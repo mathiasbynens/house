@@ -35,7 +35,9 @@ When you want a modern web development stack with a realtime streaming api that 
 
 Perfect for your personal site, blog, community, social network, game, mobile app, productivity or collaboration tools, and more!
 
-
+Open Source App Library
+-----------------------
+The power of open source lets you easily find great apps for house to do nearly anything.  The best part about using your favorite applications on house.js such as music players, location & photo sharing, bookmarking, note taking, productivity tools, contacts, blogging, reading the news and more...  is that it runs on your own private cloud and you can control the experience.  You can modify your apps to suit your needs, contribute and collaborate with the community.  This way you can find best of breed applications that you know will last.
 
 More coming soon!
 -----------------
