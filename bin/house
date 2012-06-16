@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+var argv = require('optimist').argv;
+
+var spawn = require('child_process').spawn
+
+//console.log('Current directory: ' + process.cwd());
+//console.log(argv);
+
+var printHelp = function() {
+    console.log('\nUsage:\n');
+    console.log('  --help \t\t this menu');
+    console.log('  --init \t\t initialize project in the current folder with a config file, apps, web and other folders');
+    console.log('  --build-docs \t\t build docs from the source');
+    console.log('  --run-tests \t\t run the tests');
+    console.log('\n');
+}
+
+var mkdirp = function(dirname, callback) {
+    var mkdir  = spawn('mkdir', ['-p', dirname], { cwd: process.cwd() });
+    mkdir.stdout.on('data', function (data) {
+      process.stdout.write(data);
+    });
+    mkdir.stderr.on('data', function (data) {
+      process.stdout.write(data);
+    });
+    mkdir.on('exit', function (code, signal) {
+      if(callback) {
+        callback();
+      }
+    });
+}
+
+var initProject = function() {
+    var fs = require('fs')
+    console.log('init project...');
+    mkdirp('config', function(){
+        var defaultConfig = fs.readFileSync(__dirname+'/config.default');
+        fs.writeFileSync('config/config.js', defaultConfig);
+    });
+    mkdirp('apps');
+    mkdirp('web', function(){
+        fs.writeFileSync('web/index.html', '<html><body><h1>My House on a Cloud</h1></body></html>');
+    });
+}
+var runTests = function() {
+    console.log('running tests...');
+    var mocha  = spawn('mocha', [__dirname+'/../test/'], { cwd: __dirname+'/..' });
+    mocha.stdout.on('data', function (data) {
+      process.stdout.write(data);
+    });
+    mocha.stderr.on('data', function (data) {
+      process.stdout.write(data);
+    });
+    mocha.on('exit', function (code, signal) {
+      //console.log('mocha terminated due to receipt of signal '+signal);
+    });
+}
+var buildDocs = function() {
+    console.log('building docs...');
+    var docco  = spawn('docco-husky', ['-name', '"House.Js"', '*.js', 'lib'], { cwd: __dirname+'/..' });
+    docco.stdout.on('data', function (data) {
+      process.stdout.write(data);
+    });
+    docco.stderr.on('data', function (data) {
+      process.stdout.write(data);
+    });
+    docco.on('exit', function (code, signal) {
+      //console.log('docco terminated due to receipt of signal '+signal);
+    });
+}
+var start = function() {
+    console.log('starting house...');
+
+    var housejs = require(__dirname+'/../index.js');
+
+    var config = require(process.cwd()+'/config/config.js').config;
+
+    var house = new housejs(config);
+    house.start();
+}
+
+if(argv.hasOwnProperty('help')) {
+    printHelp();
+} else if(argv.hasOwnProperty('init')) {
+    initProject();
+} else if(argv.hasOwnProperty('run-tests')) {
+    runTests();
+} else if(argv.hasOwnProperty('build-docs')) {
+    buildDocs();
+} else if(argv.hasOwnProperty('start')) {
+    start();
+}

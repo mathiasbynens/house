@@ -1,0 +1,34 @@
+{
+  "name": "house",
+  "version": "0.0.1",
+  "dependencies": {
+    "optimist": "latest",
+    "paperboy": "latest",
+    "underscore": "latest",
+    "socket.io": "latest",
+    "oauth": "latest",
+    "emailjs": "latest",
+    "imap": "latest",
+    "uglify-js": "latest",
+    "bson": "latest",
+    "mongodb": "latest"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  },
+  "bin": {
+    "house": "./bin/house"
+  },
+  "main": "./lib/house.js",
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "author": "Jeff Pelton <j@jeffpelton.com> (jeffpelton.com)",
+  "description": "A home for your website, apps & data.",
+  "homepage": "https://github.com/comster/house",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/comster/house.git"
+  }
+}

@@ -1,0 +1,9 @@
+exports = module.exports.config = {
+    env: "dev",
+    version: .101,
+    webPort: 8000,
+    webPortSecure: 8443,
+    webRoot: "web",
+    dbname: "house",
+    apiPrefix: "api"
+};

@@ -1,6 +1,10 @@
 house.js
 ========
-A home for your apps.
+A home for your website, apps & data.
+
+Read the [annotated source](https://comster.github.com/house/docs/lib/house/house.js.html).
+
+Clone the [github repo](https://github.com/comster/house).
 
 Objective
 ---------
@@ -23,7 +27,7 @@ The tools you need to build a great application without the hassle of rebuilding
  - *API* to power your application.  The server is a thin wrapper around your database with permissions and other logic you might add.
  - *User* authentication using OAuth to connect with popular providers and offering standard username/password login.
  - *Flexible* and open source.  No limits.  There's nothing stopping you from getting the job done.
- - *Community* of existing applications and modules.  Browse and share applications built for your house.
+ - *Community* of existing applications and modules.  Browse and share applications built on house.js.
 
 Goal
 ----
@@ -42,3 +46,31 @@ The power of open source lets you easily find great apps for house to do nearly 
 More coming soon!
 -----------------
 Email j@jeffpelton.com with questions, comments and concerns!
+
+[Join the mailing list](https://groups.google.com/forum/?fromgroups#!forum/housejs).
+
+
+Getting Started
+===========
+
+**Install** house.js using [npm](http://npmjs.org/)
+
+ > sudo npm install -g house
+
+then make a new folder for your project, for instance:
+
+ > mkdir ilovekungfu
+
+ > cd ilovekungfu
+
+next initialize the project in that folder by runnning
+
+ > house --init
+
+which gives you a default config/config.js and web/index.html to modify.
+
+now start the server with
+
+ > house --start
+
+and the files in ilovekungfu/web will be accessible from localhost:8000.  You can modify the path and port from the config.
