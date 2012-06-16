@@ -2,7 +2,7 @@ house.js
 ========
 A home for your website, apps & data.
 
-Read the [annotated source](https://comster.github.com/house/docs/lib/house/house.js.html).
+Read the [annotated source](http://comster.github.com/house/docs/lib/house/house.js.html).
 
 Clone the [github repo](https://github.com/comster/house).
 
