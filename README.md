@@ -74,3 +74,20 @@ now start the server with
  > house --start
 
 and the files in ilovekungfu/web will be accessible from localhost:8000.  You can modify the path and port from the config.
+
+
+Features, ToDo's & Roadmap
+==========================
+
+ - <del>[Config](http://comster.github.com/house/docs/lib/house/house.js.html#section-2)</del>
+ - <del>[Tests](https://github.com/comster/house/tree/master/test)</del>
+ - <del>[Static File Server](http://comster.github.com/house/docs/lib/house/house.js.html#section-17)</del>
+ - Logging
+ - Debugging Strategy Guide
+ - Request Filters Strategy Pattern
+ - Form Parsing
+ - Session Parsing
+ - Data Sources
+ - REST API
+ - Socket.io
+ - User Authentication
