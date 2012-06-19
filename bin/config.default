@@ -4,9 +4,10 @@ exports = module.exports.config = {
     webPort: 8000,
     webPortSecure: 8443,
     filters: [
+        {parser:{}},
         {session:{houseGuest:{
-		guestName: "Anonymous Coward"
-	}}},
+		        guestName: "Anonymous Coward"
+	    }}},
         {router:{simpleRoute:{routes:[
                 {api: {api:{rest:{}}}},
         ]}}},

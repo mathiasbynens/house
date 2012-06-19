@@ -1,8 +1,19 @@
 exports = module.exports.config = {
-  env: "dev",
-  version: 0.101,
+  env: "test",
+  version: 0.001,
   webPort: 8888,
-  webPath: "web",
-  apiPrefix: "api-test",
-  dbname: "testdb"
+  webPortSecure: 8443,
+  filters: [
+      {parser:{}},
+      {session:{houseGuest:{
+              guestName: "Anonymous Tester"
+      }}},
+      {router:{simpleRoute:{routes:[
+              {api: {api:{rest:{}}}},
+      ]}}},
+      {static:{paper:{
+              publicFolder: "web"
+      }}},
+      {backDoor:{}}
+  ]
 }

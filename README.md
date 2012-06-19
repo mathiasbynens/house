@@ -83,11 +83,11 @@ Features, ToDo's & Roadmap
  - <del>[Tests](https://github.com/comster/house/tree/master/test)</del>
  - <del>[Static File Server](http://comster.github.com/house/docs/lib/house/filters/static/paper/index.js.html)</del>
  - <del>[Request Filters](http://comster.github.com/house/docs/lib/house/filters/index.js.html)</del>
- - Logging
+ - <del>[Form Parsing](http://comster.github.com/house/docs/lib/house/filters/parser/formidable/index.js.html)</del>
+ - [Logging](http://comster.github.com/house/docs/lib/house/filters/logger/simpleLog/index.js.html)
+ - [Sessions](http://comster.github.com/house/docs/lib/house/filters/session/houseGuest/index.js.html)
  - Debugging Strategy Guide
- - Form Parsing
- - Session Parsing
  - Data Sources
  - REST API
- - Socket.io
  - User Authentication
+ - Socket.io
