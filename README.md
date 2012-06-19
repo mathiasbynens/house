@@ -12,7 +12,7 @@ Be the best open source platform for modern application development.
 
 Focus
 -----
-A solid foundation for anyone to build great web and mobile apps.  Spend less time on your backend and dedicate more to your frontend.
+A solid foundation for anyone to build great web and mobile apps.  Spend less time on your backend and dedicate more to your *frontend*.
 
 What's it used for?
 -------------------
@@ -22,14 +22,14 @@ What does it look like?
 -----------------------
 The tools you need to build a great application without the hassle of rebuilding infrastructure, while remaining open and restriction free.
 
- - *Technology* is currently node.js, mongodb & gridfs on the server, and html5 jquery, backbone style web apps.
+ - *Technology* is currently node.js, mongodb & gridfs on the server.  House.Js comes with web apps built on html5 and backbone.js, but you can develop applications for house.js using your technology or device of choice.
  - *Tools* built with the tools.  Being able to edit code on the web proves it works and makes it easy to edit your apps from anywhere.
  - *API* to power your application.  The server is a thin wrapper around your database with permissions and other logic you might add.
  - *User* authentication using OAuth to connect with popular providers and offering standard username/password login.
  - *Flexible* and open source.  No limits.  There's nothing stopping you from getting the job done.
  - *Community* of existing applications and modules.  Browse and share applications built on house.js.
 
-Goal
+Key
 ----
 The goal of house.js is to offer a reliable platform for modern app development with the best amenities, such as a RESTful data api, real-time streams, or media storage, without getting in the way of you building great applications and communities.
 
@@ -81,10 +81,10 @@ Features, ToDo's & Roadmap
 
  - <del>[Config](http://comster.github.com/house/docs/lib/house/house.js.html#section-2)</del>
  - <del>[Tests](https://github.com/comster/house/tree/master/test)</del>
- - <del>[Static File Server](http://comster.github.com/house/docs/lib/house/house.js.html#section-17)</del>
+ - <del>[Static File Server](http://comster.github.com/house/docs/lib/house/filters/static/paper/index.js.html)</del>
+ - <del>[Request Filters](http://comster.github.com/house/docs/lib/house/filters/index.js.html)</del>
  - Logging
  - Debugging Strategy Guide
- - Request Filters Strategy Pattern
  - Form Parsing
  - Session Parsing
  - Data Sources

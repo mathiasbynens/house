@@ -3,7 +3,16 @@ exports = module.exports.config = {
     version: .101,
     webPort: 8000,
     webPortSecure: 8443,
-    webRoot: "web",
-    dbname: "house",
-    apiPrefix: "api"
+    filters: [
+        {session:{houseGuest:{
+		guestName: "Anonymous Coward"
+	}}},
+        {router:{simpleRoute:{routes:[
+                {api: {api:{rest:{}}}},
+        ]}}},
+        {static:{paper:{
+                publicFolder: "web"
+        }}},
+        {backDoor:{}}
+    ]
 };
