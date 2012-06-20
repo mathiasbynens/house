@@ -1,10 +1,6 @@
 house.js
 ========
-A home for your website, apps & data.
-
-Read the [annotated source](http://comster.github.com/house/docs/lib/house/house.js.html).
-
-Clone the [github repo](https://github.com/comster/house).
+Read the [annotated source](http://comster.github.com/house/docs/lib/house/house.js.html).  Clone the [github repo](https://github.com/comster/house).
 
 Objective
 ---------
@@ -84,10 +80,10 @@ Features, ToDo's & Roadmap
  - <del>[Static File Server](http://comster.github.com/house/docs/lib/house/filters/static/paper/index.js.html)</del>
  - <del>[Request Filters](http://comster.github.com/house/docs/lib/house/filters/index.js.html)</del>
  - <del>[Form Parsing](http://comster.github.com/house/docs/lib/house/filters/parser/formidable/index.js.html)</del>
- - [Logging](http://comster.github.com/house/docs/lib/house/filters/logger/simpleLog/index.js.html)
+ - <del>[Logging](http://comster.github.com/house/docs/lib/house/logger.js.html)</del>
  - [Sessions](http://comster.github.com/house/docs/lib/house/filters/session/houseGuest/index.js.html)
- - Debugging Strategy Guide
  - Data Sources
  - REST API
  - User Authentication
  - Socket.io
+ - Debugging Strategy Guide

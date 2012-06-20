@@ -1,0 +1,106 @@
+<!DOCTYPE html><html><head><title>log.js</title><meta http-equiv="Content-Type" content="text/html" charset="UTF-8"><link rel="stylesheet" media="all" href="../../docco.css"></head><body><div id="container"><div id="background"></div><div id="jump_to">Jump To &hellip;<div id="jump_wrapper"><div id="jump_page"><a href="../../index.html" class="source"><span class="file_name">README</span></a><a href="../../index.js.html" class="source "><span class="base_path">. / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/logger/simpleLog/index.js.html" class="source "><span class="base_path">lib / house / filters / logger / simpleLog / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/logger/index.js.html" class="source "><span class="base_path">lib / house / filters / logger / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/parser/formidable/index.js.html" class="source "><span class="base_path">lib / house / filters / parser / formidable / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/parser/index.js.html" class="source "><span class="base_path">lib / house / filters / parser / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/api/rest/index.js.html" class="source "><span class="base_path">lib / house / filters / api / rest / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/api/index.js.html" class="source "><span class="base_path">lib / house / filters / api / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/static/paper/index.js.html" class="source "><span class="base_path">lib / house / filters / static / paper / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/static/index.js.html" class="source "><span class="base_path">lib / house / filters / static / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/backDoor/fourOhFour/index.js.html" class="source "><span class="base_path">lib / house / filters / backDoor / fourOhFour / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/backDoor/index.js.html" class="source "><span class="base_path">lib / house / filters / backDoor / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/router/simpleRoute/index.js.html" class="source "><span class="base_path">lib / house / filters / router / simpleRoute / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/router/index.js.html" class="source "><span class="base_path">lib / house / filters / router / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/session/houseGuest/index.js.html" class="source "><span class="base_path">lib / house / filters / session / houseGuest / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/session/index.js.html" class="source "><span class="base_path">lib / house / filters / session / </span><span class="file_name">index.js</span></a><a href="../../lib/house/filters/index.js.html" class="source "><span class="base_path">lib / house / filters / </span><span class="file_name">index.js</span></a><a href="../../lib/house/requestHandler.js.html" class="source "><span class="base_path">lib / house / </span><span class="file_name">requestHandler.js</span></a><a href="../../lib/house/log.js.html" class="source selected"><span class="base_path">lib / house / </span><span class="file_name">log.js</span></a><a href="../../lib/house/house.js.html" class="source "><span class="base_path">lib / house / </span><span class="file_name">house.js</span></a><a href="../../lib/house/index.js.html" class="source "><span class="base_path">lib / house / </span><span class="file_name">index.js</span></a></div></div></div><table cellpadding="0" cellspacing="0"><thead><tr><th class="docs"><h1>log.js</h1><div class="filepath">lib/house/</div></th><th class="code"></th></tr></thead><tbody><tr id="section-1"><td class="docs"><div class="pilwrap"><a href="#section-1" class="pilcrow">&#182;</a></div><h1>Logger</h1>
+
+<p>This module should provice a simple logger interface
+and expose events to extend log handling</p>
+</td><td class="code"><div class="highlight"><pre><span class="p">(</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">config</span><span class="p">){</span>
+
+<span class="kd">var</span> <span class="nx">log</span> <span class="o">=</span> <span class="p">{};</span>
+
+<span class="nx">log</span><span class="p">.</span><span class="nx">levels</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">&#39;system&#39;</span><span class="o">:</span> <span class="o">-</span><span class="mi">1</span>
+<span class="p">,</span> <span class="s1">&#39;emergency&#39;</span><span class="o">:</span> <span class="mi">0</span>
+<span class="p">,</span> <span class="s1">&#39;alert&#39;</span><span class="o">:</span> <span class="mi">1</span>
+<span class="p">,</span> <span class="s1">&#39;critical&#39;</span><span class="o">:</span> <span class="mi">2</span>
+<span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="o">:</span> <span class="mi">3</span>
+<span class="p">,</span> <span class="s1">&#39;warning&#39;</span><span class="o">:</span> <span class="mi">4</span>
+<span class="p">,</span> <span class="s1">&#39;notice&#39;</span><span class="o">:</span> <span class="mi">5</span>
+<span class="p">,</span> <span class="s1">&#39;info&#39;</span><span class="o">:</span> <span class="mi">6</span>
+<span class="p">,</span> <span class="s1">&#39;debug&#39;</span><span class="o">:</span> <span class="mi">7</span>
+<span class="p">,</span> <span class="s1">&#39;client&#39;</span><span class="o">:</span> <span class="mi">8</span>
+<span class="p">}</span></pre></div></td></tr><tr id="section-2"><td class="docs"><div class="pilwrap"><a href="#section-2" class="pilcrow">&#182;</a></div><h2>Usage</h2>
+
+<p>You can insert a message to the log at any of the levels like</p>
+
+<blockquote>
+  <p>log.critical('something happened');</p>
+  
+  <p>log.debug(myVar);</p>
+</blockquote>
+</td><td class="code"><div class="highlight"><pre><span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">name</span> <span class="k">in</span> <span class="nx">log</span><span class="p">.</span><span class="nx">levels</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nx">insert</span><span class="p">(</span><span class="nx">msg</span><span class="p">,</span> <span class="nx">log</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="nx">name</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="p">})(</span><span class="nx">name</span><span class="p">);</span>
+<span class="p">}</span></pre></div></td></tr><tr id="section-3"><td class="docs"><div class="pilwrap"><a href="#section-3" class="pilcrow">&#182;</a></div><p>Some have a short hand</p>
+</td><td class="code"><div class="highlight"><pre><span class="nx">log</span><span class="p">.</span><span class="nx">dev</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">debug</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">log</span><span class="p">.</span><span class="nx">err</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">log</span><span class="p">.</span><span class="nx">warn</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nx">warning</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">log</span><span class="p">.</span><span class="nx">crit</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">critical</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">log</span><span class="p">.</span><span class="nx">sys</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">system</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">env</span> <span class="o">=</span> <span class="nx">config</span><span class="p">.</span><span class="nx">env</span> <span class="o">||</span> <span class="s1">&#39;dev&#39;</span><span class="p">;</span>
+<span class="nx">log</span><span class="p">.</span><span class="nx">insert</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">msg</span><span class="p">,</span> <span class="nx">level</span><span class="p">,</span> <span class="nx">code</span><span class="p">)</span> <span class="p">{</span>
+    </pre></div></td></tr><tr id="section-4"><td class="docs"><div class="pilwrap"><a href="#section-4" class="pilcrow">&#182;</a></div><p>Don't log debug level and higher in production</p>
+
+<p>TODO make this more configurable with <em>config.log.level</em> or something</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="k">if</span><span class="p">(</span><span class="nx">env</span> <span class="o">===</span> <span class="s1">&#39;prod&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">level</span> <span class="o">&gt;</span> <span class="mi">6</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span></pre></div></td></tr><tr id="section-5"><td class="docs"><div class="pilwrap"><a href="#section-5" class="pilcrow">&#182;</a></div><div class="dox"><div class="summary"><p>For Errors, lets see if it was the error object itself and try printing it nicely somehow.</p></div><div class="body"></div></div>
+</td><td class="code"><div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">msg</span> <span class="o">===</span> <span class="s1">&#39;object&#39;</span> <span class="o">&amp;&amp;</span> <span class="nx">level</span> <span class="o">==</span> <span class="nx">log</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">])</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">new_msg</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">msg</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="s1">&#39;message&#39;</span><span class="p">))</span> <span class="p">{</span>
+        <span class="nx">new_msg</span> <span class="o">+=</span> <span class="nx">msg</span><span class="p">.</span><span class="nx">message</span><span class="p">;</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">msg</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="s1">&#39;stack&#39;</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">new_msg</span> <span class="o">+=</span> <span class="nx">msg</span><span class="p">.</span><span class="nx">stack</span><span class="p">;</span>
+          <span class="p">}</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">new_msg</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">msg</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="nx">msg</span> <span class="o">=</span> <span class="nx">new_msg</span><span class="p">;</span>
+      
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="k">typeof</span> <span class="nx">msg</span> <span class="o">===</span> <span class="s1">&#39;object&#39;</span><span class="p">)</span> <span class="p">{</span>
+        </pre></div></td></tr><tr id="section-6"><td class="docs"><div class="pilwrap"><a href="#section-6" class="pilcrow">&#182;</a></div><div class="dox"><div class="summary"><p>Try to output objects in a readable format</p></div><div class="body"></div></div>
+</td><td class="code"><div class="highlight"><pre>        
+        <span class="nx">msg</span> <span class="o">=</span> <span class="nx">util</span><span class="p">.</span><span class="nx">inspect</span><span class="p">(</span><span class="nx">msg</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nx">level</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">level</span> <span class="o">=</span> <span class="mi">6</span><span class="p">;</span>
+    <span class="p">}</span>
+    </pre></div></td></tr><tr id="section-7"><td class="docs"><div class="pilwrap"><a href="#section-7" class="pilcrow">&#182;</a></div><p>Quick and dirty output for now</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="k">if</span><span class="p">(</span><span class="nx">code</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">msg</span> <span class="o">=</span> <span class="nx">msg</span><span class="o">+</span><span class="s1">&#39; &#39;</span><span class="o">+</span><span class="nx">code</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="nx">msg</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">().</span><span class="nx">toString</span><span class="p">()</span><span class="o">+</span><span class="s1">&#39; - &#39;</span><span class="o">+</span><span class="nx">level</span><span class="o">+</span><span class="s1">&#39; - &#39;</span><span class="o">+</span><span class="nx">msg</span><span class="p">;</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nx">console</span><span class="p">.</span><span class="nx">warn</span> <span class="o">&amp;&amp;</span> <span class="nx">level</span> <span class="o">==</span> <span class="nx">log</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="s2">&quot;warning&quot;</span><span class="p">])</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">warn</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="nx">console</span><span class="p">.</span><span class="nx">err</span> <span class="o">&amp;&amp;</span> <span class="nx">level</span> <span class="o">==</span> <span class="nx">log</span><span class="p">.</span><span class="nx">levels</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">])</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+    <span class="p">}</span>
+    </pre></div></td></tr><tr id="section-8"><td class="docs"><div class="pilwrap"><a href="#section-8" class="pilcrow">&#182;</a></div><p>TODO trigger events log.insert and log.$level with our msg</p>
+</td><td class="code"><div class="highlight"><pre><span class="p">}</span></pre></div></td></tr><tr id="section-9"><td class="docs"><div class="pilwrap"><a href="#section-9" class="pilcrow">&#182;</a></div><p>Grab any uncaught exceptions</p>
+</td><td class="code"><div class="highlight"><pre><span class="nx">process</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;uncaughtException&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">log</span><span class="p">.</span><span class="nx">err</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="k">return</span> <span class="nx">log</span><span class="p">;</span>
+<span class="p">});</span>
+
+</pre></div></td></tr></tbody></table><div id="generated">generated Wed Jun 20 2012 00:50:32 GMT-0700 (PDT)  </div><div id="projectname"><a href="../../index.html">&quot;House.Js&quot;</a></div></div></body></html>

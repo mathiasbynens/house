@@ -8,6 +8,7 @@ exports = module.exports.config = {
       {session:{houseGuest:{
               guestName: "Anonymous Tester"
       }}},
+      {logger:{simpleLog:{}}},
       {router:{simpleRoute:{routes:[
               {api: {api:{rest:{}}}},
       ]}}},

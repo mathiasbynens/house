@@ -44,7 +44,7 @@ var initProject = function() {
 }
 var runTests = function() {
     console.log('running tests...');
-    var mocha  = spawn('mocha', [__dirname+'/../test/'], { cwd: __dirname+'/..' });
+    var mocha  = spawn('mocha', ['-c', '--globals', '_', __dirname+'/../test/'], { cwd: __dirname+'/..' });
     mocha.stdout.on('data', function (data) {
       process.stdout.write(data);
     });
