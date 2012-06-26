@@ -96,6 +96,107 @@ var basicHttpTests = function(callback) {
                 //console.log('BODY: ' + chunk);
                 assert.equal(chunk, dataJson);
                 done();
+                callback();
+              });
+            }).on('error', function(e) {
+              console.log("Got error: " + e.message);
+              done(e);
+            });
+            req.write(data);
+            req.end();
+        });
+    });
+}
+
+var apiFsTests = function(callback) {
+    var http = require('http');
+    describe("house rest api fs", function() {
+        it("should respond 200", function(done) {
+            var options = {
+              host: 'localhost',
+              port: config.webPort,
+              path: '/api/fs'
+            };
+            http.get(options, function(res) {
+                
+                res.on('data', function (chunk) {
+                  console.log('BODY: ' + chunk);
+                  describe("house rest api fs", function() {
+                    it("should respond data", function(done) {
+                      //assert.equal(chunk, dataJson);
+                      done();
+                    });
+                  });
+                });
+                
+              console.log("Got response from /api/fs/: " + res.statusCode);
+              assert.equal(res.statusCode, 200);
+              done();
+            }).on('error', function(e) {
+              console.log("Got error: " + e.message);
+              done(e);
+            });
+        });
+    });
+    
+    describe("house rest api fs", function() {
+        it("should respond 200", function(done) {
+            var options = {
+              host: 'localhost',
+              port: config.webPort,
+              path: '/api/fs/package.json'
+            };
+            http.get(options, function(res) {
+                
+                res.on('data', function (chunk) {
+                  console.log('BODY: ' + chunk);
+                  describe("house rest api fs", function() {
+                    it("should respond data", function(done) {
+                      //assert.equal(chunk, dataJson);
+                      done();
+                    });
+                  });
+                });
+                
+              console.log("Got response from /api/fs/: " + res.statusCode);
+              assert.equal(res.statusCode, 200);
+              done();
+            }).on('error', function(e) {
+              console.log("Got error: " + e.message);
+              done(e);
+            });
+        });
+    });
+    callback();
+    return;
+    
+    
+    describe("house rest api put fs", function() {
+        it("should respond back", function(done) {
+            var o = {
+                "test": "msg"
+                , "test2": "msg2"
+            };
+            var data = querystring.stringify(o);
+            var dataJson = JSON.stringify(o);
+            
+            var options = {
+              host: 'localhost',
+              port: config.webPort,
+              path: '/api/fs',
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Content-Length': data.length
+              }
+            };
+            var req = http.request(options, function(res) {
+                res.setEncoding('utf8');
+                //console.log("Got response: " + res.statusCode);
+              res.on('data', function (chunk) {
+                //console.log('BODY: ' + chunk);
+                assert.equal(chunk, dataJson);
+                done();
               });
             }).on('error', function(e) {
               console.log("Got error: " + e.message);
@@ -116,6 +217,8 @@ bootup(function(house) {
                     assert.equal(house.config.webPort, "8888");
                     
                     basicHttpTests(function(){
+                        apiFsTests(function(){
+                        });
                     });
                 });
             });

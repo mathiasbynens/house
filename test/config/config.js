@@ -10,11 +10,31 @@ exports = module.exports.config = {
       }}},
       {logger:{simpleLog:{}}},
       {router:{simpleRoute:{routes:[
-              {api: {api:{rest:{}}}},
+        {api: {api:{rest:{
+          endPoints: __dirname+'/../../lib/endPoints'
+      }}}},
       ]}}},
       {static:{paper:{
               publicFolder: "web"
       }}},
       {backDoor:{}}
-  ]
+  ],
+  dataSources: {
+    testMongo: {
+      mongodb: {
+        server: 'localhost',
+        db: 'test-house'
+      }
+    },
+    testMemcache: {
+      memcache: {
+        server: 'localhost'
+      }
+    },
+    fileSystem: {
+      fs: {
+        path: __dirname+'/../../'
+      }
+    }
+  }
 }

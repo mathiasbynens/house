@@ -81,9 +81,16 @@ Features, ToDo's & Roadmap
  - <del>[Request Filters](http://comster.github.com/house/docs/lib/house/filters/index.js.html)</del>
  - <del>[Form Parsing](http://comster.github.com/house/docs/lib/house/filters/parser/formidable/index.js.html)</del>
  - <del>[Logging](http://comster.github.com/house/docs/lib/house/logger.js.html)</del>
+ - <del>[Data Sources](http://comster.github.com/house/docs/lib/house/dataSources/index.js.html)</del>
+  - [File System](http://comster.github.com/house/docs/lib/house/dataSources/fs/index.js.html)
+  - [Mongo](http://comster.github.com/house/docs/lib/house/dataSources/mongodb/index.js.html)
+  - [Memcache](http://comster.github.com/house/docs/lib/house/dataSources/memcache/index.js.html)
+  - [Http](http://comster.github.com/house/docs/lib/house/dataSources/http/index.js.html)
+  - [Oauth](http://comster.github.com/house/docs/lib/house/dataSources/oauth/index.js.html)
+ - <del>[REST API](http://comster.github.com/house/docs/lib/house/filters/api/rest/index.js.html)</del>
+ - Apps
+  - [Admin](http://comster.github.com/house/docs/apps/admin/)
  - [Sessions](http://comster.github.com/house/docs/lib/house/filters/session/houseGuest/index.js.html)
- - Data Sources
- - REST API
  - User Authentication
  - Socket.io
  - Debugging Strategy Guide
