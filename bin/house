@@ -76,6 +76,9 @@ var start = function() {
     var config = require(process.cwd()+'/config/config.js').config;
 
     var house = new housejs(config);
+
+    house.useApps(process.cwd()+'/apps');
+
     house.start();
 }
 

@@ -1,5 +1,6 @@
 var assert = require("assert");
 var querystring = require('querystring');
+var http = require('http');
 
 describe("test mocha", function() {
     it("assert equal", function() {
@@ -19,6 +20,7 @@ var bootup = function(callback) {
                 });
             });
             var testHouse = new housejs(config);
+            testHouse.useApps(__dirname+'/../apps');
             describe("housejs", function() {
                 it("should start", function(started) {
                     testHouse.start(function() {
@@ -30,9 +32,28 @@ var bootup = function(callback) {
         });
     });
 };
+var appStaticWebTests = function(callback) {
+    describe("house apps static web folders", function() {
+        it("should respond 200", function(echoed) {
+            var options = {
+              host: 'localhost',
+              port: config.webPort,
+              path: '/desktop'
+            };
+            http.get(options, function(res) {
+              //console.log("Got response: " + res.statusCode);
+              assert.equal(res.statusCode, 200);
+              echoed();
+              callback();
+            }).on('error', function(e) {
+              console.log("Got error: " + e.message);
+              echoed(e);
+            });
+        });
+    });
+}
 
 var basicHttpTests = function(callback) {
-    var http = require('http');
     describe("house http api echo", function() {
         it("should respond 200", function(echoed) {
             var options = {
@@ -218,6 +239,8 @@ bootup(function(house) {
                     
                     basicHttpTests(function(){
                         apiFsTests(function(){
+                            appStaticWebTests(function(){
+                            });
                         });
                     });
                 });
