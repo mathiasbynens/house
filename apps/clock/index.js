@@ -5,13 +5,13 @@
 //
 //
 (exports = module.exports = function(house){
-    var filesApp = {};
+    var clockApp = {};
     
-    filesApp.config = require('./config/config.js').config;
+    clockApp.config = require('./config/config.js').config;
     
-    if(filesApp.config.routes) {
-        house.addRoutes(filesApp.config.routes);
+    if(clockApp.config.routes) {
+        house.addRoutes(clockApp.config.routes);
     }
     
-    return filesApp;
+    return clockApp;
 });

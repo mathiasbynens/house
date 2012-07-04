@@ -34,11 +34,30 @@ var bootup = function(callback) {
 };
 var appStaticWebTests = function(callback) {
     describe("house apps static web folders", function() {
-        it("should respond 200", function(echoed) {
+        it("should respond 301", function(echoed) {
             var options = {
               host: 'localhost',
               port: config.webPort,
               path: '/desktop'
+            };
+            http.get(options, function(res) {
+              //console.log("Got response: " + res.statusCode);
+              assert.equal(res.statusCode, 301);
+              echoed();
+              callback();
+            }).on('error', function(e) {
+              console.log("Got error: " + e.message);
+              echoed(e);
+            });
+        });
+    });
+    
+    describe("house apps static web folders", function() {
+        it("should respond 200", function(echoed) {
+            var options = {
+              host: 'localhost',
+              port: config.webPort,
+              path: '/desktop/'
             };
             http.get(options, function(res) {
               //console.log("Got response: " + res.statusCode);
@@ -59,7 +78,7 @@ var basicHttpTests = function(callback) {
             var options = {
               host: 'localhost',
               port: config.webPort,
-              path: '/api'
+              path: '/api/'
             };
             http.get(options, function(res) {
               //console.log("Got response: " + res.statusCode);
