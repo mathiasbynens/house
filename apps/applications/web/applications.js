@@ -89,11 +89,20 @@
         
         className: "app",
     
-        htmlTemplate: '<span class="">\
-                            <a href="<%= url %>"><%= name %></a>\
+        htmlTemplate: '<span class="icon">\
+                            <a href="<%= url %>">\
+                                <img src="<%= iconSrc %>" />\
+                                <%= name %>\
+                            </a>\
                         </span>',
         
         template: function(doc) {
+            doc.iconSrc = '';
+            if(doc.iosicon) {
+                doc.iconSrc = doc.iosicon;
+            } else if(doc.favicon) {
+                doc.iconSrc = doc.favicon;
+            }
             var template = $(_.template(this.htmlTemplate, doc));
             return template;
         },

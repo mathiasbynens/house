@@ -1,9 +1,9 @@
 exports = module.exports.config = {
     version: 0.001,
-    favicon: 'favicon.ico',
-    iosicon: 'iosicon.png',
+    favicon: 'vaulticon.ico',
+    iosicon: 'vaulticon.png',
     routes: [ {
-        clock: {
+        vault: {
             "static": {
                 paper: {
                     publicFolder: __dirname + "/../web"
