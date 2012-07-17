@@ -176,6 +176,9 @@
             var $list = $('<span class="list" data-id="/" selected></span>');
             this.$lists.append($list);
             this.$e.append(this.$lists);
+            
+            var uploadF = new rest.UploadFrame();
+            this.$e.append(uploadF.render().el);
 
             self.collection = this.getCollection('/');
             self.collection.load();
@@ -412,14 +415,14 @@
             if(this.model) {
                 this.model.bind('change', this.render, this);
                 this.model.bind('destroy', this.remove, this);
-                
-                if(this.model.get('mime') && this.model.get('mime').indexOf('text') === 0) {
+                var mime = this.model.has('mime') ? this.model.get('mime') : this.model.get('contentType');
+                if(mime.indexOf('text') === 0) {
                     this.editorView = new rest.TextEditorView({model: this.model});
-                } else if(this.model.get('mime') && this.model.get('mime').indexOf('image') === 0) {
+                } else if(mime.indexOf('image') === 0) {
                     this.editorView = new rest.ImageEditorView({model: this.model});
-                } else if(this.model.get('mime') && this.model.get('mime').indexOf('audio') === 0) {
+                } else if(mime.indexOf('audio') === 0) {
                     this.editorView = new rest.AudioEditorView({model: this.model});
-                } else if(this.model.get('mime') && this.model.get('mime').indexOf('video') === 0) {
+                } else if(mime.indexOf('video') === 0) {
                     this.editorView = new rest.VideoEditorView({model: this.model});
                 } else {
                     this.editorView = new rest.ParamsEditorView({model: this.model});
@@ -563,7 +566,6 @@
             }
             
             var dz = new rest.DropZone();
-            
             $inputs.append(dz.render().el).append('<br />');
             
             $inpKey.focus();
@@ -686,7 +688,13 @@
         render: function() {
             this.$el.html(this.template(this.model.toJSON()));
             var $audio = this.$el.find('audio.audio');
-            $audio.attr('src', 'data:'+this.model.get('mime')+';base64,'+this.model.get('data'));
+            
+            if(this.model.has('mime')) {
+                $audio.attr('src', 'data:'+this.model.get('mime')+';base64,'+this.model.get('data'));
+            } else if(this.model.has('contentType')) {
+                console.log(this.model.collection.url);
+                $audio.attr('src', this.model.collection.url+this.model.get('filename'));
+            }
             //$audio[0].play();
             this.setElement(this.$el);
             return this;
@@ -861,6 +869,26 @@
         }
     });
     
+    rest.UploadFrame = Backbone.View.extend({
+        tagName: "span",
+        className: "uploadFrame",
+        htmlTemplate: '<iframe src="upload.html"></iframe>',
+        template: function(doc) {
+            return $(_.template(this.htmlTemplate, doc));
+        },
+        render: function() {
+            this.$el.html(this.template({}));
+            this.setElement(this.$el);
+            return this;
+        },
+        initialize: function() {
+        },
+        events: {
+        },
+        remove: function() {
+          $(this.el).remove();
+        }
+    });
         
     rest.Row = Backbone.View.extend({
         tagName: "li",
@@ -870,7 +898,11 @@
                         </span>',
         template: function(doc) {
             if(!doc.name) {
-                doc.name = doc.id;
+                if(doc.filename) {
+                    doc.name = doc.filename;
+                } else  {
+                    doc.name = doc.id;
+                }
             }
             return $(_.template(this.htmlTemplate, doc));
         },

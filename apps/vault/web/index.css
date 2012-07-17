@@ -92,6 +92,20 @@
 .dropZone.dropping {
     border: 2px solid green;
 }
+
+.uploadFrame {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+}
+.uploadFrame iframe {
+    border: 0px;
+    height: 44px;
+}
+.uploadFrame iframe input {
+    
+}
+
 .clearfix:after{
   clear: both;
   content: ".";
