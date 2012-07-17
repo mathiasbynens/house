@@ -11,8 +11,10 @@
     vault.init = function(callback) {
         require(['underscore.js'], function(){
             require(['backbone.js'], function(){
-                require(['vault.js'], function(apps) {
-                    if(callback) callback(apps);
+                require(['backbone-house.js'], function(){
+                    require(['vault.js'], function(apps) {
+                        if(callback) callback(apps);
+                    });
                 });
             });
         });

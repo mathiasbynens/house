@@ -19,11 +19,33 @@
         initialize: function() {
             var self = this;
             this.on("change", function(model, options){
-                //console.log(model.changedAttributes())
+                console.log(model.changedAttributes())
+                console.log(options)
                 model.save(null, {silent: true});
             });
         },
         getView: function(options) {
+            
+            if(this.has('id')) {
+                var id = this.get('id');
+                console.log(this.attributes)
+                console.log(id)
+                var iOfId = this.collection.url.indexOf(id);
+                if(iOfId !== -1 && this.collection.url.length>0 && (iOfId + id.length === this.collection.url.length)) {
+                    console.log(this.collection.url.indexOf(id))
+                    console.log(this.collection.url.length)
+                    if(!this.hasOwnProperty('view')) {
+                        options.model = this;
+                        this.view = new rest.ResourceView(options);
+                        
+                        this.view.model.collection.url = this.view.model.collection.url.substr(0, this.view.model.collection.url.indexOf(this.view.model.id));
+                        console.log(this.view.model.id)
+                        console.log(this.view.model.collection.url)
+                    }
+                    return this.view;
+                }
+            }
+            
             if(this.has('data')) {
                 if(!this.hasOwnProperty('view')) {
                     options.model = this;
@@ -524,21 +546,36 @@
         template: function(doc) {
             return $(_.template(this.htmlTemplate, doc));
         },
-        appendParamValueInput: function() {
-            var $inputs = $('<span></span>');
+        appendParamValueInput: function(k,v) {
+            var $inputs = $('<span class="field"></span>');
             this.$el.find('.params').append($inputs);
-            var $inp = $('<input type="text" name="param" placeholder="parameter" />');
-            $inputs.append($inp);
-            $inputs.append('<input type="text" name="value" placeholder="value" />');
+            var $inpKey = $('<input type="text" name="param" placeholder="parameter" />');
+            $inputs.append($inpKey);
+            var $inpVal = $('<input type="text" name="value" placeholder="value" />');
+            $inputs.append($inpVal);
+            
+            if(k) {
+                $inpKey.val(k);
+            }
+            if(v) {
+                $inpVal.val(v);
+                $inpVal.attr('data-typeof', typeof(v));
+            }
             
             var dz = new rest.DropZone();
             
-            $inputs.append(dz.render().el);
+            $inputs.append(dz.render().el).append('<br />');
             
-            $inp.focus();
+            $inpKey.focus();
         },
         render: function() {
             this.$el.html(this.template(this.model.toJSON()));
+            
+            console.log(this.model.attributes);
+            for(var k in this.model.attributes) {
+                this.appendParamValueInput(k, this.model.attributes[k]);
+            }
+            
             this.appendParamValueInput();
             this.setElement(this.$el);
             return this;
@@ -557,14 +594,22 @@
         save: function() {
             var self = this;
             var obj = {};
-            var inputs = this.$el.find('.params span');
+            var inputs = this.$el.find('.params span.field');
             inputs.each(function(i,e){
                 var $e = $(e);
-                obj[$e.find('input[name="param"]').val()] = $e.find('input[name="value"]').val();
+                var $v = $e.find('input[name="value"]');
+                var strVal = $v.val();
+                if(!strVal || strVal === '') return;
+                console.log($v.attr('data-typeof'))
+                if($v.attr('data-typeof') && $v.attr('data-typeof') !== 'string') {
+                    strVal = JSON.parse(strVal);
+                }
+                obj[$e.find('input[name="param"]').val()] = strVal;
                 
                 console.log(obj);
                 if(i === inputs.length-1) {
                     self.model.set(obj);
+                    self.render();
                 }
             });
             //
@@ -718,7 +763,7 @@
     rest.DropZone = Backbone.View.extend({
         tagName: "span",
         className: "dropZone",
-        htmlTemplate: '<span class="msg">Drop your file here.</span>\
+        htmlTemplate: '<span class="msg">Drop a file here</span>\
                         <span class="droppedFiles"></span>\
                         ',
         template: function(doc) {
@@ -824,6 +869,9 @@
                        <%= name %>\
                         </span>',
         template: function(doc) {
+            if(!doc.name) {
+                doc.name = doc.id;
+            }
             return $(_.template(this.htmlTemplate, doc));
         },
         render: function() {
