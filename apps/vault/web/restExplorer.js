@@ -416,14 +416,16 @@
                 this.model.bind('change', this.render, this);
                 this.model.bind('destroy', this.remove, this);
                 var mime = this.model.has('mime') ? this.model.get('mime') : this.model.get('contentType');
-                if(mime.indexOf('text') === 0) {
-                    this.editorView = new rest.TextEditorView({model: this.model});
-                } else if(mime.indexOf('image') === 0) {
-                    this.editorView = new rest.ImageEditorView({model: this.model});
-                } else if(mime.indexOf('audio') === 0) {
-                    this.editorView = new rest.AudioEditorView({model: this.model});
-                } else if(mime.indexOf('video') === 0) {
-                    this.editorView = new rest.VideoEditorView({model: this.model});
+                if(mime) {
+                    if(mime.indexOf('text') === 0) {
+                        this.editorView = new rest.TextEditorView({model: this.model});
+                    } else if(mime.indexOf('image') === 0) {
+                        this.editorView = new rest.ImageEditorView({model: this.model});
+                    } else if(mime.indexOf('audio') === 0) {
+                        this.editorView = new rest.AudioEditorView({model: this.model});
+                    } else if(mime.indexOf('video') === 0) {
+                        this.editorView = new rest.VideoEditorView({model: this.model});
+                    }
                 } else {
                     this.editorView = new rest.ParamsEditorView({model: this.model});
                 }
