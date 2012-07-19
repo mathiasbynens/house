@@ -5,31 +5,17 @@
 //
 //
 (function(){
-
-    Backbonesync = Backbone.sync;
-    
-    Backbone.sync = function() {
-        //console.log(arguments);
-        Backbonesync.apply(this, arguments);
-    }
-
     var rest = {};
-    
     rest.Model = Backbone.Model.extend({
         initialize: function() {
             var self = this;
             this.on("change", function(model, options){
-                console.log(model.changedAttributes())
-                console.log(options)
                 model.save(null, {silent: true});
             });
         },
         getView: function(options) {
-            
             if(this.has('id')) {
                 var id = this.get('id');
-                console.log(this.attributes)
-                console.log(id)
                 var iOfId = this.collection.url.indexOf(id);
                 if(iOfId !== -1 && this.collection.url.length>0 && (iOfId + id.length === this.collection.url.length)) {
                     console.log(this.collection.url.indexOf(id))
@@ -37,7 +23,6 @@
                     if(!this.hasOwnProperty('view')) {
                         options.model = this;
                         this.view = new rest.ResourceView(options);
-                        
                         this.view.model.collection.url = this.view.model.collection.url.substr(0, this.view.model.collection.url.indexOf(this.view.model.id));
                         console.log(this.view.model.id)
                         console.log(this.view.model.collection.url)
@@ -45,7 +30,6 @@
                     return this.view;
                 }
             }
-            
             if(this.has('data')) {
                 if(!this.hasOwnProperty('view')) {
                     options.model = this;
@@ -603,14 +587,14 @@
                 var $e = $(e);
                 var $v = $e.find('input[name="value"]');
                 var strVal = $v.val();
-                if(!strVal || strVal === '') return;
-                console.log($v.attr('data-typeof'))
-                if($v.attr('data-typeof') && $v.attr('data-typeof') !== 'string') {
-                    strVal = JSON.parse(strVal);
+                if(!strVal || strVal === '') {
+                } else {
+                    console.log($v.attr('data-typeof'))
+                    if($v.attr('data-typeof') && $v.attr('data-typeof') !== 'string') {
+                        strVal = JSON.parse(strVal);
+                    }
+                    obj[$e.find('input[name="param"]').val()] = strVal;
                 }
-                obj[$e.find('input[name="param"]').val()] = strVal;
-                
-                console.log(obj);
                 if(i === inputs.length-1) {
                     self.model.set(obj);
                     self.render();
