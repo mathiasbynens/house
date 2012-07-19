@@ -409,6 +409,8 @@
                         this.editorView = new rest.AudioEditorView({model: this.model});
                     } else if(mime.indexOf('video') === 0) {
                         this.editorView = new rest.VideoEditorView({model: this.model});
+                    } else if(mime.indexOf('application/x-empty') === 0) {
+                        this.editorView = new rest.TextEditorView({model: this.model});
                     }
                 } else {
                     this.editorView = new rest.ParamsEditorView({model: this.model});

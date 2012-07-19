@@ -88,6 +88,11 @@ Features, ToDo's & Roadmap
   - [Http](http://comster.github.com/house/docs/lib/house/dataSources/http/index.js.html)
   - [Oauth](http://comster.github.com/house/docs/lib/house/dataSources/oauth/index.js.html)
  - <del>[REST API](http://comster.github.com/house/docs/lib/house/filters/api/rest/index.js.html)</del>
+  - <del>[Endpoints](http://comster.github.com/house/docs/lib/endPoints/index.js.html)</del>
+  - <del>[Apps](http://comster.github.com/house/docs/lib/endPoints/apps/index.js.html)</del>
+  - <del>[Collections](http://comster.github.com/house/docs/lib/endPoints/collections/index.js.html)</del>
+  - <del>[GridFs](http://comster.github.com/house/docs/lib/endPoints/files/index.js.html)</del>
+  - <del>[FileSystem](http://comster.github.com/house/docs/lib/endPoints/fs/index.js/html)</del>
  - <del>[Apps](http://comster.github.com/house/docs/lib/house/apps/index.js.html)</del>
   - <del>[Vault](http://comster.github.com/house/docs/apps/vault/)</del>
   - Scaffolding
