@@ -1,3 +1,5 @@
+window.houseApi = '/api';
+
 var methodMap = {
   'create': 'POST',
   'update': 'PUT',

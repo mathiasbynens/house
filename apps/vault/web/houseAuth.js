@@ -7,7 +7,7 @@
 (function(){
     var auth = this;
     
-    auth.apiUrl = '/fu/auth';
+    auth.apiUrl = houseApi+'/auth';
     
     auth.get = function(callback) {
         this.collection.bind("add", function(doc) {

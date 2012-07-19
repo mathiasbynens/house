@@ -33,10 +33,10 @@
     
     users.Collection = Backbone.Collection.extend({
         model: rest.Model,
-        url: "/fu/",
+        url: houseApi+"/",
         initialize: function() {
             var self = this;
-            this.baseUrl = '/fu';
+            this.baseUrl = houseApi;
             this.urlFilter = '';
         }, load: function(callback) {
             var self = this;
