@@ -20,7 +20,7 @@
     
     var AppCollection = Backbone.Collection.extend({
         model: App,
-        url: '/fu/apps',
+        url: '/api/apps',
         initialize: function() {
             var self = this;
         },
