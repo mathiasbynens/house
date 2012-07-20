@@ -6,9 +6,11 @@ exports = module.exports.config = {
     filters: [
         {parser:{}},
         {session:{houseGuest:{
-		        guestName: "Anonymous Coward"
-	    }}},
-        {logger:{simpleLog:{}}},
+                guestName: "Anonymous Coward",
+                cookieDomain: "",
+                ds: "mongo",
+                col: "sessions"
+        }}},
         {router:{simpleRoute:{routes:[
                 {api: {api:{rest:{}}}},
         ]}}},
@@ -16,5 +18,28 @@ exports = module.exports.config = {
                 publicFolder: "web"
         }}},
         {backDoor:{}}
-    ]
+    ],
+  dataSources: {
+    mongo: {
+      mongodb: {
+        server: 'localhost',
+        db: 'house'
+      }
+    },
+    memcache: {
+      memcache: {
+        server: 'localhost'
+      }
+    },
+    fileSystem: {
+      fs: {
+        path: __dirname+'/../../'
+      }
+    },
+    fileSystem: {
+      fs: {
+        path: '/tmp'
+      }
+    }
+  }
 };
