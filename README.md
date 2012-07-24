@@ -49,6 +49,8 @@ Email j@jeffpelton.com with questions, comments and concerns!
 Getting Started
 ===========
 
+**Required** to have a mongodb server running and configured in config/config.js using either a connection url, or a server and database name.
+
 **Install** house.js using [npm](http://npmjs.org/)
 
  > sudo npm install -g house
@@ -75,29 +77,30 @@ and the files in ilovekungfu/web will be accessible from localhost:8000.  You ca
 Features, ToDo's & Roadmap
 ==========================
 
- - <del>[Config](http://comster.github.com/house/docs/lib/house/house.js.html#section-2)</del>
- - <del>[Tests](https://github.com/comster/house/tree/master/test)</del>
- - <del>[Static File Server](http://comster.github.com/house/docs/lib/house/filters/static/paper/index.js.html)</del>
- - <del>[Request Filters](http://comster.github.com/house/docs/lib/house/filters/index.js.html)</del>
- - <del>[Form Parsing](http://comster.github.com/house/docs/lib/house/filters/parser/formidable/index.js.html)</del>
- - <del>[Logging](http://comster.github.com/house/docs/lib/house/logger.js.html)</del>
- - <del>[Data Sources](http://comster.github.com/house/docs/lib/house/dataSources/index.js.html)</del>
-  - <del>[File System](http://comster.github.com/house/docs/lib/house/dataSources/fs/index.js.html)</del>
-  - <del>[Mongo](http://comster.github.com/house/docs/lib/house/dataSources/mongodb/index.js.html)</del>
+ - [Config](http://comster.github.com/house/docs/lib/house/house.js.html#section-2)
+ - [Tests](https://github.com/comster/house/tree/master/test)
+ - [Static File Server](http://comster.github.com/house/docs/lib/house/filters/static/paper/index.js.html)
+ - [Request Filters](http://comster.github.com/house/docs/lib/house/filters/index.js.html)
+ - [Form Parsing](http://comster.github.com/house/docs/lib/house/filters/parser/formidable/index.js.html)
+ - [Logging](http://comster.github.com/house/docs/lib/house/logger.js.html)
+ - [Data Sources](http://comster.github.com/house/docs/lib/house/dataSources/index.js.html)
+  - [File System](http://comster.github.com/house/docs/lib/house/dataSources/fs/index.js.html)
+  - [Mongo](http://comster.github.com/house/docs/lib/house/dataSources/mongodb/index.js.html)
   - [Memcache](http://comster.github.com/house/docs/lib/house/dataSources/memcache/index.js.html)
   - [Http](http://comster.github.com/house/docs/lib/house/dataSources/http/index.js.html)
   - [Oauth](http://comster.github.com/house/docs/lib/house/dataSources/oauth/index.js.html)
- - <del>[REST API](http://comster.github.com/house/docs/lib/house/filters/api/rest/index.js.html)</del>
-  - <del>[Endpoints](http://comster.github.com/house/docs/lib/endPoints/index.js.html)</del>
-  - <del>[Apps](http://comster.github.com/house/docs/lib/endPoints/apps/index.js.html)</del>
-  - <del>[Collections](http://comster.github.com/house/docs/lib/endPoints/collections/index.js.html)</del>
-  - <del>[GridFs](http://comster.github.com/house/docs/lib/endPoints/files/index.js.html)</del>
-  - <del>[FileSystem](http://comster.github.com/house/docs/lib/endPoints/fs/index.js/html)</del>
- - <del>[Apps](http://comster.github.com/house/docs/lib/house/apps/index.js.html)</del>
-  - <del>[Vault](http://comster.github.com/house/docs/apps/vault/)</del>
+ - [REST API](http://comster.github.com/house/docs/lib/house/filters/api/rest/index.js.html)
+  - [Endpoints](http://comster.github.com/house/docs/lib/endPoints/index.js.html)
+  - [Apps](http://comster.github.com/house/docs/lib/endPoints/apps/index.js.html)
+  - [Collections](http://comster.github.com/house/docs/lib/endPoints/collections/index.js.html)
+  - [GridFs](http://comster.github.com/house/docs/lib/endPoints/files/index.js.html)
+  - [FileSystem](http://comster.github.com/house/docs/lib/endPoints/fs/index.js/html)
+ - <del>[Apps](http://comster.github.com/house/docs/lib/house/apps/index.js.html)
+  - [Vault](http://comster.github.com/house/docs/apps/vault/)
+  - [Jukebox](https://github.com/comster/jukebox)
   - Scaffolding
   - Todo
- - <del>[Sessions](http://comster.github.com/house/docs/lib/house/filters/session/houseGuest/index.js.html)</del>
+ - [Sessions](http://comster.github.com/house/docs/lib/house/filters/session/houseGuest/index.js.html)
  - User Authentication
  - Socket.io
  - Debugging Strategy Guide
