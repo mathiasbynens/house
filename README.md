@@ -95,7 +95,7 @@ Features, ToDo's & Roadmap
   - [Collections](http://comster.github.com/house/docs/lib/endPoints/collections/index.js.html)
   - [GridFs](http://comster.github.com/house/docs/lib/endPoints/files/index.js.html)
   - [FileSystem](http://comster.github.com/house/docs/lib/endPoints/fs/index.js/html)
- - <del>[Apps](http://comster.github.com/house/docs/lib/house/apps/index.js.html)
+ - [Apps](http://comster.github.com/house/docs/lib/house/apps/index.js.html)
   - [Vault](http://comster.github.com/house/docs/apps/vault/)
   - [Jukebox](https://github.com/comster/jukebox)
   - Scaffolding
