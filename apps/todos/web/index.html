@@ -1,0 +1,169 @@
+<html manifest="/todos/cache.manifest.dev">
+    <head>
+    	<title>Todo</title>
+        <link rel="icon" href="/todos/favicon.ico" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-startup-image" href="/images/startup-splash.png" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <link rel="apple-touch-icon-precomposed" href="/todos/Icon@2x.png"/>
+        <meta name="viewport" content="initial-scale = 1.0, user-scalable = no" />
+        <style>
+            body.loading {
+                cursor: wait;
+            }
+            #loading {
+
+            }
+            #loadingSpinner{
+            position:relative;
+            width:128px;
+            height:128px;
+            -webkit-transform:scale(0.6);
+            -moz-transform:scale(0.6)}
+            
+            #loadingSpinner > div{
+            position:absolute;
+            background-color:#FFFFFF;
+            height:23px;
+            width:23px;
+            -moz-border-radius:12px;
+            -webkit-border-radius:12px;
+            -webkit-animation-name:spin_fade;
+            -webkit-animation-duration:1.04s;
+            -webkit-animation-iteration-count:infinite;
+            -webkit-animation-direction:linear;
+            -moz-animation-name:spin_fade;
+            -moz-animation-duration:1.04s;
+            -moz-animation-iteration-count:infinite;
+            -moz-animation-direction:linear}
+            
+            #loadingSpinner > div:nth-child(1){
+            left:0;
+            top:52px;
+            -webkit-animation-delay:0.39s;
+            -moz-animation-delay:0.39s}
+            
+            #loadingSpinner > div:nth-child(2){
+            left:15px;
+            top:15px;
+            -webkit-animation-delay:0.52s;
+            -moz-animation-delay:0.52s}
+            
+            #loadingSpinner > div:nth-child(3){
+            left:52px;
+            top:0;
+            -webkit-animation-delay:0.65s;
+            -moz-animation-delay:0.65s}
+            
+            #loadingSpinner > div:nth-child(4){
+            right:15px;
+            top:15px;
+            -webkit-animation-delay:0.78s;
+            -moz-animation-delay:0.78s}
+            
+            #loadingSpinner > div:nth-child(5){
+            right:0;
+            top:52px;
+            -webkit-animation-delay:0.9099999999999999s;
+            -moz-animation-delay:0.9099999999999999s}
+            
+            #loadingSpinner > div:nth-child(6){
+            right:15px;
+            bottom:15px;
+            -webkit-animation-delay:1.04s;
+            -moz-animation-delay:1.04s}
+            
+            #loadingSpinner > div:nth-child(7){
+            left:52px;
+            bottom:0;
+            -webkit-animation-delay:1.1700000000000002s;
+            -moz-animation-delay:1.1700000000000002s}
+            
+            #loadingSpinner > div:nth-child(8){
+            left:15px;
+            bottom:15px;
+            -webkit-animation-delay:1.3s;
+            -moz-animation-delay:1.3s}
+            
+            @-webkit-keyframes spin_fade{
+                0%{
+                background-color:#000000}
+                
+                100%{
+                background-color:#FFFFFF}
+            }
+            
+            @-moz-keyframes spin_fade{
+                0%{
+                background-color:#000000}
+                
+                100%{
+                background-color:#FFFFFF}
+            }
+            .table { display: table; height: 100%; }
+            .table-cell { display: table-cell; vertical-align: middle; }
+            #loading .table { margin: 0 auto; }
+            #splash.lightbox > div {
+                height: 100%;
+                opacity: .90;
+            }
+            body #splash {
+                display: none;
+            }
+            body.loading #splash {
+                display: block;
+            }
+        </style>
+        <base href="/todos/" />
+	</head>
+	<body class="loading">
+        <header></header>
+		<div id="scroller"><div id="container"></div></div>
+        <footer></footer>
+        <div id="splash" class="lightbox"><div>
+        <div id="loading">
+            <div class="table"><div class="table-cell">
+                <div id="loadingSpinner">
+                    <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+                </div>
+            </div></div>
+        </div>
+        </div></div>
+        <script src="require.js"></script>
+        <script>
+        require(['jquery.js'], function(){
+            require(['index.js'], function(webApp){
+                webApp.init(function(todoApp){
+                    var body = window.todoAppView = new todoApp();
+                    
+                    body.on('initialized', function(){
+                        
+                        var historyOptions = {pushState: true, root: "/todos/"};
+                        
+                        if(window.navigator.standalone) {
+                            historyOptions.silent = true; // lets use our localStorage history instead
+                        }
+                        
+                        if(!Backbone.history.start(historyOptions)) {
+                            if(window.navigator.standalone) {
+                                var history = body.todoAppRouter.localStorageNavigationHistory();
+                                
+                                if(history) {
+                                    setTimeout(function(){
+                                    body.todoAppRouter.navigate(history.pop(), true);
+                                    }, 1000);
+                                } else {
+                                    body.todoAppRouter.navigate('todo', true);
+                                }
+                            } else {
+                                body.todoAppRouter.navigate('todo', true);
+                            }
+                        }
+                    });
+                    body.render();
+                });
+            });
+        });
+        </script>
+	</body>
+</html>
