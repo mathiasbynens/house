@@ -81,6 +81,12 @@ var start = function() {
 
     house.start();
 }
+var ver = function() {
+    console.log('house version: ');
+
+    var packageJson = require(__dirname+'/../package.json');
+    console.log(packageJson.version);
+}
 
 if(argv.hasOwnProperty('help')) {
     printHelp();
@@ -92,4 +98,6 @@ if(argv.hasOwnProperty('help')) {
     buildDocs();
 } else if(argv.hasOwnProperty('start')) {
     start();
+} else if(argv.hasOwnProperty('v')) {
+    ver();
 }
