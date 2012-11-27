@@ -1,0 +1,150 @@
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    text-align: center;
+}
+clock {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 25%;
+    text-align: left;
+}
+account {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 25%;
+    text-align: right;
+}
+account menu {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0 0;
+    background: white;
+}
+account:hover menu {
+    display: block;
+}
+body {
+    margin-top: 44px;
+}
+menu {
+    list-style: none;
+}
+menu li {
+    cursor: pointer;
+}
+#windows .close, #windows .min, #windows .max, #windows .pop {
+    border-radius: 50%;
+    border: 6px solid grey;
+    height: 0px;
+    width: 0px;
+    display: block;
+    float: left;
+    margin: 2px;
+    cursor: pointer;
+}
+.chrome:hover .close {
+    border-color: red;
+}
+.chrome:hover .min {
+    border-color: orange;
+}
+.chrome:hover .max {
+    border-color: green;
+}
+.chrome:hover .pop {
+    border-color: blue;
+}
+ul#windows {
+    margin: 0 0;
+    padding: 0 0;
+}
+li.window {
+    position: absolute;
+    list-style: none;
+    background: #ccc;
+}
+li.window.maximized {
+    width: 100%;
+    height: 100%;
+}
+li.window.minimized {
+    width: 50%;
+}
+.window {
+    position: absolute;
+    z-index: 2;
+    border: 1px solid yellow;
+    width: 400px;
+    height: 600px;
+}
+.window .chrome {
+    width: 100%;
+    cursor: move;
+}
+.window .chrome .title {
+    bottom: 100%;
+}
+.window .chrome input {
+    width: 100%;
+}
+.window iframe {
+    width: 100%;
+    height: 90%;
+    border: 0px;
+    visibility: visible;
+    background: white;
+}
+.window.ui-resizable-resizing iframe, .window.ui-draggable-dragging iframe {
+    visibility: hidden;
+}
+.window[selected] {
+    z-index: 100;
+}
+
+.lightbox { bottom: 0; left: 0; right: 0; top: 0; position: fixed; z-index: 1000; padding-top: 0px; }
+.lightbox .close a { background: rgba(0, 0, 0, 0.85); bottom: 0; left: 0; right: 0; top: 0; position: absolute; z-index: 1; }
+.lightbox .close span { color: #000000; font-size: 2em; text-indent: 0; position: absolute; right: 0.5em; top: 0.5em; }
+.lightbox .close {text-indent: -999em;}
+.lightbox > div {
+    position: absolute; left: 50%; z-index: 99;
+    max-height: 100%;
+    overflow: auto;
+}
+.lightbox > div {
+    background: rgb(255,255,255); /* Old browsers */
+    background: -moz-linear-gradient(top, rgb(173,173,173) 0%, rgb(211,211,211) 25%, rgb(255,255,255) 76%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgb(173,173,173)), color-stop(25%,rgb(211,211,211)), color-stop(76%,rgb(255,255,255))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top, #ADADAD 0%,lightGrey 25%,white 76%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top, rgb(173,173,173) 0%,rgb(211,211,211) 25%,rgb(255,255,255) 76%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, rgb(173,173,173) 0%,rgb(211,211,211) 25%,rgb(255,255,255) 76%); /* IE10+ */
+    background: linear-gradient(to bottom, rgb(173,173,173) 0%,rgb(211,211,211) 25%,rgb(255,255,255) 76%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#515151', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
+    color: black;
+    -webkit-appearance: none;
+    -webkit-box-shadow: 2px 2px 6px white;
+    -webkit-border-radius: 12px;
+    margin-left: -45%;
+    width: 90%;
+}
+.lightbox > div {  }
+.lightbox .scroll { overflow-y: scroll; padding: 0 1em; }
+
+.ui-resizable { position: relative;}
+.ui-resizable-handle { position: absolute;font-size: 0.1px;z-index: 99999; display: block; }
+.ui-resizable-disabled .ui-resizable-handle, .ui-resizable-autohide .ui-resizable-handle { display: none; }
+.ui-resizable-n { cursor: n-resize; height: 7px; width: 100%; top: -5px; left: 0; }
+.ui-resizable-s { cursor: s-resize; height: 7px; width: 100%; bottom: -5px; left: 0; }
+.ui-resizable-e { cursor: e-resize; width: 7px; right: -5px; top: 0; height: 100%; }
+.ui-resizable-w { cursor: w-resize; width: 7px; left: -5px; top: 0; height: 100%; }
+.ui-resizable-se { cursor: se-resize; width: 12px; height: 12px; right: 1px; bottom: 1px; }
+.ui-resizable-sw { cursor: sw-resize; width: 9px; height: 9px; left: -5px; bottom: -5px; }
+.ui-resizable-nw { cursor: nw-resize; width: 9px; height: 9px; left: -5px; top: -5px; }
+.ui-resizable-ne { cursor: ne-resize; width: 9px; height: 9px; right: -5px; top: -5px;}

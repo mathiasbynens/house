@@ -3,11 +3,10 @@ exports = module.exports.config = {
     favicon: 'favicon.ico',
     iosicon: 'iosicon.png',
     routes: [ {
-        desktop: {
+        account: {
             "static": {
                 paper: {
                     publicFolder: __dirname + "/../web"
-                    , otherwise: 'index.html'
                 }
             }
         }

@@ -1,0 +1,44 @@
+(function(){
+    var index = {};
+    index.init = function(callback) {
+        require(['../desktop/underscore.js'], function(){
+            require(['../desktop/backbone.js'], function(){
+                require(['../desktop/backbone-house.js'], function(){
+                    require(['../desktop/utils.js'], function(utils){
+                        window.utils = utils;
+                        require(['../account/account.js'], function(account){
+                            account.on('init', function(){
+                                var $account = $('<account></account>');
+                                $('header').append($account);
+                                $account.append(account.render().$el);
+                                require(['../desktop/nav.js'], function(nav){
+                                    index.nav = nav;
+                                    nav.init();
+                                    require(['images.js'], function(Images) {
+                                        var images = new Images();
+                                        images.on('initialized', function(){
+                                            $('body').append(images.render().$el);
+                                            images.bindRouter(nav.router);
+                                            nav.startRouter('/images/');
+                                            if(callback) callback(images);
+                                        });
+                                    });
+                                    account.bindRouter(nav.router);
+                                    if(callback) {
+                                        callback();
+                                    }
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+    
+    if(define) {
+        define(function () {
+            return index;
+        });
+    }
+})();

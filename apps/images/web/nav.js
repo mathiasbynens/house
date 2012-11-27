@@ -14,7 +14,7 @@
             "help": "help"
         },
         gohome: function() {
-            this.navigate('', {trigger: true, replace: true});
+            this.navigate('', true);
         },
         about: function() {
             alert('we\'re awesome');
@@ -23,12 +23,17 @@
             alert('we\'re here to help');
         },
         reset: function() {
-            this.setTitle('');
-            this.trigger('reset');
+            $('.lightbox').hide();
+            $('#container').children().hide();
+            $('header h1').html('');
         },
         root: function() {
+            this.nav();
+        },
+        nav: function() {
             this.reset();
-            this.trigger('root');
+            this.setTitle('Home');
+            $('nav').show();
         },
         setTitle: function(title) {
             $('header h1').html(title);
@@ -37,8 +42,8 @@
     
     nav.router = new nav.Router;
 
-    nav.startRouter = function(root) {
-        var historyOptions = {pushState: true, root: root};
+    nav.startRouter = function() {
+        var historyOptions = {pushState: true, root: "/images/"};
         
         if(window.navigator.standalone) {
             historyOptions.silent = true; // lets use our localStorage history instead
@@ -136,7 +141,6 @@
             if(this.model.has('class')) {
                 this.$el.addClass(this.model.get('class'));
             }
-            this.$el.append('<div class="bg"></div>');
             return this;
         },
         initialize: function() {
@@ -164,40 +168,14 @@
         }
     });
     
-    var NavBackButton = Backbone.View.extend({
-        tagName: "div",
-        className: "navBackButton",
-        render: function() {
-            this.$el.html('◀');
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click": "select",
-          "touchstart input": "touchstartstopprop"
-        },
-        touchstartstopprop: function(e) {
-            e.stopPropagation();
-        },
-        select: function() {
-            console.log(nav.router)
-            window.history.back()
-        }
-    });
 
-    nav.init = function() {
+
+    nav.render = function(el) {
         if(!nav.hasOwnProperty('list')) {
             nav.col = new NavCollection();
-            nav.list = new NavList({collection: nav.col});
+            nav.list = new NavList({el: el, collection: nav.col});
         }
-        
-        if(window.navigator.standalone) {
-            if(!nav.hasOwnProperty('backButton')) {
-                nav.backButton = new NavBackButton();
-            }
-            $('body').append(nav.backButton.render().$el);
-        }
+        nav.list.render();
     }
     
     if(define) {
