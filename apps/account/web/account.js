@@ -158,18 +158,18 @@
     });
     auth.View = Backbone.View.extend({
         tagName: "span",
-        className: "profile",
+        className: "authView",
         render: function() {
             var self = this;
             var name = this.model.get('name');
             var loginbtn;
             if (this.model.get('user')) {
-                loginbtn = '<li><span class="avatar" title="'+name+'"></span><span class="name">'+name+'</span></li><li class="logout">Sign out</li>';
+                loginbtn = '<li><span class="avatar" title="'+name+'"></span><span class="name">Profile</span></li><li class="logout">Sign out</li>';
             } else {
                 loginbtn = '<li class="login">Sign in</li>';
             }
             
-            this.$el.html('<span class="user">'+name+'<menu>'+loginbtn+'</menu></span>');
+            this.$el.html(name+'<menu>'+loginbtn+'</menu>');
             if (this.userModel) {
                 this.$el.find(".avatar").append(this.userModel.getAvatarView().render().el);
             } else if (this.model.has("user")) {
@@ -264,7 +264,7 @@
                 }
                 this.$el.html('<img src="' + src + '" />');
             } else {
-                this.$el.html("☺");
+                this.$el.html(""); //☺
             }
             this.setElement(this.$el);
             return this;

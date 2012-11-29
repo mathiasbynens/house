@@ -21,15 +21,59 @@ account {
     text-align: right;
 }
 account menu {
-    display: none;
     position: absolute;
     top: 0;
     right: 0;
     margin: 0 0;
     text-align: right;
 }
-account:hover menu {
-    display: block;
+
+navigation, account {
+    display: table;
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 25%;
+    margin: 0 0;
+}
+navigation {
+    left: 0;
+    text-align: left;
+}
+navigation .opener, account .profile {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+}
+navigation .opener {
+}
+account .profile {
+}
+header h1 {
+    line-height: 44px;
+}
+navigation menu, account menu {
+    position: absolute;
+    top: 0px;
+    left: 0;
+    margin: 40px 0 0;
+    width: 100%;
+    visibility: hidden;
+}
+navigation:hover menu, account:hover menu {
+    visibility: visible;
+}
+navigation menu {
+}
+menu {
+    background: rgba(170, 170, 170, 0.8);
+    
+}
+menu li {
+    padding: 10px;
+}
+menu li:hover {
+    color: yellow;
 }
 body {
     margin-top: 44px;
@@ -192,7 +236,7 @@ input[name="user[pass]"] {
   display: block;
   min-width: 60%;
 }
-.lightbox { bottom: 0; left: 0; right: 0; top: 0; position: fixed; z-index: 1000; padding-top: 5%; }
+.lightbox { bottom: 0; left: 0; right: 0; top: 0; position: fixed; z-index: 1000; }
 .lightbox .close a { background: rgba(0, 0, 0, 0.75); bottom: 0; left: 0; right: 0; top: 0; position: absolute; z-index: 1; }
 .lightbox .close span { color: #FFFFFF; font-size: 2em; text-indent: 0; position: absolute; right: 0.5em; top: 0.5em; }
 .lightbox .close {text-indent: -999em;}
@@ -804,21 +848,15 @@ header {
     left:0;
     right: 0px;
     width: 100%;
-    height: 40px;
+    height: 44px;
     background: #222;
     z-index:100;
     box-shadow: 0 3px 3px rgb(17, 17, 17);
     -moz-box-shadow: 0 3px 3px rgb(17, 17, 17);
     -webkit-box-shadow: 0px 3px 3px rgb(17, 17, 17);
-    padding: 6px 0px;
+    padding: 0 0;
     text-align: center;
     font-size: 1.3em;
-}
-#container {
-    position:absolute; z-index:1;
-    width:100%;
-    padding:0;
-    margin-top: 52px;
 }
 
 ul li {
@@ -917,10 +955,10 @@ img.rotateNinety {
     }
     
     header h1 {
-        font-size: .8em;
+        font-size: 1em;
     }
     header h2 {
-        font-size: .6em;
+        font-size: .77em;
     }
     ul li {
         height: 74px;

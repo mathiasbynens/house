@@ -2,7 +2,6 @@ window.houseApi = '/api';
 
 Backbone.Router.prototype.localStorageNavigationHistory = function(navigateArguments) {
     var n = this.getLocalStorageNavigationHistory();
-    console.log(n);
     if(!n) {
         n = new Array;
     }
@@ -13,7 +12,7 @@ Backbone.Router.prototype.localStorageNavigationHistory = function(navigateArgum
         n.push(navigateArguments);
         localStorage.setItem(this.appName+'-navigation', JSON.stringify(n));
     }
-    return n;
+    //return n;
 }
 Backbone.Router.prototype.getLocalStorageNavigationHistory = function() {
     if(!this.hasOwnProperty('appName')) {
@@ -28,17 +27,14 @@ Backbone.Router.prototype.navigate = function(path, go) {
     Backbone.history.navDirection = 1;
     this.localStorageNavigationHistory(path);
     _navigate.apply(this, arguments);
-    
     //if(go && Backbone.history.getFragment() !== path) {
         //navigate(window.location.toString());
     //}
 };
 
 Backbone.History.prototype.checkUrl = function(e) {
-    console.log(e);
     this.navDirection = 0;
     if(e.type == "popstate") {
-        console.log('back');
         this.navDirection = -1;
     }
   var current = this.getFragment();
@@ -87,7 +83,6 @@ Backbone.sync = function(method, model, options) {
   
   if (params.type === 'PUT') {
       var changedAttr = model.changedAttributes();
-      console.log(changedAttr);
       if(changedAttr) {
         params.data = JSON.stringify({"$set":changedAttr});
       } else if(model.pulls) {

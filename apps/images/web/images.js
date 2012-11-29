@@ -15,10 +15,10 @@
                         self.initFiles(function(){
                             self.initImages(function(){
                                 self.imagesCollection.load(null, function(){
-                                self.filesCollection.load(null, function(){
-                                    self.initialized = true;
-                                    self.trigger('initialized');
-                                });
+                                    self.filesCollection.load(null, function(){
+                                        self.initialized = true;
+                                        self.trigger('initialized');
+                                    });
                                 });
                             });
                         });
@@ -41,17 +41,13 @@
             self.imageViewerImages = {};
             this.$imageList = $('<div id="images-list" class="pImages"></div>');
             this.$imageViewer = $('<div id="image-viewer" class="pImageViewer"></div>');
-            
             self.imagesCollection = new self.ImagesBackbone.Collection(); // collection
-            self.imagesCollection.pageSize = pageSize;        
-            
+            self.imagesCollection.pageSize = pageSize;
             self.checkinsCollection = new self.CheckinsBackbone.Collection();
             this.imagesListView = new self.ImagesBackbone.List({collection: this.imagesCollection});
-                
             this.imagesListView.on('select', function(imageRow) {
                 self.router.navigate('image/'+imageRow.model.get('id'), true);
             });
-                
             if(callback) callback();
         },
         initFiles: function(callback) {
@@ -62,7 +58,6 @@
             self.filesCollection.filterContentType('image');
             self.filesCollection.filterProc(true);
             self.filesList = new self.FilesBackbone.List({collection: self.filesCollection});
-            
             if(callback) callback();
         },
         render: function() {
@@ -77,11 +72,9 @@
             }
             this.$filesList.append(self.filesList.render().$el);
             this.$el.append(this.$filesList);
-            
             this.$imageList.append(self.imagesListView.render().$el);
             this.$el.append(this.$imageList);
             this.$el.append(this.$imageViewer);
-            
             return this;
         },
         findImageById: function(id) {
@@ -99,6 +92,12 @@
             self.user = user;
             self.trigger('refreshUser', user);
         },
+        bindNav: function(nav) {
+            this.bindRouter(nav.router);
+            
+            nav.col.add({title:"Images", navigate:""});
+            nav.col.add({title:"Import files", navigate:"import"});
+        },
         bindRouter: function(router) {
             var self = this;
             self.router = router;
@@ -110,6 +109,7 @@
             router.on('root', function(){
                 self.$imageList.show();
                 router.setTitle('Images');
+                router.trigger('loadingComplete');
             });
             router.route('image/:id', 'menu', function(id){
                 router.reset();
@@ -117,10 +117,13 @@
                 if(image) {
                     self.$imageViewer.append(image.getFullView().render().$el);
                 }
+                router.trigger('loadingComplete');
             });
-            router.on('import', function(){
-                self.$filesList.show();
+            router.route('import', 'import', function(){
+                router.reset();
                 router.setTitle('Import');
+                self.$filesList.show();
+                router.trigger('loadingComplete');
             });
         }
     });

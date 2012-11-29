@@ -10,17 +10,9 @@
             "_=_": "gohome",
             "_-_": "gohome",
             "": "root",
-            "about": "about",
-            "help": "help"
         },
         gohome: function() {
             this.navigate('', {trigger: true, replace: true});
-        },
-        about: function() {
-            alert('we\'re awesome');
-        },
-        help: function() {
-            alert('we\'re here to help');
         },
         reset: function() {
             this.setTitle('');
@@ -82,29 +74,14 @@
     });
 
     var NavList = Backbone.View.extend({
-        render: function() {
-            var self = this;
-            
-            //this.$el.html('');
-            
-            this.$el.append(this.$ul);
-            
-            this.$ul.html('');
-            //this.collection.sort({silent:true});
-            this.collection.each(function(doc){
-                var view;
-                view = doc.getRow({list: self});
-                
-                //self.appendRow(view.render().el);
-                self.$ul.append(view.render().el);
-            });
-            
-            return this;
-        },
+        tagName: "navigation",
+        className: "navList",
         initialize: function() {
             var self = this;
             
-            var $ul = this.$ul = $('<ul></ul>');
+            var $ul = this.$ul = $('<menu></menu>');
+            
+            this.$open = $('<span class="opener" title="Navigation Menu">≡</span>');
             
             this.collection.bind("add", function(doc) {
                 var view;
@@ -115,6 +92,20 @@
             this.collection.on('reset', function(){
                 self.render();
             });
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$open);
+            this.$el.append(this.$ul);
+            this.$ul.html('');
+            //this.collection.sort({silent:true});
+            this.collection.each(function(doc){
+                var view;
+                view = doc.getRow({list: self});
+                //self.appendRow(view.render().el);
+                self.$ul.append(view.render().el);
+            });
+            return this;
         },
         appendRow: function(row) {
             this.$ul.append(row.render().el);
