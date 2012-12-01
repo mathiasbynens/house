@@ -1,4 +1,4 @@
-<html manifest="cache.manifest.dev">
+<html>
     <head>
         <title>Images</title>
         <meta charset="utf-8">
@@ -133,12 +133,10 @@
         </div></div>
         <script src="require.js"></script>
         <script>
-        require(['jquery.js'], function(){
-            require(['index.js'], function(app){
-                app.init(function(images){
-                    window.images = images;
-                    $('body').removeAttr('class');
-                });
+        require(['index.js'], function(app){
+            app.init(function(images){
+                window.images = images;
+                $('body').removeAttr('class');
             });
         });
         </script>

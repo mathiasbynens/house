@@ -438,12 +438,12 @@
                     var groupName = groups[i];
                     this.$el.append('<button class="group">'+groupName+'</button>');
                 }
-            }
-            if(groups.indexOf('public') === -1) {
-                this.$el.append('<button class="publicGroup">+ public</button>');
-            }
-            if(groups && groups.length > 0) {
-                this.$el.append('<button class="privateGroup">+ private</button>');
+                if(groups.indexOf('public') === -1) {
+                    this.$el.append('<button class="publicGroup">+ public</button>');
+                }
+                if(groups && groups.length > 0) {
+                    this.$el.append('<button class="privateGroup">+ private</button>');
+                }
             }
             this.$el.append('<button class="newGroup">+ group</button>');
             this.$el.removeAttr('id');
@@ -500,7 +500,7 @@
         
         className: "imageRow clearfix",
 
-        htmlTemplate: '<img src="/api/files/<%= filename %>" />\
+        htmlTemplate: '<img src="/api/file/<%= filename %>" />\
                         <span class="info">\
                             <span class="filename"><%= filename %></span>\
                             <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\

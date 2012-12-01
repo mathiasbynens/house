@@ -169,7 +169,7 @@
                 loginbtn = '<li class="login">Sign in</li>';
             }
             
-            this.$el.html(name+'<menu>'+loginbtn+'</menu>');
+            this.$el.html('⚙<menu>'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
             if (this.userModel) {
                 this.$el.find(".avatar").append(this.userModel.getAvatarView().render().el);
             } else if (this.model.has("user")) {

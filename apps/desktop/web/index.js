@@ -43,13 +43,13 @@
                                         require(['../applications/applications.js'], function(apps){
                                             apps.init();
                                             apps.col.bind("add", function(doc) {
-                                                //nav.col.add({a: doc.get("name"), href: doc.get("url"), imgSrc: doc.get("icon")});
+                                                nav.col.add({title: doc.get("name"), url: doc.get("url"), imgSrc: doc.get("icon")});
                                             });
                                             apps.col.load();
                                         });
                                         
                                         nav.list.on('selected', function(navRow){
-                                            index.windows.openUrl(navRow.model.get('href'), navRow.model.get('a'))
+                                            index.windows.openUrl(navRow.model.get('url'), navRow.model.get('name'))
                                         });
                                         
                                         require(['../wallpaper/wallpaper.js'], function(wallpaper){

@@ -45,9 +45,11 @@
     utils.UploadInputView = Backbone.View.extend({
         tag: "span",
         className: "upload",
-        initialize: function() {
+        initialize: function(options) {
             var self = this;
-            this.$input = $('<input class="uploadInput" style="display:none" type="file" multiple accept="image/*" capture="camera">');
+            options = options || {};
+            var acceptType = options.acceptType || 'image/*';
+            this.$input = $('<input class="uploadInput" style="display:none" type="file" multiple accept="'+acceptType+'" capture="camera">');
             this.$meter = $('<div class="meter" style="display:none"><div class="bar" style="width:1%"></div></div>');
         },
         render: function() {
@@ -61,7 +63,7 @@
             "change .uploadInput": "fileChangeListener"
         },
         click: function() {
-            this.$input.show();
+            //this.$input.show();
             this.$input.click();
         },
         uploadFile: function(blobOrFile, callback) {

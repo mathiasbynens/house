@@ -56,12 +56,10 @@
         initialize: function() {
         },
         getRow: function(options) {
-            
             if(!this.hasOwnProperty('row')) {
                 options.model = this;
                 this.row = new NavRow(options);
             }
-            
             return this.row;
         }
     });
@@ -109,6 +107,9 @@
         },
         appendRow: function(row) {
             this.$ul.append(row.render().el);
+        },
+        deselectAll: function() {
+            this.$ul.children().removeAttr('selected');
         }
     });
     
@@ -119,7 +120,7 @@
             var $e = $('<span class="navLink"></span>');
             this.$el.html($e);
             if(this.model.has('title')) {
-                $e.append('<h2>'+this.model.get('title')+'</h2>');
+                $e.append(this.model.get('title'));
             }
             if(this.model.has('el')) {
                 $e.append(this.model.get('el'));
@@ -135,13 +136,15 @@
             this.model.bind('destroy', this.remove, this);
         },
         events: {
-          "click": "select",
+          "click": "userSelect",
           "touchstart input": "touchstartstopprop"
         },
         touchstartstopprop: function(e) {
             e.stopPropagation();
         },
-        select: function() {
+        userSelect: function() {
+            this.$el.siblings().removeAttr('selected');
+            this.select();
             if(this.model.has('navigate')) {
                 nav.router.navigate(this.model.get('navigate'), true);
             } else if(this.model.has('href')) {
@@ -149,6 +152,9 @@
             } else {
                 this.options.list.trigger('selected', this);
             }
+        },
+        select: function() {
+            this.$el.attr('selected', 'selected');
         },
         remove: function() {
           $(this.el).remove();
@@ -176,7 +182,7 @@
             window.history.back()
         }
     });
-
+// 
     nav.init = function() {
         if(!nav.hasOwnProperty('list')) {
             nav.col = new NavCollection();
@@ -189,6 +195,15 @@
             }
             $('body').append(nav.backButton.render().$el);
         }
+    }
+    
+    nav.selectByNavigate = function(navName) {
+        console.log(this.col);
+        var navModel = this.col.where({navigate: navName});
+        _.first(navModel).getRow().select();
+    }
+    nav.unselect = function() {
+        this.list.deselectAll();
     }
     
     if(define) {

@@ -26,8 +26,8 @@
                 });
             });
             
-            require(['jquery.idle-timer.js'], function() {
-                var idleTimer = $(document).idleTimer(1400);
+            require(['../desktop/jquery.idle-timer.js'], function() {
+                var idleTimer = $(document).idleTimer(2400);
                 $(document).bind("idle.idleTimer", function(e){
                     $('body').addClass('idle');
                 });
@@ -58,6 +58,16 @@
             self.filesCollection.filterContentType('image');
             self.filesCollection.filterProc(true);
             self.filesList = new self.FilesBackbone.List({collection: self.filesCollection});
+            
+            this.$upload = $('<span class="upload"></span>');
+            self.newFileForm = new self.FilesBackbone.FileForm({collection: self.filesCollection, type: 'image'});
+            self.newFileForm.on('upload', function(data){
+                if(data.image) {
+                    self.imagesCollection.add(data.image);
+                    self.router.navigate('image/'+data.image.id, true);
+                }
+            });
+            
             if(callback) callback();
         },
         render: function() {
@@ -70,6 +80,7 @@
                 });
                 return this;
             }
+            this.$filesList.append(self.newFileForm.render().$el);
             this.$filesList.append(self.filesList.render().$el);
             this.$el.append(this.$filesList);
             this.$imageList.append(self.imagesListView.render().$el);
@@ -93,6 +104,7 @@
             self.trigger('refreshUser', user);
         },
         bindNav: function(nav) {
+            this.nav = nav;
             this.bindRouter(nav.router);
             
             nav.col.add({title:"Images", navigate:""});
@@ -105,10 +117,13 @@
                 self.$imageViewer.html('');
                 self.$imageList.hide();
                 self.$filesList.hide();
+                console.log(self.nav);
+                self.nav.unselect();
             });
             router.on('root', function(){
                 self.$imageList.show();
                 router.setTitle('Images');
+                self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
             });
             router.route('image/:id', 'menu', function(id){
@@ -124,6 +139,7 @@
                 router.setTitle('Import');
                 self.$filesList.show();
                 router.trigger('loadingComplete');
+                self.nav.selectByNavigate('import');
             });
         }
     });

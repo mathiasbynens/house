@@ -536,65 +536,63 @@
         }
     });
     
-    var FileUploadForm = Backbone.View.extend({
+    var FileForm = Backbone.View.extend({
         tagName: "div",
-        className: "upload",
-        events: {
-          "submit form.uploadUrl": "uploadUrlSubmit",
-          "click form.uploadUrl button": "uploadUrlSubmit"
-        },
-        uploadUrlSubmit: function() {
+        className: "fileForm",
+        initialize: function(options) {
             var self = this;
-            var e = this.$el
-            , url = e.find('input[name="url"]').val();
-            jeffshouse.importUrl(url, function(j){
-                for(var id in j["files.files"]) {
-                    self.processFileId(id);
-                  e.find('.result').html('<a href="https://'+window.location.host+'/api/files'+j["files.files"][id]["filename"]+'" target="_new">'+j["files.files"][id]["filename"]+'</a>');
-                  e.find('input[name="url"]').val('');
+            options = options || {};
+            var typeName = 'file';
+            var acceptType = '*/*';
+            if(options.type) {
+                typeName = options.type;
+                
+                if(typeName == 'image') {
+                    acceptType = 'image/*';
+                } else if (typeName == 'audio') {
+                    acceptType = 'audio/*';
+                } else if (typeName == 'video') {
+                    acceptType = 'video/*';
+                } else if (typeName == 'text') {
+                    acceptType = 'text/*';
+                } else {
+                    acceptType = '*/*';
                 }
-            })
-            return false;
+            }
+            this.$html = $('<button class="upload">Upload '+typeName+'</button>');
+            this.fileInput = new utils.UploadInputView({acceptType: acceptType});
+            this.fileInput.on('upload', function(data){
+                if (data.file) {
+                    self.collection.add(data.file);
+                }
+                self.trigger('upload', data);
+            });
         },
         render: function() {
             var self = this;
-            
-            var $viaUrl = $('<form class="uploadUrl"><input type="text" name="url" placeholder="http://jeffpelton.com/me.png" /><button>save</button><span class="result"></span></form>');
-            
-            this.$el.html('<iframe id="uploaderFrame" name="uploaderFrame" src="/api/upload">upgrade your grey matter</iframe>');
-            this.$el.append($viaUrl);
+            this.$el.append(this.$html);
+            this.$el.append(this.fileInput.render().$el);
             this.setElement(this.$el);
-            
             return this;
         },
-        processFileId: function(id, callback) {
-            this.collection.getOrFetch(id, function(doc){
-                doc.set({"metadata.proc": 0},{wait: true, success: function(){
-                    console.log(arguments);
-                    //self.trigger('proc');
-                }});
-            });
+        events: {
+            "click button.upload": "pickFile"
         },
-        initialize: function() {
-            var self = this;
-            window.onUploadComplete = function(upload) {
-                // Process the uploaded file
-                self.processFileId(upload.id);
-            }
+        pickFile: function() {
+            this.fileInput.click();
+            return false;
         }
     });
     
     if(define) {
         define(function () {
-            //Do setup work here
-        
             return {
                 Collection: Files,
                 Model: File,
                 List: FilesList,
                 Row: FileRow,
                 Avatar: FileAvatar,
-                UploadForm: FileUploadForm
+                FileForm: FileForm
             }
         });
     }
