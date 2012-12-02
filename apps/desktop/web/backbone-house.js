@@ -82,19 +82,33 @@ Backbone.sync = function(method, model, options) {
   }
   
   if (params.type === 'PUT') {
+      var restObj = {};
+      var fullPut = true;
       var changedAttr = model.changedAttributes();
       if(changedAttr) {
-        params.data = JSON.stringify({"$set":changedAttr});
-      } else if(model.pulls) {
-          params.data = JSON.stringify({"$pull":model.pulls});
-      } else if(model.pushes) {
-          params.data = JSON.stringify({"$push":model.pushes});
-      } else if(model.pushAlls) {
-          params.data = JSON.stringify({"$pushAll":model.pushAlls});
-      } else {
-          console.log('err! dont want full put');
-          return;
+          restObj["$set"] = changedAttr;
+          fullPut = false
       }
+      if(model.pulls) {
+          restObj["$pull"] = model.pulls;
+          delete model.pulls;
+          fullPut = false
+      }
+      if(model.pushes) {
+          restObj["$push"] = model.pushes;
+          delete model.pushes;
+          fullPut = false
+      }
+      if(model.pushAlls) {
+          restObj["$pushAll"] = model.pushAlls;
+          delete model.pushAlls;
+          fullPut = false
+      }
+      if(fullPut) {
+          console.log('full put prevented');
+          return false;
+      }
+      params.data = JSON.stringify(restObj);
   }
 
   // Don't process data on a non-GET request.
@@ -108,6 +122,137 @@ Backbone.sync = function(method, model, options) {
   return $.ajax(_.extend(params, options));
 };
 
+Backbone.Model.prototype.pull = function(key, value, options) {
+    var attrs, attr, val;
+    
+    // Handle both `"key", value` and `{key: value}` -style arguments.
+    if (_.isObject(key) || key == null) {
+      attrs = key;
+      options = value;
+    } else {
+      attrs = {};
+      attrs[key] = value;
+    }
+    
+    // Extract attributes and options.
+    options || (options = {});
+    if (!attrs) return this;
+    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
+    options.pulls = {};
+    var now = this.attributes;
+    var escaped = this._escapedAttributes;
+    var prev = this._previousAttributes || {};
+    
+    if(!this.pulls) this.pulls = {};
+    // For each `set` attribute...
+    for (attr in attrs) {
+        val = attrs[attr];
+        options.pulls[attr] = true;
+        this.pulls[attr] = val;
+        var ni = now[attr].indexOf(val);
+        if(ni != -1) {
+            delete now[attr][ni];
+        }
+    }
+    // Fire the `"change"` events.
+    if (!options.silent) {
+        var pulling = this._pullings;
+        this._pulling = true;
+        for (var attr in this._silentPulls) this._pendingPulls[attr] = true;
+        
+        var pulls = _.extend({}, options.pulls, this._silentPulls);
+        this._silent = {};
+        for (var attr in pulls) {
+            this.trigger('change:' + attr, this, this.get(attr), options);
+        }
+        if (pulling) return this;
+        
+        this.trigger('change', this, options);
+        this._pulling = false;
+    }
+    return this;
+}
+Backbone.Model.prototype.push = function(key, value, options) {
+    var attrs, attr, val;
+    
+    // Handle both `"key", value` and `{key: value}` -style arguments.
+    if (_.isObject(key) || key == null) {
+      attrs = key;
+      options = value;
+    } else {
+      attrs = {};
+      attrs[key] = value;
+    }
+    
+    // Extract attributes and options.
+    options || (options = {});
+    if (!attrs) return this;
+    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
+    options.pushes = {};
+    var now = this.attributes;
+    var escaped = this._escapedAttributes;
+    var prev = this._previousAttributes || {};
+    
+    if(!this.pushes) this.pushes = {};
+    
+    // For each `set` attribute...
+    for (attr in attrs) {
+        val = attrs[attr];
+        options.pushes[attr] = true;
+    
+        this.pushes[attr] = val;
+        now[attr].push(val);
+    }
+    // Fire the `"change"` events.
+    if (!options.silent) {
+        for (var attr in options.pushes) {
+            this.trigger('change:' + attr, this, this.get(attr), options);
+        }
+        this.trigger('change', this, options);
+    }
+    return this;
+}
+Backbone.Model.prototype.pushAll = function(key, value, options) {
+    var attrs, attr, val;
+    
+    // Handle both `"key", value` and `{key: value}` -style arguments.
+    if (_.isObject(key) || key == null) {
+      attrs = key;
+      options = value;
+    } else {
+      attrs = {};
+      attrs[key] = value;
+    }
+    
+    // Extract attributes and options.
+    options || (options = {});
+    if (!attrs) return this;
+    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
+    options.pushAlls = {};
+    var now = this.attributes;
+    
+    if(!this.pushAlls) this.pushAlls = {};
+    
+    // For each `set` attribute...
+    for (attr in attrs) {
+        val = attrs[attr];
+        options.pushAlls[attr] = true;
+    
+        this.pushAlls[attr] = val;
+        
+        for(var i in val) {
+            now[attr].push(val[i]);
+        }
+    }
+    // Fire the `"change"` events.
+    if (!options.silent) {
+        for (var attr in options.pushAlls) {
+            this.trigger('change:' + attr, this, this.get(attr), options);
+        }
+        this.trigger('change', this, options);
+    }
+    return this;
+}
 
 /*_.extend(Backbone.Model.prototype, {
     save: function(key, value, options) {

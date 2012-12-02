@@ -66,30 +66,11 @@
     var Checkins = Backbone.Collection.extend({
         model: Checkin,
         collectionName: 'checkins',
-        url: '/jeffshouse/checkins',
+        url: '/api/checkins',
         initialize: function() {
             var self = this;
             self.pageSize = 10;
             this.resetFilters();
-            
-            return;
-            require(['https://www.jeffshouse.com:8443/socket.io/socket.io/socket.io.js'], function() {
-                var socket = io.connect('https://www.jeffshouse.com:8443/socket.io/checkins', {secure:true});
-                socket.on('connect', function(data) {
-                    console.log('connected to socket.io/checkins');
-                });
-                socket.on('checkin', function (data) {
-                    var sess = self.get(data["_id"]);
-                    if(sess) {
-                        sess.set(data, {silent: true});
-                        //sess.getRow().render();
-                    } else {
-                        self.add(data);
-                    }
-                    self.sort();
-                });
-                console.log('connect to socket.io/checkins');
-            });
         },
         load: function(options, success) {
             var self = this;
@@ -452,7 +433,7 @@
         
         className: "checkinRow clearfix",
 
-        htmlTemplate: '<img src="/jeffshouse/file/<%= filename %>" />\
+        htmlTemplate: '<img src="/api/files/<%= filename %>" />\
                         <span class="info">\
                             <span class="filename"><%= filename %></span>\
                             <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
@@ -552,7 +533,7 @@
         
         className: "checkinFullView clearfix",
     
-        htmlTemplate: '<img src="/jeffshouse/file<%= imgSrc %>" />\
+        htmlTemplate: '<img src="/api/files<%= imgSrc %>" />\
                         <span class="info">\
                             <h3 class="caption"></h3>\
                             <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
@@ -581,9 +562,9 @@
                 doc.createdAtShort = '';
             }
             
-            doc.metaLinksHtml = '<a href="/jeffshouse/file'+doc.filename+'.meta" target="_new">meta</a> <a href="/jeffshouse/file'+doc.filename+'.metab" target="_new">meta binary</a>';
+            doc.metaLinksHtml = '<a href="/api/files'+doc.filename+'.meta" target="_new">meta</a> <a href="/api/files'+doc.filename+'.metab" target="_new">meta binary</a>';
             
-            doc.downloadMenu = '<a target="_new" href="/jeffshouse/file'+doc.filename+'">original</a>';
+            doc.downloadMenu = '<a target="_new" href="/api/files'+doc.filename+'">original</a>';
             
             doc.imgSrc = doc.filename;
             
@@ -596,7 +577,7 @@
                             doc.imgSrc = size.filename;
                         }
                         
-                        var downloadSize = ' <a target="_new" href="/jeffshouse/file'+size.filename+'">'+sizeName+'</a> ';
+                        var downloadSize = ' <a target="_new" href="/api/files'+size.filename+'">'+sizeName+'</a> ';
                         doc.downloadMenu += downloadSize;
                     }
                 }
@@ -696,7 +677,7 @@
         
         className: "checkinAvatar",
         
-        htmlTemplate: '<img class="map" src="/jeffshouse/file<%= imgSrc %>" />\
+        htmlTemplate: '<img class="map" src="/api/files<%= imgSrc %>" />\
 <span class="info">\
     <span class="location"><%= loc %></span>\
 </span>',
@@ -778,10 +759,13 @@
             self.initialized = false;
             
             if(!this.hasOwnProperty('model')) {
-                
-                body.checkins.getOrFetch(this.id, function(model){
-                    self.model = model;
-                    self.bindModel();
+                checkinsCollection.getOrFetch(this.id, function(model){
+                    if(model) {
+                        self.model = model;
+                        self.bindModel();
+                    } else {
+                        console.log('not found');
+                    }
                     self.initialized = true;
                     self.trigger('initialized');
                 });

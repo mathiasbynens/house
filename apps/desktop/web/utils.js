@@ -43,7 +43,7 @@
     });
 
     utils.UploadInputView = Backbone.View.extend({
-        tag: "span",
+        tagName: "div",
         className: "upload",
         initialize: function(options) {
             var self = this;
@@ -91,7 +91,7 @@
             xhr.upload.onprogress = function(e) {
                 if (e.lengthComputable) {
                     var per = Math.floor((e.loaded / e.total) * 100);
-                    self.$meter.find('.bar').css('width', per);
+                    self.$meter.find('.bar').css('width', per+'%');
                 }
             };
             xhr.setRequestHeader('cache-control', 'no-cache');
@@ -112,6 +112,9 @@
                     var f = queue.shift();
                     self.uploadFile(f, function(data) {
                         console.log(data);
+                        if(_.isArray(data)) {
+                            data = _.first(data);
+                        }
                         self.trigger("upload", data);
                     });
                     if (queue.length > 0) {

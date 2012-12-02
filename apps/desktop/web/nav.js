@@ -17,6 +17,7 @@
         reset: function() {
             this.setTitle('');
             this.trigger('reset');
+            nav.list.hideMenu();
         },
         root: function() {
             this.reset();
@@ -76,17 +77,13 @@
         className: "navList",
         initialize: function() {
             var self = this;
-            
             var $ul = this.$ul = $('<menu></menu>');
-            
-            this.$open = $('<span class="opener" title="Navigation Menu">≡</span>');
-            
+            this.$open = $('<span class="opener" title="Navigation Menu"><button>≡</button></span>');
             this.collection.bind("add", function(doc) {
                 var view;
                 view = doc.getRow({list: self});
                 self.appendRow(view);
             });
-            
             this.collection.on('reset', function(){
                 self.render();
             });
@@ -104,6 +101,20 @@
                 self.$ul.append(view.render().el);
             });
             return this;
+        },
+        events: {
+            "click .opener": "toggleMenu"
+        },
+        toggleMenu: function() {
+            var v = this.$ul.css('visibility');
+            if(v == 'visible') {
+                this.hideMenu();
+            } else {
+                this.$ul.css('visibility', 'visible');
+            }
+        },
+        hideMenu: function() {
+            this.$ul.css('visibility', 'hidden');
         },
         appendRow: function(row) {
             this.$ul.append(row.render().el);
@@ -164,11 +175,11 @@
     var NavBackButton = Backbone.View.extend({
         tagName: "div",
         className: "navBackButton",
+        initialize: function() {
+        },
         render: function() {
             this.$el.html('◀');
             return this;
-        },
-        initialize: function() {
         },
         events: {
           "click": "select",
@@ -178,11 +189,10 @@
             e.stopPropagation();
         },
         select: function() {
-            console.log(nav.router)
             window.history.back()
         }
     });
-// 
+
     nav.init = function() {
         if(!nav.hasOwnProperty('list')) {
             nav.col = new NavCollection();

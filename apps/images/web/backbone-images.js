@@ -2,36 +2,14 @@
     
     var Image = Backbone.Model.extend({
         collectionName: "images",
-        initialize: function() {
+        initialize: function(attr, opts) {
+            var colOpts = {
+                image: this
+            };
+            //attr.sizes = attr.sizes || [];
+            //this.imageSizeCollection = new ImageSizeCollection(attr.sizes, colOpts);
             this.on("change", function(model, options){
-                console.log('change');
-                var doSave = false;
-                var changedAttr = model.changedAttributes();
-                
-                // Don't update the id or at
-                delete changedAttr['_id'];
-                delete changedAttr['owner'];
-                delete changedAttr['at'];
-                
-                for(var i in changedAttr) {
-                    if(changedAttr.hasOwnProperty(i)) {
-                        doSave = true;
-                    }
-                }
-                
-                for(var i in model.pulls) {
-                    doSave = true;
-                }
-                for(var i in model.pushes) {
-                    doSave = true;
-                }
-                for(var i in model.pushAlls) {
-                    doSave = true;
-                }
-                
-                if(doSave) {
-                    model.save();
-                }
+                console.log(arguments);
             });
         },
         getFullView: function(options) {
@@ -63,6 +41,49 @@
         }
     });
     
+    var ImageTag = Backbone.Model.extend({
+        initialize: function() {},
+        getView: function(options) {
+            if (!this.hasOwnProperty("row")) {
+                options.model = this;
+                this.row = this.getNewView(options);
+            }
+            return this.row;
+        },
+        getNewView: function(options) {
+            options.model = this;
+            return new ImageTagView(options);
+        }
+    });
+    var ImageGroup = Backbone.Model.extend({
+        initialize: function() {},
+        getView: function(options) {
+            if (!this.hasOwnProperty("row")) {
+                options.model = this;
+                this.row = this.getNewView(options);
+            }
+            return this.row;
+        },
+        getNewView: function(options) {
+            options.model = this;
+            return new ImageGroupView(options);
+        }
+    });
+    var ImageSize = Backbone.Model.extend({
+        initialize: function() {},
+        getView: function(options) {
+            if (!this.hasOwnProperty("row")) {
+                options.model = this;
+                this.row = this.getNewView(options);
+            }
+            return this.row;
+        },
+        getNewView: function(options) {
+            options.model = this;
+            return new ImageSizeView(options);
+        }
+    });
+    
     var Images = Backbone.Collection.extend({
         model: Image,
         collectionName: 'images',
@@ -71,24 +92,6 @@
             var self = this;
             self.pageSize = 10;
             this.resetFilters();
-            
-            return;
-            require(['https://'+window.location.host+':8443/socket.io/socket.io/socket.io.js'], function() {
-                var socket = io.connect('https://'+window.location.host+':8443/socket.io/images', {secure:true});
-                socket.on('connect', function(data) {
-                    console.log('connected to images');
-                });
-                socket.on('image', function (data) {
-                    var sess = self.get(data["_id"]);
-                    if(sess) {
-                        sess.set(data, {silent: true});
-                        //sess.getRow().render();
-                    } else {
-                        self.add(data);
-                    }
-                    self.sort();
-                });
-            });
         },
         headCount: function(callback) {
             var self = this;
@@ -153,9 +156,7 @@
             this.load();
         },
         comparator: function(doc) {
-            
             var d;
-            
             if(doc.get("at")) {
                 d = new Date(doc.get("at")).getTime();
                 return d * -1;
@@ -164,16 +165,11 @@
             }
         },
         resetFilters: function() {
-            
         },
         getOrFetch: function(id, callback) {
             var self = this;
             var image;
-            
             image = this.get(id);
-            
-            console.log(image);
-            
             if(image) {
                 callback(image);
             } else {
@@ -192,6 +188,69 @@
                     }
                 });
             }
+        },
+        getView: function(options) {
+            var self = this;
+            if (!options) options = {};
+            if (!this.hasOwnProperty("view")) {
+                options.collection = this;
+                this.view = new ImageList(options);
+                this.view.on("selected", function(m) {
+                    self.trigger("selected", m);
+                });
+            }
+            return this.view;
+        },
+    });
+    
+    var ImageTagCollection = Backbone.Collection.extend({
+        model: ImageTag,
+        url: function() {
+            return "/api/images/" + this.options.menuGroup.get("id") + "/tags";
+        },
+        getView: function(options) {
+            var self = this;
+            if (!options) options = {};
+            if (!this.hasOwnProperty("view")) {
+                options.collection = this;
+                this.view = new ImageTagList(options);
+                this.view.on("selected", function(m) {
+                    self.trigger("selected", m);
+                });
+            }
+            return this.view;
+        },
+        initialize: function(models, options) {
+            var self = this;
+            if (!options) {
+                options = models;
+            }
+            this.options = options;
+        }
+    });
+    var ImageGroupCollection = Backbone.Collection.extend({
+        model: ImageGroup,
+        url: function() {
+            return "/api/images/" + this.options.menuGroup.get("id") + "/groups";
+        },
+        getView: function(options) {
+            var self = this;
+            if (!options) options = {};
+            if (!this.hasOwnProperty("view")) {
+                options.collection = this;
+                this.view = new ImageGroupList(options);
+                this.view.on("selected", function(m) {
+                    self.trigger("selected", m);
+                });
+            }
+            return this.view;
+        },
+        initialize: function(models, options) {
+            var self = this;
+            if (!options) {
+                options = models;
+            }
+            this.options = options;
         }
     });
     
@@ -204,12 +263,9 @@
             this.collection.getNextPage();
         },
         render: function() {
-            
             var self = this;
             this.$el.html('');
-            
             this.$el.append(this.$ul);
-            
             this.$ul.html('');
             //this.collection.sort({silent:true});
             this.collection.each(function(doc){
@@ -222,18 +278,21 @@
                 
                 self.appendRow(view.render().el);
             });
-            
-            this.$pager = $('<div id="image-list-pager"><span class="image-list-count">'+this.collection.count+'</span> images</div>');
-            
             this.$el.append(this.$pager);
-            
+            this.renderPager();
             this.trigger('resize');
             this.setElement(this.$el);
             return this;
         },
+        renderPager: function() {
+            var len = this.collection.length;
+            var c = this.collection.count > len ? this.collection.count : len;
+            this.$pager.find('.image-list-length').html(len);
+            this.$pager.find('.image-list-count').html(c);
+        },
         initialize: function() {
             var self = this;
-            
+            this.$pager = $('<div id="image-list-pager">showing <span class="image-list-length"></span> of <span class="image-list-count"></span> images</div>');
             var $ul = this.$ul = $('<ul id="images"></ul>');
             
             this.collection.bind("add", function(doc) {
@@ -243,9 +302,8 @@
                 } else if(self.layout === 'avatar') {
                     view = doc.getAvatar({list: self});
                 }
-                
                 self.appendRow(view.render().el);
-                // refresh pager
+                self.renderPager();
             });
             
             this.collection.on('reset', function(){
@@ -259,38 +317,157 @@
         }
     });
     
+    var ImageTagList = Backbone.View.extend({
+        tag: "span",
+        className: "imageTags",
+        initialize: function() {
+            var self = this;
+            this.$ul = $("<ul></ul>");
+            this.collection.on("add", function(m) {
+                self.appendModel(m);
+            });
+            this.collection.on("reset", function() {
+                if (!self.$ul) {
+                    self.$ul = $("<ul></ul>");
+                } else {
+                    self.$ul.html("");
+                }
+            });
+        },
+        render: function() {
+            var self = this;
+            this.$actions = $('<ul class="actions"></ul>');
+            this.$el.html("");
+            this.collection.each(function(m, i, c) {
+                self.appendModel(m);
+            });
+            this.$el.append(this.$ul);
+            this.$el.append(this.$actions);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {},
+        appendModel: function(m) {
+            this.$el.show();
+            var $el = m.getNewView({
+                list: this
+            }).render().$el;
+            this.$ul.append($el);
+        },
+        addTagToImage: function(tag) {
+            if (!tag) {
+                return;
+            }
+            var self = this;
+            var model = new MenuGroupImage({}, {
+                collection: this.selectedMenu.menuGroupImageCollection
+            });
+            model.set(image);
+            var saveModel = model.save(null, {
+                silent: true,
+                wait: true
+            });
+            saveModel.done(function() {
+                self.selectedMenu.menuGroupImageCollection.add(model);
+            });
+        },
+    });
+    
+    var ImageGroupList = Backbone.View.extend({
+        tag: "span",
+        className: "imageGroups",
+        render: function() {
+            var self = this;
+            this.$ul = $("<ul></ul>");
+            this.$actions = $('<ul class="actions"></ul>');
+            this.$el.html("");
+            this.collection.each(function(m, i, c) {
+                self.appendModel(m);
+            });
+            this.$el.append(this.$ul);
+            this.$el.append(this.$actions);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {},
+        appendModel: function(m) {
+            this.$el.show();
+            var $el = m.getNewView({
+                list: this
+            }).render().$el;
+            this.$ul.append($el);
+        },
+        initialize: function() {
+            var self = this;
+            this.collection.on("add", function(m) {
+                self.appendModel(m);
+            });
+            this.collection.on("reset", function() {
+                if (!self.$ul) {
+                    self.$ul = $("<ul></ul>");
+                } else {
+                    self.$ul.html("");
+                }
+            });
+        }
+    });
+    
+    var ImageSizeList = Backbone.View.extend({
+        tag: "span",
+        className: "imageSizes",
+        render: function() {
+            var self = this;
+            this.$ul = $("<ul></ul>");
+            this.$actions = $('<ul class="actions"></ul>');
+            this.$el.html("");
+            this.collection.each(function(m, i, c) {
+                self.appendModel(m);
+            });
+            this.$el.append(this.$ul);
+            this.$el.append(this.$actions);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {},
+        appendModel: function(m) {
+            this.$el.show();
+            var $el = m.getNewView({
+                list: this
+            }).render().$el;
+            this.$ul.append($el);
+        },
+        initialize: function() {
+            var self = this;
+            this.collection.on("add", function(m) {
+                self.appendModel(m);
+            });
+            this.collection.on("reset", function() {
+                if (!self.$ul) {
+                    self.$ul = $("<ul></ul>");
+                } else {
+                    self.$ul.html("");
+                }
+            });
+        }
+    });
+    
     var ImageActions = Backbone.View.extend({
-        
-        tagName: "div",
-        
+        tagName: "span",
         className: "imageActions",
-        
         render: function() {
             var self = this;
             this.$el.html('');
-            
-            this.actions.forEach(function(action){
-                self.$el.append(action.render().el);
-            });
-            
-            this.$el.removeAttr('id');
+            self.$el.append(this.imageTags.render().$el);
+            self.$el.append(this.imageGroups.render().$el);
+            self.$el.append(this.imageActionDelete.render().$el);
             this.setElement(this.$el);
             return this;
         },
         initialize: function() {
             this.actions = [];
-            
-            this.imageTags = new ImageTags({id: this.id, model: this.model});
-            this.$el.append(this.imageTags.render().el);
-            this.actions.push(this.imageTags);
-            
             this.imageGroups = new ImageGroups({id: this.id, model: this.model});
-            this.$el.append(this.imageGroups.render().el);
-            this.actions.push(this.imageGroups);
-            
+            this.imageTags = new ImageTags({id: this.id, model: this.model});
             this.imageActionDelete = new ImageActionDelete({id: this.id, model: this.model});
-            this.$el.append(this.imageActionDelete.render().el);
-            this.actions.push(this.imageActionDelete);
         }
     });
 
@@ -313,7 +490,7 @@
             var self = this;
             
             var getAndDestroyModel = function(fileId, callback) {
-                body.files.getOrFetch(fileId, {add: false}, function(fileModel){
+                images.filesCollection.getOrFetch(fileId, {add: false}, function(fileModel){
                     console.log(fileModel);
                     if(fileModel) {
                         fileModel.destroy({success: function(model, response) {
@@ -329,12 +506,9 @@
             
             var removeThumbs = function() {
                 var sizes = self.model.get("sizes");
-                for(var s in sizes) {
-                    var sizesObject = sizes[s];
-                    for(var sizeName in sizesObject) {
-                        var size = sizesObject[sizeName];
-                        getAndDestroyModel(size["id"]);
-                    }
+                for(var sizeName in sizes) {
+                    var size = sizes[sizeName];
+                    getAndDestroyModel(size["id"]);
                 }
             }
             
@@ -354,6 +528,7 @@
                 }
                 this.model.destroy({success: function(model, response) {
                   //console.log('delete');
+                  window.history.back(-1);
                 }, 
                 errorr: function(model, response) {
                     console.log(arguments);
@@ -394,9 +569,9 @@
           "click .tag": "removeTag"
         },
         removeTag: function(e) {
+            var self = this;
             if(confirm("Are you sure that you want to remove this tag?")) {
                 var tags = this.model.get("tags");
-                
                 var $tag = $(e.target);
                 var tagName = '';
                 if($tag.attr('data-tag')) {
@@ -404,23 +579,44 @@
                 } else {
                     tagName = e.target.innerHTML;
                 }
-                this.model.pull({"tags": tagName}, {wait: true});
+                this.model.pull({"tags": tagName}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.render();
+                });
             }
         },
         newTag: function() {
+            var self = this;
             var tagName = prompt("Enter tags, separated, by commas.");
             if(tagName) {
                 tagName = tagName.split(',');
-                
                 for(var i in tagName) {
                     var tag = tagName[i];
                     tagName[i] = tag.trim(); // trim extra white space
                 }
                 if(tagName) {
-                    if(!this.model.get("tags")) {
-                        this.model.set({'tags': tagName}, {wait: true});
+                    if(!this.model.has("tags")) {
+                        this.model.set({'tags': tagName}, {silent: true});
+                        var saveModel = this.model.save(null, {
+                            silent: false,
+                            wait: true
+                        });
+                        saveModel.done(function() {
+                            console.log('tags saved');
+                        });
                     } else {
-                        this.model.pushAll({"tags": tagName}, {wait: true});
+                        this.model.pushAll({"tags": tagName}, {silent: true});
+                        var saveModel = this.model.save(null, {
+                            silent: false,
+                            wait: true
+                        });
+                        saveModel.done(function() {
+                            self.render();
+                        });
                     }
                 }
             }
@@ -430,6 +626,8 @@
     var ImageGroups = Backbone.View.extend({
         tagName: "span",
         className: "groups",
+        initialize: function() {
+        },
         render: function() {
             this.$el.html('');
             var groups = this.model.get("groups");
@@ -450,8 +648,6 @@
             this.setElement(this.$el);
             return this;
         },
-        initialize: function() {
-        },
         events: {
           "click .newGroup": "newGroup",
           "click .group": "removeGroup",
@@ -459,23 +655,48 @@
           "click .privateGroup": "privateGroup"
         },
         privateGroup: function() {
+            var self = this;
             if(confirm("Are you sure that you want to make this private?")) {
-                this.model.set({"groups": []}, {wait: true});  
+                this.model.set({"groups": []}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.render();
+                });
             }
         },
         publicGroup: function() {
+            var self = this;
             if(confirm("Are you sure that you want to make this public?")) {
-                this.model.push({"groups": "public"}, {wait: true});
+                this.model.push({"groups": "public"}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.render();
+                });
             }
         },
         removeGroup: function(e) {
+            var self = this;
             if(confirm("Are you sure that you want to remove this group?")) {
                 var groups = this.model.get("groups");
                 var name = e.target.innerHTML;
-                this.model.pull({"groups": name}, {wait: true});
+                this.model.pull({"groups": name}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.render();
+                });
             }
         },
         newGroup: function() {
+            var self = this;
             var groupName = prompt("Enter groups, separated, by commas.");
             groupName = groupName.split(',');
             
@@ -485,10 +706,17 @@
             }
             if(groupName) {
                 if(!this.model.get("groups")) {
-                    this.model.set({'groups': groupName}, {wait: true});
+                    this.model.set({'groups': groupName}, {silent: true});
                 } else {
-                    this.model.pushAll({"groups": groupName}, {wait: true});
+                    this.model.pushAll({"groups": groupName}, {silent: true});
                 }
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.render();
+                });
             }
         }
     });
@@ -597,11 +825,8 @@
     });
     
     var ImageFullView = Backbone.View.extend({
-        
         tagName: "div",
-        
         className: "imageFullView clearfix",
-    
         htmlTemplate: '<img src="/api/files/<%= imgSrc %>" />\
                         <span class="info">\
                             <h3 class="caption"></h3>\
@@ -610,11 +835,32 @@
                             <%= downloadMenu %>\
                             <%= exifHtml %>\
                         </span>',
-        
+        initialize: function(options) {
+            var self = this;
+            if(options.list) {
+                this.list = options.list;
+            }
+            this.model.bind('change', this.renderInfo, this);
+            this.model.bind('change:caption', this.renderCaption, this);
+            this.model.bind('change:tags', this.renderActions, this);
+            this.model.bind('change:groups', this.renderActions, this);
+            this.model.bind('change:owner', this.renderActions, this);
+            this.model.bind('destroy', this.remove, this);
+    
+            this.$actions = $('<div class="actions"></div>');
+            this.imageActions = new ImageActions({id: this.id, model: this.model});
+            this.$actions.append(this.imageActions.render().el);
+            
+            if(this.model.get('checkin') && !this.hasOwnProperty('imageCheckin')) {
+                console.log(this.model.get('checkin').id)
+                console.log(this.model.get('checkin'))
+                
+                require(['../checkins/checkins.js'], function(CheckinsBackbone){
+                    self.imageCheckin = new CheckinsBackbone.Avatar({id: self.model.get('checkin').id});
+                });
+            }
+        },
         template: function(doc) {
-            
-            // Add default values to doc which are required in the template
-            
             if(doc.hasOwnProperty('at')) {
                 var createdAtFormatted = new Date(doc.at);
                 doc.createdAtFormatted = createdAtFormatted.toLocaleString();
@@ -630,25 +876,19 @@
                 doc.createdAtFormatted = '';
                 doc.createdAtShort = '';
             }
-            
             doc.metaLinksHtml = '<a href="/api/files'+doc.filename+'.meta" target="_new">meta</a> <a href="/api/files/'+doc.filename+'.metab" target="_new">meta binary</a>';
-            
             doc.downloadMenu = '<a target="_new" href="/api/files/'+doc.filename+'">original</a>';
-            
             doc.imgSrc = doc.filename;
-            
             if(doc.hasOwnProperty('sizes')) {
-                for(var i in doc.sizes) {
-                    for(var sizeName in doc.sizes[i]) {
-                        var size = doc.sizes[i][sizeName];
-                        
-                        if(sizeName == 'full') {
-                            doc.imgSrc = size.filename;
-                        }
-                        
-                        var downloadSize = ' <a target="_new" href="/api/files/'+size.filename+'">'+sizeName+'</a> ';
-                        doc.downloadMenu += downloadSize;
+                for(var sizeName in doc.sizes) {
+                    var size = doc.sizes[sizeName];
+                    
+                    if(sizeName == 'full') {
+                        doc.imgSrc = size.filename;
                     }
+                    
+                    var downloadSize = ' <a target="_new" href="/api/files/'+size.filename+'">'+sizeName+'</a> ';
+                    doc.downloadMenu += downloadSize;
                 }
             }
             
@@ -704,32 +944,6 @@
             var caption = this.model.has('caption') ? this.model.get('caption') : 'add a caption';
             this.$el.find('.caption').html(caption);
         },
-        initialize: function(options) {
-            var self = this;
-            if(options.list) {
-                this.list = options.list;
-            }
-            
-            this.model.bind('change', this.renderInfo, this);
-            this.model.bind('change:caption', this.renderCaption, this);
-            this.model.bind('change:tags', this.renderActions, this);
-            this.model.bind('change:groups', this.renderActions, this);
-            this.model.bind('change:owner', this.renderActions, this);
-            this.model.bind('destroy', this.remove, this);
-    
-            this.$actions = $('<div class="actions"></div>');
-            this.imageActions = new ImageActions({id: this.id, model: this.model});
-            this.$actions.append(this.imageActions.render().el);
-            
-            if(this.model.get('checkin') && !this.hasOwnProperty('imageCheckin')) {
-                console.log(this.model.get('checkin').id)
-                console.log(this.model.get('checkin'))
-                
-                require(['/checkins/checkins.backbone.js'], function(CheckinsBackbone){
-                    self.imageCheckin = new CheckinsBackbone.Avatar({id: self.model.get('checkin').id});
-                });
-            }
-        },
         show: function() {
             this.$el.show();
         },
@@ -742,12 +956,20 @@
             return false;
         },
         editCaption: function() {
+            var self = this;
             var c = this.model.get("caption");
             
             var newCaption = prompt("caption text", c);
             
             if(newCaption) {
-                this.model.set({"caption": newCaption}, {wait: true});
+                this.model.set({"caption": newCaption}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.renderCaption();
+                });
             }
         },
         remove: function() {
@@ -756,21 +978,13 @@
     });
     
     var ImageAvatar = Backbone.View.extend({
-    
         tagName: "li",
-        
         className: "imageAvatar",
-        
-        htmlTemplate: '<img src="/api/files/<%= imgSrc %>" />\
-                        <span class="info">\
+        htmlTemplate: ' <span class="info">\
                             <span class="filename"><%= filename %></span>\
                             <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
                         </span>',
-        
         template: function(doc) {
-            
-            // Add default values to doc which are required in the template
-            
             if(doc.hasOwnProperty('at')) {
                 var createdAtFormatted = new Date(doc.at);
                 doc.createdAtFormatted = createdAtFormatted.toLocaleString();
@@ -786,32 +1000,25 @@
                 doc.createdAtFormatted = '';
                 doc.createdAtShort = '';
             }
-            
-            doc.imgSrc = doc.filename;
-            if(doc.hasOwnProperty('sizes')) {
-                for(var i in doc.sizes) {
-                    for(var sizeName in doc.sizes[i]) {
-                        if(sizeName == 'thumb') {
-                            var size = doc.sizes[i][sizeName];
-                            doc.imgSrc = size.filename;
-                        }
-                    }
-                }
-            }
-            
             var template = $(_.template(this.htmlTemplate, doc));
-            
             this.$el.attr('data-images-id', this.model.get("_id"));
-            
             return template;
         },
         render: function() {
+            var imageThumbSrc = this.model.get('filename');
             this.$el.html(this.template(this.model.toJSON()));
-            
             this.$el.append(this.$actions);
-            
-            this.trigger('resize');
-            
+            if(this.model.has('sizes')) {
+                var sizes = this.model.get('sizes');
+                for(var sizeName in sizes) {
+                    if(sizeName == 'thumb') {
+                        var size = sizes[sizeName];
+                        imageThumbSrc = size.filename;
+                    }
+                }
+            }
+            this.$el.css('background', 'url("/api/files/'+imageThumbSrc+'")');
+            this.$el.css('background-size', 'cover');
             this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
             
             return this;

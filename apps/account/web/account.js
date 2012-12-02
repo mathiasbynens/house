@@ -54,7 +54,6 @@
                     self.renderAll();
                     profile.loadUser();
                     profile.render();
-                    console.log(profile);
                     self.trigger("login", model);
                 }).fail(function(s, typeStr, respStr) {
                     if (s.status === 403) {
@@ -159,6 +158,15 @@
     auth.View = Backbone.View.extend({
         tagName: "span",
         className: "authView",
+        initialize: function() {
+            var self = this;
+            this.model.bind("change", this.render, this);
+            this.model.bind("destroy", this.remove, this);
+            this.userModel = window.usersCollection.get(this.model.get("user"));
+            if (!this.userModel) {
+                this.getUserModel();
+            }
+        },
         render: function() {
             var self = this;
             var name = this.model.get('name');
@@ -169,7 +177,7 @@
                 loginbtn = '<li class="login">Sign in</li>';
             }
             
-            this.$el.html('⚙<menu>'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
+            this.$el.html('<button>⚙</button><menu>'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
             if (this.userModel) {
                 this.$el.find(".avatar").append(this.userModel.getAvatarView().render().el);
             } else if (this.model.has("user")) {
@@ -190,38 +198,40 @@
             var self = this;
             return window.usersCollection.load(function() {
                 self.userModel = window.usersCollection.get(self.model.get("user"));
-                console.log('fetchUserModel');
                 self.render();
             });
         },
         getUserModel: function(callback) {
-            console.log('getUserModel');
             var self = this;
-            console.log(self.model);
              if (!this.userModel) {
                 this.userModelFetch = this.fetchUserModel();
                 this.userModelFetch.done(function(){
                     self.userModel = window.usersCollection.get(self.model.get("user"));
-                    console.log(self.userModel)
                     if(callback) callback(self.userModel);
                 });
             } else {
                 if(callback) callback(this.userModel);
             }
         },
-        initialize: function() {
-            var self = this;
-            this.model.bind("change", this.render, this);
-            this.model.bind("destroy", this.remove, this);
-            this.userModel = window.usersCollection.get(this.model.get("user"));
-            if (!this.userModel) {
-                this.getUserModel();
-            }
-        },
         events: {
             "click .logout": "logout",
             "click .login": "login",
             "click .name": "goToProfile",
+            "click button": "toggleMenu"
+        },
+        toggleMenu: function() {
+            var v = this.$el.find('menu').css('visibility');
+            if(v == 'visible') {
+                this.hideMenu();
+            } else {
+                this.showMenu();
+            }
+        },
+        showMenu: function() {
+            this.$el.find('menu').css('visibility', 'visible');
+        },
+        hideMenu: function() {
+            this.$el.find('menu').css('visibility', 'hidden');
         },
         goToProfile: function() {
             this.trigger("goToProfile", this.model.get("name"));
@@ -375,7 +385,6 @@
             this.$name.text(this.model.get('name'));
             this.$desc.text(this.model.get('desc'));
             this.setElement(this.$el);
-            console.log('render');
             return this;
         },
         initialize: function() {
@@ -436,7 +445,6 @@
         tagName: "div",
         className: "featList",
         render: function() {
-            console.log('render feat.ListView');
             var self = this;
             this.collection.each(function(model,i){
                 model.getView().render();
@@ -554,7 +562,6 @@
             //this.userFeatList = new userFeat.ListView();
         },
         render: function() {
-            console.log('render users.FeatList');
             var self = this;
             this.$el.append(this.featList.render().$el);
             this.setElement(this.$el);
@@ -710,9 +717,7 @@
         initialize: function() {
             var self = this;
             this.$profile = $('<profile></profile>');
-            console.log('test');
             auth.get(function(err, loginStatus) {
-                console.log(arguments);
                 if (err) {} else if (loginStatus) {
                     self.loginStatus = loginStatus;
                     loginStatus.getView().on("goToProfile", function(username) {
@@ -721,7 +726,6 @@
                     loginStatus.on("login", function() {
                         loginStatus.getView().render();
                     });
-                    console.log(loginStatus.getView().render().$el)
                     self.$profile.append(loginStatus.getView().render().$el);
                     if (loginStatus && loginStatus.has("user")) {} else {}
                     self.trigger('init');
@@ -776,7 +780,10 @@
                 });
             });
             router.on('reset', function() {
-                
+                if(self.userLightbox) {
+                    self.userLightbox.remove();
+                }
+                profile.loginStatus.getView().hideMenu();
             });
         }
     });

@@ -10,7 +10,7 @@
                 self.FilesBackbone = FilesBackbone;
                 require(['backbone-images.js'], function(ImagesBackbone){
                     self.ImagesBackbone = ImagesBackbone;
-                    require(['backbone-checkins.js'], function(CheckinsBackbone){
+                    require(['../checkins/checkins.js'], function(CheckinsBackbone){
                         self.CheckinsBackbone = CheckinsBackbone;
                         self.initFiles(function(){
                             self.initImages(function(){
@@ -26,24 +26,24 @@
                 });
             });
             
-            require(['../desktop/jquery.idle-timer.js'], function() {
-                var idleTimer = $(document).idleTimer(2400);
+            /*require(['../desktop/jquery.idle-timer.js'], function() {
+                var idleTimer = $(document).idleTimer(4200);
                 $(document).bind("idle.idleTimer", function(e){
                     $('body').addClass('idle');
                 });
                 $(document).bind("active.idleTimer", function(){
                     $('body').removeClass('idle');
                 });
-            });
+            });*/
         },
         initImages: function(callback) {
             var self = this;
             self.imageViewerImages = {};
             this.$imageList = $('<div id="images-list" class="pImages"></div>');
             this.$imageViewer = $('<div id="image-viewer" class="pImageViewer"></div>');
-            self.imagesCollection = new self.ImagesBackbone.Collection(); // collection
+            self.imagesCollection = window.imagesCollection = new self.ImagesBackbone.Collection(); // collection
             self.imagesCollection.pageSize = pageSize;
-            self.checkinsCollection = new self.CheckinsBackbone.Collection();
+            self.checkinsCollection = window.checkinsCollection = new self.CheckinsBackbone.Collection();
             this.imagesListView = new self.ImagesBackbone.List({collection: this.imagesCollection});
             this.imagesListView.on('select', function(imageRow) {
                 self.router.navigate('image/'+imageRow.model.get('id'), true);
@@ -88,8 +88,8 @@
             this.$el.append(this.$imageViewer);
             return this;
         },
-        findImageById: function(id) {
-            return this.imagesCollection.get(id);
+        findImageById: function(id, callback) {
+            this.imagesCollection.getOrFetch(id, callback);
         },
         userIsAdmin: function() {
             return (this.user && this.user.has('groups') && this.user.get('groups').indexOf('admin') !== -1);
@@ -107,8 +107,8 @@
             this.nav = nav;
             this.bindRouter(nav.router);
             
-            nav.col.add({title:"Images", navigate:""});
-            nav.col.add({title:"Import files", navigate:"import"});
+            nav.col.add({title:"Albums", navigate:""});
+            nav.col.add({title:"Import", navigate:"import"});
         },
         bindRouter: function(router) {
             var self = this;
@@ -117,7 +117,6 @@
                 self.$imageViewer.html('');
                 self.$imageList.hide();
                 self.$filesList.hide();
-                console.log(self.nav);
                 self.nav.unselect();
             });
             router.on('root', function(){
@@ -128,11 +127,15 @@
             });
             router.route('image/:id', 'menu', function(id){
                 router.reset();
-                var image = self.findImageById(id);
-                if(image) {
-                    self.$imageViewer.append(image.getFullView().render().$el);
-                }
-                router.trigger('loadingComplete');
+                self.findImageById(id, function(image){
+                    if(image) {
+                        self.$imageViewer.append(image.getFullView().render().$el);
+                    } else {
+                        console.log(id);
+                        router.navigate('', {replace: true, trigger: true});
+                    }
+                    router.trigger('loadingComplete');
+                });
             });
             router.route('import', 'import', function(){
                 router.reset();
