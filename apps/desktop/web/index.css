@@ -5,6 +5,10 @@ header {
     right: 0;
     height: 44px;
     text-align: center;
+    z-index: 100;
+}
+wallpaper {
+    z-index: -1;
 }
 clock {
     position: absolute;

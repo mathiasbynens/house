@@ -563,7 +563,9 @@
             this.fileInput = new utils.UploadInputView({acceptType: acceptType});
             this.fileInput.on('upload', function(data){
                 if (data.file) {
-                    self.collection.add(data.file);
+                    if(self.collection) {
+                        self.collection.add(data.file);
+                    }
                 }
                 self.trigger('upload', data);
             });

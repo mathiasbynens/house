@@ -15,6 +15,7 @@
                                     require(['../desktop/nav.js'], function(nav){
                                         index.nav = nav;
                                         nav.init();
+                                        account.bindRouter(nav.router);
                                         nav.router.on('loading', function(){
                                             $('body').addClass('loading');
                                         });
@@ -22,16 +23,14 @@
                                             $('body').removeClass('loading');
                                         });
                                         $('header').append(nav.list.render().$el);
-                                        require(['images.js'], function(Images) {
-                                            var images = new Images();
-                                            images.on('initialized', function(){
-                                                $('body').append(images.render().$el);
-                                                images.bindNav(nav);
-                                                nav.startRouter('/images/');
-                                                if(callback) callback(images);
+                                        require(['wallpaper.js'], function(wallpaper) {
+                                            wallpaper.on('initialized', function(){
+                                                $('body').append(wallpaper.getBackgroundView().render().$el);
+                                                wallpaper.bindNav(nav);
+                                                nav.startRouter('/wallpaper/');
+                                                if(callback) callback(wallpaper);
                                             });
                                         });
-                                        account.bindRouter(nav.router);
                                     });
                                 });
                             });

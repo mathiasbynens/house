@@ -53,7 +53,9 @@
                                         });
                                         
                                         require(['../wallpaper/wallpaper.js'], function(wallpaper){
-                                            wallpaper.init();
+                                            wallpaper.on('initialized', function(){
+                                                $('body').append(wallpaper.getBackgroundView().render().$el);
+                                            });
                                         });
                                         
                                         account.bindRouter(nav.router);

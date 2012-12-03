@@ -100,7 +100,7 @@ navigation menu {
     left: 0;
 }
 navigation menu, account menu {
-    position: fixed;
+    position: absolute;
     top: 0px;
     margin: 40px 0 0;
     width: 100%;

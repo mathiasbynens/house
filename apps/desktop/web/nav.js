@@ -192,7 +192,7 @@
             window.history.back()
         }
     });
-
+    
     nav.init = function() {
         if(!nav.hasOwnProperty('list')) {
             nav.col = new NavCollection();
@@ -208,10 +208,10 @@
     }
     
     nav.selectByNavigate = function(navName) {
-        console.log(this.col);
         var navModel = this.col.where({navigate: navName});
         _.first(navModel).getRow().select();
     }
+    
     nav.unselect = function() {
         this.list.deselectAll();
     }

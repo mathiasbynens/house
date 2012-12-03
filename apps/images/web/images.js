@@ -1,5 +1,5 @@
 (function() {
-    var pageSize = 8;
+    var pageSize = 24;
 
     var ImagesView = Backbone.View.extend({
         tag: 'span',
