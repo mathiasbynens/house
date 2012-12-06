@@ -853,8 +853,10 @@
                         self.loading(false);
                         self.formTitle.focus();
                         
-                        // scroll to the bottom of the list
-                        todoAppView.scroller.scrollToElement('#todos li:last-child', 500);
+                        // scroll to the bottom of the list when needed
+                        if($('#scroller').height() < $('#container').height()) {
+                            todoAppView.scroller.scrollToElement('#todos li:last-child', 500);
+                        }
                     }
                 });
             } else {
