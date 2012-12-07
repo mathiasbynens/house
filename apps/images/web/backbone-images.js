@@ -143,9 +143,9 @@
                 }
             });
         },
-        getNextPage: function() {
+        getNextPage: function(callback) {
             if(this.length < this.count) {
-                this.load({skip:this.length});
+                this.load({skip:this.length}, callback);
             }
         },
         applyFilters: function(options) {
@@ -256,11 +256,42 @@
     
     var ImagesList = Backbone.View.extend({
         layout: 'avatar',
+        initialize: function() {
+            var self = this;
+            self.loading = false;
+            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> images</div>');
+            var $ul = this.$ul = $('<ul class="images"></ul>');
+            this.collection.bind("add", function(doc) {
+                var view;
+                if(self.layout === 'row') {
+                    view = doc.getRow({list: self});
+                } else if(self.layout === 'avatar') {
+                    view = doc.getAvatar({list: self});
+                }
+                self.appendRow(view.render().el);
+                self.renderPager();
+            });
+            this.collection.on('reset', function(){
+                self.render();
+            });
+            
+            $(window).scroll(function(){
+                if(self.$el.is(":visible")) {
+                  if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()){
+                    self.loading = true;
+                    self.loadMore();
+                  }
+                }
+            });
+        },
         events: {
-          "click #image-list-pager": "loadMore",
+          "click .list-pager": "loadMore",
         },
         loadMore: function() {
-            this.collection.getNextPage();
+            var self = this;
+            this.collection.getNextPage(function(){
+                self.loading = false;
+            });
         },
         render: function() {
             var self = this;
@@ -287,30 +318,8 @@
         renderPager: function() {
             var len = this.collection.length;
             var c = this.collection.count > len ? this.collection.count : len;
-            this.$pager.find('.image-list-length').html(len);
-            this.$pager.find('.image-list-count').html(c);
-        },
-        initialize: function() {
-            var self = this;
-            this.$pager = $('<div id="image-list-pager">showing <span class="image-list-length"></span> of <span class="image-list-count"></span> images</div>');
-            var $ul = this.$ul = $('<ul id="images"></ul>');
-            
-            this.collection.bind("add", function(doc) {
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatar({list: self});
-                }
-                self.appendRow(view.render().el);
-                self.renderPager();
-            });
-            
-            this.collection.on('reset', function(){
-                self.render();
-            });
-        },
-        refreshPager: function() {
+            this.$pager.find('.list-length').html(len);
+            this.$pager.find('.list-count').html(c);
         },
         appendRow: function(row) {
             this.$ul.append(row);
@@ -726,7 +735,7 @@
         
         tagName: "li",
         
-        className: "imageRow clearfix",
+        className: "imageRow",
 
         htmlTemplate: '<img src="/api/file/<%= filename %>" />\
                         <span class="info">\
@@ -826,7 +835,7 @@
     
     var ImageFullView = Backbone.View.extend({
         tagName: "div",
-        className: "imageFullView clearfix",
+        className: "imageFullView",
         htmlTemplate: '<img src="/api/files/<%= imgSrc %>" />\
                         <span class="info">\
                             <h3 class="caption"></h3>\

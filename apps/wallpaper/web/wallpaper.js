@@ -2,36 +2,59 @@
     var BackgroundView = Backbone.View.extend({
         tagName: 'wallpaper',
         initialize: function() {
-            
+            var self = this;
+            this.collection.on('selected', function(paper){
+                console.log(paper)
+                self.selectedPaper = paper;
+                self.render();
+            });
+            self.useCollectionShuffled(this.collection);
+            self.selectedPaper = this.stack.shift();
         },
         render: function() {
-            var r = _.first(this.collection.shuffle());
-            
+            var self = this;
             this.$el.html('');
+            this.$el.css('background', '');
             this.$el.css('position', 'fixed');
             this.$el.css('top', '0px');
             this.$el.css('bottom', '0px');
             this.$el.css('left', '0px');
             this.$el.css('right', '0px');
             
-            if(r) {
-                if(r.has('image')) {
-                    var filename = r.get('image').filename;
+            if(this.selectedPaper) {
+                if(this.selectedPaper.has('image')) {
+                    var filename = this.selectedPaper.get('image').filename;
                     this.$el.css('background-size', '100%');
                     this.$el.css('background', 'url("/api/files/'+filename+'") center center');
                 }
-                if(r.has('css')) {
-                    this.$el.append('<style>wallpaper{ '+r.get('css')+' }</style>');
+                if(this.selectedPaper.has('css')) {
+                    this.$el.append('<style>wallpaper{ '+this.selectedPaper.get('css')+' }</style>');
                 }
-                if(r.has('script')) {
+                if(this.selectedPaper.has('script')) {
                     setTimeout(function(){
-                        eval(r.get('script'));
+                        eval(self.selectedPaper.get('script'));
                     }, 200);
                 }
             }
             
             this.setElement(this.$el);
             return this;
+        },
+        useCollectionShuffled: function(col) {
+            this.stack = _.clone(col.shuffle());
+        },
+        transition: function() {
+            var self = this;
+            self.stack.push(self.selectedPaper);
+            self.selectedPaper = self.stack.shift();
+            self.render();
+        },
+        transitionEvery: function(ms) {
+            var self = this;
+            setTimeout(function(){
+                self.transition();
+                self.transitionEvery(ms);
+            }, ms);
         },
         events: {
         }
@@ -41,15 +64,22 @@
             var self = this;
             require(['/wallpaper/backbone-wallpaper.js'], function(WallpaperBackbone){
                 self.WallpaperBackbone = WallpaperBackbone;
-                self.wallpaperCollection = window.wallpaperCollection = new self.WallpaperBackbone.Collection(); // collection
-                self.wallpaperCollection.load(null, function(){
+                self.collection = window.wallpaperCollection = new self.WallpaperBackbone.Collection(); // collection
+                self.collection.load(null, function(){
                     self.initialized = true;
                     self.trigger('initialized');
                 });
-                self.wallpaperListView = new self.WallpaperBackbone.List({collection: this.wallpaperCollection});
-                self.wallpaperListView.on('select', function(row) {
-                    self.router.navigate('wallpaper/'+row.model.get('id'), true);
-                });
+                if(window.hasOwnProperty('account')) {
+                    window.account.on('loggedIn', function(loginView){
+                        console.log('refresh collection');
+                        self.collection.load(null, function(){
+                            if(self.backgroundView) {
+                                self.backgroundView.useCollectionShuffled(self.collection);
+                                self.backgroundView.transition();
+                            }
+                        });
+                    });
+                }
             });
             /*require(['../desktop/jquery.idle-timer.js'], function() {
                 var idleTimer = $(document).idleTimer(4200);
@@ -89,18 +119,18 @@
             this.nav = nav;
             this.bindRouter(nav.router);
             nav.col.add({title:"Wallpaper", navigate:""});
-            nav.col.add({title:"Add Paper", navigate:"import"});
+            nav.col.add({title:"New Paper", navigate:"new"});
         },
         bindRouter: function(router) {
             var self = this;
             self.router = router;
             router.on('reset', function(){
-                self.wallpaperListView.$el.hide();
+                self.collection.getView().$el.hide();
                 self.nav.unselect();
             });
             router.on('root', function(){
                 router.setTitle('Wallpaper');
-                self.wallpaperListView.render().$el.show();
+                self.collection.getView().$el.show();
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
             });
@@ -116,13 +146,14 @@
                     router.trigger('loadingComplete');
                 });
             });
-            router.route('import', 'import', function(){
+            router.route('new', 'new', function(){
                 self.initFiles();
                 
                 var form = new self.WallpaperBackbone.Form({
-                    collection: self.wallpaperCollection
+                    collection: self.collection
                 });
                 form.on("saved", function(doc) {
+                    $light.trigger("close");
                 });
                 var $light = utils.appendLightBox(form.render().$el);
                 $light.on("close", function() {
@@ -131,14 +162,17 @@
                     }
                 });
                 router.reset();
-                router.setTitle('Import');
+                router.setTitle('New');
                 router.trigger('loadingComplete');
-                self.nav.selectByNavigate('import');
+                self.nav.selectByNavigate('new');
             });
+        },
+        getListView: function() {
+            return this.collection.getView();
         },
         getBackgroundView: function() {
             if(!this.hasOwnProperty('backgroundView')) {
-                this.backgroundView = new BackgroundView({collection: this.wallpaperCollection});
+                this.backgroundView = new BackgroundView({collection: this.collection});
             }
             return this.backgroundView;
         },

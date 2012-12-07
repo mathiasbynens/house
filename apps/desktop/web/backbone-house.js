@@ -1,5 +1,26 @@
 window.houseApi = '/api';
 
+Backbone.Collection = Backbone.Collection.extend({
+    next: function(model) {
+        var i = this.at(this.indexOf(model));
+        if (undefined === i || i < 0) return false;
+        return this.at(this.indexOf(model) + 1);
+    },
+    prev: function(model) {
+        var i = this.at(this.indexOf(model));
+        if (undefined === i || i < 1) return false;
+        return this.at(this.indexOf(model) - 1);
+    }
+});
+Backbone.Model = Backbone.Model.extend({
+    next: function() {
+        return this.collection.next(this);
+    },
+    prev: function() {
+        return this.collection.prev(this);
+    }
+});
+
 Backbone.Router.prototype.localStorageNavigationHistory = function(navigateArguments) {
     var n = this.getLocalStorageNavigationHistory();
     if(!n) {

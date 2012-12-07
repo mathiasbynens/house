@@ -6,6 +6,7 @@
         className: 'menu',
         initialize: function() {
             var self = this;
+            require(['../desktop/swipeview.js'], function(){
             require(['../files/files.js'], function(FilesBackbone){
                 self.FilesBackbone = FilesBackbone;
                 require(['backbone-images.js'], function(ImagesBackbone){
@@ -14,16 +15,25 @@
                         self.CheckinsBackbone = CheckinsBackbone;
                         self.initFiles(function(){
                             self.initImages(function(){
-                                self.imagesCollection.load(null, function(){
-                                    self.filesCollection.load(null, function(){
-                                        self.initialized = true;
-                                        self.trigger('initialized');
+                                var loadCollections = function() {
+                                    self.imagesCollection.load(null, function(){
+                                        self.filesCollection.load(null, function(){
+                                            self.initialized = true;
+                                            self.trigger('initialized');
+                                        });
                                     });
-                                });
+                                }
+                                if(window.hasOwnProperty('account')) {
+                                    window.account.on('loggedIn', function(loginView){
+                                        loadCollections();
+                                    });
+                                }
+                                loadCollections();
                             });
                         });
                     });
                 });
+            });
             });
             
             /*require(['../desktop/jquery.idle-timer.js'], function() {
@@ -40,7 +50,8 @@
             var self = this;
             self.imageViewerImages = {};
             this.$imageList = $('<div id="images-list" class="pImages"></div>');
-            this.$imageViewer = $('<div id="image-viewer" class="pImageViewer"></div>');
+            this.$imageViewer = $('<div id="image-viewer" class="pImageViewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
+            
             self.imagesCollection = window.imagesCollection = new self.ImagesBackbone.Collection(); // collection
             self.imagesCollection.pageSize = pageSize;
             self.checkinsCollection = window.checkinsCollection = new self.CheckinsBackbone.Collection();
@@ -70,6 +81,46 @@
             
             if(callback) callback();
         },
+        initCarousel: function() {
+            var self = this;
+            if(!self.hasOwnProperty('carousel')) {
+                self.carousel = new SwipeView(self.$imageViewer[0], {
+                    numberOfPages: self.imagesCollection.count,
+                    hastyPageFlip: true
+                });
+                
+                self.carousel.onFlip(function () {
+                    var el;
+                    var upcoming;
+                	var i;
+                    console.log('currentMasterPage='+self.carousel.currentMasterPage);
+                    var id = self.carousel.masterPages[self.carousel.currentMasterPage].dataset.id;
+                    console.log(id);
+                    var image = self.imagesCollection.get(id);
+                    var imageNext = image.next();
+                    var imagePrev = image.prev();
+                	for (i=0; i<3; i++) {
+                		upcoming = self.carousel.masterPages[i].dataset.upcomingPageIndex;
+                        console.log(upcoming);
+                        console.log(self.carousel.masterPages[i].dataset.pageIndex);
+                		if (upcoming != self.carousel.masterPages[i].dataset.pageIndex) {
+                            console.log('update i = '+i);
+                            console.log(self.carousel.directionX);
+                			el = self.carousel.masterPages[i];
+                            el.innerHTML = '';
+                            if(self.carousel.directionX > 0) {
+                                el.dataset.id = imagePrev.id;
+                                el.appendChild(imagePrev.getFullView().render().$el[0]);
+                            } else {
+                                el.dataset.id = imageNext.id;
+                                el.appendChild(imageNext.getFullView().render().$el[0]);
+                            }
+                		}
+                	}
+                });
+                
+            }
+        },
         render: function() {
             var self = this;
             this.$el.html('');
@@ -87,6 +138,18 @@
             this.$el.append(this.$imageList);
             this.$el.append(this.$imageViewer);
             return this;
+        },
+        events: {
+            "click .carousel-control.left": "carouselPrev",
+            "click .carousel-control.right": "carouselNext",
+        },
+        carouselPrev: function() {
+            this.carousel.prev();
+            return false;
+        },
+        carouselNext: function() {
+            this.carousel.next();
+            return false;
         },
         findImageById: function(id, callback) {
             this.imagesCollection.getOrFetch(id, callback);
@@ -114,7 +177,7 @@
             var self = this;
             self.router = router;
             router.on('reset', function(){
-                self.$imageViewer.html('');
+                self.$imageViewer.hide();
                 self.$imageList.hide();
                 self.$filesList.hide();
                 self.nav.unselect();
@@ -127,9 +190,36 @@
             });
             router.route('image/:id', 'menu', function(id){
                 router.reset();
+                self.$imageViewer.show();
                 self.findImageById(id, function(image){
                     if(image) {
-                        self.$imageViewer.append(image.getFullView().render().$el);
+                        self.initCarousel();
+                        var imageEl = image.getFullView().render().$el;
+                        
+                        var renderSiblings = function() {
+                            var imageNext = image.next();
+                            var imagePrev = image.prev();
+                            var pageNext = self.carousel.masterPages[2];
+                            var pagePrev = self.carousel.masterPages[0];
+                            if(imageNext) {
+                                pageNext.innerHTML = '';
+                                pageNext.dataset.id = imageNext.id;
+                                pageNext.appendChild(imageNext.getFullView().render().$el[0]);
+                            }
+                            if(imagePrev) {
+                                pagePrev.innerHTML = '';
+                                pagePrev.dataset.id = imagePrev.id;
+                                pagePrev.appendChild(imagePrev.getFullView().render().$el[0]);
+                            }
+                        }
+                        console.log(imageEl[0]);
+                        var currentPage = self.carousel.masterPages[1];
+                        console.log(currentPage);
+                        currentPage.innerHTML = '';
+                        currentPage.dataset.id = image.id;
+                        currentPage.appendChild(imageEl[0])
+                        renderSiblings();
+                        //self.$imageViewer.append(image.getFullView().render().$el);
                     } else {
                         console.log(id);
                         router.navigate('', {replace: true, trigger: true});

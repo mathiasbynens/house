@@ -8,6 +8,7 @@
                         require(['../desktop/utils.js'], function(utils){
                             window.utils = utils;
                             require(['../account/account.js'], function(account){
+                                window.account = account;
                                 account.on('init', function(){
                                     var $account = $('<account></account>');
                                     $('header').append($account);
@@ -25,9 +26,21 @@
                                         $('header').append(nav.list.render().$el);
                                         require(['wallpaper.js'], function(wallpaper) {
                                             wallpaper.on('initialized', function(){
-                                                $('body').append(wallpaper.getBackgroundView().render().$el);
+                                                var wallpaperBackground = wallpaper.getBackgroundView();
+                                                $('body').append(wallpaperBackground.render().$el);
+                                                wallpaperBackground.transitionEvery(32000);
+                                                $('body').append(wallpaper.collection.getView().render().$el);
                                                 wallpaper.bindNav(nav);
                                                 nav.startRouter('/wallpaper/');
+                                                require(['../desktop/jquery.idle-timer.js'], function() {
+                                                    var idleTimer = $(document).idleTimer(2200);
+                                                    $(document).bind("idle.idleTimer", function(e){
+                                                        $('body').addClass('idle');
+                                                    });
+                                                    $(document).bind("active.idleTimer", function(){
+                                                        $('body').removeClass('idle');
+                                                    });
+                                                });
                                                 if(callback) callback(wallpaper);
                                             });
                                         });

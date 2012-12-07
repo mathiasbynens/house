@@ -145,8 +145,8 @@
             if (!this.hasOwnProperty("view")) {
                 options.collection = this;
                 this.view = new WallpaperList(options);
-                this.view.on("selected", function(m) {
-                    self.trigger("selected", m);
+                this.view.on("selected", function(view) {
+                    self.trigger("selected", view.model);
                 });
             }
             return this.view;
@@ -154,7 +154,7 @@
     });
     
     var WallpaperList = Backbone.View.extend({
-        layout: 'fullView',
+        layout: 'row',
         initialize: function() {
             var self = this;
             this.$pager = $('<div id="wallpaper-list-pager">showing <span class="wallpaper-list-length"></span> of <span class="wallpaper-list-count"></span> wallpaper</div>');
@@ -228,6 +228,7 @@
             this.$el.html('');
             //self.$el.append(this.tags.render().$el);
             //self.$el.append(this.groups.render().$el);
+            self.$el.append(this.actionEdit.render().$el);
             self.$el.append(this.actionDelete.render().$el);
             this.setElement(this.$el);
             return this;
@@ -236,16 +237,46 @@
             this.actions = [];
             //this.groups = new Groups({id: this.id, model: this.model});
             //this.tags = new Tags({id: this.id, model: this.model});
+            this.actionEdit = new ActionEdit({id: this.id, model: this.model});
             this.actionDelete = new ActionDelete({id: this.id, model: this.model});
         }
     });
 
+    var ActionEdit = Backbone.View.extend({
+        tagName: "span",
+        className: "edit",
+        initialize: function() {
+            
+        },
+        render: function() {
+            this.$el.html('<button>edit</button>');
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+          "click": "select",
+        },
+        select: function() {
+            var self = this;
+            var form = new PaperForm({
+                model: self.model,
+                collection: self.model.collection
+            });
+            var $light = utils.appendLightBox(form.render().$el);
+            form.on("saved", function(doc) {
+                $light.trigger("close");
+            });
+            $light.on("close", function() {
+            });
+            return false;
+        }
+    });
+    
     var ActionDelete = Backbone.View.extend({
         tagName: "span",
         className: "delete",
         render: function() {
             this.$el.html('<button>delete</button>');
-            this.$el.removeAttr('id');
             this.setElement(this.$el);
             return this;
         },
@@ -464,12 +495,23 @@
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             this.$actions = $('<div class="actions"></div>');
-            this.imageActions = new ImageActions({id: this.id, model: this.model});
+            this.actions = new PaperActions({id: this.id, model: this.model});
         },
         render: function() {
-            this.$el.html('paper');
+            this.$el.html('');
             this.$el.append(this.$actions);
-            this.$actions.append(this.imageActions.render().el);
+            this.$actions.append(this.actions.render().el);
+            
+            if(this.model.has('image')) {
+                this.$el.append('<img src="/api/files/'+this.model.get('image').filename+'" />');
+            }
+            if(this.model.has('css')) {
+                this.$el.append(this.model.get('css'));
+            }
+            if(this.model.has('script')) {
+                this.$el.append(this.model.get('script'));
+            }
+            
             this.trigger('resize');
             this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
             return this;
@@ -478,6 +520,9 @@
           "click": "select"
         },
         select: function(e) {
+            if(this.options.list) {
+                this.options.list.trigger('selected', this);
+            }
         },
         remove: function() {
           $(this.el).remove();
@@ -559,20 +604,38 @@
                         self.renderImage(data.image);
                     }
                 });
-                self.trigger('initialized');
                 self.initialized = true;
+                self.trigger('initialized');
             });
+            if(this.model && this.model.id) {
+                this.$el.attr('data-id', this.model.id);
+            } else {
+                
+            }
         },
         render: function() {
             var self = this;
             if(!this.initialized) {
+                console.log('not inited')
                 this.on('initialized', function(){
+                    console.log('nowww inited')
                     self.render();
                 });
             }
             this.$el.html('<h4>Wallpaper</h4><form id="newWallpaperForm"><span class="image"></span><textarea name="paperScript" placeholder="javascript"></textarea><textarea name="paperCss" placeholder="css"></textarea><input type="submit" value="Save" /></form>');
             if(this.newFileForm) {
                 this.$el.find(".image").append(this.newFileForm.render().$el);
+            }
+            if(this.model) {
+                if(this.model.has('image')) {
+                    this.$el.find(".image").append('<img src="/api/files/'+this.model.get('image').filename+'" />');
+                }
+                if(this.model.has('css')) {
+                    $('[name="paperCss"]').val(this.model.get('css'));
+                }
+                if(this.model.has('script')) {
+                    $('[name="paperScript"]').val(this.model.get('script'));
+                }
             }
             this.setElement(this.$el);
             return this;
@@ -605,33 +668,39 @@
             var self = this;
             var $img = this.$el.find(".image");
             console.log($img.attr("data-id"));
-            var newDoc = {};
+            var paperScriptVal = $('[name="paperScript"]').val();
+            var paperCssVal = $('[name="paperCss"]').val();
+            var setDoc = {};
+            if(paperScriptVal) {
+                setDoc.script = paperScriptVal;
+            }
+            if(paperCssVal) {
+                setDoc.css = paperCssVal;
+            }
             if ($img.attr("data-id") && $img.attr("data-filename")) {
-                newDoc.image = {
+                setDoc.image = {
                     id: $img.attr("data-id"),
                     filename: $img.attr("data-filename")
                 };
             }
-            var paperScriptVal = $('[name="paperScript"]').val();
-            var paperCssVal = $('[name="paperCss"]').val();
-            if(paperScriptVal) {
-                newDoc.script = paperScriptVal;
+            if(!this.model) {
+                this.model = new Paper({}, {
+                    collection: this.collection
+                });
+            } else {
+                
             }
-            if(paperCssVal) {
-                newDoc.css = paperCssVal;
-            }
-            var m = new Paper({}, {
-                collection: this.collection
-            });
-            m.set(newDoc);
-            var s = m.save(null, {
-                silent: true,
+            this.model.set(setDoc, {silent: true});
+            var saveModel = this.model.save(null, {
+                silent: false ,
                 wait: true
             });
-            s.done(function() {
-                self.trigger("saved", m);
-                self.collection.add(m);
-            });
+            if(saveModel) {
+                saveModel.done(function() {
+                    self.trigger("saved", self.model);
+                    self.collection.add(self.model);
+                });
+            }
             return false;
         },
         focus: function() {},

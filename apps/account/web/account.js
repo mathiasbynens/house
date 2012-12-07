@@ -725,6 +725,7 @@
                     });
                     loginStatus.on("login", function() {
                         loginStatus.getView().render();
+                        self.trigger('loggedIn', loginStatus);
                     });
                     self.$profile.append(loginStatus.getView().render().$el);
                     if (loginStatus && loginStatus.has("user")) {} else {}
@@ -789,7 +790,6 @@
     });
     
     var profile = new ProfileView;
-    window.testprofile = profile;
     if (define) {
         define(function() {
             return profile;

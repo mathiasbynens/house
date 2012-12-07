@@ -32,7 +32,7 @@
                                     require(['nav.js'], function(nav){
                                         index.nav = nav;
                                         nav.init();
-                                        $('body').append(nav.list.render().$el);
+                                        $('header').append(nav.list.render().$el);
                                         
                                         //
                                         // Example of simple model we generate on the fly to build our nav
@@ -54,12 +54,25 @@
                                         
                                         require(['../wallpaper/wallpaper.js'], function(wallpaper){
                                             wallpaper.on('initialized', function(){
-                                                $('body').append(wallpaper.getBackgroundView().render().$el);
+                                                var wallpaperBackground = wallpaper.getBackgroundView();
+                                                $('body').append(wallpaperBackground.render().$el);
+                                                wallpaperBackground.transitionEvery(60000*15);
                                             });
                                         });
                                         
                                         account.bindRouter(nav.router);
                                         nav.startRouter('/desktop/');
+                                        
+                                        require(['jquery.idle-timer.js'], function() {
+                                            var idleTimer = $(document).idleTimer(3200);
+                                            $(document).bind("idle.idleTimer", function(e){
+                                                $('body').addClass('idle');
+                                            });
+                                            $(document).bind("active.idleTimer", function(){
+                                                $('body').removeClass('idle');
+                                            });
+                                        });
+                                        
                                         if(callback) {
                                             callback();
                                         }

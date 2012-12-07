@@ -1,13 +1,24 @@
-// Clock!
-//
+// A Clock!
 //
 (function(){
-
+    var monthNamesShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    var dayNamesShort = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    
     var clock = {};
     
     clock.alarms = [];
     
+    clock.getDateString = function() {
+        var str = '';
+        var currentTime = new Date ();
+        str += dayNamesShort[currentTime.getDay()] + ' ' + monthNamesShort[currentTime.getMonth()] + ' ' + currentTime.getDate();
+        return str;
+    }
+    
     clock.getTimeString = function() {
+        var showSeconds = false;
+        var twentyFourHour = false;
       var currentTime = new Date ();
      
       var currentHours = currentTime.getHours ( );
@@ -17,13 +28,16 @@
       currentMinutes = ( currentMinutes < 10 ? "0" : "" ) + currentMinutes;
       currentSeconds = ( currentSeconds < 10 ? "0" : "" ) + currentSeconds;
      
-      var timeOfDay = ( currentHours < 12 ) ? "am" : "pm";
+      var timeOfDay = ( currentHours < 12 ) ? "AM" : "PM";
      
       currentHours = ( currentHours > 12 ) ? currentHours - 12 : currentHours;
       currentHours = ( currentHours == 0 ) ? 12 : currentHours;
     
-      var currentTimeString = currentHours + ":" + currentMinutes + ":" + currentSeconds + " " + timeOfDay;
-      
+      var currentTimeString = currentHours + ":" + currentMinutes;
+      if(showSeconds) {
+          currentTimeString = currentTimeString + ":" + currentSeconds;
+      }
+      currentTimeString = currentTimeString + " " + timeOfDay;
       return currentTimeString;
     }
     
@@ -88,7 +102,7 @@
       var self = this
       if(this.$clocks) {
           this.$clocks.each(function(i,e){
-            $(e).html(self.getTimeString());
+            $(e).html(self.getDateString() + ", " + self.getTimeString());
           })
       }
       this.checkAlarms();

@@ -1,32 +1,9 @@
 CACHE MANIFEST
-# ver 0.3
+# ver 0.1
 
 CACHE:
-/todos/
-/todos/login
-/todos/todo
-/todos/lists
-/todos/nolist
-/images/startup-splash.png
-/js/require.js
-/js/jquery.js
-/js/underscore.js
-/js/backbone.js
-/js/backboneJeffshouse.js
-/js/jquery.ui.min.js
-/js/jquery.touchfix.js
-/js/jquery.hotkeys.js
-/js/iscroll.js
-/js/jeffshouse.js
-/js/jeffshouseAuth.js
-/js/model/todos.js
-/css/common.css
-/todos/todos.css
-/todos/todos.js
-/todos/Icon@2x.png
-/todos/favicon.ico
+/images/
 
 NETWORK:
 /
 *
-//www.jeffshouse.com

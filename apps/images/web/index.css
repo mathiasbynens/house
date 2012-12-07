@@ -56,6 +56,8 @@ clock {
     left: 0;
     width: 25%;
     text-align: left;
+    height: 44px;
+    line-height: 44px;
 }
 account {
     position: absolute;
@@ -830,7 +832,7 @@ body header, body .info, body .actions {
     -o-transition: opacity 0.3s ease;
     transition: opacity 0.3s ease;
 }
-body.idle header, body.idle .info, body.idle .actions {
+body.idle header {
     opacity: 0;
     display: block;
 }
@@ -853,8 +855,8 @@ header {
 
 ul li {
     float: left;
-    width: 280px;
-    height: 280px;
+    height: 248px;
+    width: 23%;
     overflow: hidden;
     position: relative;
     padding: 0 0;
@@ -882,7 +884,7 @@ ul li[selected] .info {
     color: black;
     display: block;
 }
-#image-list-pager {
+.list-pager {
     clear: both;
     text-align: center;
 }
@@ -940,7 +942,9 @@ img.rotateNinety {
 }
 
 @media only screen and (max-width: 767px) {
-    
+    .carousel-control {
+        display: none;
+    }
     header menu li {
     }
     
@@ -964,6 +968,11 @@ img.rotateNinety {
     }
 }
 @media only screen and (min-width: 767px) {
+    ul li {
+        height: 174px;
+        width: 23%;
+        font-size: .7em;
+    }
     ul li:hover {
         background: yellow;
         color: black;
@@ -978,6 +987,13 @@ img.rotateNinety {
     }
     navigation:hover menu, account:hover menu {
         visibility: visible !important;
+    }
+}
+@media only screen and (min-width: 1024px) {
+    ul li {
+        height: 174px;
+        width: 14.66%;
+        font-size: .7em;
     }
 }
 .fileForm {
@@ -1057,5 +1073,52 @@ button:active {
     background: -ms-linear-gradient(top,  #4c4c4c 0%,#595959 12%,#666666 25%,#474747 95%,#131313 100%); /* IE10+ */
     background: linear-gradient(to bottom,  #4c4c4c 0%,#595959 12%,#666666 25%,#474747 95%,#131313 100%); /* W3C */
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4c4c4c', endColorstr='#131313',GradientType=0 ); /* IE6-9 */
-    
+}
+.carousel-control {
+    font-size: 120px;
+    margin-top: 0;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, .4);
+    opacity: 0.5;
+    position: absolute;
+    top: 40%;
+    z-index: 2;
+    text-decoration: none;
+}
+.carousel-control.left {
+    left: 2%;
+}
+.carousel-control.right {
+    right: 2%;
+}
+.imageFullView {
+    text-align: center;
+}
+
+#image-viewer, #image-viewer img {
+	-webkit-user-select:none;
+    -webkit-text-size-adjust:none;
+}
+
+#image-viewer {
+	width:100%;
+	min-width:320px;
+    margin-top: -44px;
+    padding-top: -44px;
+}
+
+#swipeview-slider > div {
+	position:relative;
+	display:-webkit-box;
+	-webkit-box-orient:vertical;
+	-webkit-box-pack:center;
+	-webkit-box-align:center;
+	overflow:auto;
+}
+
+#swipeview-slider > span {
+	-webkit-box-sizing:border-box;
+	display:block;
+	text-align:center;
+	font-size:1.4em;
+	padding:0 20px;
 }
