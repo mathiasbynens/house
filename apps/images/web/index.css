@@ -914,6 +914,7 @@ ul li[selected] .filename, ul li[selected] .time {
 
 #image-viewer img {
     max-width: 100%;
+    max-height: 100%;
     background: white;
 }
 #image-viewer img.map {

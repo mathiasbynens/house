@@ -11,13 +11,15 @@
             this.on("change", function(model, options){
                 console.log(arguments);
             });
+            this.views = {};
         },
         getFullView: function(options) {
             options = options || {};
             options.id = this.get("_id");
             options.model = this;
             if (!this.fullView) {
-                this.fullView = new ImageFullView(options);
+                var view = this.fullView = new ImageFullView(options);
+                this.views.fullView = view;
             }
             return this.fullView;
         },
@@ -26,7 +28,8 @@
             options.id = this.get("_id");
             options.model = this;
             if (!this.avatar) {
-                this.avatar = new ImageAvatar(options);
+                var view = this.avatar = new ImageAvatar(options);
+                this.views.avatar = view;
             }
             return this.avatar;
         },
@@ -35,9 +38,15 @@
             options.id = this.get("_id");
             options.model = this;
             if (!this.row) {
-                this.row = new ImageRow(options);
+                var row = this.row = new ImageRow(options);
+                this.views.row = row;
             }
             return this.row;
+        },
+        renderViews: function() {
+            for(var i in this.views) {
+                this.views[i].render();
+            }
         }
     });
     
@@ -92,6 +101,52 @@
             var self = this;
             self.pageSize = 10;
             this.resetFilters();
+            
+            require(['//'+window.location.host+'/desktop/socket.io.min.js'], function() {
+                var socketOpts = {};
+                if(window.location.protocol.indexOf('https') !== -1) {
+                    socketOpts.secure = true;
+                } else {
+                    socketOpts.secure = false;
+                }
+                var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
+                socket.on('connect', function(data) {
+                    console.log('connected and now joining '+self.collectionName);
+                    socket.emit('join', self.collectionName);
+                });
+                var insertOrUpdateDoc = function(doc) {
+                        console.log(doc);
+                    if(_.isArray(doc)) {
+                        _.each(doc, insertOrUpdateDoc);
+                        return;s
+                    }
+                    var model = self.get(doc.id);
+                    if(!model) {
+                        var model = new self.model(doc);
+                        self.add(model);
+                    } else {
+                        console.log(model);
+                        model.set(doc, {silent:true});
+                        model.renderViews();
+                    }
+                }
+                socket.on('inserted', function(doc) {
+                    insertOrUpdateDoc(doc);
+                    self.count++;
+                    self.trigger('count', self.count);
+                });
+                socket.on('updated', function(doc) {
+                    insertOrUpdateDoc(doc);
+                });
+                socket.on('deleted', function(id) {
+                    self.remove(id);
+                    self.count--;
+                    self.trigger('count', self.count);
+                });
+                
+                self.initialized = true;
+                self.trigger('initialized');
+            });
         },
         headCount: function(callback) {
             var self = this;
@@ -111,7 +166,7 @@
             var self = this;
             self.headCount(function(count){
                 self.count = count;
-                self.trigger('colCount', count);
+                self.trigger('count', count);
             });
         },
         load: function(options, success) {
@@ -176,7 +231,6 @@
                 var options = { "_id": id };
                 this.fetch({data: options, add: true, success: function(collection, response){
                         if(response) {
-                            console.log(response);
                             image = self.get(id);
                             callback(image);
                         } else {
@@ -261,14 +315,24 @@
             self.loading = false;
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> images</div>');
             var $ul = this.$ul = $('<ul class="images"></ul>');
-            this.collection.bind("add", function(doc) {
+            this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
                     view = doc.getRow({list: self});
                 } else if(self.layout === 'avatar') {
                     view = doc.getAvatar({list: self});
                 }
-                self.appendRow(view.render().el);
+                self.appendRow(view);
+                self.renderPager();
+                doc.on('remove', function(){
+                    view.$el.remove();
+                    return false;
+                });
+            });
+            this.collection.on('remove', function(doc, col, options) {
+                self.renderPager();
+            });
+            this.collection.on('count', function() {
                 self.renderPager();
             });
             this.collection.on('reset', function(){
@@ -307,7 +371,7 @@
                     view = doc.getAvatar({list: self});
                 }
                 
-                self.appendRow(view.render().el);
+                self.appendRow(view);
             });
             this.$el.append(this.$pager);
             this.renderPager();
@@ -322,7 +386,27 @@
             this.$pager.find('.list-count').html(c);
         },
         appendRow: function(row) {
-            this.$ul.append(row);
+            var rank = new Date(row.model.get('at'));
+            rank = rank.getTime();
+            var rowEl = row.render().$el;
+            rowEl.attr('data-sort-rank', rank);
+            var d = false;
+            var $lis = this.$ul.children();
+            var last = $lis.last();
+            var lastRank = parseInt(last.attr('data-sort-rank'), 10);
+            if(rank > lastRank) {
+                $lis.each(function(i,e){
+                    if(d) return;
+                    var r = parseInt($(e).attr('data-sort-rank'), 10);
+                    if(rank > r) {
+                        $(e).before(rowEl);
+                        d = true;
+                    }
+                });
+            }
+            if(!d) {
+                this.$ul.append(rowEl);
+            }
         }
     });
     
@@ -500,7 +584,6 @@
             
             var getAndDestroyModel = function(fileId, callback) {
                 images.filesCollection.getOrFetch(fileId, {add: false}, function(fileModel){
-                    console.log(fileModel);
                     if(fileModel) {
                         fileModel.destroy({success: function(model, response) {
                             if(callback) callback(response);
@@ -536,7 +619,6 @@
                     removeThumbs();
                 }
                 this.model.destroy({success: function(model, response) {
-                  //console.log('delete');
                   window.history.back(-1);
                 }, 
                 errorr: function(model, response) {
@@ -707,25 +789,27 @@
         newGroup: function() {
             var self = this;
             var groupName = prompt("Enter groups, separated, by commas.");
-            groupName = groupName.split(',');
-            
-            for(var i in groupName) {
-                var g = groupName[i];
-                groupName[i] = g.trim(); // trim extra white space
-            }
             if(groupName) {
-                if(!this.model.get("groups")) {
-                    this.model.set({'groups': groupName}, {silent: true});
-                } else {
-                    this.model.pushAll({"groups": groupName}, {silent: true});
+                groupName = groupName.split(',');
+                
+                for(var i in groupName) {
+                    var g = groupName[i];
+                    groupName[i] = g.trim(); // trim extra white space
                 }
-                var saveModel = this.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function() {
-                    self.render();
-                });
+                if(groupName) {
+                    if(!this.model.get("groups")) {
+                        this.model.set({'groups': groupName}, {silent: true});
+                    } else {
+                        this.model.pushAll({"groups": groupName}, {silent: true});
+                    }
+                    var saveModel = this.model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    saveModel.done(function() {
+                        self.render();
+                    });
+                }
             }
         }
     });
