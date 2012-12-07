@@ -5,13 +5,15 @@
         initialize: function(attr, opts) {
             this.on("change", function(model, options){
             });
+            this.views = {};
         },
         getFullView: function(options) {
             options = options || {};
             options.id = this.get("_id");
             options.model = this;
             if (!this.fullView) {
-                this.fullView = new PaperFullView(options);
+                var view = this.fullView = new PaperFullView(options);
+                this.views.fullView = view;
             }
             return this.fullView;
         },
@@ -20,7 +22,8 @@
             options.id = this.get("_id");
             options.model = this;
             if (!this.avatar) {
-                this.avatar = new PaperAvatar(options);
+                var view = this.avatar = new PaperAvatar(options);
+                this.views.avatar = view;
             }
             return this.avatar;
         },
@@ -29,9 +32,15 @@
             options.id = this.get("_id");
             options.model = this;
             if (!this.row) {
-                this.row = new PaperRow(options);
+                var view = this.row = new PaperRow(options);
+                this.views.row = view;
             }
             return this.row;
+        },
+        renderViews: function() {
+            for(var i in this.views) {
+                this.views[i].render();
+            }
         }
     });
     
@@ -43,6 +52,50 @@
             var self = this;
             self.pageSize = 10;
             this.resetFilters();
+            require(['//'+window.location.host+'/desktop/socket.io.min.js'], function() {
+                var socketOpts = {};
+                if(window.location.protocol.indexOf('https') !== -1) {
+                    socketOpts.secure = true;
+                } else {
+                    socketOpts.secure = false;
+                }
+                var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
+                socket.on('connect', function(data) {
+                    console.log('connected and now joining '+self.collectionName);
+                    socket.emit('join', self.collectionName);
+                });
+                var insertOrUpdateDoc = function(doc) {
+                        console.log(doc);
+                    if(_.isArray(doc)) {
+                        _.each(doc, insertOrUpdateDoc);
+                        return;s
+                    }
+                    var model = self.get(doc.id);
+                    if(!model) {
+                        var model = new self.model(doc);
+                        self.add(model);
+                    } else {
+                        model.set(doc, {silent:true});
+                        model.renderViews();
+                    }
+                }
+                socket.on('insertedWallpaper', function(doc) {
+                    insertOrUpdateDoc(doc);
+                    self.count++;
+                    self.trigger('count', self.count);
+                });
+                socket.on('updatedWallpaper', function(doc) {
+                    insertOrUpdateDoc(doc);
+                });
+                socket.on('deletedWallpaper', function(id) {
+                    self.remove(id);
+                    self.count--;
+                    self.trigger('count', self.count);
+                });
+                
+                self.initialized = true;
+                self.trigger('initialized');
+            });
         },
         headCount: function(callback) {
             var self = this;

@@ -130,15 +130,16 @@
                         model.renderViews();
                     }
                 }
-                socket.on('inserted', function(doc) {
+                socket.on('insertedImages', function(doc) {
+                    console.log('inserted image');
                     insertOrUpdateDoc(doc);
                     self.count++;
                     self.trigger('count', self.count);
                 });
-                socket.on('updated', function(doc) {
+                socket.on('updatedImages', function(doc) {
                     insertOrUpdateDoc(doc);
                 });
-                socket.on('deleted', function(id) {
+                socket.on('deletedImages', function(id) {
                     self.remove(id);
                     self.count--;
                     self.trigger('count', self.count);
