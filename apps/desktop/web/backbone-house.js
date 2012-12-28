@@ -106,24 +106,36 @@ Backbone.sync = function(method, model, options) {
       var restObj = {};
       var fullPut = true;
       var changedAttr = model.changedAttributes();
+      console.log(changedAttr);
+      for(var i in changedAttr) {
+          if(_.isUndefined(changedAttr[i])) {
+              if(!restObj.hasOwnProperty("$unset")) {
+                  restObj["$unset"] = {};
+              }
+              restObj["$unset"][i] = "";
+              delete changedAttr[i];
+              fullPut = false;
+          }
+      }
+      console.log(changedAttr);
       if(changedAttr) {
           restObj["$set"] = changedAttr;
-          fullPut = false
+          fullPut = false;
       }
       if(model.pulls) {
           restObj["$pull"] = model.pulls;
           delete model.pulls;
-          fullPut = false
+          fullPut = false;
       }
       if(model.pushes) {
           restObj["$push"] = model.pushes;
           delete model.pushes;
-          fullPut = false
+          fullPut = false;
       }
       if(model.pushAlls) {
           restObj["$pushAll"] = model.pushAlls;
           delete model.pushAlls;
-          fullPut = false
+          fullPut = false;
       }
       if(fullPut) {
           console.log('full put prevented');

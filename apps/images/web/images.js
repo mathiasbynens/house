@@ -7,12 +7,12 @@
         initialize: function() {
             var self = this;
             require(['../desktop/swipeview.js'], function(){
-            require(['../files/files.js'], function(FilesBackbone){
-                self.FilesBackbone = FilesBackbone;
+            require(['../files/backbone-files.js'], function(FilesBackbone){
+                window.FilesBackbone = FilesBackbone;
                 require(['backbone-images.js'], function(ImagesBackbone){
-                    self.ImagesBackbone = ImagesBackbone;
-                    require(['../checkins/checkins.js'], function(CheckinsBackbone){
-                        self.CheckinsBackbone = CheckinsBackbone;
+                    window.ImagesBackbone = ImagesBackbone;
+                    require(['../checkins/backbone-checkins.js'], function(CheckinsBackbone){
+                        window.CheckinsBackbone = CheckinsBackbone;
                         self.initFiles(function(){
                             self.initImages(function(){
                                 var loadCollections = function() {
@@ -52,26 +52,33 @@
             this.$imageList = $('<div id="images-list" class="pImages"></div>');
             this.$imageViewer = $('<div id="image-viewer" class="pImageViewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
             
-            self.imagesCollection = window.imagesCollection = new self.ImagesBackbone.Collection(); // collection
+            self.imagesCollection = window.imagesCollection = new ImagesBackbone.Collection(); // collection
             self.imagesCollection.pageSize = pageSize;
-            self.checkinsCollection = window.checkinsCollection = new self.CheckinsBackbone.Collection();
-            this.imagesListView = new self.ImagesBackbone.List({collection: this.imagesCollection});
+            self.checkinsCollection = window.checkinsCollection = new CheckinsBackbone.Collection();
+            this.imagesListView = new ImagesBackbone.List({collection: this.imagesCollection});
             this.imagesListView.on('select', function(imageRow) {
                 self.router.navigate('image/'+imageRow.model.get('id'), true);
+            });
+            this.imagesListView.on('goToImageHref', function(href) {
+                var imgPath = '/images/';
+                if(href.indexOf(imgPath) === 0) {
+                    href = href.substr(imgPath.length);
+                }
+                self.router.navigate(href, true);
             });
             if(callback) callback();
         },
         initFiles: function(callback) {
             var self = this;
             this.$filesList = $('<div id="files-list" class="pImport"></div>');
-            self.filesCollection = new self.FilesBackbone.Collection();
+            self.filesCollection = new FilesBackbone.Collection();
             self.filesCollection.pageSize = pageSize;
             self.filesCollection.filterContentType('image');
             self.filesCollection.filterProc(true);
-            self.filesList = new self.FilesBackbone.List({collection: self.filesCollection});
+            self.filesList = new FilesBackbone.List({collection: self.filesCollection});
             
             this.$upload = $('<span class="upload"></span>');
-            self.newFileForm = new self.FilesBackbone.FileForm({collection: self.filesCollection, type: 'image'});
+            self.newFileForm = new FilesBackbone.FileForm({collection: self.filesCollection, type: 'image'});
             self.newFileForm.on('upload', function(data){
                 if(data.image) {
                     self.imagesCollection.add(data.image);
@@ -96,6 +103,7 @@
                     console.log('currentMasterPage='+self.carousel.currentMasterPage);
                     var id = self.carousel.masterPages[self.carousel.currentMasterPage].dataset.id;
                     console.log(id);
+                    var viewOpts = {list: self.imagesListView};
                     var image = self.imagesCollection.get(id);
                     var imageNext = image.next();
                     var imagePrev = image.prev();
@@ -110,10 +118,10 @@
                             el.innerHTML = '';
                             if(self.carousel.directionX > 0) {
                                 el.dataset.id = imagePrev.id;
-                                el.appendChild(imagePrev.getFullView().render().$el[0]);
+                                el.appendChild(imagePrev.getFullView(viewOpts).render().$el[0]);
                             } else {
                                 el.dataset.id = imageNext.id;
-                                el.appendChild(imageNext.getFullView().render().$el[0]);
+                                el.appendChild(imageNext.getFullView(viewOpts).render().$el[0]);
                             }
                 		}
                 	}
@@ -194,7 +202,8 @@
                 self.findImageById(id, function(image){
                     if(image) {
                         self.initCarousel();
-                        var imageEl = image.getFullView().render().$el;
+                        var viewOpts = {list: self.imagesListView};
+                        var imageEl = image.getFullView(viewOpts).render().$el;
                         
                         var renderSiblings = function() {
                             var imageNext = image.next();
@@ -204,12 +213,12 @@
                             if(imageNext) {
                                 pageNext.innerHTML = '';
                                 pageNext.dataset.id = imageNext.id;
-                                pageNext.appendChild(imageNext.getFullView().render().$el[0]);
+                                pageNext.appendChild(imageNext.getFullView(viewOpts).render().$el[0]);
                             }
                             if(imagePrev) {
                                 pagePrev.innerHTML = '';
                                 pagePrev.dataset.id = imagePrev.id;
-                                pagePrev.appendChild(imagePrev.getFullView().render().$el[0]);
+                                pagePrev.appendChild(imagePrev.getFullView(viewOpts).render().$el[0]);
                             }
                         }
                         console.log(imageEl[0]);

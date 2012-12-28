@@ -1,11 +1,7 @@
-html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
 body {
     font-family: Helvetica;
     font-size: 1.3em;
     cursor: default;
-    margin-top: 50px;
-}
-body {
     margin-top: 44px;
 }
 a {
@@ -14,6 +10,7 @@ a {
 }
 a:hover {
     color: yellow;
+    background: rgba(0, 0, 0, 0.6);
 }
 h1, h2, h3, h4, h5 {
   margin: 0 0;
@@ -26,6 +23,9 @@ input, textarea, select, button {
    border-radius: 3px;
    color: rgb(16,16,16);
    background: white;
+}
+input[type="url"]:disabled, input[type="button"]:disabled, input[type="submit"]:disabled, input[type="reset"]:disabled, input[type="file"]:disabled::-webkit-file-upload-button, button:disabled, select:disabled, keygen:disabled, optgroup:disabled, option:disabled, select[disabled] > option {
+    color: rgb(166,166,166);
 }
 .navBackButton {
     position: fixed;
@@ -822,93 +822,6 @@ header {
     text-align: center;
 }
 
-ul li {
-    float: left;
-    width: 280px;
-    height: 280px;
-    overflow: hidden;
-    position: relative;
-    padding: 0 0;
-    margin: 1%;
-    box-sizing: border-box;
-    border: 1px inset rgba(125, 125, 125, .5);
-}
-ul li img {
-    margin: 0 auto;
-    display: block;
-    width: 100%;
-    background: white;
-}
-ul li .info {
-    display:none;
-    font-size: .6em;
-}
-
-ul li[selected] .info {
-    position: absolute;
-    bottom: 0px;
-    left: 0px;
-    width: 100%;
-    background: white;
-    color: black;
-    display: block;
-}
-#image-list-pager {
-    clear: both;
-    text-align: center;
-}
-#files-list .actions {
-    display:none;
-}
-#files-list button[processed] {
-    background: orange;
-    color: black;
-}
-#files-list ul li[selected] .actions {
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-}
-.actions .delete, .actions .groups, .actions .tags{
-    display: block;
-}
-
-ul li[selected] {
-    background: yellow;
-}
-ul li[selected] .filename, ul li[selected] .time {
-    display: inline;
-}
-
-#image-viewer img {
-    max-width: 100%;
-    background: white;
-}
-#image-viewer img.map {
-    width: auto;
-}
-img.rotateNinety {
-    -moz-transform: rotate(90deg);  /* FF3.5/3.6 */
-    -o-transform: rotate(90deg);  /* Opera 10.5 */
-    -webkit-transform: rotate(90deg);  /* Saf3.1+ */
-    transform: rotate(90deg);  /* Newer browsers (incl IE9) */
-}
-
-.exifData {
-    display:none;
-}
-.download, .exif, .at, .checkin {
-    display: block;
-}
-.download a:not(:first-child) {
-    display: none;
-}
-
-
-.download:hover a:not(:first-child) {
-    display: inline;
-}
 
 @media only screen and (max-width: 767px) {
     
@@ -925,19 +838,12 @@ img.rotateNinety {
     header h2 {
         font-size: .77em;
     }
-    ul li {
-        height: 74px;
-        width: 23%;
-        font-size: .7em;
-    }
     navigation menu, account menu {
         width: 200%;
     }
 }
 @media only screen and (min-width: 767px) {
     ul li:hover {
-        background: yellow;
-        color: black;
     }
     header menu li:not([selected]):hover {
         color: yellow;
@@ -948,7 +854,7 @@ img.rotateNinety {
     ul li:hover img {
     }
     navigation:hover menu, account:hover menu {
-        visibility: visible !important;
+        visibility: visible;
     }
 }
 .fileForm {

@@ -15,3 +15,15 @@ img {
 .idle #wallpaper {
     display: none;
 }
+
+ul li {
+    float: left;
+    height: 248px;
+    width: 23%;
+    overflow: hidden;
+    position: relative;
+    padding: 0 0;
+    margin: 1%;
+    box-sizing: border-box;
+    border: 1px inset rgba(125, 125, 125, .5);
+}

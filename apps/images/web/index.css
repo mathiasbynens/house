@@ -970,7 +970,6 @@ img.rotateNinety {
 }
 @media only screen and (min-width: 767px) {
     ul li {
-        height: 174px;
         width: 23%;
         font-size: .7em;
     }
@@ -1122,4 +1121,8 @@ button:active {
 	text-align:center;
 	font-size:1.4em;
 	padding:0 20px;
+}
+
+.row .actions {
+    display: none;
 }

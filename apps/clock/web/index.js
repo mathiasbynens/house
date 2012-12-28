@@ -1,28 +1,50 @@
-//
-//
-//
-//
-//
-//
 (function(){
-
-    var clock = {};
-
-    clock.init = function(callback) {
-        require(['underscore.js'], function(){
-            require(['backbone.js'], function(){
-                $('body').append('<div class="clock"></div>');
-                require(['clock.js'], function(clock) {
-                    clock.startClocks($('.clock'));
+    var index = {};
+    index.init = function(callback) {
+        require(['../desktop/jquery.js'], function(){
+            require(['../desktop/underscore.js'], function(){
+                require(['../desktop/backbone.js'], function(){
+                    require(['../desktop/backbone-house.js'], function(){
+                        require(['../desktop/utils.js'], function(utils){
+                            window.utils = utils;
+                            require(['../account/account.js'], function(account){
+                                account.on('init', function(){
+                                    var $account = $('<account></account>');
+                                    $('header').append($account);
+                                    $account.append(account.render().$el);
+                                    require(['../desktop/nav.js'], function(nav){
+                                        index.nav = nav;
+                                        nav.init();
+                                        nav.router.on('loading', function(){
+                                            $('body').addClass('loading');
+                                        });
+                                        nav.router.on('loadingComplete', function(){
+                                            $('body').removeClass('loading');
+                                        });
+                                        $('header').append(nav.list.render().$el);
+                                        require(['clock.js'], function(Clock) {
+                                            var clock = new Clock();
+                                            clock.on('init', function(){
+                                                $('body').append(clock.render().$el);
+                                                clock.bindNav(nav);
+                                                nav.startRouter('/clock/');
+                                                if(callback) callback(clock);
+                                            });
+                                        });
+                                        account.bindRouter(nav.router);
+                                    });
+                                });
+                            });
+                        });
+                    });
                 });
-                
             });
         });
     }
     
     if(define) {
         define(function () {
-            return clock;
+            return index;
         });
     }
 })();

@@ -1,601 +1,351 @@
 (function() {
-    
-    var File = Backbone.Model.extend({
-        collectionName: "files",
-        initialize: function() {
-            this.on("change", function(file, options){
-                var changedAttr = file.changedAttributes();
-                console.log(changedAttr);
-                var doSave = false;
-                
-                // Don't update the id or createdAt
-                delete changedAttr['id'];
-                delete changedAttr['_id'];
-                delete changedAttr['createdAt'];
-                
-                for(var i in changedAttr) {
-                    if(changedAttr.hasOwnProperty(i)) {
-                        doSave = true;
-                    }
-                }
-                
-                if(doSave) {
-                    file.save();
-                }
-            });
-        },
-        getView: function(name, options) {
-            options = options || {};
-            options.id = this.get("id");
-            options.model = this;
-            
-            var viewObject = eval("File"+name);
-            
-            if (!this[name]) {
-                this[name] = new viewObject(options);
-            }
-            return this[name];
-        },
-        getFullView: function(options) {
-            return this.getView('FullView', options);
-        },
-        getAvatar: function(options) {
-            return this.getView('Avatar', options);
-        },
-        getRow: function(options) {
-            return this.getView('Row', options);
-        }
-    });
-    
-    var Files = Backbone.Collection.extend({
-        model: File,
-        collectionName: 'files',
-        url: '/api/files',
-        initialize: function() {
-            var self = this;
-            self.pageSize = 10;
-            this.resetFilters();
-        },
-        load: function(options, success) {
-            var self = this;
-            
-            if(!options) {
-                options = {};
-            }
-            if(!options.limit) {
-                options.limit = self.pageSize;
-            }
-            
-            if(!options.sort) {
-                options.sort = "uploadDate-";
-            }
-            
-            this.applyFilters(options);
-                    
-            this.fetch({data: options, add: true, success: function(collection, response){
-                    if(success) {
-                        success();
-                    }
-                },
-                error: function(collection, response){
-                }
-            });
-        },
-        getOrFetch: function(id, options, callback) {
-            var collection = this;
-            
-            var fetchOptions = {
-                data: { "_id": id }, add: true, success: function(collection, response){
-                    if(response) {
-                        documentModel = collection.get(id);
-                        callback(documentModel);
-                    } else {
-                        callback(false);
-                    }
-                },
-                error: function(collection, response){
-                    callback(false);
-                }
-            };
-            
-            if(typeof options === 'function') {
-                callback = options;
-                options = {};
-            }
-            if(options.hasOwnProperty('add')) {
-                fetchOptions.add = options.add;
-            }
-            
-            var documentModel;
-            
-            documentModel = collection.get(id);
-            
-            if(documentModel) {
-                callback(documentModel);
-            } else {
-                collection.fetch(fetchOptions);
-            }
-        },
-        getNextPage: function() {
-            if(this.length < this.collectionCount) {
-                this.load({skip:this.length});
-            }
-        },
-        filterContentType: function(contentType) {
-            this.filteredContentType = contentType;
-        },
-        filterProc: function(doFilter) {
-            this.filteredProc = doFilter;
-        },
-        applyFilters: function(options) {
-            if(this.filteredContentType) {
-                options.contentType = '/'+this.filteredContentType+'.*/';
-            }
-            if(this.filterProc) {
-                options["metadata.proc"] = {"$exists": false};
-            }
-            return options;
-        },
-        updateFilter: function(filter) {
-            this.reset();
-            this.load();
-        },
-        comparator: function(doc) {
-            
-            var d;
-            
-            if(doc.get("uploadDate")) {
-                d = new Date(doc.get("uploadDate")).getTime();
-                return d * -1;
-            } else {
-                return 1;
-            }
-        },
-        resetFilters: function() {
-            this.filteredContentType = false;
-        }
-    });
-    
-    var FilesList = Backbone.View.extend({
-        layout: 'avatar',
-        render: function() {
-            var self = this;
-            
-            this.$el.html('');
-            
-            this.$el.append(this.$ul);
-            
-            this.$ul.html('');
-            //this.collection.sort({silent:true});
-            this.collection.each(function(doc){
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatar({list: self});
-                }
-                
-                //self.appendRow(view.render().el);
-                self.$ul.append(view.render().el);
-            });
-            
-            this.trigger('resize');
-            
-            return this;
-        },
-        initialize: function() {
-            var self = this;
-            
-            var $ul = this.$ul = $('<ul id="files"></ul>');
-            
-            this.collection.bind("add", function(doc) {
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatar({list: self});
-                }
-                
-                self.appendRow(view);
-            });
-            
-            this.collection.on('reset', function(){
-                self.render();
-            });
-        },
-        refreshPager: function() {
-            //$('#todosCollectionShowing').html(this.collection.length);
-            //$('#todosCollectionCount').html(this.collection.collectionCount);
-        },
-        appendRow: function(row) {
-            if(this.$ul.children().length === 0) {
-                this.$ul.prepend(row.render().el);
-            } else {
-                var i = this.collection.indexOf(row);
-                if(i >= 0) {
-                    this.$ul.children().eq(i).before(row.render().el);
-                } else {
-                    this.$ul.prepend(row.render().el);
-                }
-            }
-        }
-    });
-    
-    
-    var FileActions = Backbone.View.extend({
-        
-        tagName: "div",
-        
-        className: "fileActions",
-        
-        render: function() {
-            var self = this;
-            this.$el.html('');
-            
-            this.actions.forEach(function(action){
-                self.$el.append(action.render().el);
-            });
-            
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            this.actions = [];
-            
-            this.fileActionDelete = new FileActionDelete({id: this.id, model: this.model});
-            this.$el.append(this.fileActionDelete.render().el);
-            this.actions.push(this.fileActionDelete);
-            
-            this.fileActionProcess = new FileActionProcess({id: this.id, model: this.model});
-            this.$el.append(this.fileActionProcess.render().el);
-            this.actions.push(this.fileActionProcess);
-        }
-    });
-    
-    
-    var FileActionProcess = Backbone.View.extend({
-        
-        tagName: "span",
-        
-        className: "process",
-        
-        render: function() {
-            
-            var $btn = $('<button>process</button>');
-            var metadata = this.model.get('metadata');
-            if(metadata.hasOwnProperty('proc')) {
-                $btn.attr('processed', metadata.proc);
-            }
-            
-            this.$el.html($btn);
-            
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            
-        },
-        events: {
-          "click": "select",
-        },
-        select: function() {
-            if(confirm("Are you sure that you want to process this file?")) {
-                
-                var m = this.model.get("metadata");
-                //m.proc = 1;
-                console.log(this.model);
-                this.model.set({"metadata.proc": 0},{wait: true});
-                console.log(this.model);
-            }
-            return false;
-        }
-    });
-    
-    var FileActionDelete = Backbone.View.extend({
-        
-        tagName: "span",
-        
-        className: "delete",
-        
-        render: function() {
-            this.$el.html('<button>delete</button>');
-            
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            
-        },
-        events: {
-          "click": "select",
-        },
-        select: function() {
-            console.log(this.model);
-            if(confirm("Are you sure that you want to delete this file?")) {
-                this.model.destroy({success: function(model, response) {
-                  console.log('delete');
-                }, 
-                error: function(model, response) {
-                    console.log(arguments);
-                },
-                wait: true});
-            }
-            return false;
-        }
-    });
-    
-    var FileRow = Backbone.View.extend({
-        
-        tagName: "li",
-        
-        className: "fileRow clearfix",
+    var pageSize = 24;
 
-        htmlTemplate: '<img src="/api/files/<%= filename %>" />\
-                        <span class="info">\
-                            <span class="filename"><%= filename %></span>\
-                            <span class="at" data-datetime="<%= uploadDate ? uploadDate : "" %>" title="<%= uploadDateFormatted %>">uploaded: <%= uploadDateShort %></span>\
-                        </span>',
-        
-        template: function(doc) {
-            
-            // Add default values to doc which are required in the template
-            
-            if(doc.hasOwnProperty('uploadDate')) {
-                var uploadDateFormatted = new Date(doc.uploadDate);
-                doc.uploadDateFormatted = uploadDateFormatted.toLocaleString();
-                var hours = uploadDateFormatted.getHours();
-                var ampm = 'am';
-                if(hours > 12) {
-                    hours = hours - 12;
-                    ampm = 'pm';
-                }
-                doc.uploadDateShort = (uploadDateFormatted.getMonth()+1)+'/'+uploadDateFormatted.getDate()+' @ '+hours+':'+uploadDateFormatted.getMinutes()+' '+ampm;
-            } else {
-                doc.uploadDate = false;
-                doc.uploadDateFormatted = '';
-                doc.uploadDateShort = '';
-            }
-            
-            var template = $(_.template(this.htmlTemplate, doc));
-            
-            this.$el.attr('data-files-id', this.model.get("_id"));
-            
-            return template;
-        },
-        render: function() {
-            this.$el.html(this.template(this.model.toJSON()));
-            
-            this.$el.append(this.$actions);
-            
-            this.fileActions.render();
-            
-            this.trigger('resize');
-            
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
-            
-            return this;
-        },
+    var FilesView = Backbone.View.extend({
+        tag: 'span',
+        className: 'app',
         initialize: function() {
-            this.model.bind('change', this.render, this);
-            this.model.bind('destroy', this.remove, this);
-            
-            this.$actions = $('<div class="actions"></div>');
-            this.fileActions = new FileActions({id: this.id, model: this.model});
-            this.$actions.append(this.fileActions.render().el);
-        },
-        events: {
-          "click": "select",
-          "touchstart input": "touchstartstopprop"
-        },
-        touchstartstopprop: function(e) {
-            e.stopPropagation();
-        },
-        select: function() {
-            // One click to select, another to deselect.  Can only have one selection at a time.
-            
-            if(this.hasOwnProperty('list') && this.list.hasOwnProperty('multiSelect') && this.list.multiSelect) {
-                this.$el.addClass("selected");
-                this.$el.attr("selected", true);
-            } else {
-            
-                var deselectSiblings = function(el) {
-                    el.siblings().removeClass('selected');
-                    el.siblings().removeAttr('selected');
-                }
-                
-                if(this.$el.hasClass('selected')) {
-                    this.$el.removeClass("selected");
-                    this.$el.removeAttr('selected');
-                    
-                    // Un Filter the Actions List
-                    //body.actionsListView.filterSession(false);
-                    //this.trigger('select', true);
-                } else {
-                    deselectSiblings(this.$el);
-                    this.$el.addClass("selected");
-                    this.$el.attr("selected", true);
-                    //this.trigger('select', false);
-                }
-            }
-            this.trigger('resize');
-        },
-        remove: function() {
-          $(this.el).remove();
-        }
-    });
-    
-    var FileAvatar = Backbone.View.extend({
-    
-        tagName: "li",
-        
-        className: "fileAvatar",
-        
-        htmlTemplate: '<img src="/api/files/<%= filename %>" />\
-                        <span class="info">\
-                            <span class="filename"><%= filename %></span>\
-                            <span class="at" data-datetime="<%= uploadDate ? uploadDate : "" %>" title="<%= uploadDateFormatted %>">uploaded: <%= uploadDateShort %></span>\
-                            <%= refsHtml %>\
-                        </span>',
-        
-        template: function(doc) {
-            
-            // Add default values to doc which are required in the template
-            
-            if(doc.hasOwnProperty('uploadDate')) {
-                var uploadDateFormatted = new Date(doc.uploadDate);
-                doc.uploadDateFormatted = uploadDateFormatted.toLocaleString();
-                var hours = uploadDateFormatted.getHours();
-                var ampm = 'am';
-                if(hours > 12) {
-                    hours = hours - 12;
-                    ampm = 'pm';
-                }
-                doc.uploadDateShort = (uploadDateFormatted.getMonth()+1)+'/'+uploadDateFormatted.getDate()+' @ '+hours+':'+uploadDateFormatted.getMinutes()+' '+ampm;
-            } else {
-                doc.uploadDate = false;
-                doc.uploadDateFormatted = '';
-                doc.uploadDateShort = '';
-            }
-            
-            doc.refsHtml = 'Refs: ';
-            if(doc.metadata.hasOwnProperty('refs')) {
-                for(var i in doc.metadata.refs) {
-                    var refDoc = doc.metadata.refs[i];
-                    doc.refsHtml += ' '+refDoc.col +'/'+ refDoc.id;
-                }
-            }
-            
-            var template = $(_.template(this.htmlTemplate, doc));
-            
-            this.$el.attr('data-files-id', this.model.get("_id"));
-            
-            return template;
-        },
-        render: function() {
-            this.$el.html(this.template(this.model.toJSON()));
-            
-            this.$el.append(this.$actions);
-            
-            this.fileActions.render();
-            
-            this.trigger('resize');
-            
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
-            
-            return this;
-        },
-        initialize: function() {
-            this.model.bind('change', this.render, this);
-            this.model.bind('destroy', this.remove, this);
-            
-            this.$actions = $('<div class="actions"></div>');
-            this.fileActions = new FileActions({id: this.id, model: this.model});
-            this.$actions.append(this.fileActions.render().el);
-        },
-        events: {
-          "click": "select",
-          "touchstart input": "touchstartstopprop"
-        },
-        touchstartstopprop: function(e) {
-            e.stopPropagation();
-        },
-        select: function() {
-            // One click to select, another to deselect.  Can only have one selection at a time.
-            
-            if(this.hasOwnProperty('list') && this.list.hasOwnProperty('multiSelect') && this.list.multiSelect) {
-                this.$el.addClass("selected");
-                this.$el.attr("selected", true);
-            } else {
-            
-                var deselectSiblings = function(el) {
-                    el.siblings().removeClass('selected');
-                    el.siblings().removeAttr('selected');
-                }
-                
-                if(this.$el.hasClass('selected')) {
-                    this.$el.removeClass("selected");
-                    this.$el.removeAttr('selected');
-                    
-                    // Un Filter the Actions List
-                    //body.actionsListView.filterSession(false);
-                    //this.trigger('select', true);
-                } else {
-                    deselectSiblings(this.$el);
-                    this.$el.addClass("selected");
-                    this.$el.attr("selected", true);
-                    //this.trigger('select', false);
-                }
-            }
-            this.trigger('resize');
-        },
-        remove: function() {
-          $(this.el).remove();
-        }
-    });
-    
-    var FileForm = Backbone.View.extend({
-        tagName: "div",
-        className: "fileForm",
-        initialize: function(options) {
             var self = this;
-            options = options || {};
-            var typeName = 'file';
-            var acceptType = '*/*';
-            if(options.type) {
-                typeName = options.type;
+            self.editForms = {};
+            require(['../desktop/swipeview.js'], function(){
+                require(['../images/backbone-images.js'], function(ImagesBackbone){
+                    window.ImagesBackbone = ImagesBackbone;
+                    require(['../checkins/backbone-checkins.js'], function(CheckinsBackbone){
+                        window.CheckinsBackbone = CheckinsBackbone;
+                        require(['backbone-files.js'], function(FilesBackbone){
+                            window.FilesBackbone = FilesBackbone;
+                            self.$list = $('<div class="file-list"></div>');
+                            self.$viewer = $('<div class="file-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
+                            self.collection = window.filesCollection = new FilesBackbone.Collection(); // collection
+                            self.collection.pageSize = pageSize;
+                            self.listView = new FilesBackbone.List({el: self.$list, collection: self.collection});
+                            self.listView.on('select', function(row) {
+                                self.router.navigate(row.model.getNavigatePath(), true);
+                            });
+                            self.listView.on('goToProfile', function(user){
+                                self.router.navigate('by/'+user.get('name'), true);
+                            });
+                            
+                            self.collection.on('editModel', function(model) {
+                                self.router.navigate(model.getNavigatePath()+'/edit', true);
+                            });
+                            
+                            var loadCollections = function() {
+                                self.collection.load(null, function(){
+                                    self.initialized = true;
+                                    self.trigger('initialized');
+                                });
+                            }
+                            if(window.hasOwnProperty('account')) {
+                                window.account.on('loggedIn', function(loginView){
+                                    loadCollections();
+                                });
+                            }
+                            loadCollections();
+                        });
+                    });
+                });
+            });
+            
+            /*require(['../desktop/jquery.idle-timer.js'], function() {
+                var idleTimer = $(document).idleTimer(4200);
+                $(document).bind("idle.idleTimer", function(e){
+                    $('body').addClass('idle');
+                });
+                $(document).bind("active.idleTimer", function(){
+                    $('body').removeClass('idle');
+                });
+            });*/
+        },
+        initCarousel: function() {
+            var self = this;
+            if(!self.hasOwnProperty('carousel')) {
+                self.carousel = new SwipeView(self.$viewer[0], {
+                    numberOfPages: self.collection.count,
+                    hastyPageFlip: true
+                });
                 
-                if(typeName == 'image') {
-                    acceptType = 'image/*';
-                } else if (typeName == 'audio') {
-                    acceptType = 'audio/*';
-                } else if (typeName == 'video') {
-                    acceptType = 'video/*';
-                } else if (typeName == 'text') {
-                    acceptType = 'text/*';
-                } else {
-                    acceptType = '*/*';
-                }
+                self.carousel.onFlip(function () {
+                    var el;
+                    var upcoming;
+                	var i;
+                    var id = self.carousel.masterPages[self.carousel.currentMasterPage].dataset.id;
+                    var doc = self.collection.get(id);
+                    self.router.navigate('files/'+doc.get('filename'), {trigger: false, replace: false});
+                    var docNext = doc.next();
+                    var docPrev = doc.prev();
+                	for (i=0; i<3; i++) {
+                		upcoming = self.carousel.masterPages[i].dataset.upcomingPageIndex;
+                		if (upcoming != self.carousel.masterPages[i].dataset.pageIndex) {
+                			el = self.carousel.masterPages[i];
+                            if(self.carousel.directionX > 0) {
+                                if(docPrev) {
+                                    self.carouselPageRender(el, docPrev);
+                                }
+                            } else {
+                                if(docNext) {
+                                    self.carouselPageRender(el, docNext);
+                                }
+                            }
+                		}
+                	}
+                });
+                
             }
-            this.$html = $('<button class="upload">Upload '+typeName+'</button>');
-            this.fileInput = new utils.UploadInputView({acceptType: acceptType});
-            this.fileInput.on('upload', function(data){
-                if (data.file) {
-                    if(self.collection) {
-                        self.collection.add(data.file);
+        },
+        render: function() {
+            var self = this;
+            this.$el.html('');
+            this.setElement(this.$el);
+            if(!this.initialized) {
+                this.on('initialized', function(){
+                    self.render();
+                });
+                return this;
+            }
+            this.$el.append(self.listView.render().$el);
+            this.$el.append(this.$viewer);
+            return this;
+        },
+        events: {
+            "click .carousel-control.left": "carouselPrev",
+            "click .carousel-control.right": "carouselNext",
+        },
+        carouselPrev: function() {
+            this.carousel.prev();
+            return false;
+        },
+        carouselNext: function() {
+            this.carousel.next();
+            return false;
+        },
+        carouselPageRender: function(page, doc) {
+            page.innerHTML = '';
+            page.dataset.id = doc.id;
+            page.appendChild(doc.getFullView({list: self.listView}).render().$el[0]);
+            page.scrollTop = 0;
+        },
+        carouselDoc: function(doc) {
+            var self = this;
+            if(doc.has('title')) {
+                self.router.setTitle(doc.get('title'));
+            }
+            self.initCarousel();
+            var docEl = doc.getFullView({list: self.listView}).render().$el;
+            var foundDoc = false;
+            self.carousel.masterPages.forEach(function(e,i){
+                console.log(e.dataset.id);
+                console.log(doc.id);
+                if(e.dataset.id == doc.id) {
+                    console.log(e);
+                    foundDoc = i;
+                }
+            });
+            console.log(self.carousel.currentMasterPage);
+            if(foundDoc !== false) {
+                console.log(foundDoc);
+                if(self.carousel.currentMasterPage > foundDoc) {
+                    if(self.carousel.currentMasterPage - foundDoc > 1) {
+                        self.carousel.next();
+                    } else {
+                        self.carousel.prev();
+                    }
+                } else if(self.carousel.currentMasterPage < foundDoc) {
+                    if(foundDoc - self.carousel.currentMasterPage > 1) {
+                        self.carousel.prev();
+                    } else {
+                        self.carousel.next();
                     }
                 }
-                self.trigger('upload', data);
-            });
+                return;
+            }
+            
+            var currentPageNum = self.carousel.currentMasterPage;
+            var nextPageNum = currentPageNum + 1;
+            var prevPageNum = currentPageNum - 1;
+            var maxPageNum = self.carousel.masterPages.length - 1;
+            if(nextPageNum > maxPageNum) {
+                nextPageNum = 0;
+            } else if(prevPageNum < 0) {
+                prevPageNum = maxPageNum;
+            }
+            var renderSiblings = function() {
+                var docNext = doc.next();
+                var docPrev = doc.prev();
+                var pageNext = self.carousel.masterPages[nextPageNum];
+                var pagePrev = self.carousel.masterPages[prevPageNum];
+                if(docNext) {
+                    self.carouselPageRender(pageNext, docNext);
+                }
+                if(docPrev) {
+                    self.carouselPageRender(pagePrev, docPrev);
+                }
+            }
+            var currentPage = self.carousel.masterPages[currentPageNum];
+            self.carouselPageRender(currentPage, doc);
+            renderSiblings();
         },
-        render: function() {
+        editDoc: function(doc) {
             var self = this;
-            this.$el.append(this.$html);
-            this.$el.append(this.fileInput.render().$el);
-            this.setElement(this.$el);
-            return this;
+            var $form;
+            if(!doc) {
+                self.newForm = new FilesBackbone.Form({
+                    collection: self.collection
+                });
+                self.newForm.on("saved", function(doc) {
+                    self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
+                });
+                $form = self.newForm.render().$el;
+                $form.show();
+                self.$el.append($form);
+                $form.siblings().hide();
+                self.newForm.focus();
+            } else {
+                if(!self.editForms.hasOwnProperty(doc.id)) {
+                    self.editForms[doc.id] = new self.FilesBackbone.Form({
+                        collection: self.collection,
+                        model: doc
+                    });
+                    self.editForms[doc.id].on("saved", function(doc) {
+                        self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
+                    });
+                    $form = self.editForms[doc.id].render().$el;
+                    $form.show();
+                    self.$el.append($form);
+                    self.editForms[doc.id].wysiEditor();
+                } else {
+                    $form = self.editForms[doc.id].render().$el;
+                    $form.show();
+                    //self.$el.append($form);
+                }
+                $form.siblings().hide();
+                self.editForms[doc.id].focus();
+            }
         },
-        events: {
-            "click button.upload": "pickFile"
+        findFileById: function(id, callback) {
+            this.collection.getOrFetch(id, callback);
         },
-        pickFile: function() {
-            this.fileInput.click();
-            return false;
+        findFileByName: function(id, callback) {
+            this.collection.getOrFetchFilename(id, callback);
+        },
+        userIs: function(userId) {
+            return (this.user && this.user.id == userId);
+        },
+        userIsAdmin: function() {
+            return (this.user && this.user.has('groups') && this.user.get('groups').indexOf('admin') !== -1);
+        },
+        bindAuth: function(auth) {
+            var self = this;
+            self.auth = auth;
+        },
+        bindUser: function(user) {
+            var self = this;
+            self.user = user;
+            self.trigger('refreshUser', user);
+        },
+        bindNav: function(nav) {
+            this.nav = nav;
+            this.bindRouter(nav.router);
+            nav.col.add({title:"Files", navigate:""});
+            if(window.account && (account.isUser() || account.isAdmin())) {
+                nav.col.add({title:"Upload", navigate:"upload"});
+            }
+        },
+        bindRouter: function(router) {
+            var self = this;
+            var routerReset = function() {
+                $('body').attr('class', '');
+                router.reset();
+            }
+            self.router = router;
+            router.on('title', function(title){
+                var $e = $('header h1');
+                $e.html(title);
+                $e.attr('class', '');
+                var eh = $e.height();
+                var eph = $e.offsetParent().height();
+                if(eh > eph) {
+                    var lines = Math.floor(eh/eph);
+                    if(lines > 3) {
+                        $e.addClass('f'+lines);
+                        eh = $e.height();
+                        eph = $e.offsetParent().height();
+                        if(eh > eph) {
+                            lines = Math.floor(eh/eph);
+                            $e.addClass('l'+lines);
+                        }
+                    } else {
+                        $e.addClass('l'+lines);
+                    }
+                }
+            });
+            router.on('reset', function(){
+                $('header').removeAttr('class');
+                self.nav.unselect();
+            });
+            router.on('root', function(){
+                self.listView.filter();
+                self.listView.$el.siblings().hide();
+                self.listView.$el.show();
+                router.setTitle('Files');
+                self.nav.selectByNavigate('');
+                router.trigger('loadingComplete');
+            });
+            router.route('/file/:filename/edit', 'editSlug', function(filename){
+                routerReset();
+                self.findFileByName(filename, function(doc){
+                    if(doc) {
+                        self.editDoc(doc);
+                    } else {
+                        router.navigate('upload', {replace: true, trigger: true});
+                    }
+                    router.trigger('loadingComplete');
+                });
+            });
+            router.route('by/:userName', 'userFiles', function(name){
+                routerReset();
+                router.setTitle('Files by '+name);
+                self.nav.selectByNavigate('');
+                
+                usersCollection.getByName(name, function(user){
+                    if(user) {
+                        self.listView.filter(function(model) {
+                          if (user.id !== model.get('owner').id) return false;
+                          return true;
+                        });
+                        self.listView.$el.siblings().hide();
+                        self.listView.$el.show();
+                        router.trigger('loadingComplete');
+                    }
+                });
+            });
+            router.route('file/:id', 'file', function(id){
+                routerReset();
+                self.$viewer.siblings().hide();
+                self.$viewer.show();
+                self.findFileByName(id, function(doc){
+                    if(doc) {
+                        self.carouselDoc(doc);
+                    } else {
+                        console.log(id);
+                        router.navigate('', {replace: true, trigger: true});
+                    }
+                    router.trigger('loadingComplete');
+                });
+            });
+            router.route('upload', 'upload', function(){
+                routerReset();
+                router.setTitle('Upload');
+                self.editDoc();
+                router.trigger('loadingComplete');
+                self.nav.selectByNavigate('here');
+            });
         }
     });
-    
+
     if(define) {
         define(function () {
-            return {
-                Collection: Files,
-                Model: File,
-                List: FilesList,
-                Row: FileRow,
-                Avatar: FileAvatar,
-                FileForm: FileForm
-            }
+            return FilesView;
         });
     }
 })();

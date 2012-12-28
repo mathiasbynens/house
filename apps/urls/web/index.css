@@ -1,0 +1,74 @@
+#newWallpaperForm textarea {
+    width: 94%;
+}
+#newWallpaperForm textarea {
+    width: 94%;
+    margin: 2%;
+    height: 240px;
+}
+#newWallpaperForm img {
+    width: 94%;
+}
+img {
+    max-width: 100%;
+}
+.idle #wallpaper {
+    display: none;
+}
+.row {
+    position: relative;
+    display: block;
+    height: 64px;
+    border-top: 1px dashed #fff;
+    border-bottom: 1px dashed #fff;
+}
+.row:hover {
+    border-top: 1px dashed #ccc;
+    border-bottom: 1px dashed #ccc;
+}
+.row actions {
+    z-index: 1;
+    position: absolute;
+    top:0;
+    right: 0;
+    text-align: right;
+    display: none;
+}
+.row:hover actions {
+    display: block;
+}
+.row actions .actions {
+    display: none;
+    margin-top: -2px;
+    background: rgba(0,0,0,0.5);
+    padding: 4px;
+    border-radius: 6px;
+    z-index: 2;
+}
+.row .actions span {
+    display: block;
+}
+.row actions:hover .actions {
+    display: block;
+}
+
+.row .title, .row .contentType {
+    margin-left: 12px;
+    
+}
+.row .avatar {
+    position: absolute;
+    top:0;
+    bottom: 0;
+    right:0;
+}
+.row .avatar img {
+    height: 100%;
+}
+.urlForm {
+}
+.urlForm input[type="url"] {
+    width: 100%;
+    font-size: 24px;
+    text-indent: 4px;
+}

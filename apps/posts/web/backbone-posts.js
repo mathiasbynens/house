@@ -397,6 +397,53 @@
         }
     });
 
+    var ActionFeedView = Backbone.View.extend({
+        tagName: "span",
+        className: "feed",
+        render: function() {
+            if(!this.model.has('feed')) {
+                this.$el.html('<button class="publish">publish to feed</button>');
+            } else {
+                var feed = this.model.get('feed');
+                this.$el.html('published at <a href="/feed/item/'+feed.id+'" target="_new">'+feed.at+'</a><button class="unpublish">remove from feed</button>');
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        initialize: function() {
+        },
+        events: {
+          "click .publish": "publish",
+          "click .unpublish": "unpublish",
+        },
+        publish: function() {
+            var self = this;
+            console.log(this.model);
+            this.model.set({"feed": 0},{silent: true});
+            var saveModel = this.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            saveModel.done(function() {
+                self.render();
+            });
+            return false;
+        },
+        unpublish: function() {
+            var self = this;
+            console.log(this.model);
+            this.model.unset("feed", {silent: true});
+            var saveModel = this.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            saveModel.done(function() {
+                self.render();
+            });
+            return false;
+        }
+    });
+
     var ActionDeleteView = Backbone.View.extend({
         tagName: "span",
         className: "delete",
@@ -774,21 +821,33 @@
         tagName: "span",
         className: "avatar",
         render: function() {
-            var imageThumbSrc = this.model.get('filename');
-            if(this.model.has('sizes')) {
-                var sizes = this.model.get('sizes');
-                for(var sizeName in sizes) {
-                    if(sizeName == 'thumb') {
-                        var size = sizes[sizeName];
-                        imageThumbSrc = size.filename;
-                    }
-                }
+            this.$el.html('');
+            var $byline = $('<span class="byline"></span>');
+            if(this.model.has('title')) {
+                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
             }
-            this.$el.html('<img src="/api/files/'+imageThumbSrc+'" />');
-            //this.$el.css('background', 'url("/api/files/'+imageThumbSrc+'")');
-            //this.$el.css('background-size', 'cover');
-            this.$el.attr('data-id', this.model.get("id"));
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
+            if(this.model.has('at')) {
+                var $at = $('<span class="at"></span>');
+                if(window.hasOwnProperty('clock')) {
+                    $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
+                    $at.html(clock.moment(this.model.get('at')).calendar());
+                } else {
+                    $at.html(this.model.get('at'));
+                }
+                $byline.append($at);
+            }
+            if(this.model.has('owner')) {
+                $byline.append(' by '+this.model.get('owner').name);
+            }
+            if(this.model.has('msg')) {
+                var $msg = $('<span class="msg"></span>');
+                $msg.html(this.model.get('msg'));
+                this.$el.append($msg);
+            }
+            this.$el.append($byline);
+            this.$el.attr('data-id', this.model.get("_id"));
+            //this.$el.append(this.actions.render().$el);
+            this.setElement(this.$el);
             return this;
         },
         initialize: function(options) {
@@ -902,6 +961,7 @@
             this.atPublished.find('.at').append(this.$inputAtTime);
             
             this.inputGroupsView = new SelectGroupsView({model: this.model});
+            this.feedView = new ActionFeedView({model: this.model});
             this.deleteView = new ActionDeleteView({model: this.model});
             
             this.$form = $('<form class="post"><fieldset></fieldset><controls></controls></form>');
@@ -911,6 +971,7 @@
             this.$form.find('fieldset').append('<hr />');
             this.$form.find('fieldset').append(this.$slugShare);
             this.$form.find('fieldset').append(this.atPublished);
+            this.$form.find('fieldset').append(this.feedView.render().$el);
             this.$form.find('fieldset').append(this.deleteView.render().$el);
             this.$form.find('controls').append(this.inputGroupsView.render().$el);
             this.$form.find('controls').append('<input type="submit" value="POST" />');

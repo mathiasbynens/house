@@ -24,9 +24,9 @@
                                     index.windows = windows;
                                     windows.render($('body'));
                                     
-                                    $('header').append('<clock data-format="digital"></clock>');
-                                    require(['../clock/clock.js'], function(clock){
-                                        clock.startClocks($('clock'));
+                                    require(['../clock/clock.js'], function(Clock){
+                                        var clock = new Clock();
+                                        $('header').append(clock.render().$el);
                                     });
                                     
                                     require(['nav.js'], function(nav){

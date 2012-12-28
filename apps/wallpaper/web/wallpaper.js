@@ -95,7 +95,7 @@
         initFiles: function(callback) {
             var self = this;
             if(self.initedFiles) return;
-            require(['../files/files.js'], function(FilesBackbone){
+            require(['../files/backbone-files.js'], function(FilesBackbone){
                 self.FilesBackbone = FilesBackbone;
                 this.$filesList = $('<div id="files-list" class="import"></div>');
                 self.filesCollection = new self.FilesBackbone.Collection();

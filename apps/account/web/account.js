@@ -52,8 +52,8 @@
                     silent: true
                 }).done(function(s, typeStr, respStr) {
                     self.renderAll();
-                    profile.loadUser();
-                    profile.render();
+                    account.loadUser();
+                    account.render();
                     self.trigger("login", model);
                 }).fail(function(s, typeStr, respStr) {
                     if (s.status === 403) {
@@ -82,7 +82,16 @@
                 this.view = new auth.View(options);
             }
             return this.view;
-        }
+        },
+        isAdmin: function() {
+            return(this.has('groups') && this.get('groups').indexOf('admin') !== -1);
+        },
+        isUser: function() {
+            return(this.has('user'));
+        },
+        isOwner: function(ownerId) {
+            return(this.has('user') && this.get('user') == ownerId);
+        },
     });
     auth.Collection = Backbone.Collection.extend({
         model: auth.Model,
@@ -164,7 +173,7 @@
             this.model.bind("destroy", this.remove, this);
             this.userModel = window.usersCollection.get(this.model.get("user"));
             if (!this.userModel) {
-                this.getUserModel();
+                //this.getUserModel(); // requires waiting for callback to be useful
             }
         },
         render: function() {
@@ -238,7 +247,7 @@
         },
         login: function() {
             var self = this;
-            profile.router.navigate('join', true);
+            account.router.navigate('join', true);
         },
         logout: function() {
             if (confirm("Are you sure that you want to log off?")) {
@@ -263,6 +272,35 @@
         }
     });
     var users = {};
+    users.AvatarNameView = Backbone.View.extend({
+        tagName: "span",
+        className: "avatarName",
+        render: function() {
+            var self = this;
+            if (this.model.has("avatar")) {
+                var src = this.model.get("avatar");
+                if (src.indexOf("http") === 0) {} else {
+                    src = "/api/files/" + src;
+                }
+                this.$el.html('<img src="' + src + '" />');
+            } else {
+                this.$el.html("");
+            }
+            this.$el.append(this.model.get('name'));
+            this.setElement(this.$el);
+            return this;
+        },
+        initialize: function() {},
+        events: {
+            click: "goToProfile"
+        },
+        goToProfile: function() {
+            this.trigger("goToProfile", this.model);
+        },
+        remove: function() {
+            $(this.el).remove();
+        }
+    });
     users.AvatarView = Backbone.View.extend({
         tagName: "span",
         render: function() {
@@ -657,6 +695,18 @@
             }
             return this.userView;
         },
+        getNewAvatarNameView: function(options) {
+            if (!options) options = {};
+            options.model = this;
+            return new users.AvatarNameView(options)
+        },
+        getAvatarNameView: function(options) {
+            if (!options) options = {};
+            if (!this.hasOwnProperty("avatarNameView")) {
+                this.avatarNameView = this.getNewAvatarNameView(options);
+            }
+            return this.avatarNameView;
+        },
         getAvatarView: function(options) {
             if (!options) options = {};
             if (!this.hasOwnProperty("view")) {
@@ -700,12 +750,34 @@
             if (users.length > 0) {
                 callback(users[0]);
             } else {}
-        }
+        },
+        getOrFetch: function(id, callback) {
+            var self = this;
+            var doc;
+            doc = this.get(id);
+            if(doc) {
+                callback(doc);
+            } else {
+                var options = { "_id": id };
+                this.fetch({data: options, add: true, success: function(collection, response){
+                        if(response) {
+                            doc = self.get(id);
+                            callback(doc);
+                        } else {
+                            callback(false);
+                        }
+                    },
+                    error: function(collection, response){
+                        callback(false);
+                    }
+                });
+            }
+        },
     });
     
     
     window.usersCollection = new users.Collection;
-    window.usersCollection.load();
+    //window.usersCollection.load();
     var ProfileView = Backbone.View.extend({
         tag: "span",
         className: "profile",
@@ -719,7 +791,7 @@
             this.$profile = $('<profile></profile>');
             auth.get(function(err, loginStatus) {
                 if (err) {} else if (loginStatus) {
-                    self.loginStatus = loginStatus;
+                    window.account = self.loginStatus = loginStatus;
                     loginStatus.getView().on("goToProfile", function(username) {
                         self.router.navigate('user/'+username, true);
                     });
@@ -784,15 +856,15 @@
                 if(self.userLightbox) {
                     self.userLightbox.remove();
                 }
-                profile.loginStatus.getView().hideMenu();
+                account.loginStatus.getView().hideMenu();
             });
         }
     });
     
-    var profile = new ProfileView;
+    var account = new ProfileView;
     if (define) {
         define(function() {
-            return profile;
+            return account;
         });
     }
 })();

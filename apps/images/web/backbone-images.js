@@ -14,8 +14,8 @@
             this.views = {};
         },
         getFullView: function(options) {
+            console.log(options)
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.fullView) {
                 var view = this.fullView = new ImageFullView(options);
@@ -25,7 +25,6 @@
         },
         getAvatar: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.avatar) {
                 var view = this.avatar = new ImageAvatar(options);
@@ -35,7 +34,6 @@
         },
         getRow: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.row) {
                 var row = this.row = new ImageRow(options);
@@ -249,7 +247,7 @@
             if (!options) options = {};
             if (!this.hasOwnProperty("view")) {
                 options.collection = this;
-                this.view = new ImageList(options);
+                this.view = new ImagesList(options);
                 this.view.on("selected", function(m) {
                     self.trigger("selected", m);
                 });
@@ -310,7 +308,7 @@
     });
     
     var ImagesList = Backbone.View.extend({
-        layout: 'avatar',
+        layout: 'row',
         initialize: function() {
             var self = this;
             self.loading = false;
@@ -553,15 +551,64 @@
             this.$el.html('');
             self.$el.append(this.imageTags.render().$el);
             self.$el.append(this.imageGroups.render().$el);
+            self.$el.append(this.imageActionFeed.render().$el);
             self.$el.append(this.imageActionDelete.render().$el);
             this.setElement(this.$el);
             return this;
         },
         initialize: function() {
             this.actions = [];
-            this.imageGroups = new ImageGroups({id: this.id, model: this.model});
-            this.imageTags = new ImageTags({id: this.id, model: this.model});
-            this.imageActionDelete = new ImageActionDelete({id: this.id, model: this.model});
+            this.imageGroups = new ImageGroups({model: this.model});
+            this.imageTags = new ImageTags({model: this.model});
+            this.imageActionFeed = new ImageActionFeed({model: this.model});
+            this.imageActionDelete = new ImageActionDelete({model: this.model});
+        }
+    });
+
+    var ImageActionFeed = Backbone.View.extend({
+        tagName: "span",
+        className: "feed",
+        render: function() {
+            if(!this.model.has('feed')) {
+                this.$el.html('<button class="publish">publish to feed</button>');
+            } else {
+                var feed = this.model.get('feed');
+                this.$el.html('published at <a href="/feed/item/'+feed.id+'" target="_new">'+feed.at+'</a><button class="unpublish">remove from feed</button>');
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        initialize: function() {
+        },
+        events: {
+          "click .publish": "publish",
+          "click .unpublish": "unpublish",
+        },
+        publish: function() {
+            var self = this;
+            console.log(this.model);
+            this.model.set({"feed": 0},{silent: true});
+            var saveModel = this.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            saveModel.done(function() {
+                self.render();
+            });
+            return false;
+        },
+        unpublish: function() {
+            var self = this;
+            console.log(this.model);
+            this.model.unset("feed", {silent: true});
+            var saveModel = this.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            saveModel.done(function() {
+                self.render();
+            });
+            return false;
         }
     });
 
@@ -570,7 +617,6 @@
         className: "delete",
         render: function() {
             this.$el.html('<button>delete</button>');
-            this.$el.removeAttr('id');
             this.setElement(this.$el);
             return this;
         },
@@ -584,7 +630,7 @@
             var self = this;
             
             var getAndDestroyModel = function(fileId, callback) {
-                images.filesCollection.getOrFetch(fileId, {add: false}, function(fileModel){
+                images.filesCollection.getOrFetch(fileId, function(fileModel){
                     if(fileModel) {
                         fileModel.destroy({success: function(model, response) {
                             if(callback) callback(response);
@@ -817,263 +863,8 @@
 
 
     var ImageRow = Backbone.View.extend({
-        
         tagName: "li",
-        
-        className: "imageRow",
-
-        htmlTemplate: '<img src="/api/file/<%= filename %>" />\
-                        <span class="info">\
-                            <span class="filename"><%= filename %></span>\
-                            <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
-                        </span>',
-        
-        template: function(doc) {
-            
-            // Add default values to doc which are required in the template
-            
-            if(doc.hasOwnProperty('at')) {
-                var createdAtFormatted = new Date(doc.at);
-                doc.createdAtFormatted = createdAtFormatted.toLocaleString();
-                var hours = createdAtFormatted.getHours();
-                var ampm = 'am';
-                if(hours > 12) {
-                    hours = hours - 12;
-                    ampm = 'pm';
-                }
-                doc.createdAtShort = (createdAtFormatted.getMonth()+1)+'/'+createdAtFormatted.getDate()+' @ '+hours+':'+createdAtFormatted.getMinutes()+' '+ampm;
-            } else {
-                doc.at = false;
-                doc.createdAtFormatted = '';
-                doc.createdAtShort = '';
-            }
-            
-            var template = $(_.template(this.htmlTemplate, doc));
-            
-            this.$el.attr('data-images-id', this.model.get("_id"));
-            
-            return template;
-        },
-        render: function() {
-            this.$el.html(this.template(this.model.toJSON()));
-            
-            this.$el.append(this.$actions);
-            
-            this.imageActions.render();
-            
-            this.trigger('resize');
-            
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
-            
-            return this;
-        },
-        initialize: function(options) {
-            
-            if(options.list) {
-                this.list = options.list;
-            }
-            
-            this.model.bind('change', this.render, this);
-            this.model.bind('destroy', this.remove, this);
-
-            this.$actions = $('<div class="actions"></div>');
-            this.imageActions = new ImageActions({id: this.id, model: this.model});
-            this.$actions.append(this.imageActions.render().el);
-            
-            
-        },
-        events: {
-          "click": "select"
-        },
-        select: function(e) {
-            
-            
-            // One click to select, another to deselect.  Can only have one selection at a time.
-            
-            var deselectSiblings = function(el) {
-                el.siblings().removeClass('selected');
-                el.siblings().removeAttr('selected');
-            }
-            
-            if(this.$el.hasClass('selected')) {
-                this.$el.removeClass("selected");
-                this.$el.removeAttr('selected');
-                
-                this.trigger('deselect');
-            } else {
-                deselectSiblings(this.$el);
-                this.$el.addClass("selected");
-                this.$el.attr("selected", true);
-                
-                if(this.hasOwnProperty('list')) {
-                    this.list.trigger('select', this);
-                }
-                
-                this.trigger('select');
-            }
-            this.trigger('resize');
-        },
-        remove: function() {
-          $(this.el).remove();
-        }
-    });
-    
-    var ImageFullView = Backbone.View.extend({
-        tagName: "div",
-        className: "imageFullView",
-        htmlTemplate: '<img src="/api/files/<%= imgSrc %>" />\
-                        <span class="info">\
-                            <h3 class="caption"></h3>\
-                            <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
-                            <span class="checkin"></span>\
-                            <%= downloadMenu %>\
-                            <%= exifHtml %>\
-                        </span>',
-        initialize: function(options) {
-            var self = this;
-            if(options.list) {
-                this.list = options.list;
-            }
-            this.model.bind('change', this.renderInfo, this);
-            this.model.bind('change:caption', this.renderCaption, this);
-            this.model.bind('change:tags', this.renderActions, this);
-            this.model.bind('change:groups', this.renderActions, this);
-            this.model.bind('change:owner', this.renderActions, this);
-            this.model.bind('destroy', this.remove, this);
-    
-            this.$actions = $('<div class="actions"></div>');
-            this.imageActions = new ImageActions({id: this.id, model: this.model});
-            this.$actions.append(this.imageActions.render().el);
-            
-            if(this.model.get('checkin') && !this.hasOwnProperty('imageCheckin')) {
-                console.log(this.model.get('checkin').id)
-                console.log(this.model.get('checkin'))
-                
-                require(['../checkins/checkins.js'], function(CheckinsBackbone){
-                    self.imageCheckin = new CheckinsBackbone.Avatar({id: self.model.get('checkin').id});
-                });
-            }
-        },
-        template: function(doc) {
-            if(doc.hasOwnProperty('at')) {
-                var createdAtFormatted = new Date(doc.at);
-                doc.createdAtFormatted = createdAtFormatted.toLocaleString();
-                var hours = createdAtFormatted.getHours();
-                var ampm = 'am';
-                if(hours > 12) {
-                    hours = hours - 12;
-                    ampm = 'pm';
-                }
-                doc.createdAtShort = (createdAtFormatted.getMonth()+1)+'/'+createdAtFormatted.getDate()+' @ '+hours+':'+createdAtFormatted.getMinutes()+' '+ampm;
-            } else {
-                doc.at = false;
-                doc.createdAtFormatted = '';
-                doc.createdAtShort = '';
-            }
-            doc.metaLinksHtml = '<a href="/api/files'+doc.filename+'.meta" target="_new">meta</a> <a href="/api/files/'+doc.filename+'.metab" target="_new">meta binary</a>';
-            doc.downloadMenu = '<a target="_new" href="/api/files/'+doc.filename+'">original</a>';
-            doc.imgSrc = doc.filename;
-            if(doc.hasOwnProperty('sizes')) {
-                for(var sizeName in doc.sizes) {
-                    var size = doc.sizes[sizeName];
-                    
-                    if(sizeName == 'full') {
-                        doc.imgSrc = size.filename;
-                    }
-                    
-                    var downloadSize = ' <a target="_new" href="/api/files/'+size.filename+'">'+sizeName+'</a> ';
-                    doc.downloadMenu += downloadSize;
-                }
-            }
-            
-            doc.downloadMenu = '<span class="download"><a>'+doc.filename+'</a> '+ doc.downloadMenu + doc.metaLinksHtml + '</span>';
-            
-            // Checkin HTML
-            doc.checkinHtml = '';
-            if(doc.hasOwnProperty('checkin')) {
-                doc.checkinHtml = '<span class="checkin">checkins/'+doc.checkin.id+'</span>';
-            }
-            
-            // Exif HTML
-            doc.exifHtml = '';
-            if(doc.hasOwnProperty('exif')) {
-                for(var i in doc.exif) {
-                    doc.exifHtml += '<pre>'+i+': '+doc.exif[i]+'</pre>';
-                }
-            }
-            doc.exifHtml = '<a class="exif" href="#">exif data</a><span class="exifData">' + doc.exifHtml + '</span>';
-            
-            var template = $(_.template(this.htmlTemplate, doc));
-            
-            this.$el.attr('data-images-id', this.model.get("_id"));
-            
-            return template;
-        },
-        render: function() {
-            var self = this;
-            this.$el.html(this.template(this.model.toJSON()));
-            
-            this.renderCaption();
-            
-            if(this.hasOwnProperty('imageCheckin')) {
-                var c = this.$el.find('.checkin');
-                this.imageCheckin.setElement(c);
-                this.imageCheckin.render();
-            }
-            
-            this.$el.append(this.$actions);
-            this.imageActions.render();
-            
-            this.trigger('resize');
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
-            return this;
-        },
-        renderInfo: function() {
-            
-        },
-        renderActions: function() {
-            this.imageActions.render();
-        },
-        renderCaption: function() {
-            var caption = this.model.has('caption') ? this.model.get('caption') : 'add a caption';
-            this.$el.find('.caption').html(caption);
-        },
-        show: function() {
-            this.$el.show();
-        },
-        events: {
-          "click .exif": "toggleExif",
-          "click .caption": "editCaption"
-        },
-        toggleExif: function() {
-            this.$el.find('.exifData').toggle();
-            return false;
-        },
-        editCaption: function() {
-            var self = this;
-            var c = this.model.get("caption");
-            
-            var newCaption = prompt("caption text", c);
-            
-            if(newCaption) {
-                this.model.set({"caption": newCaption}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function() {
-                    self.renderCaption();
-                });
-            }
-        },
-        remove: function() {
-          $(this.el).remove();
-        }
-    });
-    
-    var ImageAvatar = Backbone.View.extend({
-        tagName: "li",
-        className: "imageAvatar",
+        className: "row",
         htmlTemplate: ' <span class="info">\
                             <span class="filename"><%= filename %></span>\
                             <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
@@ -1113,6 +904,7 @@
             }
             this.$el.css('background', 'url("/api/files/'+imageThumbSrc+'")');
             this.$el.css('background-size', 'cover');
+            //this.$el.css('background-position-y', '50%');
             this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
             
             return this;
@@ -1121,18 +913,230 @@
             if(options.list) {
                 this.list = options.list;
             }
-            
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
+            this.$actions = $('<div class="actions"></div>');
+            this.imageActions = new ImageActions({id: this.id, model: this.model});
+            this.$actions.append(this.imageActions.render().el);
         },
         events: {
           "click": "select"
         },
         select: function(e) {
+            var deselectSiblings = function(el) {
+                el.siblings().removeClass('selected');
+                el.siblings().removeAttr('selected');
+            }
             
+            deselectSiblings(this.$el);
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
             
-            // One click to select, another to deselect.  Can only have one selection at a time.
+            if(this.hasOwnProperty('list')) {
+                this.list.trigger('select', this);
+            }
+                
+            this.trigger('select');
+            this.trigger('resize');
+        },
+        remove: function() {
+          $(this.el).remove();
+        }
+    });
+    
+    var ImageFullView = Backbone.View.extend({
+        tagName: "div",
+        className: "imageFullView",
+        htmlTemplate: '<img src="/api/files/<%= imgSrc %>" />\
+                        <span class="info">\
+                            <h3 class="caption"></h3>\
+                            <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
+                            <span class="checkin"></span>\
+                            <%= downloadMenu %>\
+                            <%= exifHtml %>\
+                        </span>',
+        initialize: function(options) {
+            var self = this;
+            if(options.list) {
+                this.list = options.list;
+            }
+            this.model.bind('change', this.renderInfo, this);
+            this.model.bind('change:caption', this.renderCaption, this);
+            this.model.bind('change:tags', this.renderActions, this);
+            this.model.bind('change:groups', this.renderActions, this);
+            this.model.bind('change:owner', this.renderActions, this);
+            this.model.bind('destroy', this.remove, this);
+    
+            this.$actions = $('<div class="actions"></div>');
+            this.imageActions = new ImageActions({id: this.id, model: this.model});
+            this.$actions.append(this.imageActions.render().el);
+        },
+        template: function(doc) {
+            if(doc.hasOwnProperty('at')) {
+                var createdAtFormatted = new Date(doc.at);
+                doc.createdAtFormatted = createdAtFormatted.toLocaleString();
+                var hours = createdAtFormatted.getHours();
+                var ampm = 'am';
+                if(hours > 12) {
+                    hours = hours - 12;
+                    ampm = 'pm';
+                }
+                doc.createdAtShort = (createdAtFormatted.getMonth()+1)+'/'+createdAtFormatted.getDate()+' @ '+hours+':'+createdAtFormatted.getMinutes()+' '+ampm;
+            } else {
+                doc.at = false;
+                doc.createdAtFormatted = '';
+                doc.createdAtShort = '';
+            }
+            doc.downloadMenu = '<a target="_new" href="/api/files/'+doc.filename+'">original</a>';
+            doc.imgSrc = doc.filename;
+            if(doc.hasOwnProperty('sizes')) {
+                for(var sizeName in doc.sizes) {
+                    var size = doc.sizes[sizeName];
+                    
+                    if(sizeName == 'full') {
+                        doc.imgSrc = size.filename;
+                    }
+                    
+                    var downloadSize = ' <a target="_new" href="/api/files/'+size.filename+'">'+sizeName+'</a> ';
+                    doc.downloadMenu += downloadSize;
+                }
+            }
             
+            doc.downloadMenu = '<span class="download"><a>'+doc.filename+'</a> '+ doc.downloadMenu + '</span>';
+            
+            // Checkin HTML
+            doc.checkinHtml = '';
+            if(doc.hasOwnProperty('checkin')) {
+                doc.checkinHtml = '<span class="checkin">checkins/'+doc.checkin.id+'</span>';
+            }
+            
+            // Exif HTML
+            doc.exifHtml = '';
+            if(doc.hasOwnProperty('exif')) {
+                for(var i in doc.exif) {
+                    doc.exifHtml += '<pre>'+i+': '+doc.exif[i]+'</pre>';
+                }
+            }
+            doc.exifHtml = '<a class="exif" href="#">exif data</a><span class="exifData">' + doc.exifHtml + '</span>';
+            
+            var template = $(_.template(this.htmlTemplate, doc));
+            
+            this.$el.attr('data-images-id', this.model.get("_id"));
+            
+            return template;
+        },
+        render: function() {
+            var self = this;
+            this.$el.html(this.template(this.model.toJSON()));
+            
+            this.renderCaption();
+            
+            if(this.model.has("checkin")) {
+                if(!self.hasOwnProperty('mapImage')) {
+                    self.mapImage = new ImagesBackbone.Model(self.model.get('checkin').mapImage);
+                }
+                self.$el.append(self.mapImage.getAvatar().render().$el);
+                self.$el.append($('<a class="image" href="/images/image/'+self.mapImage.id+'">map image</a>'));
+                self.$el.append($('<a class="checkin" target="_new" href="/checkins/checkin/'+this.model.get('checkin').id+'">checkin</a>'));
+            }
+            
+            this.$el.append(this.$actions);
+            this.imageActions.render();
+            
+            this.trigger('resize');
+            this.setElement(this.$el);
+            return this;
+        },
+        renderInfo: function() {
+            
+        },
+        renderActions: function() {
+            this.imageActions.render();
+        },
+        renderCaption: function() {
+            var caption = this.model.has('caption') ? this.model.get('caption') : 'add a caption';
+            this.$el.find('.caption').html(caption);
+        },
+        show: function() {
+            this.$el.show();
+        },
+        events: {
+          "click .exif": "toggleExif",
+          "click .caption": "editCaption",
+          "click a.image": "goToImage",
+        },
+        goToImage: function(e) {
+            var $e = $(e.target);
+            var href = $e.attr('href');
+            console.log(this.options)
+            console.log(this.list)
+            if(this.options.list) {
+                this.options.list.trigger('goToImageHref', href);
+            }
+            return false;
+        },
+        toggleExif: function() {
+            this.$el.find('.exifData').toggle();
+            return false;
+        },
+        editCaption: function() {
+            var self = this;
+            var c = this.model.get("caption");
+            
+            var newCaption = prompt("caption text", c);
+            
+            if(newCaption) {
+                this.model.set({"caption": newCaption}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.renderCaption();
+                });
+            }
+        },
+        remove: function() {
+          $(this.el).remove();
+        }
+    });
+    
+    var ImageAvatar = Backbone.View.extend({
+        tagName: "span",
+        className: "avatar",
+        render: function() {
+            var imageThumbSrc = this.model.get('filename');
+            console.log(this.model);
+            if(this.model.has('sizes')) {
+                var sizes = this.model.get('sizes');
+                for(var sizeName in sizes) {
+                    if(sizeName == 'thumb') {
+                        var size = sizes[sizeName];
+                        imageThumbSrc = size.filename;
+                    }
+                }
+            }
+            this.$el.html('<img src="/api/files/'+imageThumbSrc+'" />');
+            //this.$el.css('background', 'url("/api/files/'+imageThumbSrc+'")');
+            //this.$el.css('background-size', 'cover');
+            this.$el.attr('data-id', this.model.get("id"));
+            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
+            return this;
+        },
+        initialize: function(options) {
+            if(options.list) {
+                this.list = options.list;
+            }
+            
+            if(this.model) {
+                this.model.bind('change', this.render, this);
+                this.model.bind('destroy', this.remove, this);
+            }
+        },
+        events: {
+          "click": "select"
+        },
+        select: function(e) {
             var deselectSiblings = function(el) {
                 el.siblings().removeClass('selected');
                 el.siblings().removeAttr('selected');
@@ -1162,6 +1166,7 @@
             Collection: Images,
             Model: Image,
             List: ImagesList,
+            FullView: ImageFullView,
             Row: ImageRow,
             Avatar: ImageAvatar
         }

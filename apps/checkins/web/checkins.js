@@ -1,819 +1,348 @@
 (function() {
-    
-    var Checkin = Backbone.Model.extend({
-        collectionName: "checkins",
-        initialize: function() {
-            this.on("change", function(model, options){
-                console.log('change');
-                var doSave = false;
-                var changedAttr = model.changedAttributes();
-                
-                // Don't update the id or at
-                delete changedAttr['_id'];
-                delete changedAttr['owner'];
-                delete changedAttr['at'];
-                
-                for(var i in changedAttr) {
-                    if(changedAttr.hasOwnProperty(i)) {
-                        doSave = true;
-                    }
-                }
-                
-                for(var i in model.pulls) {
-                    doSave = true;
-                }
-                for(var i in model.pushes) {
-                    doSave = true;
-                }
-                for(var i in model.pushAlls) {
-                    doSave = true;
-                }
-                
-                if(doSave) {
-                    model.save();
-                }
-            });
-        },
-        getFullView: function(options) {
-            options = options || {};
-            options.id = this.get("_id");
-            options.model = this;
-            if (!this.fullView) {
-                this.fullView = new CheckinFullView(options);
-            }
-            return this.fullView;
-        },
-        getAvatar: function(options) {
-            options = options || {};
-            options.id = this.get("_id");
-            options.model = this;
-            if (!this.avatar) {
-                this.avatar = new CheckinAvatar(options);
-            }
-            return this.avatar;
-        },
-        getRow: function(options) {
-            options = options || {};
-            options.id = this.get("_id");
-            options.model = this;
-            if (!this.row) {
-                this.row = new CheckinRow(options);
-            }
-            return this.row;
-        }
-    });
-    
-    var Checkins = Backbone.Collection.extend({
-        model: Checkin,
-        collectionName: 'checkins',
-        url: '/api/checkins',
+    var pageSize = 24;
+
+    var CheckinsView = Backbone.View.extend({
+        tag: 'span',
+        className: 'app',
         initialize: function() {
             var self = this;
-            self.pageSize = 10;
-            this.resetFilters();
-        },
-        load: function(options, success) {
-            var self = this;
-            if(!options) {
-                options = {};
-            }
-            if(!options.limit) {
-                options.limit = self.pageSize;
-            }
-            
-            if(!options.sort) {
-                options.sort = "at-";
-            }
-            
-            this.applyFilters(options);
-                    
-            this.fetch({data: options, add: true, success: function(collection, response){
-                    if(success) {
-                        success();
-                    }
-                },
-                error: function(collection, response){
-                }
-            });
-        },
-        getNextPage: function() {
-            if(this.length < this.collectionCount) {
-                this.load({skip:this.length});
-            }
-        },
-        applyFilters: function(options) {
-            
-        },
-        updateFilter: function(filter) {
-            this.reset();
-            this.load();
-        },
-        comparator: function(doc) {
-            
-            var d;
-            
-            if(doc.get("at")) {
-                d = new Date(doc.get("at")).getTime();
-                return d * -1;
-            } else {
-                return 1;
-            }
-        },
-        resetFilters: function() {
-            
-        },
-        getOrFetch: function(id, callback) {
-            var self = this;
-            var checkin;
-            
-            checkin = this.get(id);
-            
-            if(checkin) {
-                callback(checkin);
-            } else {
-                var options = { "_id": id };
-                this.fetch({data: options, add: true, success: function(collection, response){
-                        if(response) {
-                            console.log(response);
-                            checkin = self.get(id);
-                            callback(checkin);
-                        } else {
-                            callback(false);
+            self.editForms = {};
+            require(['../desktop/swipeview.js'], function(){
+                require(['../images/backbone-images.js'], function(ImagesBackbone){
+                    window.ImagesBackbone = ImagesBackbone;
+                    require(['backbone-checkins.js'], function(ModelBackbone){
+                        window.CheckinsBackbone = ModelBackbone;
+                        self.$checkinList = $('<div class="checkin-list"></div>');
+                        self.$checkinViewer = $('<div class="checkin-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
+                        self.checkinsCollection = window.checkinsCollection = new ModelBackbone.Collection(); // collection
+                        self.checkinsCollection.pageSize = pageSize;
+                        self.listView = new ModelBackbone.List({el: self.$checkinList, collection: self.checkinsCollection});
+                        self.listView.on('select', function(row) {
+                            self.router.navigate(row.model.getNavigatePath(), true);
+                        });
+                        self.listView.on('goToProfile', function(user){
+                            self.router.navigate('by/'+user.get('name'), true);
+                        });
+                        
+                        self.checkinsCollection.on('editModel', function(model) {
+                            self.router.navigate(model.getNavigatePath()+'/edit', true);
+                        });
+                        
+                        var loadCollections = function() {
+                            self.checkinsCollection.load(null, function(){
+                                self.initialized = true;
+                                self.trigger('initialized');
+                            });
                         }
-                    },
-                    error: function(collection, response){
-                        callback(false);
-                    }
+                        if(window.hasOwnProperty('account')) {
+                            window.account.on('loggedIn', function(loginView){
+                                loadCollections();
+                            });
+                        }
+                        loadCollections();
+                    });
                 });
+            });
+            
+            /*require(['../desktop/jquery.idle-timer.js'], function() {
+                var idleTimer = $(document).idleTimer(4200);
+                $(document).bind("idle.idleTimer", function(e){
+                    $('body').addClass('idle');
+                });
+                $(document).bind("active.idleTimer", function(){
+                    $('body').removeClass('idle');
+                });
+            });*/
+        },
+        initCarousel: function() {
+            var self = this;
+            if(!self.hasOwnProperty('carousel')) {
+                self.carousel = new SwipeView(self.$checkinViewer[0], {
+                    numberOfPages: self.checkinsCollection.count,
+                    hastyPageFlip: true
+                });
+                
+                self.carousel.onFlip(function () {
+                    var el;
+                    var upcoming;
+                	var i;
+                    var id = self.carousel.masterPages[self.carousel.currentMasterPage].dataset.id;
+                    var doc = self.checkinsCollection.get(id);
+                    self.router.navigate('checkin/'+doc.get('id'), {trigger: false, replace: false});
+                    var docNext = doc.next();
+                    var docPrev = doc.prev();
+                	for (i=0; i<3; i++) {
+                		upcoming = self.carousel.masterPages[i].dataset.upcomingPageIndex;
+                		if (upcoming != self.carousel.masterPages[i].dataset.pageIndex) {
+                			el = self.carousel.masterPages[i];
+                            if(self.carousel.directionX > 0) {
+                                if(docPrev) {
+                                    self.carouselPageRender(el, docPrev);
+                                }
+                            } else {
+                                if(docNext) {
+                                    self.carouselPageRender(el, docNext);
+                                }
+                            }
+                		}
+                	}
+                });
+                
             }
-        }
-    });
-    
-    var CheckinsList = Backbone.View.extend({
-        layout: 'avatar',
-        render: function() {
-            
-            var self = this;
-            this.$el.html('');
-            
-            this.$el.append(this.$ul);
-            
-            this.$ul.html('');
-            //this.collection.sort({silent:true});
-            this.collection.each(function(doc){
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatar({list: self});
-                }
-                
-                self.appendRow(view.render().el);
-            });
-            
-            this.trigger('resize');
-            
-            return this;
         },
-        initialize: function() {
-            var self = this;
-            
-            var $ul = this.$ul = $('<ul id="checkins"></ul>');
-            
-            this.collection.bind("add", function(doc) {
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatar({list: self});
-                }
-                
-                self.appendRow(view.render().el);
-                // refresh pager
-            });
-            
-            this.collection.on('reset', function(){
-                self.render();
-            });
-        },
-        refreshPager: function() {
-        },
-        appendRow: function(row) {
-            this.$ul.append(row);
-        }
-    });
-    
-    var CheckinActions = Backbone.View.extend({
-        
-        tagName: "div",
-        
-        className: "checkinActions",
-        
         render: function() {
             var self = this;
             this.$el.html('');
-            
-            this.actions.forEach(function(action){
-                self.$el.append(action.render().el);
-            });
-            
-            this.$el.removeAttr('id');
             this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            this.actions = [];
-            
-            this.checkinTags = new CheckinTags({id: this.id, model: this.model});
-            this.$el.append(this.checkinTags.render().el);
-            this.actions.push(this.checkinTags);
-            
-            this.checkinGroups = new CheckinGroups({id: this.id, model: this.model});
-            this.$el.append(this.checkinGroups.render().el);
-            this.actions.push(this.checkinGroups);
-            
-            this.checkinActionDelete = new CheckinActionDelete({id: this.id, model: this.model});
-            this.$el.append(this.checkinActionDelete.render().el);
-            this.actions.push(this.checkinActionDelete);
-        }
-    });
-
-    var CheckinActionDelete = Backbone.View.extend({
-        
-        tagName: "span",
-        
-        className: "delete",
-        
-        render: function() {
-            this.$el.html('<button>delete</button>');
-            
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            
-        },
-        events: {
-          "click": "select",
-        },
-        select: function() {
-            if(confirm("Are you sure that you want to delete this checkin?")) {
-                this.model.destroy({success: function(model, response) {
-                  console.log('delete');
-                }, 
-                errorr: function(model, response) {
-                    console.log(arguments);
-                },
-                wait: true});
-            }
-            return false;
-        }
-    });
-
-    var CheckinActionProcess = Backbone.View.extend({
-        
-        tagName: "span",
-        
-        className: "process",
-        
-        render: function() {
-            this.$el.html('<button>process</button>');
-            
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            
-        },
-        events: {
-          "click": "select",
-        },
-        select: function() {
-            if(confirm("Are you sure that you want to process this checkin?")) {
-                this.model.set({proc: 0});
-            }
-            return false;
-        }
-    });
-
-    var CheckinTags = Backbone.View.extend({
-        tagName: "span",
-        className: "tags",
-        render: function() {
-            this.$el.html('');
-            var tags = this.model.get("tags");
-            if(tags) {
-                for(var i in tags) {
-                    var tagName = tags[i];
-                    if(!_.isString(tagName)) {
-                        var $btn = $('<button class="tag">'+tagName+'</button>');
-                        $btn.attr('data-tag', JSON.stringify(tagName));
-                        this.$el.append($btn);
-                    } else {
-                        this.$el.append('<button class="tag">'+tagName+'</button>');
-                    }
-                }
-            }
-            this.$el.append('<button class="newTag">+ tag</button>');
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click .newTag": "newTag",
-          "click .tag": "removeTag"
-        },
-        removeTag: function(e) {
-            if(confirm("Are you sure that you want to remove this tag?")) {
-                var tags = this.model.get("tags");
-                
-                var $tag = $(e.target);
-                var tagName = '';
-                if($tag.attr('data-tag')) {
-                    tagName = JSON.parse($tag.attr('data-tag'));
-                } else {
-                    tagName = e.target.innerHTML;
-                }
-                this.model.pull({"tags": tagName}, {wait: true});
-            }
-        },
-        newTag: function() {
-            var tagName = prompt("Enter tags, separated, by commas.");
-            
-            tagName = tagName.split(',');
-            
-            for(var i in tagName) {
-                var tag = tagName[i];
-                tagName[i] = tag.trim(); // trim extra white space
-            }
-            if(tagName) {
-                if(!this.model.get("tags")) {
-                    this.model.set({'tags': tagName}, {wait: true});
-                } else {
-                    this.model.pushAll({"tags": tagName}, {wait: true});
-                }
-            }
-        }
-    });
-
-    var CheckinGroups = Backbone.View.extend({
-        tagName: "span",
-        className: "groups",
-        render: function() {
-            this.$el.html('');
-            var groups = this.model.get("groups");
-            if(groups) {
-                for(var i in groups) {
-                    var groupName = groups[i];
-                    this.$el.append('<button class="group">'+groupName+'</button>');
-                }
-            }
-            if(groups.indexOf('public') === -1) {
-                this.$el.append('<button class="publicGroup">+ public</button>');
-            }
-            if(groups && groups.length > 0) {
-                this.$el.append('<button class="privateGroup">+ private</button>');
-            }
-            this.$el.append('<button class="newGroup">+ group</button>');
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click .newGroup": "newGroup",
-          "click .group": "removeGroup",
-          "click .publicGroup": "publicGroup",
-          "click .privateGroup": "privateGroup"
-        },
-        privateGroup: function() {
-            if(confirm("Are you sure that you want to make this private?")) {
-                this.model.set({"groups": []}, {wait: true});  
-            }
-        },
-        publicGroup: function() {
-            if(confirm("Are you sure that you want to make this public?")) {
-                this.model.push({"groups": "public"}, {wait: true});
-            }
-        },
-        removeGroup: function(e) {
-            if(confirm("Are you sure that you want to remove this group?")) {
-                var groups = this.model.get("groups");
-                var name = e.target.innerHTML;
-                this.model.pull({"groups": name}, {wait: true});
-            }
-        },
-        newGroup: function() {
-            var groupName = prompt("Enter groups, separated, by commas.");
-            groupName = groupName.split(',');
-            
-            for(var i in groupName) {
-                var g = groupName[i];
-                groupName[i] = g.trim(); // trim extra white space
-            }
-            if(groupName) {
-                if(!this.model.get("groups")) {
-                    this.model.set({'groups': groupName}, {wait: true});
-                } else {
-                    this.model.pushAll({"groups": groupName}, {wait: true});
-                }
-            }
-        }
-    });
-
-
-    var CheckinRow = Backbone.View.extend({
-        
-        tagName: "li",
-        
-        className: "checkinRow clearfix",
-
-        htmlTemplate: '<img src="/api/files/<%= filename %>" />\
-                        <span class="info">\
-                            <span class="filename"><%= filename %></span>\
-                            <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
-                        </span>',
-        
-        template: function(doc) {
-            
-            // Add default values to doc which are required in the template
-            
-            if(doc.hasOwnProperty('at')) {
-                var createdAtFormatted = new Date(doc.at);
-                doc.createdAtFormatted = createdAtFormatted.toLocaleString();
-                var hours = createdAtFormatted.getHours();
-                var ampm = 'am';
-                if(hours > 12) {
-                    hours = hours - 12;
-                    ampm = 'pm';
-                }
-                doc.createdAtShort = (createdAtFormatted.getMonth()+1)+'/'+createdAtFormatted.getDate()+' @ '+hours+':'+createdAtFormatted.getMinutes()+' '+ampm;
-            } else {
-                doc.at = false;
-                doc.createdAtFormatted = '';
-                doc.createdAtShort = '';
-            }
-            
-            var template = $(_.template(this.htmlTemplate, doc));
-            
-            this.$el.attr('data-checkins-id', this.model.get("_id"));
-            
-            return template;
-        },
-        render: function() {
-            this.$el.html(this.template(this.model.toJSON()));
-            
-            this.$el.append(this.$actions);
-            
-            this.checkinActions.render();
-            
-            this.trigger('resize');
-            
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
-            
-            return this;
-        },
-        initialize: function(options) {
-            
-            if(options.list) {
-                this.list = options.list;
-            }
-            
-            this.model.bind('change', this.render, this);
-            this.model.bind('destroy', this.remove, this);
-
-            this.$actions = $('<div class="actions"></div>');
-            this.checkinActions = new CheckinActions({id: this.id, model: this.model});
-            this.$actions.append(this.CheckinActions.render().el);
-        },
-        events: {
-          "click": "select"
-        },
-        select: function(e) {
-            
-            
-            // One click to select, another to deselect.  Can only have one selection at a time.
-            
-            var deselectSiblings = function(el) {
-                el.siblings().removeClass('selected');
-                el.siblings().removeAttr('selected');
-            }
-            
-            if(this.$el.hasClass('selected')) {
-                this.$el.removeClass("selected");
-                this.$el.removeAttr('selected');
-                
-                this.trigger('deselect');
-            } else {
-                deselectSiblings(this.$el);
-                this.$el.addClass("selected");
-                this.$el.attr("selected", true);
-                
-                if(this.hasOwnProperty('list')) {
-                    this.list.trigger('select', this);
-                }
-                
-                this.trigger('select');
-            }
-            this.trigger('resize');
-        },
-        remove: function() {
-          $(this.el).remove();
-        }
-    });
-    
-    var CheckinFullView = Backbone.View.extend({
-        
-        tagName: "div",
-        
-        className: "checkinFullView clearfix",
-    
-        htmlTemplate: '<img src="/api/files<%= imgSrc %>" />\
-                        <span class="info">\
-                            <h3 class="caption"></h3>\
-                            <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
-                            <%= checkinHtml %>\
-                            <%= downloadMenu %>\
-                            <%= exifHtml %>\
-                        </span>',
-        
-        template: function(doc) {
-            
-            // Add default values to doc which are required in the template
-            
-            if(doc.hasOwnProperty('at')) {
-                var createdAtFormatted = new Date(doc.at);
-                doc.createdAtFormatted = createdAtFormatted.toLocaleString();
-                var hours = createdAtFormatted.getHours();
-                var ampm = 'am';
-                if(hours > 12) {
-                    hours = hours - 12;
-                    ampm = 'pm';
-                }
-                doc.createdAtShort = (createdAtFormatted.getMonth()+1)+'/'+createdAtFormatted.getDate()+' @ '+hours+':'+createdAtFormatted.getMinutes()+' '+ampm;
-            } else {
-                doc.at = false;
-                doc.createdAtFormatted = '';
-                doc.createdAtShort = '';
-            }
-            
-            doc.metaLinksHtml = '<a href="/api/files'+doc.filename+'.meta" target="_new">meta</a> <a href="/api/files'+doc.filename+'.metab" target="_new">meta binary</a>';
-            
-            doc.downloadMenu = '<a target="_new" href="/api/files'+doc.filename+'">original</a>';
-            
-            doc.imgSrc = doc.filename;
-            
-            if(doc.hasOwnProperty('sizes')) {
-                for(var i in doc.sizes) {
-                    for(var sizeName in doc.sizes[i]) {
-                        var size = doc.sizes[i][sizeName];
-                        
-                        if(sizeName == 'full') {
-                            doc.imgSrc = size.filename;
-                        }
-                        
-                        var downloadSize = ' <a target="_new" href="/api/files'+size.filename+'">'+sizeName+'</a> ';
-                        doc.downloadMenu += downloadSize;
-                    }
-                }
-            }
-            
-            doc.downloadMenu = '<span class="download"><a>'+doc.filename+'</a> '+ doc.downloadMenu + doc.metaLinksHtml + '</span>';
-            
-            // Checkin HTML
-            doc.checkinHtml = '';
-            if(doc.hasOwnProperty('checkin')) {
-                doc.checkinHtml = '<span class="checkin">checkins/'+doc.checkin.id+'</span>';
-            }
-            
-            // Exif HTML
-            doc.exifHtml = '';
-            if(doc.hasOwnProperty('exif')) {
-                for(var i in doc.exif) {
-                    doc.exifHtml += '<pre>'+i+': '+doc.exif[i]+'</pre>';
-                }
-            }
-            doc.exifHtml = '<a class="exif" href="#">exif data</a><span class="exifData">' + doc.exifHtml + '</span>';
-            
-            var template = $(_.template(this.htmlTemplate, doc));
-            
-            this.$el.attr('data-checkins-id', this.model.get("_id"));
-            
-            return template;
-        },
-        render: function() {
-            this.$el.html(this.template(this.model.toJSON()));
-            
-            this.renderCaption();
-            
-            this.$el.append(this.$actions);
-            
-            this.checkinActions.render();
-            
-            this.trigger('resize');
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
-            return this;
-        },
-        renderInfo: function() {
-            
-        },
-        renderActions: function() {
-            this.checkinActions.render();
-        },
-        renderCaption: function() {
-            var caption = this.model.has('caption') ? this.model.get('caption') : 'add a caption';
-            this.$el.find('.caption').html(caption);
-        },
-        initialize: function(options) {
-            
-            if(options.list) {
-                this.list = options.list;
-            }
-            
-            this.model.bind('change', this.renderInfo, this);
-            this.model.bind('change:caption', this.renderCaption, this);
-            this.model.bind('change:tags', this.renderActions, this);
-            this.model.bind('change:groups', this.renderActions, this);
-            this.model.bind('change:owner', this.renderActions, this);
-            this.model.bind('destroy', this.remove, this);
-    
-            this.$actions = $('<div class="actions"></div>');
-            this.checkinActions = new CheckinActions({id: this.id, model: this.model});
-            this.$actions.append(this.checkinActions.render().el);
-        },
-        show: function() {
-            this.$el.show();
-        },
-        events: {
-          "click .exif": "toggleExif",
-          "click .caption": "editCaption"
-        },
-        toggleExif: function() {
-            this.$el.find('.exifData').toggle();
-            return false;
-        },
-        editCaption: function() {
-            var c = this.model.get("caption");
-            
-            var newCaption = prompt("caption text", c);
-            
-            if(newCaption) {
-                this.model.set({"caption": newCaption}, {wait: true});
-            }
-        },
-        remove: function() {
-          $(this.el).remove();
-        }
-    });
-    
-    var CheckinAvatar = Backbone.View.extend({
-    
-        tagName: "li",
-        
-        className: "checkinAvatar",
-        
-        htmlTemplate: '<img class="map" src="/api/files<%= imgSrc %>" />\
-<span class="info">\
-    <span class="location"><%= loc %></span>\
-</span>',
-        
-        template: function(doc) {
-            
-            // Add default values to doc which are required in the template
-            
-            if(doc.hasOwnProperty('at')) {
-                var createdAtFormatted = new Date(doc.at);
-                doc.createdAtFormatted = createdAtFormatted.toLocaleString();
-                var hours = createdAtFormatted.getHours();
-                var ampm = 'am';
-                if(hours > 12) {
-                    hours = hours - 12;
-                    ampm = 'pm';
-                }
-                doc.createdAtShort = (createdAtFormatted.getMonth()+1)+'/'+createdAtFormatted.getDate()+' @ '+hours+':'+createdAtFormatted.getMinutes()+' '+ampm;
-            } else {
-                doc.at = false;
-                doc.createdAtFormatted = '';
-                doc.createdAtShort = '';
-            }
-            
-            doc.imgSrc = doc.thumb;
-            console.log(doc);
-            if(doc.hasOwnProperty('mapImage') && doc.mapImage.hasOwnProperty('sizes')) {
-                for(var i in doc.mapImage.sizes) {
-                    for(var sizeName in doc.mapImage.sizes[i]) {
-                        if(sizeName == 'thumb') {
-                            var size = doc.mapImage.sizes[i][sizeName];
-                            doc.imgSrc = size.filename;
-                        }
-                    }
-                }
-            } else if(doc.hasOwnProperty('thumb')) {
-                doc.imgSrc = doc.thumb;
-            }
-            
-            var template = $(_.template(this.htmlTemplate, doc));
-            
-            this.$el.attr('data-checkins-id', this.model.get("_id"));
-            
-            return template;
-        },
-        render: function() {
-            var self = this;
-            
             if(!this.initialized) {
-                
                 this.on('initialized', function(){
                     self.render();
                 });
-                
-                return;
+                return this;
             }
-            this.$el.html(this.template(this.model.toJSON()));
-            
-            this.$el.append(this.checkinActionProcess.render().el);
-            
-            this.trigger('resize');
-            
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
-            
+            this.$el.append(self.listView.render().$el);
+            this.$el.append(this.$checkinViewer);
             return this;
         },
-        bindModel: function() {
-            this.model.bind('change', this.render, this);
-            this.model.bind('destroy', this.remove, this);
-            
-            this.checkinActionProcess = new CheckinActionProcess({model: this.model});
-        },
-        initialize: function(options) {
-            if(options.list) {
-                this.list = options.list;
-            }
-            
-            var self = this;
-            self.initialized = false;
-            
-            if(!this.hasOwnProperty('model')) {
-                checkinsCollection.getOrFetch(this.id, function(model){
-                    if(model) {
-                        self.model = model;
-                        self.bindModel();
-                    } else {
-                        console.log('not found');
-                    }
-                    self.initialized = true;
-                    self.trigger('initialized');
-                });
-            } else {
-                this.bindModel();
-                self.initialized = true;
-                this.trigger('initialized');
-            }
-        },
         events: {
-          "click": "select"
+            "click .carousel-control.left": "carouselPrev",
+            "click .carousel-control.right": "carouselNext",
         },
-        select: function(e) {
-            
-            
-            // One click to select, another to deselect.  Can only have one selection at a time.
-            
-            var deselectSiblings = function(el) {
-                el.siblings().removeClass('selected');
-                el.siblings().removeAttr('selected');
+        carouselPrev: function() {
+            this.carousel.prev();
+            return false;
+        },
+        carouselNext: function() {
+            this.carousel.next();
+            return false;
+        },
+        carouselPageRender: function(page, doc) {
+            page.innerHTML = '';
+            page.dataset.id = doc.id;
+            page.appendChild(doc.getFullView({list: self.listView}).render().$el[0]);
+            page.scrollTop = 0;
+        },
+        carouselDoc: function(doc) {
+            var self = this;
+            if(doc.has('title')) {
+                self.router.setTitle(doc.get('title'));
+            }
+            self.initCarousel();
+            var docEl = doc.getFullView({list: self.listView}).render().$el;
+            var foundDoc = false;
+            self.carousel.masterPages.forEach(function(e,i){
+                console.log(e.dataset.id);
+                console.log(doc.id);
+                if(e.dataset.id == doc.id) {
+                    console.log(e);
+                    foundDoc = i;
+                }
+            });
+            console.log(self.carousel.currentMasterPage);
+            if(foundDoc !== false) {
+                console.log(foundDoc);
+                if(self.carousel.currentMasterPage > foundDoc) {
+                    if(self.carousel.currentMasterPage - foundDoc > 1) {
+                        self.carousel.next();
+                    } else {
+                        self.carousel.prev();
+                    }
+                } else if(self.carousel.currentMasterPage < foundDoc) {
+                    if(foundDoc - self.carousel.currentMasterPage > 1) {
+                        self.carousel.prev();
+                    } else {
+                        self.carousel.next();
+                    }
+                }
+                return;
             }
             
-            deselectSiblings(this.$el);
-            this.$el.addClass("selected");
-            this.$el.attr("selected", true);
-            
-            if(this.hasOwnProperty('list')) {
-                this.list.trigger('select', this);
+            var currentPageNum = self.carousel.currentMasterPage;
+            var nextPageNum = currentPageNum + 1;
+            var prevPageNum = currentPageNum - 1;
+            var maxPageNum = self.carousel.masterPages.length - 1;
+            if(nextPageNum > maxPageNum) {
+                nextPageNum = 0;
+            } else if(prevPageNum < 0) {
+                prevPageNum = maxPageNum;
             }
+            var renderSiblings = function() {
+                var docNext = doc.next();
+                var docPrev = doc.prev();
+                var pageNext = self.carousel.masterPages[nextPageNum];
+                var pagePrev = self.carousel.masterPages[prevPageNum];
+                if(docNext) {
+                    self.carouselPageRender(pageNext, docNext);
+                }
+                if(docPrev) {
+                    self.carouselPageRender(pagePrev, docPrev);
+                }
+            }
+            var currentPage = self.carousel.masterPages[currentPageNum];
+            self.carouselPageRender(currentPage, doc);
+            renderSiblings();
+        },
+        editDoc: function(doc) {
+            var self = this;
+            var $form;
+            if(!doc) {
+                self.newForm = new CheckinsBackbone.Form({
+                    collection: self.checkinsCollection
+                });
+                self.newForm.on("saved", function(doc) {
+                    self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
+                });
+                $form = self.newForm.render().$el;
+                $form.show();
+                self.$el.append($form);
+                $form.siblings().hide();
+                self.newForm.focus();
+            } else {
+                if(!self.editForms.hasOwnProperty(doc.id)) {
+                    self.editForms[doc.id] = new self.CheckinsBackbone.Form({
+                        collection: self.checkinsCollection,
+                        model: doc
+                    });
+                    self.editForms[doc.id].on("saved", function(doc) {
+                        self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
+                    });
+                    $form = self.editForms[doc.id].render().$el;
+                    $form.show();
+                    self.$el.append($form);
+                    self.editForms[doc.id].wysiEditor();
+                } else {
+                    $form = self.editForms[doc.id].render().$el;
+                    $form.show();
+                    //self.$el.append($form);
+                }
+                $form.siblings().hide();
+                self.editForms[doc.id].focus();
+            }
+        },
+        findCheckinById: function(id, callback) {
+            this.checkinsCollection.getOrFetch(id, callback);
+        },
+        userIs: function(userId) {
+            return (this.user && this.user.id == userId);
+        },
+        userIsAdmin: function() {
+            return (this.user && this.user.has('groups') && this.user.get('groups').indexOf('admin') !== -1);
+        },
+        bindAuth: function(auth) {
+            var self = this;
+            self.auth = auth;
+        },
+        bindUser: function(user) {
+            var self = this;
+            self.user = user;
+            self.trigger('refreshUser', user);
+        },
+        bindNav: function(nav) {
+            this.nav = nav;
+            this.bindRouter(nav.router);
+            nav.col.add({title:"Checkins", navigate:""});
+            if(window.account && (account.isUser() || account.isAdmin())) {
+                nav.col.add({title:"Checkin here", navigate:"here"});
+            }
+        },
+        bindRouter: function(router) {
+            var self = this;
+            var routerReset = function() {
+                $('body').attr('class', '');
+                router.reset();
+            }
+            self.router = router;
+            router.on('title', function(title){
+                var $e = $('header h1');
+                $e.html(title);
+                $e.attr('class', '');
+                var eh = $e.height();
+                var eph = $e.offsetParent().height();
+                if(eh > eph) {
+                    var lines = Math.floor(eh/eph);
+                    if(lines > 3) {
+                        $e.addClass('f'+lines);
+                        eh = $e.height();
+                        eph = $e.offsetParent().height();
+                        if(eh > eph) {
+                            lines = Math.floor(eh/eph);
+                            $e.addClass('l'+lines);
+                        }
+                    } else {
+                        $e.addClass('l'+lines);
+                    }
+                }
+            });
+            router.on('reset', function(){
+                $('header').removeAttr('class');
+                self.nav.unselect();
+            });
+            router.on('root', function(){
+                self.listView.filter();
+                self.listView.$el.siblings().hide();
+                self.listView.$el.show();
+                router.setTitle('Checkins');
+                self.nav.selectByNavigate('');
+                router.trigger('loadingComplete');
+            });
+            router.route('/checkin/:id/edit', 'editSlug', function(slug){
+                routerReset();
+                self.findCheckinBySlug(slug, function(doc){
+                    if(doc) {
+                        self.editDoc(doc);
+                    } else {
+                        router.navigate('here', {replace: true, trigger: true});
+                    }
+                    router.trigger('loadingComplete');
+                });
+            });
+            router.route('by/:userName', 'userCheckins', function(name){
+                routerReset();
+                router.setTitle('Checkins by '+name);
+                self.nav.selectByNavigate('');
                 
-            this.trigger('select');
-            this.trigger('resize');
-        },
-        remove: function() {
-          $(this.el).remove();
+                usersCollection.getByName(name, function(user){
+                    if(user) {
+                        self.listView.filter(function(model) {
+                          if (user.id !== model.get('owner').id) return false;
+                          return true;
+                        });
+                        self.listView.$el.siblings().hide();
+                        self.listView.$el.show();
+                        router.trigger('loadingComplete');
+                    }
+                });
+            });
+            router.route('checkin/:id', 'checkin', function(id){
+                routerReset();
+                self.$checkinViewer.siblings().hide();
+                self.$checkinViewer.show();
+                self.findCheckinById(id, function(doc){
+                    if(doc) {
+                        if(doc.has('slug')) {
+                            router.navigate(doc.get('slug'), {trigger: false, replace: true});
+                        }
+                        self.carouselDoc(doc);
+                    } else {
+                        console.log(id);
+                        router.navigate('', {replace: true, trigger: true});
+                    }
+                    router.trigger('loadingComplete');
+                });
+            });
+            router.route('here', 'here', function(){
+                routerReset();
+                router.setTitle('Checkin Here');
+                self.editDoc();
+                router.trigger('loadingComplete');
+                self.nav.selectByNavigate('here');
+            });
         }
     });
-    
-    if(define)
-    define(function () {
-        //Do setup work here
-    
-        return {
-            Collection: Checkins,
-            Model: Checkin,
-            List: CheckinsList,
-            Row: CheckinRow,
-            Avatar: CheckinAvatar
-        }
-    });
+
+    if(define) {
+        define(function () {
+            return CheckinsView;
+        });
+    }
 })();

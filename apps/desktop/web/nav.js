@@ -24,7 +24,8 @@
             this.trigger('root');
         },
         setTitle: function(title) {
-            $('header h1').html(title);
+            document.title = title;
+            this.trigger('title', title);
         }
     });
     
@@ -154,6 +155,7 @@
             e.stopPropagation();
         },
         userSelect: function() {
+            this.options.list.hideMenu();
             this.$el.siblings().removeAttr('selected');
             this.select();
             if(this.model.has('navigate')) {
@@ -209,7 +211,10 @@
     
     nav.selectByNavigate = function(navName) {
         var navModel = this.col.where({navigate: navName});
-        _.first(navModel).getRow().select();
+        var doc = _.first(navModel);
+        if(doc) {
+            doc.getRow().select();
+        }
     }
     
     nav.unselect = function() {
