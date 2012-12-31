@@ -1,6 +1,6 @@
 {
   "name": "house",
-  "version": "0.0.20",
+  "version": "0.0.22",
   "dependencies": {
     "optimist": "latest",
     "paperboy": "latest",
@@ -10,9 +10,12 @@
     "oauth": "latest",
     "emailjs": "latest",
     "imap": "latest",
+    "mailcomposer": "latest",
+    "simplesmtp": "latest",
     "uglify-js": "latest",
     "bson": "latest",
-    "mongodb": "latest"
+    "mongodb": "latest",
+    "useragent": "latest"
   },
   "devDependencies": {
     "mocha": "*"

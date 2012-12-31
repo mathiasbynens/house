@@ -343,7 +343,7 @@
             this.$pager.find('.list-count').html(c);
         },
         appendRow: function(row) {
-            var rank = new Date(row.model.get('at'));
+            var rank = new Date(row.model.get('uploadDate'));
             rank = rank.getTime();
             var rowEl = row.render().$el;
             if(this.currentFilter && !this.currentFilter(row.model)) {
@@ -479,10 +479,30 @@
         tagName: "li",
         className: "fileRow",
         render: function() {
+            var $byline = $('<span class="byline"></span>');
             this.$el.html('');
+            var contentType = this.model.get('contentType');
+            var $icon = $('<span class="contentIcon '+contentType.substr(0, contentType.indexOf('/'))+'"></span>');
+            if(contentType.indexOf('image') === 0) {
+                var $img = $('<img src="/api/files/'+this.model.get('filename')+'" />');
+                $icon.append($img);
+            }
+            this.$el.append($icon);
             this.$el.append('<span class="filename"><a href="/api/files/'+this.model.get('filename')+'" target="_new">'+this.model.get('filename')+'</a></span>');
             this.$el.append('<span class="contentLength">'+this.model.getLengthFormatted()+'</span>');
             this.$el.append('<span class="contentType">'+this.model.get('contentType')+'</span>');
+            
+            var $at = $('<span class="uploadDate">'+this.model.get('uploadDate')+'</span>');
+            if(window.hasOwnProperty('clock')) {
+                $at.attr('title', clock.moment(this.model.get('uploadDate')).format('LLLL'));
+                $at.html(clock.moment(this.model.get('uploadDate')).calendar());
+            }
+            $byline.append($at);
+            if(this.model.has('metadata')) {
+                $byline.append(' by '+this.model.get('metadata').owner.name);
+            }
+            this.$el.append($byline);
+            
             this.$el.append(this.fileActions.render().$el);
             this.setElement(this.$el);
             return this;
