@@ -16,7 +16,12 @@
                     window.sessionsCollection.pageSize = pageSize;
                     self.sessionsListView = new SessionsBackbone.List({el: self.$sessionList, collection: sessionsCollection});
                     self.sessionsListView.on('select', function(row) {
-                        self.router.navigate(row.model.getNavigatePath(), true);
+                        //self.router.navigate(row.model.getNavigatePath(), true);
+                        self.actionsListView.filter({s: row.model.get("id")});
+                    });
+                    self.sessionsListView.on('deselect', function(row) {
+                        //self.router.navigate(row.model.getNavigatePath(), true);
+                        self.actionsListView.filter();
                     });
                     self.sessionsListView.on('goToProfile', function(user){
                         self.router.navigate('by/'+user.get('name'), true);
@@ -24,7 +29,6 @@
                     sessionsCollection.on('editModel', function(model) {
                         self.router.navigate(model.getNavigatePath()+'/edit', true);
                     });
-                    
                     require(['backbone-actions.js'], function(ActionsBackbone){
                         window.ActionsBackbone = ActionsBackbone;
                         self.$actionList = $('<div class="actions-list"></div>');
@@ -42,19 +46,39 @@
                             self.router.navigate(model.getNavigatePath()+'/edit', true);
                         });
                         
-                        if(window.hasOwnProperty('account')) {
-                            window.account.on('loggedIn', function(loginView){
-                                loadCollections();
+                        require(['backbone-io.js'], function(IoBackbone){
+                            window.IoBackbone = IoBackbone;
+                            self.$ioList = $('<div class="io-session-list"></div>');
+                            self.$ioViewer = $('<div class="io-session-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
+                            window.ioCollection = new IoBackbone.Collection(); // collection
+                            window.ioCollection.pageSize = pageSize;
+                            self.ioListView = new IoBackbone.List({el: self.$ioList, collection: ioCollection});
+                            self.ioListView.on('select', function(row) {
+                                self.router.navigate(row.model.getNavigatePath(), true);
                             });
-                        }
-                        loadCollections();
+                            self.ioListView.on('goToProfile', function(user){
+                                self.router.navigate('by/'+user.get('name'), true);
+                            });
+                            ioCollection.on('editModel', function(model) {
+                                self.router.navigate(model.getNavigatePath()+'/edit', true);
+                            });
+                        
+                            if(window.hasOwnProperty('account')) {
+                                window.account.on('loggedIn', function(loginView){
+                                    loadCollections();
+                                });
+                            }
+                            loadCollections();
+                        });
                     });
                     
                     var loadCollections = function() {
-                        sessionsCollection.load(null, function(){
-                            actionsCollection.load(null, function(){
-                                self.initialized = true;
-                                self.trigger('initialized');
+                        ioCollection.load(null, function(){
+                            sessionsCollection.load(null, function(){
+                                actionsCollection.load(null, function(){
+                                    self.initialized = true;
+                                    self.trigger('initialized');
+                                });
                             });
                         });
                     }
@@ -123,8 +147,10 @@
                 });
                 return this;
             }
+            this.$el.append(self.ioListView.render().$el);
             this.$el.append(self.sessionsListView.render().$el);
             this.$el.append(self.actionsListView.render().$el);
+            this.$el.append(this.$ioViewer);
             this.$el.append(this.$sessionViewer);
             this.$el.append(this.$actionViewer);
             return this;
@@ -277,6 +303,7 @@
             this.bindRouter(nav.router);
             if(window.account && (account.isUser() || account.isAdmin())) {
                 nav.col.add({title:"Analytics", navigate:""});
+                nav.col.add({title:"Live", navigate:"live"});
                 nav.col.add({title:"Sessions", navigate:"sessions"});
                 nav.col.add({title:"Actions", navigate:"actions"});
             }
@@ -319,6 +346,8 @@
                 self.sessionsListView.$el.show();
                 self.actionsListView.filter();
                 self.actionsListView.$el.show();
+                self.ioListView.filter();
+                self.ioListView.$el.show();
                 router.setTitle('Analytics');
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');

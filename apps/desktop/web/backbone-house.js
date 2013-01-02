@@ -45,12 +45,28 @@ Backbone.Router.prototype.getLocalStorageNavigationHistory = function() {
 var _navigate = Backbone.Router.prototype.navigate;
 
 Backbone.Router.prototype.navigate = function(path, go) {
+    var frag = Backbone.history.getFragment();
     Backbone.history.navDirection = 1;
     this.localStorageNavigationHistory(path);
     _navigate.apply(this, arguments);
-    //if(go && Backbone.history.getFragment() !== path) {
-        //navigate(window.location.toString());
-    //}
+    console.log(arguments);
+    var wl = window.location.toString();
+    console.log(Backbone.history.getFragment());
+        //alert(wl);
+    if(go && frag !== path) {
+        if(window.hasOwnProperty('ActionsBackbone')) {
+            var action = new ActionsBackbone.Model({});
+            action.set({a:"GET "+wl},{silent:true});
+            action.save();
+        } else {
+            require(['/analytics/backbone-actions.js'], function(ActionsBackbone){
+                window.ActionsBackbone = ActionsBackbone;
+                var action = new ActionsBackbone.Model({});
+                action.set({a:"GET "+wl},{silent:true});
+                action.save();
+            });
+        }
+    }
 };
 
 Backbone.History.prototype.checkUrl = function(e) {

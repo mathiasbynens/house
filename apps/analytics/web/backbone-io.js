@@ -1,33 +1,6 @@
 (function() {
-    var upgradeExternalLinks = function() {
-      $('a[target="_new"]:not([rel="external"])').each(function(i,e){
-        $(e).click(function(){
-          var url = $(this).attr("href");
-          // post to activity as visit with a referer
-          //   the server will see if there is an existing url, if so increment its visits counter
-          var visitToSiteWithRefer = {
-            "t": 2,
-            "a": 'EXIT '+window.location.toString()+' TO '+url
-          }
-          if(window.hasOwnProperty('ActionsBackbone')) {
-              var action = new ActionsBackbone.Model({});
-              action.set({a:"GET "+wl},{silent:true});
-              action.save();
-          } else {
-              require(['/analytics/backbone-actions.js'], function(ActionsBackbone){
-                  window.ActionsBackbone = ActionsBackbone;
-                  var action = new ActionsBackbone.Model({});
-                  action.set(visitToSiteWithRefer,{silent:true});
-                  action.save();
-              });
-          }
-        });
-        $(e).attr('rel', 'external'); // flag that it's been click handled.  I also want to add a hover state to pull a thumbnail, etc.
-      });
-    };
     var Model = Backbone.Model.extend({
-        collectionName: "actions",
-        url: "/api/actions",
+        collectionName: "io",
         initialize: function(attr, opts) {
             var colOpts = {
                 image: this
@@ -36,21 +9,14 @@
                 console.log(arguments);
             });
             this.views = {};
-            if(this.id) {
-                var timestamp = this.id.toString().substring(0,8);
-                var date = new Date( parseInt( timestamp, 16 ) * 1000 );
-                this.attributes.at = date;
-            }
         },
         getOwner: function(callback) {
-            if (this.has("owner")) {
-                var owner = this.get("owner");
-                var user = window.usersCollection.getOrFetch(owner.id, callback);
+            if (this.has("session").user) {
+                var user = window.usersCollection.getOrFetch(this.get("session").user, callback);
             }
         },
         getFullView: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.fullView) {
                 var view = this.fullView = new FullView(options);
@@ -63,7 +29,6 @@
         },
         getAvatar: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.avatar) {
                 var view = this.avatar = new AvatarView(options);
@@ -73,7 +38,6 @@
         },
         getRow: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.row) {
                 var row = this.row = new RowView(options);
@@ -87,19 +51,19 @@
             }
         },
         getNavigatePath: function() {
-            return "action/" + this.id;
+            return "id/" + this.id;
         }
     });
     var Collection = Backbone.Collection.extend({
         model: Model,
-        collectionName: "actions",
-        url: "/api/actions",
+        collectionName: "io",
+        url: "/api/io",
         initialize: function() {
             var self = this;
             self.pageSize = 10;
             this.resetFilters();
             require([ "//" + window.location.host + "/desktop/socket.io.min.js" ], function() {
-                var socketOpts = {reconnect: true};
+                var socketOpts = {};
                 if (window.location.protocol.indexOf("https") !== -1) {
                     socketOpts.secure = true;
                 } else {
@@ -116,8 +80,22 @@
                 socket.on('connect_failed', function () {
                     console.log("connect_failed " + self.collectionName);
                 });
-                console.log("connect to  " + self.collectionName);
+                socket.on('disconnect', function () {
+                    console.log("disconnect " + self.collectionName);
+                });
+                socket.on('error', function () {
+                    console.log("error " + self.collectionName);
+                });
+                socket.on('reconnecting', function () {
+                    console.log("reconnecting " + self.collectionName);
+                });
+                socket.on('reconnect', function () {
+                    console.log("reconnect " + self.collectionName);
+                });
+                console.log("connect to " + self.collectionName);
                 var insertOrUpdateDoc = function(doc) {
+                    console.log('insert/update io ');
+                    console.log(doc);
                     if (_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;
@@ -130,35 +108,36 @@
                         model.set(doc, {
                             silent: true
                         });
+                        if(doc.lastAt) {
+                            self.sort();
+                        }
                         model.renderViews();
                     }
                 };
-                socket.on("insertedActions", function(doc) {
+                socket.on("insertedIo", function(doc) {
                     insertOrUpdateDoc(doc);
-                    //self.count++;
-                    //self.trigger("count", self.count);
+                    self.count++;
+                    self.trigger("count", self.count);
                 });
-                socket.on("updatedActions", function(doc) {
+                socket.on("updatedIo", function(doc) {
                     insertOrUpdateDoc(doc);
                 });
-                socket.on("deletedActions", function(id) {
+                socket.on("deletedIo", function(id) {
+                    console.log('remove io '+id);
                     self.remove(id);
-                    //self.count--;
-                    //self.trigger("count", self.count);
+                    self.count--;
+                    self.trigger("count", self.count);
                 });
                 self.initialized = true;
                 self.trigger("initialized");
             });
         },
-        headCount: function(options, callback) {
-            if (!options) {
-                options = {};
-            }
+        headCount: function(callback) {
             var self = this;
             var aj = $.ajax({
                 type: "HEAD",
                 url: self.url,
-                data: options,
+                data: {},
                 success: function(json) {
                     callback(aj.getResponseHeader("X-Count"));
                 },
@@ -167,15 +146,18 @@
                 }
             });
         },
-        refreshCount: function(options) {
+        refreshCount: function() {
             var self = this;
-            self.headCount(options, function(count) {
+            self.headCount(function(count) {
                 self.count = count;
                 self.trigger("count", count);
             });
         },
         load: function(options, success) {
             var self = this;
+            if (!this.count) {
+                this.refreshCount();
+            }
             if (!options) {
                 options = {};
             }
@@ -183,10 +165,7 @@
                 options.limit = self.pageSize;
             }
             if (!options.sort) {
-                options.sort = "_id-";
-            }
-            if (!this.count) {
-                this.refreshCount(options);
+                //options.sort = "_id-";
             }
             this.applyFilters(options);
             this.fetch({
@@ -214,8 +193,8 @@
         },
         comparator: function(doc) {
             var d;
-            if (doc.get("at")) {
-                d = (new Date(doc.get("at"))).getTime();
+            if (doc.get("time")) {
+                d = (new Date(doc.get("time"))).getTime();
                 return d * -1;
             } else {
                 return 1;
@@ -267,8 +246,8 @@
         initialize: function() {
             var self = this;
             self.loading = false;
-            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> actions</div>');
-            var $ul = this.$ul = $('<ul class="actions"></ul>');
+            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> live sessions</div>');
+            var $ul = this.$ul = $('<ul class="io-sessions"></ul>');
             this.collection.on("add", function(doc) {
                 var view;
                 if (self.layout === "row") {
@@ -281,13 +260,6 @@
                     });
                 }
                 self.appendRow(view);
-                if(self.currentFilter) {
-                    if(self.currentFilter(doc)) {
-                        self.getDocLayoutView(doc).$el.show();
-                    } else {
-                        self.getDocLayoutView(doc).$el.hide();
-                    }
-                }
                 self.renderPager();
                 doc.on("remove", function() {
                     view.$el.remove();
@@ -324,24 +296,6 @@
                     self.getDocLayoutView(model).$el.hide();
                     return false;
                 });
-            } else if(f) {
-                this.currentFilter = function(model) {
-                    for(var i in f) {
-                      if (f[i] !== model.get(i)) return false;
-                      return true;
-                    }
-                }
-                this.collection.filter(function(model) {
-                    if (self.currentFilter(model)) {
-                        self.getDocLayoutView(model).$el.show();
-                        return true;
-                    }
-                    self.getDocLayoutView(model).$el.hide();
-                    return false;
-                });
-                delete this.collection.count;
-                f.skip = this.collection.length;
-                this.collection.load(f);
             } else {
                 self.$ul.children().show();
                 self.currentFilter = false;
@@ -380,24 +334,17 @@
             });
             this.$el.append(this.$pager);
             this.renderPager();
-            this.trigger("resize");
             this.setElement(this.$el);
             return this;
         },
         renderPager: function() {
             var len = this.collection.length;
             var c = this.collection.count > len ? this.collection.count : len;
-            if(this.currentFilter) {
-                c = this.collection.count;
-                len = this.collection.filter(this.currentFilter).length;
-            } else {
-                
-            }
             this.$pager.find(".list-length").html(len);
             this.$pager.find(".list-count").html(c);
         },
         appendRow: function(row) {
-            var rank = new Date(row.model.get("at"));
+            var rank = new Date(row.model.get("lastAt"));
             rank = rank.getTime();
             var rowEl = row.render().$el;
             if (this.currentFilter && !this.currentFilter(row.model)) {
@@ -439,6 +386,57 @@
                 id: this.id,
                 model: this.model
             });
+        }
+    });
+    var ActionFeedView = Backbone.View.extend({
+        tagName: "span",
+        className: "feed",
+        render: function() {
+            if (!this.model.has("feed")) {
+                this.$el.html('<button class="publish">publish to feed</button>');
+            } else {
+                var feed = this.model.get("feed");
+                this.$el.html('published at <a href="/feed/item/' + feed.id + '" target="_new">' + feed.at + '</a><button class="unpublish">remove from feed</button>');
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        initialize: function() {},
+        events: {
+            "click .publish": "publish",
+            "click .unpublish": "unpublish"
+        },
+        publish: function() {
+            var self = this;
+            console.log(this.model);
+            this.model.set({
+                feed: 0
+            }, {
+                silent: true
+            });
+            var saveModel = this.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            saveModel.done(function() {
+                self.render();
+            });
+            return false;
+        },
+        unpublish: function() {
+            var self = this;
+            console.log(this.model);
+            this.model.unset("feed", {
+                silent: true
+            });
+            var saveModel = this.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            saveModel.done(function() {
+                self.render();
+            });
+            return false;
         }
     });
     var ActionDeleteView = Backbone.View.extend({
@@ -708,13 +706,12 @@
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
             this.$el.attr("data-id", this.model.get("id"));
-            this.$el.attr("data-session_id", this.model.get("s"));
         },
         render: function() {
             this.$el.html("");
             var $byline = $('<span class="byline"></span>');
-            if (this.model.has("userAgent")) {
-                var str = this.model.get('userAgent');
+            if (this.model.has("agent") && this.model.get('headers')["user-agent"]) {
+                var str = this.model.get('headers')["user-agent"];
                 var $ua = $('<userAgent><span class="string">' + str + '</span><span class="os"></span><span class="browser"></span></userAgent>');
                 if (this.model.has("agent")) {
                     var $os = $ua.find('.os');
@@ -725,14 +722,15 @@
                     $os.attr('title', agent.os);
                     $browser.addClass(agent.family.replace(/\s/g, ''));
                     $browser.html(agent.family);
-                    $browser.attr('title', agent.family);
+                    $browser.attr('title', agent.family + ' ' + agent.major);
                 }
                 this.$el.append($ua);
             }
-            var $name = $('<strong class="name">' + this.model.get("a") + "</strong>");
+            var session = this.model.get("session");
+            var $name = $('<strong class="name">' + session.name + "</strong>");
             this.$el.append($name);
-            if (this.model.has("user")) {
-                $name.attr("data-owner-id", this.model.get("user"));
+            if (session.user) {
+                $name.attr("data-owner-id", session.user);
                 var owner = this.model.getOwner(function(owner) {
                     if (owner) {
                         $name.html("");
@@ -753,16 +751,27 @@
             if (this.model.has("referer")) {
                 this.$el.append('<referer>' + this.model.get("referer") + "</referer>");
             }
-            if (this.model.has("s")) {
-                this.$el.append('<span class="sid">' + this.model.get("s") + "</span>");
+            if (this.model.has("sid")) {
+                //this.$el.append('<span class="sid">' + this.model.get("sid") + "</span>");
             }
-            if (this.model.has("at")) {
+            if (this.model.has("rooms")) {
+                var $rooms = $('<span class="rooms"></span>');
+                var roomPrefix = "/socket.io/io/";
+                for(var i in this.model.get("rooms")) {
+                    if(i.indexOf(roomPrefix) !== -1) {
+                        $rooms.append('<span class="room">'+i.substr(roomPrefix.length)+'</span>');
+                    }
+                }
+                this.$el.append($rooms);
+                //this.$el.append('<span class="sid">' + this.model.get("sid") + "</span>");
+            }
+            if (this.model.has("time")) {
                 var $at = $('<span class="at"></span>');
                 if (window.hasOwnProperty("clock")) {
-                    $at.attr("title", clock.moment(this.model.get("at")).format("LLLL"));
-                    $at.html(clock.moment(this.model.get("at")).calendar());
+                    $at.attr("title", clock.moment(this.model.get("time")).format("LLLL"));
+                    $at.html(clock.moment(this.model.get("time")).calendar());
                 } else {
-                    $at.html(this.model.get("at"));
+                    $at.html(this.model.get("time"));
                 }
                 this.$el.append($at);
             }
@@ -862,6 +871,9 @@
             $(this.el).remove();
         }
     });
+    window.nl2br = function(str) {
+        return (str + "").replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, "$1" + "<br />");
+    };
     var AvatarView = Backbone.View.extend({
         tagName: "span",
         className: "avatar",
@@ -922,6 +934,35 @@
             $(this.el).remove();
         }
     });
+    var SelectGroupsView = Backbone.View.extend({
+        tagName: "select",
+        className: "groups",
+        initialize: function() {
+            this.$options = $('<option value="public">public</option><option value="private">private</option>');
+        },
+        render: function() {
+            var self = this;
+            this.$el.attr("name", "groups");
+            this.$el.append(this.$options);
+            if (this.model && this.model.has("groups") && this.model.get("groups").indexOf("public") !== -1) {
+                this.$el.val("public");
+            } else {
+                console.log("rpv");
+                this.$el.val("private");
+                this.$options.find('option[value="private"]').attr("selected", "selected");
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function() {
+            var groups = [];
+            if (this.$el.find("input").val() == "public") {
+                groups = [ "public" ];
+            }
+            return groups;
+        },
+        events: {}
+    });
     var FormView = Backbone.View.extend({
         tagName: "div",
         className: "form",
@@ -945,6 +986,12 @@
             this.atPublished.find(".owner").append(this.$owner);
             this.atPublished.find(".at").append(this.$inputAtDate);
             this.atPublished.find(".at").append(this.$inputAtTime);
+            this.inputGroupsView = new SelectGroupsView({
+                model: this.model
+            });
+            this.feedView = new ActionFeedView({
+                model: this.model
+            });
             this.deleteView = new ActionDeleteView({
                 model: this.model
             });
@@ -953,11 +1000,13 @@
             this.$form.find("fieldset").append("<hr />");
             this.$form.find("fieldset").append(this.atPublished);
             this.$form.find("fieldset").append(this.deleteView.render().$el);
+            this.$form.find("controls").append(this.inputGroupsView.render().$el);
             this.$form.find("controls").append('<input type="submit" value="POST" />');
         },
         render: function() {
             var self = this;
             if (this.$el.find("form").length === 0) {
+                console.log("append form");
                 this.$el.append(this.$form);
             }
             if (this.model) {
@@ -968,7 +1017,7 @@
                     this.$inputAtDate.val(this.model.get("at").substr(0, 10));
                     this.$inputAtTime.val(this.model.get("at").substr(11, 5));
                 }
-                if (this.model.has("owner")) {
+                if (this.model.has("user")) {
                     this.model.getOwner(function(owner) {
                         if (owner) {
                             self.$owner.html(owner.getAvatarNameView().render().$el);
@@ -1008,6 +1057,15 @@
             var groups = this.inputGroupsView.val();
             if (title !== "" && title !== this.model.get("title")) {
                 setDoc.title = title;
+            }
+            if (msg !== "" && msg !== this.model.get("msg")) {
+                setDoc.msg = msg;
+            }
+            if (slug !== "" && slug !== this.model.get("slug")) {
+                setDoc.slug = slug;
+            }
+            if (groups.length > 0 && groups !== this.model.get("groups")) {
+                setDoc.groups = groups;
             }
             console.log("setDoc");
             console.log(setDoc);

@@ -694,9 +694,9 @@
             this.model.bind("destroy", this.remove, this);
         },
         render: function() {
+            var self = this;
             this.$el.html("");
             var $byline = $('<span class="byline"></span>');
-            
             if (this.model.has("userAgent")) {
                 var str = this.model.get('userAgent');
                 var $ua = $('<userAgent><span class="string">' + str + '</span><span class="os"></span><span class="browser"></span></userAgent>');
@@ -709,7 +709,7 @@
                     $os.attr('title', agent.os);
                     $browser.addClass(agent.family.replace(/\s/g, ''));
                     $browser.html(agent.family);
-                    $browser.attr('title', agent.family);
+                    $browser.attr('title', agent.family + ' ' + agent.major);
                 }
                 this.$el.append($ua);
             }
@@ -783,7 +783,7 @@
                 }
                 this.$el.append($geo);
             }
-            this.$el.attr("data-id", this.model.get("_id"));
+            this.$el.attr("data-id", this.model.get("id"));
             this.setElement(this.$el);
             return this;
         },
@@ -796,13 +796,22 @@
                 el.siblings().removeAttr("selected");
             };
             deselectSiblings(this.$el);
-            this.$el.addClass("selected");
-            this.$el.attr("selected", true);
-            if (this.hasOwnProperty("list")) {
-                this.list.trigger("select", this);
+            
+            if(this.$el.hasClass("selected")) {
+                this.$el.removeClass("selected");
+                this.$el.removeAttr("selected");
+                if (this.hasOwnProperty("list")) {
+                    this.list.trigger("deselect", this);
+                }
+                this.trigger("deselect");
+            } else {
+                this.$el.addClass("selected");
+                this.$el.attr("selected", true);
+                if (this.hasOwnProperty("list")) {
+                    this.list.trigger("select", this);
+                }
+                this.trigger("select");
             }
-            this.trigger("select");
-            this.trigger("resize");
         },
         remove: function() {
             $(this.el).remove();

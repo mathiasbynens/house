@@ -67,7 +67,6 @@
         initialize: function() {
             var self = this;
             self.pageSize = 10;
-            this.resetFilters();
             require(['//'+window.location.host+'/desktop/socket.io.min.js'], function() {
                 var socketOpts = {};
                 if(window.location.protocol.indexOf('https') !== -1) {
@@ -80,7 +79,6 @@
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                        console.log(doc);
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;s
@@ -111,28 +109,36 @@
                 self.trigger('initialized');
             });
         },
-        headCount: function(callback) {
+        headCount: function(options, callback) {
+            if (!options) {
+                options = {};
+            }
             var self = this;
-            var aj = $.ajax({type: "HEAD",url: self.url,data: {},
+            var aj = $.ajax({
+                type: "HEAD",
+                url: self.url,
+                data: options,
                 success: function(json) {
-                    callback(aj.getResponseHeader('X-Count'));
-                },xhrFields: {withCredentials: true}
+                    callback(aj.getResponseHeader("X-Count"));
+                },
+                xhrFields: {
+                    withCredentials: true
+                }
             });
         },
-        refreshCount: function() {
+        refreshCount: function(options) {
             var self = this;
-            self.headCount(function(count){
+            self.headCount(options, function(count){
                 self.count = count;
                 self.trigger('count', count);
             });
         },
         load: function(options, success) {
             var self = this;
-            if(!this.count) {
-                this.refreshCount();
-            }
             if(!options) {
                 options = {};
+            } else {
+                options = _.clone(options);
             }
             if(!options.limit) {
                 options.limit = self.pageSize;
@@ -140,7 +146,9 @@
             if(!options.sort) {
                 options.sort = "uploadDate-";
             }
-            this.applyFilters(options);
+            if(!this.count) {
+                this.refreshCount(options);
+            }
             this.fetch({data: options, add: true, success: function(collection, response){
                     if(success) {
                         success();
@@ -150,32 +158,26 @@
                 }
             });
         },
+        setLoadFilter: function(f) {
+            this.filterLoadOptions = f;
+        },
+        applyLoadFilter: function(o) {
+            if(this.filterLoadOptions) {
+                for(var i in this.filterLoadOptions) {
+                    o[i] = this.filterLoadOptions[i];
+                }
+            }
+        },
         getNextPage: function(callback) {
             if(this.length < this.count) {
-                this.load({skip:this.length}, callback);
+                var loadO = this.filterLoadOptions || {};
+                if(this.filterLength) {
+                    loadO.skip = this.filterLength;
+                } else {
+                    loadO.skip = this.length;
+                }
+                this.load(loadO, callback);
             }
-        },
-        filterContentType: function(contentType) {
-            this.filteredContentType = contentType;
-        },
-        filterProc: function(doFilter) {
-            this.filteredProc = doFilter;
-        },
-        applyFilters: function(options) {
-            if(this.filteredContentType) {
-                options.contentType = '/'+this.filteredContentType+'.*/';
-            }
-            if(this.filteredProc) {
-                options["metadata.proc"] = {"$exists": false};
-            }
-            return options;
-        },
-        updateFilter: function(filter) {
-            this.reset();
-            this.load();
-        },
-        resetFilters: function() {
-            this.filteredContentType = false;
         },
         comparator: function(doc) {
             var d;
@@ -259,6 +261,7 @@
                     view = doc.getAvatar({list: self});
                 }
                 self.appendRow(view);
+                
                 self.renderPager();
                 doc.on('remove', function(){
                     view.$el.remove();
@@ -286,20 +289,59 @@
         },
         filter: function(f) {
             var self = this;
-            if(f && typeof f == 'function') {
+            if (f && typeof f == "function") {
                 this.currentFilter = f;
-                this.collection.filter(function(model) {
-                  if(f(model)) {
-                      self.getDocLayoutView(model).$el.show();
-                      return true;
-                  }
-                  self.getDocLayoutView(model).$el.hide();
-                  return false;
+                var flen = this.collection.filter(function(model) {
+                    if (f(model)) {
+                        self.getDocLayoutView(model).$el.show();
+                        return true;
+                    }
+                    self.getDocLayoutView(model).$el.hide();
+                    return false;
+                }).length;
+                this.filterLength = flen;
+            } else if(f) {
+                this.currentFilterO = _.clone(f);
+                this.currentFilter = function(model) {
+                    var l = _.size(this.currentFilterO);
+                    for(var i in this.currentFilterO) {
+                      if(this.currentFilterO[i] instanceof RegExp) {
+                          if(this.currentFilterO[i].test(model.get(i))) {
+                              l--;
+                          }
+                      } else {
+                        if (this.currentFilterO[i] === model.get(i)) l--;
+                      }
+                    }
+                    if(l === 0) {
+                        return true;
+                    }
+                    return false;
+                }
+                var flen = this.collection.filter(function(model) {
+                    if (self.currentFilter(model)) {
+                        self.getDocLayoutView(model).$el.show();
+                        return true;
+                    }
+                    self.getDocLayoutView(model).$el.hide();
+                    return false;
+                }).length;
+                delete this.collection.count;
+                this.filterLength = flen;
+                self.filterLoadOptions = _.clone(f);
+                var loadO = _.clone(f);
+                loadO.skip = 0; //flen;
+                this.collection.load(loadO, function(){
+                    self.filterLength = self.collection.filter(self.currentFilter).length
                 });
             } else {
-                // show all
                 self.$ul.children().show();
                 self.currentFilter = false;
+                self.filterLength = false;
+                self.filterLoadOptions = false;
+                delete this.collection.count;
+                this.collection.load({}, function(){
+                });
             }
         },
         events: {
@@ -307,9 +349,19 @@
         },
         loadMore: function() {
             var self = this;
-            this.collection.getNextPage(function(){
-                self.loading = false;
-            });
+            
+            if(this.collection.length < this.collection.count) {
+                var loadO = this.filterLoadOptions || {};
+                if(this.filterLength) {
+                    loadO.skip = this.filterLength;
+                } else {
+                    loadO.skip = this.collection.length;
+                }
+                this.collection.load(loadO, function(){
+                    self.filterLength = self.collection.filter(self.currentFilter).length;
+                    self.loading = false;
+                });
+            }
         },
         getDocLayoutView: function(doc) {
             var view;
@@ -332,15 +384,20 @@
             });
             this.$el.append(this.$pager);
             this.renderPager();
-            this.trigger('resize');
             this.setElement(this.$el);
             return this;
         },
         renderPager: function() {
             var len = this.collection.length;
             var c = this.collection.count > len ? this.collection.count : len;
-            this.$pager.find('.list-length').html(len);
-            this.$pager.find('.list-count').html(c);
+            if(this.currentFilter) {
+                c = this.collection.count;
+                len = this.collection.filter(this.currentFilter).length;
+            } else {
+                
+            }
+            this.$pager.find(".list-length").html(len);
+            this.$pager.find(".list-count").html(c);
         },
         appendRow: function(row) {
             var rank = new Date(row.model.get('uploadDate'));
@@ -349,6 +406,15 @@
             if(this.currentFilter && !this.currentFilter(row.model)) {
                 rowEl.hide();
             }
+            /*
+            if(self.currentFilter) {
+                if(self.currentFilter(doc)) {
+                    self.getDocLayoutView(doc).$el.show();
+                } else {
+                    self.getDocLayoutView(doc).$el.hide();
+                }
+            }
+            */
             rowEl.attr('data-sort-rank', rank);
             var d = false;
             var $lis = this.$ul.children();
@@ -395,9 +461,9 @@
             this.$el.append(this.fileActionDelete.render().el);
             this.actions.push(this.fileActionDelete);
             
-            this.fileActionProcess = new FileActionProcess({id: this.id, model: this.model});
+            /*this.fileActionProcess = new FileActionProcess({id: this.id, model: this.model});
             this.$el.append(this.fileActionProcess.render().el);
-            this.actions.push(this.fileActionProcess);
+            this.actions.push(this.fileActionProcess);*/
         }
     });
     
@@ -499,7 +565,9 @@
             }
             $byline.append($at);
             if(this.model.has('metadata')) {
-                $byline.append(' by '+this.model.get('metadata').owner.name);
+                if(this.model.get('metadata').owner) {
+                    $byline.append(' by '+this.model.get('metadata').owner.name);
+                }
             }
             this.$el.append($byline);
             
@@ -674,6 +742,82 @@
         }
     });
     
+    var SearchView = Backbone.View.extend({
+        className: 'search',
+        element: 'div',
+        render: function() {
+            this.$el.html('');
+            var $form = $('<form></form>').append(this.$search).append('<div class="clearBox">x</div>');
+            this.$el.append($form);
+            var $libCount = $('<span class="libCount"></span>');
+            if(this.list.collection.colCount)
+                $libCount.html('from ' + this.list.collection.colCount + ' files');
+            this.$el.append($libCount);
+            this.$el.append(this.$selectType);
+            this.setElement(this.$el);
+            return this;
+        },
+        initialize: function(options) {
+            var self = this;
+            this.$search = $('<input class="search" type="text" name="query" placeholder="search artist, album, title" autocomplete="off" />');
+            this.$selectType = $('<select name="type"><option value="all">all types</option><option value="text">text</option><option value="image">image</option><option value="audio">audio</option><option value="video">video</option></select>');
+            this.list = options.list;
+        },
+        events: {
+            "keyup input": "debouncedSearch",
+            "click .clearBox": "clear",
+            "submit form": "submit",
+            'change select[name="type"]': 'changeType',
+        },
+        clear: function() {
+            this.$search.val('');
+            this.$search.focus();
+        },
+        changeType: function() {
+            this.search();
+        },
+        submit: function(e) {
+            this.search();
+            return false;
+        },
+        debouncedSearch: _.debounce(function(e){
+            this.search(e);
+        }, 300),
+        search: function(e) {
+            var searchStr = this.$search.val().trim();
+            if(searchStr.length == 1) return false;
+            var f = {};
+            var contentTypeStr = this.$selectType.val();
+            var noFilter = false;
+            if(contentTypeStr == 'all') {
+                if(searchStr == '') {
+                    noFilter = true;
+                }
+            } else {
+                var regexCt = new RegExp(escapeRegExp(contentTypeStr), 'i');
+                f.contentType = regexCt;
+            }
+            
+            if(searchStr == '') {
+                
+            } else {
+                var regex = new RegExp(escapeRegExp(searchStr), 'i');
+                f.filename = regex;
+            }
+            if(noFilter) {
+                this.list.filter();
+            } else {
+                this.list.filter(f);
+            }
+            
+            return false;
+        }
+    });
+    
+    function escapeRegExp(str) {
+      return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+    }
+    
     if(define) {
         define(function () {
             return {
@@ -682,7 +826,8 @@
                 List: ListView,
                 Row: FileRow,
                 Avatar: FileAvatar,
-                FileForm: FileForm
+                FileForm: FileForm,
+                SearchView: SearchView
             }
         });
     }

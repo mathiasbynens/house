@@ -1,21 +1,21 @@
 {
   "name": "house",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "dependencies": {
     "optimist": "latest",
     "paperboy": "latest",
     "formidable-plus": "latest",
     "underscore": "latest",
-    "socket.io": "latest",
+    "socket.io": "0.9.11",
     "oauth": "latest",
     "emailjs": "latest",
     "imap": "latest",
     "mailcomposer": "latest",
     "simplesmtp": "latest",
     "uglify-js": "latest",
-    "bson": "latest",
     "mongodb": "latest",
-    "useragent": "latest"
+    "useragent": "latest",
+    "imagemagick": "latest"
   },
   "devDependencies": {
     "mocha": "*"

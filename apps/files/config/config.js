@@ -5,6 +5,7 @@ exports = module.exports.config = {
             "static": {
                 paper: {
                     publicFolder: __dirname + "/../web"
+                    , otherwise: 'index.html'
                 }
             }
         }

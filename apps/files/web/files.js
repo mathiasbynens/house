@@ -19,6 +19,8 @@
                             self.collection = window.filesCollection = new FilesBackbone.Collection(); // collection
                             self.collection.pageSize = pageSize;
                             self.listView = new FilesBackbone.List({el: self.$list, collection: self.collection});
+                            self.listView.searchView = new FilesBackbone.SearchView({list: self.listView});
+                            
                             self.listView.on('select', function(row) {
                                 self.router.navigate(row.model.getNavigatePath(), true);
                             });
@@ -104,6 +106,7 @@
                 return this;
             }
             this.$el.append(self.listView.render().$el);
+            self.$list.prepend(self.listView.searchView.render().$el);
             this.$el.append(this.$viewer);
             return this;
         },
@@ -336,7 +339,16 @@
             router.route('upload', 'upload', function(){
                 routerReset();
                 router.setTitle('Upload');
-                self.editDoc();
+                
+                self.newFileForm = new FilesBackbone.FileForm({collection: self.filesCollection});
+                self.newFileForm.on('upload', function(data){
+                    if(data.file) {
+                        filesCollection.add(data.file);
+                        self.router.navigate('file/'+data.file.filename, true);
+                    }
+                });
+                self.$el.prepend(self.newFileForm.render().$el);
+                self.newFileForm.pickFile();
                 router.trigger('loadingComplete');
                 self.nav.selectByNavigate('here');
             });

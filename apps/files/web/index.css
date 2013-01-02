@@ -969,6 +969,10 @@ ul li[selected] .info {
 .list-pager {
     clear: both;
     text-align: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
 #files-list .actions {
     display:none;
