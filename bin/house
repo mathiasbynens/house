@@ -10,6 +10,7 @@ var printHelp = function() {
     console.log('\nUsage:\n');
     console.log('  --help \t\t this menu');
     console.log('  --init \t\t initialize project in the current folder with a config file, apps, web and other folders');
+    console.log('  --add-admin \t\t add an admin user');
     console.log('  --build-docs \t\t build docs from the source');
     console.log('  --run-tests \t\t run the tests');
     console.log('\n');
@@ -68,6 +69,28 @@ var buildDocs = function() {
       //console.log('docco terminated due to receipt of signal '+signal);
     });
 }
+var addAdmin = function(email, pass) {
+    console.log('Add admin user: '+email+' pass: '+pass);
+    var housejs = require(__dirname+'/../index.js');
+    var config = require(process.cwd()+'/config/config.js').config;
+    var house = new housejs(config);
+    if(!house.dataSources.mongo) {
+        console.log('data source required');
+        return;
+    }
+    var name = email.substr(0, email.indexOf('@'));
+    house.dataSources.mongo.connected(function(){
+        house.dataSources.mongo.insert('users', {name: name, email: email, pass: pass, groups: ['admin']}, function(err, docs){
+            if(err) {
+                console.log('err');
+                console.log(err);
+            } else {
+                console.log('user inserted');
+                console.log(docs);
+            }
+        });
+    });
+}
 var start = function() {
     console.log('starting house...');
 
@@ -98,6 +121,8 @@ if(argv.hasOwnProperty('help')) {
     buildDocs();
 } else if(argv.hasOwnProperty('start')) {
     start();
+} else if(argv.hasOwnProperty('add-admin')) {
+    addAdmin(argv['add-admin'], argv["_"][0]);
 } else if(argv.hasOwnProperty('v')) {
     ver();
 }

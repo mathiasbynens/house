@@ -1,12 +1,12 @@
 {
   "name": "house",
-  "version": "0.0.23",
+  "version": "0.0.25",
   "dependencies": {
     "optimist": "latest",
     "paperboy": "latest",
     "formidable-plus": "latest",
     "underscore": "latest",
-    "socket.io": "0.9.11",
+    "socket.io": "latest",
     "oauth": "latest",
     "emailjs": "latest",
     "imap": "latest",

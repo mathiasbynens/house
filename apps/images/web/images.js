@@ -20,6 +20,7 @@
                                         self.filesCollection.load(null, function(){
                                             self.initialized = true;
                                             self.trigger('initialized');
+                                            self.filesList.filter({contentType: /image/});
                                         });
                                     });
                                 }
@@ -73,10 +74,10 @@
             this.$filesList = $('<div id="files-list" class="pImport"></div>');
             self.filesCollection = new FilesBackbone.Collection();
             self.filesCollection.pageSize = pageSize;
-            self.filesCollection.filterContentType('image');
-            self.filesCollection.filterProc(true);
+            //self.filesCollection.filterContentType('image');
+            //self.filesCollection.filterProc(true);
             self.filesList = new FilesBackbone.List({collection: self.filesCollection});
-            
+            //options["metadata.proc"] = {"$exists": false};
             this.$upload = $('<span class="upload"></span>');
             self.newFileForm = new FilesBackbone.FileForm({collection: self.filesCollection, type: 'image'});
             self.newFileForm.on('upload', function(data){
