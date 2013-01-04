@@ -1,6 +1,6 @@
 {
   "name": "house",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "dependencies": {
     "optimist": "latest",
     "paperboy": "latest",
