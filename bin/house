@@ -76,6 +76,7 @@ var addAdmin = function(email, pass) {
     var house = new housejs(config);
     if(!house.dataSources.mongo) {
         console.log('data source required');
+	process.exit(1);
         return;
     }
     var name = email.substr(0, email.indexOf('@'));
@@ -88,6 +89,7 @@ var addAdmin = function(email, pass) {
                 console.log('user inserted');
                 console.log(docs);
             }
+	    process.exit(0);
         });
     });
 }
