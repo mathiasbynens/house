@@ -81,7 +81,7 @@
                 var insertOrUpdateDoc = function(doc) {
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
-                        return;s
+                        return;
                     }
                     var model = self.get(doc.id);
                     if(!model) {
@@ -252,6 +252,7 @@
             var self = this;
             self.loading = false;
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> files</div>');
+            this.$batch = $('<div class="batch"><input type="checkbox" name="select" /><button class="delete">delete</button></div>');
             var $ul = this.$ul = $('<ul class="files"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
@@ -346,6 +347,31 @@
         },
         events: {
           "click .list-pager": "loadMore",
+          'change .batch input[type="checkbox"]': "toggleSelectAll",
+          'click .batch .delete': "deleteSelected"
+        },
+        deleteSelected: function() {
+            if(!confirm("Are you sure that you really want to delete the selected files?")) return;
+            var self = this;
+            this.$el.find('input[type="checkbox"]:visible:checked').each(function(i,e){
+                var doc = self.collection.get($(e).parent().attr('id'));
+                if(doc) {
+                    doc.destroy({success: function(model, response) {
+                          console.log('deleted');
+                        }, 
+                        error: function(model, response) {
+                            console.log(arguments);
+                        },
+                    wait: true});
+                }
+            });
+        },
+        toggleSelectAll: function() {
+            if(this.$el.find('.batch input[type="checkbox"]').attr('checked') == 'checked') {
+                this.$el.find('input[type="checkbox"]:visible').attr('checked', 'checked');
+            } else {
+                this.$el.find('input[type="checkbox"]').removeAttr('checked');
+            }
         },
         loadMore: function() {
             var self = this;
@@ -375,6 +401,7 @@
         render: function() {
             var self = this;
             this.$el.html('');
+            this.$el.append(this.$batch);
             this.$el.append(this.$ul);
             this.$ul.html('');
             //this.collection.sort({silent:true});
@@ -547,11 +574,14 @@
         render: function() {
             var $byline = $('<span class="byline"></span>');
             this.$el.html('');
+            this.$el.append(this.$checkbox);
             var contentType = this.model.get('contentType');
             var $icon = $('<span class="contentIcon '+contentType.substr(0, contentType.indexOf('/'))+'"></span>');
             if(contentType.indexOf('image') === 0) {
-                var $img = $('<img src="/api/files/'+this.model.get('filename')+'" />');
-                $icon.append($img);
+                if(this.model.get('length') < 1000000) {
+                    var $img = $('<img src="/api/files/'+this.model.get('filename')+'" />');
+                    $icon.append($img);
+                }
             }
             this.$el.append($icon);
             this.$el.append('<span class="filename"><a href="/api/files/'+this.model.get('filename')+'" target="_new">'+this.model.get('filename')+'</a></span>');
@@ -579,6 +609,7 @@
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             this.fileActions = new FileActions({model: this.model});
+            this.$checkbox = $('<input type="checkbox" name="select" />');
         },
         events: {
           "click": "select",
@@ -759,7 +790,7 @@
         },
         initialize: function(options) {
             var self = this;
-            this.$search = $('<input class="search" type="text" name="query" placeholder="search artist, album, title" autocomplete="off" />');
+            this.$search = $('<input class="search" type="text" name="query" placeholder="search filename" autocomplete="off" />');
             this.$selectType = $('<select name="type"><option value="all">all types</option><option value="text">text</option><option value="image">image</option><option value="audio">audio</option><option value="video">video</option></select>');
             this.list = options.list;
         },

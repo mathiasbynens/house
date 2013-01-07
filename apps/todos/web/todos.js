@@ -60,7 +60,6 @@
                         doSave = true;
                     }
                 }
-                
                 if(doSave) {
                     todo.save();
                 }
@@ -150,7 +149,7 @@
                             
                             var doneCount = todoList.get("doneCount");
                             
-                            if(doneCount != collection.collectionCount) {
+                            if(collection.collectionCount && doneCount != collection.collectionCount) {
                                 todoList.set({"doneCount": collection.collectionCount});
                             }
                         }
@@ -161,7 +160,7 @@
                             
                             var notDoneCount = todoList.get("notDoneCount");
                             
-                            if(notDoneCount != collection.collectionCount) {
+                            if(collection.collectionCount && notDoneCount != collection.collectionCount) {
                                 todoList.set({"notDoneCount": collection.collectionCount});
                             }
                         }
@@ -245,7 +244,6 @@
                         doSave = true;
                     }
                 }
-                
                 if(doSave) {
                     todo.save();
                 }
