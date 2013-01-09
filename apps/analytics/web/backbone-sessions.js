@@ -149,7 +149,7 @@
                 options.limit = self.pageSize;
             }
             if (!options.sort) {
-                options.sort = "_id-";
+                options.sort = "lastAt-";
             }
             this.applyFilters(options);
             this.fetch({

@@ -723,56 +723,6 @@
         }
     });
     
-    var FileForm = Backbone.View.extend({
-        tagName: "div",
-        className: "fileForm",
-        initialize: function(options) {
-            var self = this;
-            options = options || {};
-            var typeName = 'file';
-            var acceptType = '*/*';
-            if(options.type) {
-                typeName = options.type;
-                
-                if(typeName == 'image') {
-                    acceptType = 'image/*';
-                } else if (typeName == 'audio') {
-                    acceptType = 'audio/*';
-                } else if (typeName == 'video') {
-                    acceptType = 'video/*';
-                } else if (typeName == 'text') {
-                    acceptType = 'text/*';
-                } else {
-                    acceptType = '*/*';
-                }
-            }
-            this.$html = $('<button class="upload">Upload '+typeName+'</button>');
-            this.fileInput = new utils.UploadInputView({acceptType: acceptType});
-            this.fileInput.on('upload', function(data){
-                if (data.file) {
-                    if(self.collection) {
-                        self.collection.add(data.file);
-                    }
-                }
-                self.trigger('upload', data);
-            });
-        },
-        render: function() {
-            var self = this;
-            this.$el.append(this.$html);
-            this.$el.append(this.fileInput.render().$el);
-            this.setElement(this.$el);
-            return this;
-        },
-        events: {
-            "click button.upload": "pickFile"
-        },
-        pickFile: function() {
-            this.fileInput.click();
-            return false;
-        }
-    });
-    
     var SearchView = Backbone.View.extend({
         className: 'search',
         element: 'div',
@@ -845,6 +795,323 @@
         }
     });
     
+    var FileForm = Backbone.View.extend({
+        tagName: "div",
+        className: "fileForm",
+        initialize: function(options) {
+            var self = this;
+            self.options = options = options || {};
+            var typeName = 'file';
+            var acceptType = '*/*';
+            if(options.type) {
+                typeName = options.type;
+                if(typeName == 'image') {
+                    acceptType = 'image/*';
+                } else if (typeName == 'audio') {
+                    acceptType = 'audio/*';
+                } else if (typeName == 'video') {
+                    acceptType = 'video/*';
+                } else if (typeName == 'text') {
+                    acceptType = 'text/*';
+                } else {
+                    acceptType = '*/*';
+                }
+            }
+            this.$html = $('<button class="upload">Choose '+typeName+'</button>');
+            this.$input = $('<input class="uploadInput" style="display:none" type="file" multiple accept="'+acceptType+'" capture="camera">');
+        },
+        uploadFile: function(blobOrFile, callback) {
+            var self = this;
+            var formData = new FormData;
+            var xhr = new XMLHttpRequest;
+            var onReady = function(e) {
+            };
+            var onError = function(err) {
+                console.log(err);
+                self.trigger('failed', err);
+            };
+            formData.append("files", blobOrFile);
+            xhr.open("POST", "/api/files", true);
+            xhr.addEventListener("error", onError, false);
+            xhr.addEventListener("readystatechange", onReady, false);
+            xhr.onload = function(e) {
+                var data = JSON.parse(e.target.response);
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                if(self.options.collection && data.file) {
+                    self.options.collection.add(data.file);
+                }
+                self.trigger('uploaded', {localfile: blobOrFile, data: data});
+                if (callback) callback(data);
+            };
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    self.trigger('progress', {localfile: blobOrFile, loaded: e.loaded, total: e.total});
+                }
+            };
+            xhr.setRequestHeader('cache-control', 'no-cache');
+            xhr.send(formData);
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$html);
+            this.$el.append(this.$input);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click button.upload": "click",
+            "change .uploadInput": "fileChangeListener"
+        },
+        click: function() {
+            this.$input.click();
+            return false;
+        },
+        fileChangeListener: function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            var self = this;
+            //self.$input.hide();
+            var files = e.target.files;
+            var queue = [];
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                queue.push(file);
+                self.trigger('file', file);
+            }
+            var process = function() {
+                if (queue.length) {
+                    var f = queue.shift();
+                    self.uploadFile(f, function(data) {
+                        console.log(data);
+                        if(_.isArray(data)) {
+                            data = _.first(data);
+                        }
+                        //self.trigger("uploaded", data);
+                        if (queue.length > 0) {
+                            process();
+                        } else {
+                            console.log('uploads finished');
+                        }
+                    });
+                }
+            };
+            process();
+            return false;
+        }
+    });
+    
+    var DragDropView = Backbone.View.extend({
+        tagName: "span",
+        className: "dropzone",
+        initialize: function(options) {
+            var self = this;
+            self.options = options || {};
+        },
+        uploadFile: function(blobOrFile, callback) {
+            var self = this;
+            var formData = new FormData;
+            var xhr = new XMLHttpRequest;
+            var onReady = function(e) {
+            };
+            var onError = function(err) {
+                console.log(err);
+                self.trigger('failed', err);
+            };
+            formData.append("files", blobOrFile);
+            xhr.open("POST", "/api/files", true);
+            xhr.addEventListener("error", onError, false);
+            xhr.addEventListener("readystatechange", onReady, false);
+            xhr.onload = function(e) {
+                var data = JSON.parse(e.target.response);
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                console.log(data);
+                console.log(self.options);
+                if(self.options.collection && data.file) {
+                    self.options.collection.add(data.file);
+                }
+                self.trigger('uploaded', {localfile: blobOrFile, data: data});
+                if (callback) callback(data);
+            };
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    self.trigger('progress', {localfile: blobOrFile, loaded: e.loaded, total: e.total});
+                }
+            };
+            xhr.setRequestHeader('cache-control', 'no-cache');
+            xhr.send(formData);
+        },
+        render: function() {
+            this.$el.html('Drop files here');
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "dragenter": "handleDragEnter",
+            "dragleave": "handleDragLeave",
+            "dragover": "handleDragOver",
+            "drop": "handleFileSelect"
+        },
+        handleDragOver: function(e) {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+            return;
+        },
+        handleFileSelect: function(e) {
+            /*
+            if (path.indexOf('.AppleDouble') != -1) {
+            continue;
+            }         
+            var size = file.size || file.fileSize || 4096;
+            if(size < 4095) { 
+            continue;
+            }
+            */
+            e.stopPropagation();
+            e.preventDefault();
+            var self = this;
+            var files = e.originalEvent.dataTransfer.files;
+            var queue = [];
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                queue.push(file);
+                self.trigger('file', file);
+            }
+            var process = function() {
+                if (queue.length) {
+                    var f = queue.shift();
+                    self.uploadFile(f, function(data) {
+                        console.log(data);
+                        if(_.isArray(data)) {
+                            data = _.first(data);
+                        }
+                        if (queue.length > 0) {
+                            process();
+                        } else {
+                            console.log('uploads finished');
+                        }
+                    });
+                }
+            };
+            process();
+            this.$el.removeClass('dragover');
+            return false;
+        },
+        handleDragEnter: function(e) {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+            this.$el.addClass('dragover');
+            e.originalEvent.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+            return false;
+        },
+        handleDragLeave: function(e) {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+            this.$el.removeClass('dragover');
+            return false;
+        },
+        remove: function() {
+          $(this.el).remove();
+        }
+    });
+    
+    var UploadFrame = Backbone.View.extend({
+        tagName: "span",
+        className: "uploadFrame",
+        initialize: function(options) {
+            options = options || {};
+            var self = this;
+            this.fileForm = new FileForm(options);
+            this.fileForm.on('file', function(f) {
+                self.appendFile(f);
+            });
+            this.fileForm.on('progress', function(progress) {
+                var name = progress.localfile.name;
+                var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
+                $file.find('.meter').show();
+                var per = Math.floor((progress.loaded / progress.total) * 100);
+                $file.find('.bar').css('width', per+'%');
+            });
+            this.fileForm.on('uploaded', function(data) {
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                console.log(data);
+                var name = data.localfile.name;
+                var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
+                console.log($file);
+                $file.remove();
+                self.trigger('uploaded', data.data);
+            });
+            this.uploadDragDrop = new DragDropView(options);
+            this.uploadDragDrop.on('file', function(f) {
+                self.appendFile(f);
+            });
+            this.uploadDragDrop.on('progress', function(progress) {
+                var name = progress.localfile.name;
+                var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
+                $file.find('.meter').show();
+                var per = Math.floor((progress.loaded / progress.total) * 100);
+                $file.find('.bar').css('width', per+'%');
+            });
+            this.uploadDragDrop.on('uploaded', function(data) {
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                console.log(data);
+                var name = data.localfile.name;
+                var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
+                console.log($file);
+                $file.remove();
+                self.trigger('uploaded', data.data);
+            });
+            this.$uploadFileList = $('<ul class="uploadFileList"></ul>');
+        },
+        render: function() {
+            this.$el.html('');
+            this.$el.append(this.uploadDragDrop.render().$el);
+            this.$el.append('<span style="display:block;text-align:center"><br />or</span>');
+            this.$el.append(this.fileForm.render().$el);
+            this.$el.append(this.$uploadFileList);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click .pickFiles": "pickFiles"
+        },
+        pickFiles: function() {
+            this.fileForm.click();
+        },
+        appendFile: function(f, callback) {
+            var self = this;
+            var $localFile = $('<li class="localFile"></li>');
+            var $title = $('<span class="title"></span> ');
+            $title.html(f.webkitRelativePath || f.mozFullPath || f.name);
+            $localFile.append($title);
+            $localFile.append('<div class="meter" style="display:none"><div class="bar" style="width:0%"></div></div>');
+            var url;
+            if(window.createObjectURL){
+              url = window.createObjectURL(f)
+            }else if(window.createBlobURL){
+              url = window.createBlobURL(f)
+            }else if(window.URL && window.URL.createObjectURL){
+              url = window.URL.createObjectURL(f)
+            }else if(window.webkitURL && window.webkitURL.createObjectURL){
+              url = window.webkitURL.createObjectURL(f)
+            }
+            $localFile.attr('data-filename', $title.html());
+            self.$uploadFileList.append($localFile);
+            console.log($localFile);
+            if(callback) callback();
+        },
+        remove: function() {
+          this.$el.remove();
+        }
+    });
+    
     function escapeRegExp(str) {
       return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     }
@@ -858,6 +1125,8 @@
                 Row: FileRow,
                 Avatar: FileAvatar,
                 FileForm: FileForm,
+                DragDropView: DragDropView,
+                UploadFrame: UploadFrame,
                 SearchView: SearchView
             }
         });

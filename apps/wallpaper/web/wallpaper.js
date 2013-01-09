@@ -62,24 +62,31 @@
     var WallpaperApp = Backbone.View.extend({
         initialize: function() {
             var self = this;
-            require(['/wallpaper/backbone-wallpaper.js'], function(WallpaperBackbone){
-                self.WallpaperBackbone = WallpaperBackbone;
-                self.collection = window.wallpaperCollection = new self.WallpaperBackbone.Collection(); // collection
-                self.collection.load(null, function(){
-                    self.initialized = true;
-                    self.trigger('initialized');
-                });
-                if(window.hasOwnProperty('account')) {
-                    window.account.on('loggedIn', function(loginView){
-                        console.log('refresh collection');
-                        self.collection.load(null, function(){
-                            if(self.backgroundView) {
-                                self.backgroundView.useCollectionShuffled(self.collection);
-                                self.backgroundView.transition();
-                            }
-                        });
+            require(['../files/backbone-files.js'], function(FilesBackbone){
+                window.FilesBackbone = FilesBackbone;
+                this.$filesList = $('<div id="files-list" class="import"></div>');
+                self.filesCollection = new window.FilesBackbone.Collection();
+                self.filesList = new window.FilesBackbone.List({collection: self.filesCollection});
+            
+                require(['/wallpaper/backbone-wallpaper.js'], function(WallpaperBackbone){
+                    window.WallpaperBackbone = WallpaperBackbone;
+                    self.collection = window.wallpaperCollection = new window.WallpaperBackbone.Collection(); // collection
+                    self.collection.load(null, function(){
+                        self.initialized = true;
+                        self.trigger('initialized');
                     });
-                }
+                    if(window.hasOwnProperty('account')) {
+                        window.account.on('loggedIn', function(loginView){
+                            console.log('refresh collection');
+                            self.collection.load(null, function(){
+                                if(self.backgroundView) {
+                                    self.backgroundView.useCollectionShuffled(self.collection);
+                                    self.backgroundView.transition();
+                                }
+                            });
+                        });
+                    }
+                });
             });
             /*require(['../desktop/jquery.idle-timer.js'], function() {
                 var idleTimer = $(document).idleTimer(4200);
@@ -90,19 +97,6 @@
                     $('body').removeClass('idle');
                 });
             });*/
-            this.initedFiles = false;
-        },
-        initFiles: function(callback) {
-            var self = this;
-            if(self.initedFiles) return;
-            require(['../files/backbone-files.js'], function(FilesBackbone){
-                self.FilesBackbone = FilesBackbone;
-                this.$filesList = $('<div id="files-list" class="import"></div>');
-                self.filesCollection = new self.FilesBackbone.Collection();
-                self.filesList = new self.FilesBackbone.List({collection: self.filesCollection});
-                self.initedFiles = true;
-                if(callback) callback();
-            });
         },
         userIsAdmin: function() {
             return (this.user && this.user.has('groups') && this.user.get('groups').indexOf('admin') !== -1);
@@ -130,7 +124,39 @@
             });
             router.on('root', function(){
                 router.setTitle('Wallpaper');
-                self.collection.getView().$el.show();
+                $wall = self.collection.getView().$el;
+                $wall.show();
+                
+                self.uploadFrame = new window.FilesBackbone.UploadFrame();
+                self.uploadFrame.on('uploaded', function(data){
+                    if(_.isArray(data)) {
+                        data = _.first(data);
+                    }
+                    if(data.image) {
+                        var setDoc = {
+                            image: {
+                                id: data.image.id,
+                                filename: data.image.filename
+                            }
+                        }
+                        var model = new window.WallpaperBackbone.Model({}, {
+                            collection: self.collection
+                        });
+                        model.set(setDoc, {silent: true});
+                        var saveModel = model.save(null, {
+                            silent: false,
+                            wait: true
+                        });
+                        if(saveModel) {
+                            saveModel.done(function() {
+                                self.trigger("newWallpaperImage", self.model);
+                                self.collection.add(self.model);
+                            });
+                        }
+                    }
+                });
+                $wall.before(self.uploadFrame.render().$el);
+                
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
             });
@@ -149,7 +175,7 @@
             router.route('new', 'new', function(){
                 self.initFiles();
                 
-                var form = new self.WallpaperBackbone.Form({
+                var form = new window.WallpaperBackbone.Form({
                     collection: self.collection
                 });
                 form.on("saved", function(doc) {

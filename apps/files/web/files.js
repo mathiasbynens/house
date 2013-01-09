@@ -1,5 +1,5 @@
 (function() {
-    var pageSize = 24;
+    var pageSize = 100;
 
     var FilesView = Backbone.View.extend({
         tag: 'span',
@@ -7,10 +7,10 @@
         initialize: function() {
             var self = this;
             self.editForms = {};
-            require(['../desktop/swipeview.js'], function(){
-                require(['../images/backbone-images.js'], function(ImagesBackbone){
+            require(['/desktop/swipeview.js'], function(){
+                require(['/images/backbone-images.js'], function(ImagesBackbone){
                     window.ImagesBackbone = ImagesBackbone;
-                    require(['../checkins/backbone-checkins.js'], function(CheckinsBackbone){
+                    require(['/checkins/backbone-checkins.js'], function(CheckinsBackbone){
                         window.CheckinsBackbone = CheckinsBackbone;
                         require(['backbone-files.js'], function(FilesBackbone){
                             window.FilesBackbone = FilesBackbone;
@@ -340,17 +340,21 @@
                 routerReset();
                 router.setTitle('Upload');
                 
-                self.newFileForm = new FilesBackbone.FileForm({collection: self.filesCollection});
-                self.newFileForm.on('upload', function(data){
-                    if(data.file) {
-                        filesCollection.add(data.file);
-                        self.router.navigate('file/'+data.file.filename, true);
+                self.uploadFrame = new FilesBackbone.UploadFrame({collection: window.filesCollection});
+                self.uploadFrame.on('uploaded', function(data){
+                    if(_.isArray(data)) {
+                        data = _.first(data);
                     }
+                    if(data.file) {
+                        //self.router.navigate('file/'+data.file.filename, true);
+                    }
+                    console.log(arguments);
                 });
-                self.$el.prepend(self.newFileForm.render().$el);
-                self.newFileForm.pickFile();
+                self.$el.prepend(self.uploadFrame.render().$el);
+                //self.uploadFrame.pickFile();
+                
                 router.trigger('loadingComplete');
-                self.nav.selectByNavigate('here');
+                self.nav.selectByNavigate('upload');
             });
         }
     });

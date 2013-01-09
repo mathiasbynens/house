@@ -650,13 +650,22 @@
         initialize: function() {
             var self = this;
             self.initialized = false;
-            require(['../files/files.js'], function(FilesBackbone){
-                self.newFileForm = new FilesBackbone.FileForm({collection: self.filesCollection, type: 'image'});
-                self.newFileForm.on('upload', function(data){
+            require(['/files/backbone-files.js'], function(FilesBackbone){
+                
+                self.uploadFrame = new FilesBackbone.UploadFrame({collection: self.filesCollection});
+                self.uploadFrame.on('uploaded', function(data){
+                    if(_.isArray(data)) {
+                        data = _.first(data);
+                    }
+                    if(data.file) {
+                    }
                     if(data.image) {
                         self.renderImage(data.image);
                     }
+                    console.log(arguments);
                 });
+                self.$el.prepend(self.uploadFrame.render().$el);
+                
                 self.initialized = true;
                 self.trigger('initialized');
             });
@@ -676,8 +685,8 @@
                 });
             }
             this.$el.html('<h4>Wallpaper</h4><form id="newWallpaperForm"><span class="image"></span><textarea name="paperScript" placeholder="javascript"></textarea><textarea name="paperCss" placeholder="css"></textarea><input type="submit" value="Save" /></form>');
-            if(this.newFileForm) {
-                this.$el.find(".image").append(this.newFileForm.render().$el);
+            if(this.uploadFrame) {
+                this.$el.find(".image").append(this.uploadFrame.render().$el);
             }
             if(this.model) {
                 if(this.model.has('image')) {
