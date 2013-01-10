@@ -49,10 +49,7 @@ Backbone.Router.prototype.navigate = function(path, go) {
     Backbone.history.navDirection = 1;
     this.localStorageNavigationHistory(path);
     _navigate.apply(this, arguments);
-    console.log(arguments);
     var wl = window.location.toString();
-    console.log(Backbone.history.getFragment());
-        //alert(wl);
     if(go && frag !== path) {
         if(window.hasOwnProperty('ActionsBackbone')) {
             var action = new ActionsBackbone.Model({});

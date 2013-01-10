@@ -32,9 +32,6 @@
             var colOpts = {
                 image: this
             };
-            this.on("change", function(model, options) {
-                console.log(arguments);
-            });
             this.views = {};
             if(this.id) {
                 var timestamp = this.id.toString().substring(0,8);
