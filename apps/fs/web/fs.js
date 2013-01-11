@@ -9,7 +9,7 @@
                 window.FsBackbone = ModelBackbone;
                 self.pathSelected = '/';
                 
-                self.$fileTree = $('<div class="tree browser"><controls><button class="up">↑</button><button class="refresh">'+self.pathSelected+'</button><button class="add">+</button></controls><div class="paths"></div></div>');
+                self.$fileTree = $('<div class="tree browser"><controls><button class="up">↑</button><button class="refresh">'+self.pathSelected+'</button><button class="add">+</button><span class="addNewFilesFrame" style="display:none"><button class="new">New file or folder</button></span></controls><div class="paths"></div></div>');
                 self.$filesOpen = $('<ul class="files-open"></ul>');
                 self.$fileViewer = $('<div class="file-viewer"></div>');
                 
@@ -28,6 +28,16 @@
                     console.log(row);
                     self.router.navigate(row.model.getNavigatePath(), true);
                 });
+                
+                self.uploadFrame = new window.FsBackbone.UploadFrame();
+                self.uploadFrame.on('uploaded', function(data){
+                    if(_.isArray(data)) {
+                        data = _.first(data);
+                    }
+                    window.fsRootCollection.collectionPaths[self.pathSelected].add(data);
+                    console.log(arguments);
+                });
+                self.$fileTree.find('controls .addNewFilesFrame').append(self.uploadFrame.render().$el);
                 
                 var loadCollections = function() {
                     window.fsRootCollection.load(null, function(){
@@ -63,6 +73,7 @@
         },
         renderPathControls: function() {
             var path = this.pathSelected;
+            this.uploadFrame.setPath(path);
             if(path == '/') {
                 this.$fileTree.find('.up').hide();
             } else {
@@ -74,22 +85,30 @@
             "click .up": "goUp",
             "click .refresh": "refreshPath",
             "click .add": "addFiles",
+            "click .new": "newFiles",
         },
         addFiles: function() {
+            this.$el.find('.addNewFilesFrame').toggle();
+        },
+        newFiles: function() {
             var name = prompt("New file or folder/ name");
-            var f = new window.FsBackbone.Model();
-            var o = {name: this.pathSelected+name};
-            if(name.substr(name.length-1) !== '/') {
-                o.data = ' ';
+            if(name) {
+                var col = window.fsRootCollection.collectionPaths[this.pathSelected];
+                var f = new window.FsBackbone.Model({},{collection: col});
+                var o = {name: name};
+                if(name.substr(name.length-1) !== '/') {
+                    o.data = ' ';
+                }
+                f.set(o, {silent: true});
+                var saveModel = f.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    console.log(f);
+                    col.add(f);
+                });
             }
-            f.set(o, {silent: true});
-            var saveModel = f.save(null, {
-                silent: false,
-                wait: true
-            });
-            saveModel.done(function() {
-                window.fsRootCollection.collectionPaths[this.pathSelected].add(f);
-            });
         },
         goUp: function() {
             var path = this.pathSelected;

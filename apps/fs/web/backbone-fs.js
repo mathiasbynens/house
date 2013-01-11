@@ -1,7 +1,6 @@
 (function() {
     
     var Model = Backbone.Model.extend({
-        url: '/api/fs',
         collectionName: "fs",
         initialize: function(attr, opts) {
             var colOpts = {
@@ -87,7 +86,7 @@
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
                 socket.on('connect', function(data) {
                     console.log('connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
+                    socket.emit('join', self.collectionName+path);
                 });
                 var insertOrUpdateDoc = function(doc) {
                         console.log(doc);
@@ -1309,6 +1308,23 @@
                 this.$el.append('<div id="'+this.model.get('filename')+'" class="data" title="'+this.model.get('filename')+'"></div>');
             }
             }
+            // cheap mime for now since get('mime') isnt consistent
+            if((/\.(gif|jpg|jpeg|tiff|png)$/i).test(this.model.get('filename'))) {
+                this.notText = true;
+                
+                this.$el.find('.data').append('<img />');
+                var mime = this.model.get('mime');
+                if(!mime) {
+                    var ext = this.model.get('filename').substr(this.model.get('filename').lastIndexOf('.')+1);
+                    mime = 'image/'+ext;
+                    console.log('assume mime: '+mime);
+                }
+                this.$el.find('.data img').attr('src', 'data:'+mime+';base64,'+this.model.get('data'));
+                
+            } else if((/\.(mp3|m4a|wma|wav|mp4|mpeg|flv|avi)$/i).test(this.model.get('filename'))) {
+                this.notText = true;
+            }
+            
             //this.$el.append($byline);
             //this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
@@ -1316,6 +1332,7 @@
         },
         renderAce: function() {
             var self = this;
+            if(this.notText) return;
             console.log('renderAce')
             require(['ace/ace'], function(){
                 self.editor = ace.edit(self.model.get('filename'));
@@ -1326,8 +1343,19 @@
                 self.editor.setShowPrintMargin(false);
                 self.editor.setReadOnly(false);
                 self.editor.setTheme("ace/theme/monokai");
+                
+                var mime = self.model.get('mime');
+                if(mime && mime.indexOf('text') === 0) {
+                    self.editor.setValue(self.model.get('data'));
+                } else {
+                    // assume base64, but lets try to textify it
+                    if(window.hasOwnProperty('atob')) {
+                        self.editor.setValue(atob(self.model.get('data')));
+                    }
+                }
+                
                 self.editor.getSession().setMode("ace/mode/javascript");
-                self.editor.setValue(self.model.get('data'));
+                
                 self.editor.gotoLine(1);
                 //editor.getValue(); // or session.getValue
                 self.editor.commands.addCommand({
@@ -1407,6 +1435,329 @@
         }
     });
     
+    var FileForm = Backbone.View.extend({
+        tagName: "div",
+        className: "fileForm",
+        initialize: function(options) {
+            var self = this;
+            self.options = options = options || {};
+            self.options.path = options.path || '/';
+            var typeName = 'file';
+            var acceptType = '*/*';
+            if(options.type) {
+                typeName = options.type;
+                if(typeName == 'image') {
+                    acceptType = 'image/*';
+                } else if (typeName == 'audio') {
+                    acceptType = 'audio/*';
+                } else if (typeName == 'video') {
+                    acceptType = 'video/*';
+                } else if (typeName == 'text') {
+                    acceptType = 'text/*';
+                } else {
+                    acceptType = '*/*';
+                }
+            }
+            this.$html = $('<button class="upload">Choose '+typeName+'</button>');
+            this.$input = $('<input class="uploadInput" style="display:none" type="file" multiple accept="'+acceptType+'" capture="camera">');
+        },
+        uploadFile: function(blobOrFile, callback) {
+            var self = this;
+            var formData = new FormData;
+            var xhr = new XMLHttpRequest;
+            var onReady = function(e) {
+            };
+            var onError = function(err) {
+                console.log(err);
+                self.trigger('failed', err);
+            };
+            formData.append("files", blobOrFile);
+            xhr.open("POST", "/api/fs"+self.options.path, true);
+            xhr.addEventListener("error", onError, false);
+            xhr.addEventListener("readystatechange", onReady, false);
+            xhr.onload = function(e) {
+                var data = JSON.parse(e.target.response);
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                if(self.options.collection && data.file) {
+                    self.options.collection.add(data.file);
+                }
+                self.trigger('uploaded', {localfile: blobOrFile, data: data});
+                if (callback) callback(data);
+            };
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    self.trigger('progress', {localfile: blobOrFile, loaded: e.loaded, total: e.total});
+                }
+            };
+            xhr.setRequestHeader('cache-control', 'no-cache');
+            xhr.send(formData);
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$html);
+            this.$el.append(this.$input);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click button.upload": "click",
+            "change .uploadInput": "fileChangeListener"
+        },
+        click: function() {
+            this.$input.click();
+            return false;
+        },
+        fileChangeListener: function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            var self = this;
+            //self.$input.hide();
+            var files = e.target.files;
+            var queue = [];
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                queue.push(file);
+                self.trigger('file', file);
+            }
+            var process = function() {
+                if (queue.length) {
+                    var f = queue.shift();
+                    self.uploadFile(f, function(data) {
+                        console.log(data);
+                        if(_.isArray(data)) {
+                            data = _.first(data);
+                        }
+                        //self.trigger("uploaded", data);
+                        if (queue.length > 0) {
+                            process();
+                        } else {
+                            console.log('uploads finished');
+                        }
+                    });
+                }
+            };
+            process();
+            return false;
+        }
+    });
+    
+    var DragDropView = Backbone.View.extend({
+        tagName: "span",
+        className: "dropzone",
+        initialize: function(options) {
+            var self = this;
+            self.options = options || {};
+            options.path = options.path || '/';
+        },
+        uploadFile: function(blobOrFile, callback) {
+            var self = this;
+            var formData = new FormData;
+            var xhr = new XMLHttpRequest;
+            var onReady = function(e) {
+            };
+            var onError = function(err) {
+                console.log(err);
+                self.trigger('failed', err);
+            };
+            formData.append("files", blobOrFile);
+            xhr.open("POST", "/api/fs"+self.options.path, true);
+            xhr.addEventListener("error", onError, false);
+            xhr.addEventListener("readystatechange", onReady, false);
+            xhr.onload = function(e) {
+                var data = JSON.parse(e.target.response);
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                console.log(data);
+                console.log(self.options);
+                if(self.options.collection && data.file) {
+                    self.options.collection.add(data.file);
+                }
+                self.trigger('uploaded', {localfile: blobOrFile, data: data});
+                if (callback) callback(data);
+            };
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    self.trigger('progress', {localfile: blobOrFile, loaded: e.loaded, total: e.total});
+                }
+            };
+            xhr.setRequestHeader('cache-control', 'no-cache');
+            xhr.send(formData);
+        },
+        render: function() {
+            this.$el.html('Drop files here');
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "dragenter": "handleDragEnter",
+            "dragleave": "handleDragLeave",
+            "dragover": "handleDragOver",
+            "drop": "handleFileSelect"
+        },
+        handleDragOver: function(e) {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+            return;
+        },
+        handleFileSelect: function(e) {
+            /*
+            if (path.indexOf('.AppleDouble') != -1) {
+            continue;
+            }         
+            var size = file.size || file.fileSize || 4096;
+            if(size < 4095) { 
+            continue;
+            }
+            */
+            e.stopPropagation();
+            e.preventDefault();
+            var self = this;
+            var files = e.originalEvent.dataTransfer.files;
+            var queue = [];
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                queue.push(file);
+                self.trigger('file', file);
+            }
+            var process = function() {
+                if (queue.length) {
+                    var f = queue.shift();
+                    self.uploadFile(f, function(data) {
+                        console.log(data);
+                        if(_.isArray(data)) {
+                            data = _.first(data);
+                        }
+                        if (queue.length > 0) {
+                            process();
+                        } else {
+                            console.log('uploads finished');
+                        }
+                    });
+                }
+            };
+            process();
+            this.$el.removeClass('dragover');
+            return false;
+        },
+        handleDragEnter: function(e) {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+            this.$el.addClass('dragover');
+            e.originalEvent.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+            return false;
+        },
+        handleDragLeave: function(e) {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+            this.$el.removeClass('dragover');
+            return false;
+        },
+        remove: function() {
+          $(this.el).remove();
+        }
+    });
+    
+    var UploadFrame = Backbone.View.extend({
+        tagName: "span",
+        className: "uploadFrame",
+        initialize: function(options) {
+            options = options || {};
+            var self = this;
+            options.path = options.path || '/';
+            this.fileForm = new FileForm(options);
+            this.fileForm.on('file', function(f) {
+                self.appendFile(f);
+            });
+            this.fileForm.on('progress', function(progress) {
+                var name = progress.localfile.name;
+                var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
+                $file.find('.meter').show();
+                var per = Math.floor((progress.loaded / progress.total) * 100);
+                $file.find('.bar').css('width', per+'%');
+            });
+            this.fileForm.on('uploaded', function(data) {
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                console.log(data);
+                var name = data.localfile.name;
+                var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
+                console.log($file);
+                $file.remove();
+                self.trigger('uploaded', data.data);
+            });
+            this.uploadDragDrop = new DragDropView(options);
+            this.uploadDragDrop.on('file', function(f) {
+                self.appendFile(f);
+            });
+            this.uploadDragDrop.on('progress', function(progress) {
+                var name = progress.localfile.name;
+                var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
+                $file.find('.meter').show();
+                var per = Math.floor((progress.loaded / progress.total) * 100);
+                $file.find('.bar').css('width', per+'%');
+            });
+            this.uploadDragDrop.on('uploaded', function(data) {
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                console.log(data);
+                var name = data.localfile.name;
+                var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
+                console.log($file);
+                $file.remove();
+                self.trigger('uploaded', data.data);
+            });
+            this.$uploadFileList = $('<ul class="uploadFileList"></ul>');
+        },
+        render: function() {
+            this.$el.html('');
+            this.$el.append(this.uploadDragDrop.render().$el);
+            this.$el.append('<span style="display:block;text-align:center"><br />or</span>');
+            this.$el.append(this.fileForm.render().$el);
+            this.$el.append(this.$uploadFileList);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click .pickFiles": "pickFiles"
+        },
+        pickFiles: function() {
+            this.fileForm.click();
+        },
+        appendFile: function(f, callback) {
+            var self = this;
+            var $localFile = $('<li class="localFile"></li>');
+            var $title = $('<span class="title"></span> ');
+            $title.html(f.webkitRelativePath || f.mozFullPath || f.name);
+            $localFile.append($title);
+            $localFile.append('<div class="meter" style="display:none"><div class="bar" style="width:0%"></div></div>');
+            var url;
+            if(window.createObjectURL){
+              url = window.createObjectURL(f)
+            }else if(window.createBlobURL){
+              url = window.createBlobURL(f)
+            }else if(window.URL && window.URL.createObjectURL){
+              url = window.URL.createObjectURL(f)
+            }else if(window.webkitURL && window.webkitURL.createObjectURL){
+              url = window.webkitURL.createObjectURL(f)
+            }
+            $localFile.attr('data-filename', $title.html());
+            self.$uploadFileList.append($localFile);
+            console.log($localFile);
+            if(callback) callback();
+        },
+        remove: function() {
+          this.$el.remove();
+        },
+        setPath: function(p) {
+            this.uploadDragDrop.options.path = this.fileForm.options.path = this.options.path = p;
+        }
+    });
+    
     if(define) {
         define(function () {
             return {
@@ -1420,7 +1771,10 @@
                 FilesCollection: FilesCollection,
                 FileModel: FileModel,
                 FileName: FileNameView,
-                FileList: FileListView
+                FileList: FileListView,
+                UploadFrame: UploadFrame,
+                DragDropView: DragDropView,
+                FileForm: FileForm
             }
         });
     }

@@ -7,6 +7,9 @@ body {
     background-color: #2f3129;
     color: white;
 }
+.dropzone {
+    color: white;
+}
 body {
     margin: 44px 0 0 0;
 }
