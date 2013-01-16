@@ -450,7 +450,7 @@
             var self = this;
             if(confirm("Are you sure that you want to delete this file?")) {
                 this.model.destroy({success: function(model, response) {
-                  window.history.back(-1);
+                  
                 }, 
                 errorr: function(model, response) {
                     console.log(arguments);
