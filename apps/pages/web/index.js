@@ -39,6 +39,15 @@
                                                                             pages.bindNav(nav);
                                                                             account.bindRouter(nav.router);
                                                                             
+                                                                            require(['/desktop/jquery.hotkeys.js'], function(){
+                                                                              $(document).bind('keydown', 'esc', function(){
+                                                                                if(!account.loginStatus.isUser()) {
+                                                                                    nav.router.navigate('join', true);
+                                                                                }
+                                                                                return false;
+                                                                              });
+                                                                            });
+                                                                            
                                                                             var d = new Date(); $('.year').html(d.getFullYear());
                                                                     
                                                                             if (callback) callback(pages);

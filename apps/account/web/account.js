@@ -823,6 +823,9 @@
                 window.history.back();
             });
         },
+        join: function() {
+            self.router.navigate('join', true);
+        },
         bindRouter: function(router) {
             var self = this;
             self.router = router;

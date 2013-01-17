@@ -830,6 +830,9 @@
                 console.log(err);
                 self.trigger('failed', err);
             };
+            if(self.options.metadata) {
+                formData.append("metadata", JSON.stringify(self.options.metadata));
+            }
             formData.append("files", blobOrFile);
             xhr.open("POST", "/api/files", true);
             xhr.addEventListener("error", onError, false);
@@ -919,6 +922,9 @@
                 console.log(err);
                 self.trigger('failed', err);
             };
+            if(self.options.metadata) {
+                formData.append("metadata", JSON.stringify(self.options.metadata));
+            }
             formData.append("files", blobOrFile);
             xhr.open("POST", "/api/files", true);
             xhr.addEventListener("error", onError, false);

@@ -333,7 +333,7 @@
         events: {},
         appendModel: function(m) {
             console.log(m)
-            var el = this.$el.find('[data-id="'+m.id+'"]')[0];
+            var el = this.$el.find('#'+m.id)[0];
             var row = m.getView({
                 list: this,
                 el: el
@@ -766,7 +766,7 @@
                 });
             }
             
-            self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image'});
+            self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
             self.uploadFrame.on('uploaded', function(data){
                 if(_.isArray(data)) {
                     data = _.first(data);
@@ -804,7 +804,8 @@
                 $e = $('<div class="container"><div class="carousel-caption"><h1></h1><p class="lead"></p><a class="btn btn-large btn-link" href="#">See more</a></div></div>');
                 this.$el.append($e);
             }
-            if(this.$el.find('img[src="'+src+'"]').length == 0) {
+            if(this.$el.find('img[src="/api/files/'+src+'"]').length == 0) {
+                this.$el.find('img').remove();
                 this.$el.prepend('<img src="/api/files/'+src+'" />'); ///api/files/' + this.model.get("filename") + '
             }
             var $cap = $e.find('.carousel-caption');
@@ -1310,6 +1311,7 @@
             this.$form.find('fieldset').append(this.$inputDesc);
             this.$form.find('fieldset').append(this.$inputPath);
             this.$el.append('<button class="attach">Upload logo</button>');
+            this.$el.append('<button class="publish">Publish site</button>');
             this.$form.find('controls').append('<input type="submit" value="Save" />');
         },
         render: function() {
@@ -1339,12 +1341,26 @@
         events: {
             "submit form": "submit",
             "click .attach": "attachImage",
+            "click .publish": "publish",
             'click input[type="submit"]': "submit",
             'keyup input[name="title"]': "throttleTitle",
             'blur input[name="title"]': "blurTitle"
         },
         attachImage: function() {
             this.uploadFrame.pickFiles();
+            return false;
+        },
+        publish: function() {
+            this.model.set({publish: window.location.href}, {silent: true});
+            var saveModel = this.model.save(null, {
+                silent: false ,
+                wait: true
+            });
+            if(saveModel) {
+                saveModel.done(function() {
+                    window.location.reload();
+                });
+            }
             return false;
         },
         blurTitle: function() {
@@ -1521,7 +1537,7 @@
             var self = this;
             this.$html = $('<label>Image:<input data-wysihtml5-dialog-field="src" value="http://"></label><label>Caption:<input name="alt" placeholder="caption"></label><label class="justify"><input type="radio" name="klass" value="original"> Center </label><label class="justify"><input type="radio" name="klass" value="pull-left"> Left </label><label class="justify"><input type="radio" name="klass" value="pull-right"> Right </label><button class="save">OK</button>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>');
             self.$inputUrl = this.$html.find('input[data-wysihtml5-dialog-field="src"]');
-            self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image'});
+            self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
             self.uploadFrame.on('uploaded', function(data){
                 if(_.isArray(data)) {
                     data = _.first(data);

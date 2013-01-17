@@ -141,7 +141,7 @@ body {
     visibility: hidden;
 }
 .carousel-caption, .form form.feature {
-background: #333;
+background: rgba(0, 0, 0, 0.75);
 border-radius: 4px;
 box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.75);
   position: static;
@@ -636,11 +636,14 @@ ol.lead li {
 .uploadFrame .copy, .uploadFrame .fileForm, .uploadFrame .uploadFileList {
     display: none;
 }
-.navbar .attach {
+.navbar .attach, .navbar .publish {
     position: absolute;
     top:0px;
     right: 0px;
     z-index: 3;
+}
+.navbar .publish {
+    top: 26px;
 }
 form.page {
     position: absolute;
@@ -726,6 +729,96 @@ form.section, form.section fieldset {
 [data-wysihtml5-dialog="insertImage"] label.justify {
     display: inline;
 }
+
+.sections ol, .sections ul {
+    margin: 8px 40px;
+}
+.lightbox h2, .lightbox h3, .lightbox h4 {
+    padding-left: 15px;
+    text-shadow: 0px 1px 3px #FFF;
+}
+.lightbox { bottom: 0; left: 0; right: 0; top: 0; position: fixed; z-index: 2000; padding-top: 0px; }
+.lightbox .close a { background: rgba(0, 0, 0, 0.85); bottom: 0; left: 0; right: 0; top: 0; position: absolute; z-index: 1; }
+.lightbox .close span { color: #000000; font-size: 2em; text-indent: 0; position: absolute; right: 0.5em; top: 0.5em; }
+.lightbox .close {text-indent: -999em;}
+.lightbox > div {
+    position: absolute; left: 50%; z-index: 99;
+    max-height: 100%;
+    overflow: auto;
+}
+.lightbox > div {
+    background: rgb(255,255,255); /* Old browsers */
+    background: -moz-linear-gradient(top, rgb(173,173,173) 0%, rgb(211,211,211) 25%, rgb(255,255,255) 76%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgb(173,173,173)), color-stop(25%,rgb(211,211,211)), color-stop(76%,rgb(255,255,255))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top, #ADADAD 0%,lightGrey 25%,white 76%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top, rgb(173,173,173) 0%,rgb(211,211,211) 25%,rgb(255,255,255) 76%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top, rgb(173,173,173) 0%,rgb(211,211,211) 25%,rgb(255,255,255) 76%); /* IE10+ */
+    background: linear-gradient(to bottom, rgb(173,173,173) 0%,rgb(211,211,211) 25%,rgb(255,255,255) 76%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#515151', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
+    color: black;
+    -webkit-appearance: none;
+    -webkit-box-shadow: 2px 2px 6px white;
+    -webkit-border-radius: 12px;
+    margin-left: -45%;
+    width: 90%;
+}
+.lightbox > div {  }
+.lightbox .scroll { overflow-y: scroll; padding: 0 1em; }
+
+.authentication p {
+    margin: 1em 20px;
+}
+.connect {
+    display: none;
+    width: 90%;
+    margin: 0 auto 18px;
+}
+.connectTwitter, .connectFacebook {
+    width: 48%;
+    padding: 4px;
+    background: #dddddd; /* Old browsers */
+    background: -moz-linear-gradient(top,  #dddddd 0%, #4070a0 8%, #39335b 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#dddddd), color-stop(8%,#4070a0), color-stop(100%,#39335b)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #dddddd 0%,#4070a0 8%,#39335b 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #dddddd 0%,#4070a0 8%,#39335b 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #dddddd 0%,#4070a0 8%,#39335b 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  #dddddd 0%,#4070a0 8%,#39335b 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#dddddd', endColorstr='#39335b',GradientType=0 ); /* IE6-9 */
+    
+}
+.connectFacebook {
+    float: right;
+}
+form#houseAuth {
+    width: 90%;
+    margin: 0 auto 18px;
+    overflow: visible;
+}
+form#houseAuth input[name="email"], form#houseAuth input[name="pass"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 10px;
+    margin: 0 0;
+    -webkit-appearance: none;
+    border-radius: 0px;
+}
+form#houseAuth input[name="email"] {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+form#houseAuth input[name="pass"] {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+form#houseAuth input[type="submit"] {
+    width: 50%;
+    padding: 6px;
+    float: right;
+    margin-top: 16px;
+}
+.authentication h4 {
+    font-size: 124%;
+}
         </style>
     </head>
     <body data-spy="scroll" data-target=".navbar" class="loading">
@@ -781,7 +874,7 @@ form.section, form.section fieldset {
             g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
             s.parentNode.insertBefore(g,s)}(document,'script'));
         </script> -->
-        <script src="require.js"></script>
+        <script src="/desktop/require.js"></script>
         <script>
         require(['index.js'], function(index){
             index.init(function(pages){

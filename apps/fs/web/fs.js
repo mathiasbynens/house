@@ -14,6 +14,7 @@
                 self.$fileViewer = $('<div class="file-viewer"></div>');
                 
                 window.fsRootCollection = new window.FsBackbone.Collection([], {path: self.pathSelected}); // collection
+                window.fsRootCollection.collectionPaths = {};
                 self.treeRootView = window.fsRootCollection.getView();
                 window.fsRootCollection.on('selected', function(row) {
                     self.router.navigate(row.model.getNavigatePath(), true);
@@ -34,8 +35,9 @@
                     if(_.isArray(data)) {
                         data = _.first(data);
                     }
-                    window.fsRootCollection.collectionPaths[self.pathSelected].add(data);
-                    console.log(arguments);
+                    if(window.fsRootCollection.hasOwnProperty('collectionPaths')) {
+                        window.fsRootCollection.collectionPaths[self.pathSelected].add(data);
+                    }
                 });
                 self.$fileTree.find('controls .addNewFilesFrame').append(self.uploadFrame.render().$el);
                 
@@ -127,9 +129,6 @@
             }
             self.pathSelected = path;
             this.renderPathControls();
-            if(!window.fsRootCollection.hasOwnProperty('collectionPaths')) {
-                window.fsRootCollection.collectionPaths = {};
-            }
             var col;
             if(window.fsRootCollection.collectionPaths.hasOwnProperty(path)) {
                 console.log(path);
