@@ -65,7 +65,6 @@
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                        console.log(doc);
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;s
@@ -111,11 +110,14 @@
                 }
             });
         },
-        refreshCount: function() {
+        refreshCount: function(callback) {
             var self = this;
             self.headCount(function(count){
                 self.count = count;
                 self.trigger('colCount', count);
+                if(callback) {
+                    callback(count);
+                }
             });
         },
         load: function(options, success) {
@@ -146,6 +148,26 @@
                 error: function(collection, response){
                 }
             });
+        },
+        getRandomDoc: function(callback) {
+            var self = this;
+            
+            if(!this.count) {
+                this.refreshCount(function(c){
+                    self.getRandomDoc(callback);
+                });
+            } else {
+                var skip = Math.floor(Math.random()*this.count);
+                
+                this.fetch({data: {skip:skip, limit:1}, add: true, success: function(collection, response){
+                        if(callback) {
+                            callback(collection.last());
+                        }
+                    },
+                    error: function(collection, response){
+                    }
+                });
+            }
         },
         getNextPage: function() {
             if(this.length < this.count) {

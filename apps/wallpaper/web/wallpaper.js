@@ -4,12 +4,10 @@
         initialize: function() {
             var self = this;
             this.collection.on('selected', function(paper){
-                console.log(paper)
                 self.selectedPaper = paper;
                 self.render();
             });
-            self.useCollectionShuffled(this.collection);
-            self.selectedPaper = this.stack.shift();
+            self.transition();
         },
         render: function() {
             var self = this;
@@ -40,14 +38,26 @@
             this.setElement(this.$el);
             return this;
         },
+        findRandomPaper: function(col, callback) {
+            var self = this;
+            col.getRandomDoc(function(doc){
+                if(callback) {
+                    callback(doc);
+                }
+            });
+        },
         useCollectionShuffled: function(col) {
             this.stack = _.clone(col.shuffle());
         },
         transition: function() {
             var self = this;
-            self.stack.push(self.selectedPaper);
-            self.selectedPaper = self.stack.shift();
-            self.render();
+            if(!self.stack) {
+                self.stack = [];
+            }
+            self.findRandomPaper(this.collection, function(doc){
+                self.stack.push(doc);
+                self.collection.trigger('selected', self.stack.shift());
+            });
         },
         transitionEvery: function(ms) {
             var self = this;
@@ -71,10 +81,10 @@
                 require(['/wallpaper/backbone-wallpaper.js'], function(WallpaperBackbone){
                     window.WallpaperBackbone = WallpaperBackbone;
                     self.collection = window.wallpaperCollection = new window.WallpaperBackbone.Collection(); // collection
-                    self.collection.load(null, function(){
-                        self.initialized = true;
-                        self.trigger('initialized');
-                    });
+                    self.initialized = true;
+                    self.trigger('initialized');
+                    //self.collection.load(null, function(){
+                    //});
                     if(window.hasOwnProperty('account')) {
                         window.account.on('loggedIn', function(loginView){
                             console.log('refresh collection');
