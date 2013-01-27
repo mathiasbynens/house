@@ -34,7 +34,7 @@
                 }
                 self.initialized = true;
                 self.trigger('initialized');
-                //loadCollections();
+                loadCollections();
             });
             
             /*require(['../desktop/jquery.idle-timer.js'], function() {

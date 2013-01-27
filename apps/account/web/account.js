@@ -191,7 +191,7 @@
                 //this.getUserModel(); // requires waiting for callback to be useful
             }
         },
-        render: function() {
+        render: function(recursive) {
             var self = this;
             var name = this.model.get('name');
             var loginbtn;
@@ -205,9 +205,11 @@
             if (this.userModel) {
                 this.$el.find(".avatar").append(this.userModel.getAvatarView().render().el);
             } else if (this.model.has("user")) {
-                this.getUserModel(function(){
-                    self.render();
-                });
+                if(!recursive) {
+                    this.getUserModel(function(){
+                        self.render(true);
+                    });
+                }
             }
             this.setElement(this.$el);
             return this;
@@ -218,19 +220,17 @@
                 self.render();
             });
         },
-        fetchUserModel: function() {
+        fetchUserModel: function(callback) {
             var self = this;
-            return window.usersCollection.load(function() {
-                self.userModel = window.usersCollection.get(self.model.get("user"));
-                self.render();
+            window.usersCollection.getOrFetch(self.model.get("user"), function(user) {
+                self.userModel = user;
+                if(callback) callback(user);
             });
         },
         getUserModel: function(callback) {
             var self = this;
              if (!this.userModel) {
-                this.userModelFetch = this.fetchUserModel();
-                this.userModelFetch.done(function(){
-                    self.userModel = window.usersCollection.get(self.model.get("user"));
+                this.fetchUserModel(function(){
                     if(callback) callback(self.userModel);
                 });
             } else {
@@ -852,6 +852,10 @@
             var self = this;
             self.router = router;
             router.route("join", "join", function() {
+                if(self.loginStatus.has('user')) {
+                    self.router.navigate('', true);
+                    return;
+                }
                 self.router.navigate('join');
                 
                 self.loginLightbox = new utils.LightboxView().render();

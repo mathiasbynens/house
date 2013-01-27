@@ -36,13 +36,18 @@
             options.id = this.get("_id");
             options.model = this;
             if (!this.avatar) {
-                var view = this.avatar = new AvatarView(options);
+                var view = this.avatar = this.getNewAvatarNameView(options);
                 this.views.avatar = view;
             }
             return this.avatar;
         },
         getAvatarView: function(options) {
             return this.getAvatar(options);
+        },
+        getNewAvatarNameView: function(options) {
+            options = options || {};
+            options.model = this;
+            return new AvatarView(options);
         },
         getUserView: function(options) {
             return this.getFullView(options);
@@ -201,7 +206,7 @@
             if(doc) {
                 callback(doc);
             } else {
-                var options = { "_id": id };
+                var options = { "id": id };
                 this.fetch({data: options, add: true, success: function(collection, response){
                         if(response) {
                             doc = self.get(id);
@@ -698,9 +703,15 @@
             this.$el.html('');
             var $byline = $('<span class="byline"></span>');
             this.$el.append('<span class="avatar"></span>');
-            if (this.model.has("avatar")) {
+            if (this.model.has("avatar") && this.model.get("avatar")) {
                 var src = this.model.get("avatar");
-                if (src.indexOf("http") === 0) {} else {
+                if (typeof src == 'string') {
+                } else if(src.hasOwnProperty('url')) {
+                    src = src.url;
+                }
+                if (src.indexOf("http") === 0) {
+                    
+                } else {
                     src = "/api/files/" + src;
                 }
                 this.$el.find('.avatar').append('<img src="' + src + '" />');
@@ -773,9 +784,15 @@
             this.$el.append('<h2 class="name">'+this.model.get('name')+'</h2>');
             
             this.$el.append('<span class="avatar"></span>');
-            if (this.model.has("avatar")) {
+            if (this.model.has("avatar") && this.model.get("avatar")) {
                 var src = this.model.get("avatar");
-                if (src.indexOf("http") === 0) {} else {
+                if (typeof src == 'string') {
+                } else if(src.hasOwnProperty('url')) {
+                    src = src.url;
+                }
+                if (src.indexOf("http") === 0) {
+                    
+                } else {
                     src = "/api/files/" + src;
                 }
                 this.$el.find('.avatar').append('<img src="' + src + '" />');
@@ -960,7 +977,10 @@
                                 avatar = data.image.sizes.thumb.filename;
                             }
                         }
-                        setDoc.avatar = avatar;
+                        setDoc.avatar = {
+                            image: data.image,
+                            url: avatar
+                        };
                         self.model.set(setDoc, {silent: true});
                         var saveModel = self.model.save(null, {
                             silent: false,
@@ -1012,12 +1032,13 @@
             return this;
         },
         initialize: function(options) {
-            if(options.list) {
+            if(options && options.list) {
                 this.list = options.list;
             }
-            
-            this.model.bind('change', this.render, this);
-            this.model.bind('destroy', this.remove, this);
+            if(this.model) {
+                this.model.bind('change', this.render, this);
+                this.model.bind('destroy', this.remove, this);
+            }
         },
         events: {
           "click": "select"
