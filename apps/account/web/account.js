@@ -138,7 +138,22 @@
             });
         },
         events: {
-            "submit form": "submit"
+            "submit form": "submit",
+            "click .connectTwitter": "twitter",
+            "click .connectFacebook": "facebook",
+            "click .connectGoogle": "google"
+        },
+        twitter: function() {
+            window.location = window.location.origin + '/api/auth/twitter';
+            return false;
+        },
+        facebook: function() {
+            window.location = window.location.origin + '/api/auth/facebook';
+            return false;
+        },
+        google: function() {
+            window.location = window.location.origin + '/api/auth/google';
+            return false;
         },
         submit: function() {
             var email = this.$el.find('input[name="email"]').val();
@@ -541,7 +556,7 @@
             this.$name.focus();
         }
     });
-    feat.Forfm = Backbone.View.extend({
+    feat.Form = Backbone.View.extend({
         tag: "div",
         className: "featForm",
         render: function() {
@@ -775,9 +790,6 @@
         },
     });
     
-    
-    window.usersCollection = new users.Collection;
-    //window.usersCollection.load();
     var ProfileView = Backbone.View.extend({
         tag: "span",
         className: "profile",
@@ -789,20 +801,25 @@
         initialize: function() {
             var self = this;
             this.$profile = $('<profile></profile>');
-            auth.get(function(err, loginStatus) {
-                if (err) {} else if (loginStatus) {
-                    window.account = self.loginStatus = loginStatus;
-                    loginStatus.getView().on("goToProfile", function(username) {
-                        self.router.navigate('user/'+username, true);
-                    });
-                    loginStatus.on("login", function() {
-                        loginStatus.getView().render();
-                        self.trigger('loggedIn', loginStatus);
-                    });
-                    self.$profile.append(loginStatus.getView().render().$el);
-                    if (loginStatus && loginStatus.has("user")) {} else {}
-                    self.trigger('init');
-                }
+            
+            require(['/users/backbone-users.js'], function(UsersBackbone){
+                self.UsersBackbone = UsersBackbone;
+                window.usersCollection = new UsersBackbone.Collection();
+                auth.get(function(err, loginStatus) {
+                    if (err) {} else if (loginStatus) {
+                        window.account = self.loginStatus = loginStatus;
+                        loginStatus.getView().on("goToProfile", function(username) {
+                            self.router.navigate('user/'+username, true);
+                        });
+                        loginStatus.on("login", function() {
+                            loginStatus.getView().render();
+                            self.trigger('loggedIn', loginStatus);
+                        });
+                        self.$profile.append(loginStatus.getView().render().$el);
+                        if (loginStatus && loginStatus.has("user")) {} else {}
+                        self.trigger('init');
+                    }
+                });
             });
         },
         loadUser: function() {
@@ -822,6 +839,11 @@
             this.userLightbox.on('close', function(){
                 window.history.back();
             });
+        },
+        navToMe: function() {
+            console.log(this.loginStatus.getView().userModel);
+            var user = this.loginStatus.getView().userModel;
+            this.navToUser(user);
         },
         join: function() {
             self.router.navigate('join', true);
@@ -851,7 +873,7 @@
                 router.reset();
                 router.setTitle(path);
                 
-                usersCollection.getByName(path, function(user){
+                usersCollection.getOrFetchName(path, function(user){
                     self.navToUser(user);
                 });
             });
