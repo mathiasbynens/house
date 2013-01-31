@@ -45,9 +45,17 @@
             return this.getAvatar(options);
         },
         getNewAvatarNameView: function(options) {
-            options = options || {};
+            if (!options) options = {};
             options.model = this;
-            return new AvatarView(options);
+            return new AvatarNameView(options)
+        },
+        getAvatarNameView: function(options) {
+            if (!options) options = {};
+            options.model = this;
+            if (!this.hasOwnProperty("avatarNameView")) {
+                this.avatarNameView = this.getNewAvatarNameView(options);
+            }
+            return this.avatarNameView;
         },
         getUserView: function(options) {
             return this.getFullView(options);
@@ -686,7 +694,36 @@
             }
         }
     });
-
+    
+    var AvatarNameView = Backbone.View.extend({
+        tagName: "span",
+        className: "avatarName",
+        render: function() {
+            var self = this;
+            if (this.model.has("avatar")) {
+                var src = this.model.get("avatar");
+                if (src.indexOf("http") === 0) {} else {
+                    src = "/api/files/" + src;
+                }
+                this.$el.html('<img src="' + src + '" />');
+            } else {
+                this.$el.html("");
+            }
+            this.$el.append(this.model.get('name'));
+            this.setElement(this.$el);
+            return this;
+        },
+        initialize: function() {},
+        events: {
+            click: "goToProfile"
+        },
+        goToProfile: function() {
+            this.trigger("goToProfile", this.model);
+        },
+        remove: function() {
+            $(this.el).remove();
+        }
+    });
 
     var RowView = Backbone.View.extend({
         tagName: "li",
