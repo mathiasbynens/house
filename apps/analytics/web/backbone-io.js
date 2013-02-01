@@ -717,9 +717,20 @@
                     var $os = $ua.find('.os');
                     var $browser = $ua.find('.browser');
                     var agent = this.model.get('agent');
-                    $os.addClass(agent.os.replace(/\s/g, ''));
-                    $os.html(agent.os);
-                    $os.attr('title', agent.os);
+                    if(agent.os) {
+                        var agentStr = '';
+                        if(typeof agent.os == 'string') {
+                            agentStr = agent.os;
+                        } else if(agent.os.family) {
+                            agentStr = agent.os.family;
+                            if(agent.os.major) {
+                                agentStr = agentStr + ' ' + agent.os.major;
+                            }
+                        }
+                        $os.addClass(agentStr.replace(/\s/g, ''));
+                        $os.html(agentStr);
+                        $os.attr('title', agentStr);
+                    }
                     $browser.addClass(agent.family.replace(/\s/g, ''));
                     $browser.html(agent.family);
                     $browser.attr('title', agent.family + ' ' + agent.major);
