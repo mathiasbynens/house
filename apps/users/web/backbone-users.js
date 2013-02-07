@@ -1014,10 +1014,7 @@
                                 avatar = data.image.sizes.thumb.filename;
                             }
                         }
-                        setDoc.avatar = {
-                            image: data.image,
-                            url: avatar
-                        };
+                        setDoc.avatar = avatar;
                         self.model.set(setDoc, {silent: true});
                         var saveModel = self.model.save(null, {
                             silent: false,

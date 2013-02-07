@@ -894,8 +894,8 @@
             this.$el.append(this.$options);
             if(this.model && this.model.has('groups') && this.model.get('groups').indexOf('public') !== -1) {
                 this.$el.val('public');
+                this.$options.find('option[value="public"]').attr('selected','selected');
             } else {
-                console.log('rpv')
                 this.$el.val('private');
                 this.$options.find('option[value="private"]').attr('selected','selected');
             }
@@ -904,7 +904,7 @@
         },
         val: function() {
             var groups = [];
-            if(this.$el.find('input').val() == 'public') {
+            if(this.$el.val() == 'public') {
                 groups = ['public'];
             }
             return groups;
