@@ -152,7 +152,7 @@
                 options = {};
             }
             this.applyFilters(options);
-            this.fetch({data: options, add: true, success: function(collection, response){
+            this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                     if(success) {
                         success();
                     }
@@ -186,7 +186,7 @@
                 callback(doc);
             } else {
                 var options = { "_id": id };
-                this.fetch({data: options, add: true, success: function(collection, response){
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = self.get(id);
                             callback(doc);
@@ -208,7 +208,7 @@
                 callback(doc);
             } else {
                 var options = { "slug": slug };
-                this.fetch({data: options, add: true, success: function(collection, response){
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = _.first(self.where({slug:slug}));
                             callback(doc);
@@ -308,9 +308,9 @@
         getDocLayoutView: function(doc) {
             var view;
             if(this.layout === 'row') {
-                view = doc.getRow({list: self});
+                view = doc.getRow({list: this});
             } else if(this.layout === 'avatar') {
-                view = doc.getAvatar({list: self});
+                view = doc.getAvatar({list: this});
             }
             return view;
         },
@@ -1114,7 +1114,7 @@
             if(!options) {
                 options = {};
             }
-            this.fetch({data: options, add: true, success: function(collection, response){
+            this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                     if(success) {
                         success();
                     }
@@ -1131,7 +1131,7 @@
                 callback(doc);
             } else {
                 var options = { "_id": id };
-                this.fetch({data: options, add: true, success: function(collection, response){
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = self.get(id);
                             callback(doc);

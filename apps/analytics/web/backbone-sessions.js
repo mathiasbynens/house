@@ -154,7 +154,7 @@
             this.applyFilters(options);
             this.fetch({
                 data: options,
-                add: true,
+                update: true, remove: false,
                 success: function(collection, response) {
                     if (success) {
                         success();
@@ -200,7 +200,7 @@
                 };
                 this.fetch({
                     data: options,
-                    add: true,
+                    update: true, remove: false,
                     success: function(collection, response) {
                         if (response) {
                             doc = self.get(id);

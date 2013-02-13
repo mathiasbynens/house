@@ -149,7 +149,7 @@
             if(!this.count) {
                 this.refreshCount(options);
             }
-            this.fetch({data: options, add: true, success: function(collection, response){
+            this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                     if(success) {
                         success();
                     }
@@ -196,7 +196,7 @@
                 callback(doc);
             } else {
                 var options = { "_id": id };
-                this.fetch({data: options, add: true, success: function(collection, response){
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = self.get(id);
                             callback(doc);
@@ -218,7 +218,7 @@
                 callback(doc);
             } else {
                 var options = { "filename": filename };
-                this.fetch({data: options, add: true, success: function(collection, response){
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = _.first(self.where({filename:filename}));
                             callback(doc);
@@ -384,6 +384,7 @@
                     loadO.skip = this.collection.length;
                 }
                 this.collection.load(loadO, function(){
+                    if(self.currentFilter)
                     self.filterLength = self.collection.filter(self.currentFilter).length;
                     self.loading = false;
                 });

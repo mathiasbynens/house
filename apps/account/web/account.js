@@ -103,12 +103,11 @@
             var self = this;
             this.reset();
             return this.fetch({
-                add: true,
+                update: true, remove: false,
                 success: function() {
                     self.trigger("loaded", self.url);
                     if (callback) callback();
                 },
-                complete: function(xhr) {}
             });
         }
     });

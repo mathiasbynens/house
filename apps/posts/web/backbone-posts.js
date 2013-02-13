@@ -158,7 +158,7 @@
                 options.sort = "at-";
             }
             this.applyFilters(options);
-            this.fetch({data: options, add: true, success: function(collection, response){
+            this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                     if(success) {
                         success();
                     }
@@ -198,7 +198,7 @@
                 callback(doc);
             } else {
                 var options = { "_id": id };
-                this.fetch({data: options, add: true, success: function(collection, response){
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = self.get(id);
                             callback(doc);
@@ -220,7 +220,7 @@
                 callback(doc);
             } else {
                 var options = { "slug": slug };
-                this.fetch({data: options, add: true, success: function(collection, response){
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = _.first(self.where({slug:slug}));
                             callback(doc);
@@ -761,13 +761,16 @@
             if(this.model.has('title')) {
                 this.$el.append('<h1 class="title">'+this.model.get('title')+'</h1>');
             }
+            if(this.model.has('seq')) {
+                this.$el.append('<span class="seq">#'+this.model.get('seq')+'</span>');
+            }
             if(this.model.has('owner')) {
                 $byline.append(' <i>by</i> <span class="owner">'+this.model.get('owner').name+'</span>');
                 $byline.attr('data-owner-id', this.model.get('owner').id);
                 var owner = this.model.getOwner(function(owner){
                     if(owner) {
                         $byline.find('.owner').html('');
-                        var ownerAvatarName = owner.getAvatarNameView();
+                        var ownerAvatarName = owner.getNewAvatarNameView();
                         ownerAvatarName.on('goToProfile', function(user){
                             self.trigger('goToProfile', user);
                         });
@@ -785,6 +788,11 @@
                 }
                 $byline.append(' ');
                 $byline.append($at);
+            }
+            if(this.model.has('youtube')) {
+                var yt = this.model.get('youtube');
+                var ytid = yt.id;
+                this.$el.append('<span class="youtube"><div id="ytapiplayer-'+ytid+'"><iframe width="640" height="480" src="https://www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
             }
             if(this.model.has('msg')) {
                 var $msg = $('<span class="msg"></span>');
@@ -912,6 +920,37 @@
         events: {
         },
     });
+    
+    var YoutubeView = Backbone.View.extend({
+        tagName: "span",
+        className: "youtube",
+        initialize: function() {
+            this.$input = $('<input name="youtube_id" placeholder="youtube id" />');
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$input);
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v) {
+                this.$input.val(v);
+            } else {
+                var ytid = this.$input.val();
+                var y = {};
+                if(this.model.has('youtube')) {
+                    _.clone(this.model.get('youtube'));
+                }
+                y.id = ytid;
+                return y;
+            }
+        },
+        events: {
+            
+        },
+    });
+    
     var FormView = Backbone.View.extend({
         tagName: "div",
         className: "form",
@@ -929,6 +968,81 @@
                 } else {
                 }
             }
+            self.uploadAvatarFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
+            self.uploadAvatarFrame.on('uploaded', function(data){
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                if(data.image) {
+                    if(!self.model.isNew()) {
+                        var setDoc = {
+                            avatar: data.image
+                        }
+                        self.model.set(setDoc, {silent: true});
+                        var saveModel = self.model.save(null, {
+                            silent: false,
+                            wait: true
+                        });
+                        if(saveModel) {
+                            saveModel.done(function() {
+                                self.trigger("newImage", self.model);
+                                self.render();
+                            });
+                        }
+                    } else {
+                        
+                    }
+                }
+            });
+            self.uploadMediaAudioFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'audio', metadata:{groups: ['public']}});
+            self.uploadMediaAudioFrame.on('uploaded', function(data){
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                if(!self.model.isNew()) {
+                    var setDoc = {
+                        audio: data.file
+                    }
+                    self.model.set(setDoc, {silent: true});
+                    var saveModel = self.model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    if(saveModel) {
+                        saveModel.done(function() {
+                            self.trigger("newAudio", self.model);
+                            self.render();
+                        });
+                    }
+                } else {
+                    
+                }
+            });
+            self.uploadMediaVideoFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'video', metadata:{groups: ['public']}});
+            self.uploadMediaVideoFrame.on('uploaded', function(data){
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                if(!self.model.isNew()) {
+                    var setDoc = {
+                        video: data.file
+                    }
+                    self.model.set(setDoc, {silent: true});
+                    var saveModel = self.model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    if(saveModel) {
+                        saveModel.done(function() {
+                            self.trigger("newVideo", self.model);
+                            self.render();
+                        });
+                    }
+                } else {
+                    
+                }
+            });
+            
             this.wsyi_id = 'wysihtml5-'+this.cid;
             this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your post" autocomplete="off" />');
             this.$msgToolbar = $('<div class="wysihtml5-toolbar" id="'+this.wsyi_id+'-toolbar"><header><ul class="commands">\
@@ -952,14 +1066,17 @@
             this.$slugShare.html('/posts/'); //window.location.origin+
             this.$slugShare.append(this.$inputSlug);
             
-            this.$inputAtDate = $('<input name="at-date" type="date"/>');
-            this.$inputAtTime = $('<input type="time"/>');
+            this.$inputAtDate = $('<input name="at-date" type="date" />');
+            this.$inputAtTime = $('<input type="time" />');
+            
+            this.$inputSeq = $('<input type="text" name="seq" placeholder="sequence #" />');
             
             this.atPublished = $('<span class="published"><span class="by">by <span class="owner"></span></span><br /><span class="at">at </span></span>');
             this.atPublished.find('.owner').append(this.$owner);
             this.atPublished.find('.at').append(this.$inputAtDate);
             this.atPublished.find('.at').append(this.$inputAtTime);
             
+            this.youtubeView = new YoutubeView({model: this.model});
             this.inputGroupsView = new SelectGroupsView({model: this.model});
             this.feedView = new ActionFeedView({model: this.model});
             this.deleteView = new ActionDeleteView({model: this.model});
@@ -970,7 +1087,18 @@
             this.$form.find('fieldset').append(this.$inputMsg);
             this.$form.find('fieldset').append('<hr />');
             this.$form.find('fieldset').append(this.$slugShare);
+            this.$form.find('fieldset').append(this.$inputSeq);
             this.$form.find('fieldset').append(this.atPublished);
+            this.$form.find('fieldset').append(this.youtubeView.render().$el);
+            
+            this.$form.find('fieldset').append('<span class="avatar"><span class="embed"></span><button class="attachImage">Attach Image</button></span>');
+            this.$form.find('fieldset').append('<span class="audio"><span class="embed"></span><button class="attachAudio">Attach Audio</button></span>');
+            this.$form.find('fieldset').append('<span class="video"><span class="embed"></span><button class="attachVideo">Attach Video</button></span>');
+            
+            this.$form.find('fieldset').append(this.uploadAvatarFrame.render().$el.hide());
+            this.$form.find('fieldset').append(this.uploadMediaAudioFrame.render().$el.hide());
+            this.$form.find('fieldset').append(this.uploadMediaVideoFrame.render().$el.hide());
+            
             this.$form.find('fieldset').append(this.feedView.render().$el);
             this.$form.find('fieldset').append(this.deleteView.render().$el);
             this.$form.find('controls').append(this.inputGroupsView.render().$el);
@@ -986,12 +1114,41 @@
                 if(this.model.has('title')) {
                     this.$inputTitle.val(this.model.get('title'));
                 }
+                if(this.model.has('seq')) {
+                    this.$inputSeq.val(this.model.get('seq'));
+                } else if(this.model.isNew()) {
+                    this.$inputSeq.val(this.model.collection.count+1);
+                }
                 if(this.model.has('msg')) {
                     this.$inputMsg.val(this.model.get('msg'));
                 }
                 if(this.model.has('slug')) {
                     this.$inputSlug.val(this.model.get('slug'));
                 }
+                if(this.model.has('youtube')) {
+                    var youtube = this.model.get('youtube');
+                    this.youtubeView.val(youtube.id);
+                }
+                
+                if(this.model.has('avatar')) {
+                    var avatarImage = this.model.get('avatar');
+                    var $avatarImg = $('<img src="/api/files/'+avatarImage.filename+'" />');
+                    // TODO detatch media
+                    this.$form.find('.avatar .embed').html($avatarImg);
+                }
+                if(this.model.has('audio')) {
+                    var media = this.model.get('audio');
+                    var $mediaEmbed = $('<audio controls="true" src="/api/files/'+media.filename+'" />');
+                    // TODO detatch media
+                    this.$form.find('.audio .embed').html($mediaEmbed);
+                }
+                if(this.model.has('video')) {
+                    var media = this.model.get('video');
+                    var $mediaEmbed = $('<video controls="true" src="/api/files/'+media.filename+'" />');
+                    // TODO detatch media
+                    this.$form.find('.video .embed').html($mediaEmbed);
+                }
+                
                 if(this.model.has('groups')) {
                     this.inputGroupsView.val(this.model.get('groups'));
                 }
@@ -1023,7 +1180,22 @@
         events: {
             "submit form": "submit",
             'keyup input[name="title"]': "throttleTitle",
-            'blur input[name="title"]': "blurTitle"
+            'blur input[name="title"]': "blurTitle",
+            "click .attachImage": "attachImage",
+            "click .attachAudio": "attachAudio",
+            "click .attachVideo": "attachVideo"
+        },
+        attachImage: function() {
+            this.uploadAvatarFrame.pickFiles();
+            return false;
+        },
+        attachAudio: function() {
+            this.uploadMediaAudioFrame.pickFiles();
+            return false;
+        },
+        attachVideo: function() {
+            this.uploadMediaVideoFrame.pickFiles();
+            return false;
         },
         blurTitle: function() {
             console.log('blur title');
@@ -1050,11 +1222,16 @@
             var self = this;
             var setDoc = {};
             var title = this.$inputTitle.val();
+            var seq = this.$inputSeq.val();
             var msg = this.$inputMsg.val();
             var slug = this.$inputSlug.val();
             var groups = this.inputGroupsView.val();
+            var youtube = this.youtubeView.val();
             if(title !== '' && title !== this.model.get('title')) {
                 setDoc.title = title;
+            }
+            if(seq !== '' && seq !== this.model.get('seq')) {
+                setDoc.seq = parseInt(seq, 10);
             }
             if(msg !== '' && msg !== this.model.get('msg')) {
                 setDoc.msg = msg;
@@ -1064,6 +1241,9 @@
             }
             if(groups.length > 0 && groups !== this.model.get('groups')) {
                 setDoc.groups = groups;
+            }
+            if(youtube && !_.isEqual(youtube, this.model.get('youtube'))) {
+                setDoc.youtube = youtube;
             }
             console.log('setDoc')
             console.log(setDoc)

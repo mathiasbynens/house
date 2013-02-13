@@ -9,35 +9,40 @@
             self.editForms = {};
             require(['../desktop/swipeview.js'], function(){
                 require(['backbone-posts.js'], function(ModelBackbone){
-                    self.PostsBackbone = ModelBackbone;
-                    self.$postList = $('<div class="post-list"></div>');
-                    self.$postViewer = $('<div class="post-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
-                    self.postsCollection = window.postsCollection = new ModelBackbone.Collection(); // collection
-                    self.postsCollection.pageSize = pageSize;
-                    self.listView = new ModelBackbone.List({el: self.$postList, collection: self.postsCollection});
-                    self.listView.on('select', function(row) {
-                        self.router.navigate(row.model.getNavigatePath(), true);
-                    });
-                    self.listView.on('goToProfile', function(user){
-                        self.router.navigate('by/'+user.get('name'), true);
-                    });
-                    
-                    self.postsCollection.on('editModel', function(model) {
-                        self.router.navigate(model.getNavigatePath()+'/edit', true);
-                    });
-                    
-                    var loadCollections = function() {
-                        self.postsCollection.load(null, function(){
-                            self.initialized = true;
-                            self.trigger('initialized');
+                    window.PostsBackbone = ModelBackbone;
+                    window.postsCollection = new ModelBackbone.Collection(); // collection
+                    require(['/files/backbone-files.js'], function(FilesBackbone){
+                        window.FilesBackbone = FilesBackbone;
+                        window.filesCollection = new FilesBackbone.Collection(); // collection
+                
+                        self.$postList = $('<div class="post-list"></div>');
+                        self.$postViewer = $('<div class="post-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
+                        window.postsCollection.pageSize = pageSize;
+                        self.listView = new ModelBackbone.List({el: self.$postList, collection: window.postsCollection});
+                        self.listView.on('select', function(row) {
+                            self.router.navigate(row.model.getNavigatePath(), true);
                         });
-                    }
-                    if(window.hasOwnProperty('account')) {
-                        window.account.on('loggedIn', function(loginView){
-                            loadCollections();
+                        self.listView.on('goToProfile', function(user){
+                            self.router.navigate('by/'+user.get('name'), true);
                         });
-                    }
-                    loadCollections();
+                        
+                        window.postsCollection.on('editModel', function(model) {
+                            self.router.navigate(model.getNavigatePath()+'/edit', true);
+                        });
+                        
+                        var loadCollections = function() {
+                            window.postsCollection.load(null, function(){
+                                self.initialized = true;
+                                self.trigger('initialized');
+                            });
+                        }
+                        if(window.hasOwnProperty('account')) {
+                            window.account.on('loggedIn', function(loginView){
+                                loadCollections();
+                            });
+                        }
+                        loadCollections();
+                    });
                 });
             });
             
@@ -55,7 +60,7 @@
             var self = this;
             if(!self.hasOwnProperty('carousel')) {
                 self.carousel = new SwipeView(self.$postViewer[0], {
-                    numberOfPages: self.postsCollection.count,
+                    numberOfPages: window.postsCollection.count,
                     hastyPageFlip: true
                 });
                 
@@ -64,7 +69,7 @@
                     var upcoming;
                 	var i;
                     var id = self.carousel.masterPages[self.carousel.currentMasterPage].dataset.id;
-                    var doc = self.postsCollection.get(id);
+                    var doc = window.postsCollection.get(id);
                     if(doc.has('title')) {
                         self.router.setTitle(doc.get('title'));
                     }
@@ -190,8 +195,8 @@
             var self = this;
             var $form;
             if(!doc) {
-                self.newForm = new self.PostsBackbone.Form({
-                    collection: self.postsCollection
+                self.newForm = new window.PostsBackbone.Form({
+                    collection: window.postsCollection
                 });
                 self.newForm.on("saved", function(doc) {
                     self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
@@ -207,8 +212,8 @@
                 self.newForm.focus();
             } else {
                 if(!self.editForms.hasOwnProperty(doc.id)) {
-                    self.editForms[doc.id] = new self.PostsBackbone.Form({
-                        collection: self.postsCollection,
+                    self.editForms[doc.id] = new window.PostsBackbone.Form({
+                        collection: window.postsCollection,
                         model: doc
                     });
                     self.editForms[doc.id].on("saved", function(doc) {
@@ -231,10 +236,10 @@
             }
         },
         findPostById: function(id, callback) {
-            this.postsCollection.getOrFetch(id, callback);
+            window.postsCollection.getOrFetch(id, callback);
         },
         findPostBySlug: function(slug, callback) {
-            this.postsCollection.getOrFetchSlug(slug, callback);
+            window.postsCollection.getOrFetchSlug(slug, callback);
         },
         userIs: function(userId) {
             return (this.user && this.user.id == userId);
@@ -329,7 +334,7 @@
                 router.setTitle('Posts by '+name);
                 self.nav.selectByNavigate('');
                 
-                usersCollection.getByName(name, function(user){
+                usersCollection.getOrFetchName(name, function(user){
                     if(user) {
                         self.listView.filter(function(model) {
                           if (user.id !== model.get('owner').id) return false;
