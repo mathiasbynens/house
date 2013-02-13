@@ -1139,13 +1139,13 @@
                 }
                 if(this.model.has('audio')) {
                     var media = this.model.get('audio');
-                    var $mediaEmbed = $('<audio controls="true" src="/api/files/'+media.filename+'" />');
+                    var $mediaEmbed = $('<audio controls preload="none" src="/api/files/'+media.filename+'" />');
                     // TODO detatch media
                     this.$form.find('.audio .embed').html($mediaEmbed);
                 }
                 if(this.model.has('video')) {
                     var media = this.model.get('video');
-                    var $mediaEmbed = $('<video controls="true" src="/api/files/'+media.filename+'" />');
+                    var $mediaEmbed = $('<video controls preload="none" src="/api/files/'+media.filename+'" />');
                     // TODO detatch media
                     this.$form.find('.video .embed').html($mediaEmbed);
                 }
@@ -1159,12 +1159,13 @@
                     this.$inputAtDate.val(m.format('YYYY-MM-DD'));
                 }
                 if(this.model.has('owner')) {
-                    
                     this.model.getOwner(function(owner){
                         if(owner) {
-                            self.$owner.html(owner.getAvatarNameView().render().$el);
+                            self.$owner.html(owner.getNewAvatarNameView().render().$el);
                         }
                     });
+                } else {
+                    // logged in user
                 }
             }
             this.setElement(this.$el);
@@ -1189,14 +1190,17 @@
         },
         attachImage: function() {
             this.uploadAvatarFrame.pickFiles();
+            this.uploadAvatarFrame.$el.show();
             return false;
         },
         attachAudio: function() {
             this.uploadMediaAudioFrame.pickFiles();
+            this.uploadMediaAudioFrame.$el.show();
             return false;
         },
         attachVideo: function() {
             this.uploadMediaVideoFrame.pickFiles();
+            this.uploadMediaVideoFrame.$el.show();
             return false;
         },
         blurTitle: function() {
