@@ -58,7 +58,7 @@
             }
         },
         slugStr: function(str) {
-            return str.toLowerCase().replace(/ /gi, '-');
+            return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
         },
         setSlug: function(slug) {
             this.set('slug', this.slugStr(slug));
@@ -1067,7 +1067,7 @@
             this.$slugShare.append(this.$inputSlug);
             
             this.$inputAtDate = $('<input name="at-date" type="date" />');
-            this.$inputAtTime = $('<input type="time" />');
+            this.$inputAtTime = $('<input name="at-time" type="time" />');
             
             this.$inputSeq = $('<input type="text" name="seq" placeholder="sequence #" />');
             
@@ -1117,7 +1117,8 @@
                 if(this.model.has('seq')) {
                     this.$inputSeq.val(this.model.get('seq'));
                 } else if(this.model.isNew()) {
-                    this.$inputSeq.val(this.model.collection.count+1);
+                    var ii = parseInt(this.model.collection.count) + 1;
+                    this.$inputSeq.val(ii);
                 }
                 if(this.model.has('msg')) {
                     this.$inputMsg.val(this.model.get('msg'));
@@ -1153,8 +1154,9 @@
                     this.inputGroupsView.val(this.model.get('groups'));
                 }
                 if(this.model.has('at')) {
-                    this.$inputAtDate.val(this.model.get('at').substr(0,10));
-                    this.$inputAtTime.val(this.model.get('at').substr(11,5));
+                    var m = moment(this.model.get('at'));
+                    this.$inputAtTime.val(m.format('HH:mm'));
+                    this.$inputAtDate.val(m.format('YYYY-MM-DD'));
                 }
                 if(this.model.has('owner')) {
                     
@@ -1227,6 +1229,17 @@
             var slug = this.$inputSlug.val();
             var groups = this.inputGroupsView.val();
             var youtube = this.youtubeView.val();
+            
+            var atDate = this.$inputAtDate.val();
+            var atTime = this.$inputAtTime.val();
+            
+            if(atDate && atTime) {
+                var formDate = moment(atDate+' '+atTime, "YYYY-MM-DD HH:mm");
+                var at = new Date(this.model.get('at'));
+                if(formDate && at.getTime() !== formDate.toDate().getTime()) {
+                    setDoc.at = formDate.toDate();
+                }
+            }
             if(title !== '' && title !== this.model.get('title')) {
                 setDoc.title = title;
             }
