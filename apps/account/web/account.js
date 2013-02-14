@@ -67,7 +67,7 @@
             }
         },
         url: function() {
-            return "/api/auth";
+            return "https://"+window.location.hostname+"/api/auth";
         },
         renderAll: function() {
             for(var i in this.views){
@@ -95,7 +95,9 @@
     });
     auth.Collection = Backbone.Collection.extend({
         model: auth.Model,
-        url: "/api/auth",
+        url: function() {
+            return "https://"+window.location.hostname+"/api/auth";
+        },
         initialize: function() {
             var self = this;
         },
