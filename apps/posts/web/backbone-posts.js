@@ -246,6 +246,18 @@
             }
             return this.view;
         },
+        getSelectView: function(options) {
+            var self = this;
+            if (!options) options = {};
+            if (!this.hasOwnProperty("selectView")) {
+                options.collection = this;
+                this.selectView = new SelectListView(options);
+                this.selectView.on("selected", function(m) {
+                    self.trigger("selected", m);
+                });
+            }
+            return this.selectView;
+        },
     });
     
     var ListView = Backbone.View.extend({
@@ -374,6 +386,52 @@
         }
     });
     
+    var SelectListView = Backbone.View.extend({
+        tagName: "select",
+        className: "selectPost",
+        initialize: function() {
+            var self = this;
+        },
+        events: {
+        },
+        render: function() {
+            var self = this;
+            this.$el.html('');
+            this.$el.append('<option></option>');
+            //this.collection.sort({silent:true});
+            postsCollection.each(function(doc){
+                self.$el.append('<option value="'+doc.id+'">'+doc.get('title')+'</option>');
+            });
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v) {
+                this.$el.val(v.id);
+            } else {
+                var post_id = this.$el.val();
+                if(post_id) {
+                    var post = postsCollection.get(post_id);
+                    var p = {
+                        id: post_id
+                    }
+                    p.title = post.title;
+                    if(post.has('slug')) {
+                        p.slug = post.get('slug');
+                    }
+                    if(post.has('seq')) {
+                        p.seq = post.get('seq');
+                    }
+                    if(post.has('youtube') && post.get('youtube').id) {
+                        p.youtube = post.get('youtube');
+                    }
+                    return p;
+                } else {
+                    return false;
+                }
+            }
+        }
+    });
     
     var ActionsView = Backbone.View.extend({
         tagName: "span",
