@@ -77,6 +77,7 @@
             this.resetFilters();
             
             require(['//'+window.location.host+'/desktop/socket.io.min.js'], function() {
+                /*
                 var socketOpts = {};
                 if(window.location.protocol.indexOf('https') !== -1) {
                     socketOpts.secure = true;
@@ -119,6 +120,7 @@
                     self.trigger('count', self.count);
                 });
                 
+                */
                 self.initialized = true;
                 self.trigger('initialized');
             });
