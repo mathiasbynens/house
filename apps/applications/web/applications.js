@@ -27,7 +27,7 @@
         load: function(success) {
             var self = this;
             
-            this.fetch({add: true, success: function(collection, response){
+            this.fetch({update: true, remove: false, success: function(collection, response){
                     if(success) {
                         success();
                     }

@@ -78,8 +78,9 @@
         className: "navList",
         initialize: function() {
             var self = this;
+            var openerTxt = this.options.openerTxt || '≡';
             var $ul = this.$ul = $('<menu></menu>');
-            this.$open = $('<span class="opener" title="Navigation Menu"><button>≡</button></span>');
+            this.$open = $('<span class="opener" title="Navigation Menu"><button>'+openerTxt+'</button></span>');
             this.collection.bind("add", function(doc) {
                 var view;
                 view = doc.getRow({list: self});
@@ -195,10 +196,12 @@
         }
     });
     
-    nav.init = function() {
+    nav.init = function(options) {
+        if(!options) options = {};
         if(!nav.hasOwnProperty('list')) {
             nav.col = new NavCollection();
-            nav.list = new NavList({collection: nav.col});
+            options.collection = nav.col;
+            nav.list = new NavList(options);
         }
         
         if(window.navigator.standalone) {
