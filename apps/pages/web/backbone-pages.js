@@ -134,7 +134,6 @@
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                        console.log(doc);
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;s
@@ -144,13 +143,11 @@
                         var model = new self.model(doc);
                         self.add(model);
                     } else {
-                        console.log(model);
                         model.set(doc, {silent:true});
                         model.renderViews();
                     }
                 }
                 socket.on('insertedPosts', function(doc) {
-                    console.log('inserted post');
                     insertOrUpdateDoc(doc);
                     self.count++;
                     self.trigger('count', self.count);
@@ -332,7 +329,6 @@
         },
         events: {},
         appendModel: function(m) {
-            console.log(m)
             var el = this.$el.find('#'+m.id)[0];
             var row = m.getView({
                 list: this,
@@ -445,11 +441,9 @@
             this.featureCarosel.carousel('prev');
         },
         goto: function(n) {
-            console.log('go to slide '+n)
             this.featureCarosel.carousel(n);
         },
         pause: function() {
-            console.log('pause')
             this.featureCarosel.carousel('pause');
             this.isPlaying = false;
             clearTimeout(this.featureCaroselTimeout);
@@ -471,7 +465,6 @@
         },
         events: {},
         appendModel: function(m) {
-            console.log(m)
             var el = this.$el.find('[data-id="'+m.id+'"]')[0];
             var row = m.getView({
                 list: this,
@@ -671,7 +664,6 @@
                     subs.push(txt);
                 }
             });
-            console.log('found h3s done')
             if(subs.length > 0) {
                 self.options.list.trigger('addToNavSubs', self.model, subs);
             }
@@ -705,6 +697,7 @@
             this.$el.addClass('editing');
             this.form = new SectionForm({model: this.model, collection: this.model.collection});
             this.form.on('saved', function(){
+                self.model.trigger('change');
                 self.$el.removeClass('editing');
                 self.form.$el.remove();
             });
@@ -874,6 +867,7 @@
             this.$el.addClass('editing');
             this.form = new FeatureForm({model: this.model, collection: this.model.collection});
             this.form.on('saved', function(){
+                self.model.trigger('change');
                 self.$el.removeClass('editing');
                 self.form.$el.remove();
             });
@@ -1065,6 +1059,7 @@
             this.$el.addClass('editing');
             this.form = new FormView({model: this.model, collection: this.model.collection});
             this.form.on('saved', function(){
+                self.model.trigger('change');
                 self.$el.removeClass('editing');
                 self.form.$el.remove();
             });
@@ -1338,7 +1333,6 @@
         render: function() {
             var self = this;
             if(this.$el.find('form').length === 0) {
-                console.log('append form');
                 this.$el.append(this.$form);
             }
             if(this.model) {
@@ -1385,7 +1379,6 @@
             return false;
         },
         blurTitle: function() {
-            console.log('blur title');
             var titleStr = this.$inputTitle.val().trim();
             if(titleStr != '') {
                 // autosave
@@ -1413,8 +1406,6 @@
             if(path !== '' && path !== this.model.get('path')) {
                 setDoc.path = path;
             }
-            console.log('setDoc')
-            console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,
@@ -1468,7 +1459,6 @@
         render: function() {
             var self = this;
             if(this.$el.find('form').length === 0) {
-                console.log('append form');
                 this.$el.append(this.$form);
             }
             if(this.model) {
@@ -1495,7 +1485,6 @@
             'blur input[name="title"]': "blurTitle"
         },
         blurTitle: function() {
-            console.log('blur title');
             var titleStr = this.$inputTitle.val().trim();
             if(titleStr != '') {
                 // autosave
@@ -1527,8 +1516,6 @@
             if(href !== '' && href !== this.model.get('href')) {
                 setDoc.href = href;
             }
-            console.log('setDoc')
-            console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,
@@ -1639,7 +1626,6 @@
         render: function() {
             var self = this;
             if(this.$el.find('form').length === 0) {
-                console.log('append form');
                 this.$el.append(this.$form);
             }
             if(this.model) {
@@ -1691,8 +1677,6 @@
             if(html !== '' && html !== this.model.get('html')) {
                 setDoc.html = html;
             }
-            console.log('setDoc')
-            console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,

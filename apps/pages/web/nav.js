@@ -58,7 +58,6 @@
         getRow: function(options) {
             if (!this.hasOwnProperty("row")) {
                 options.el = $('[data-id="'+this.id+'"]')[0];
-                console.log(options.el)
                 options.model = this;
                 this.row = new NavRow(options);
             }
@@ -131,6 +130,9 @@
             this.$ul.children().removeClass("active");
         }
     });
+    
+    
+    
     var NavRow = Backbone.View.extend({
         tagName: "li",
         className: "navRow",
@@ -152,6 +154,19 @@
             if (this.model.has("class")) {
                 this.$el.addClass(this.model.get("class"));
             }
+            if (this.model.has("sub")) {
+                var sub = this.model.get("sub");
+                this.$el.addClass('dropdown');
+                $e.append(' <b class="caret"></b>');
+                $e.attr('data-toggle', 'dropdown');
+                $e.addClass('dropdown-toggle');
+                var $ul = $('<ul class="dropdown-menu"></ul>');
+                for(var s in sub) {
+                    var subName = sub[s];
+                    $ul.append('<li><a href="#">'+subName+'</a></li>');
+                }
+                this.$el.append($ul);
+            }
             this.setElement(this.$el);
             return this;
         },
@@ -161,6 +176,7 @@
         },
         events: {
             click: "userSelect",
+            "click ul li": "userSelectSub",
             "touchstart input": "touchstartstopprop"
         },
         touchstartstopprop: function(e) {
@@ -176,6 +192,11 @@
             } else {
                 this.options.list.trigger("selected", this);
             }
+            return false;
+        },
+        userSelectSub: function(e) {
+            this.select();
+            this.options.list.trigger("selectedSub", this, $(e.target).text());
             return false;
         },
         select: function() {
@@ -216,7 +237,6 @@
             if(elSel) {
                 listOpts.el = $(elSel)[0];
             }
-            console.log(listOpts)
             nav.list = new NavList(listOpts);
         }
         if (window.navigator.standalone) {

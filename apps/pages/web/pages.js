@@ -3,7 +3,7 @@
         tag: 'body',
         initialize: function() {
             var self = this;
-            require(['backbone-pages.js'], function(ModelBackbone){
+            require(['/pages/backbone-pages.js'], function(ModelBackbone){
                 window.PagesBackbone = ModelBackbone;
                 window.pagesCollection = new ModelBackbone.Collection(); // collection
                 
@@ -57,6 +57,9 @@
                         self.$el.find('.navbar .container').append($brand);
                     }
                     var brandView = page.getBrandView({el: $brand[0]});
+                    brandView.on('gohome', function(){
+                        self.router.navigate('/', true);
+                    });
                     brandView.render();
                     
                     var sections = page.get('sections');
@@ -80,10 +83,41 @@
                     //self.$el.append(page.getSectionsView().render().$el);
                     var $sEl = self.$el.find('.sections');
                     var sectionListView;
+                    var listenToSection = function(){
+                        sectionListView.on('addToNavSubs', function(section, subItems){
+                            var n = self.nav.col.get(section.id);
+                            console.log(n)
+                            if(n) {
+                                n.set({sub: subItems});
+                                n.trigger('change');
+                            }
+                        });
+                        sectionListView.on('addToNavSub', function(section, subItem){
+                            console.log(section)
+                            console.log(subItem)
+                            var n = self.nav.col.get(section.id);
+                            console.log(n)
+                            if(n) {
+                                var sub = n.get('sub');
+                                console.log(sub)
+                                if(sub) {
+                                    sub.push(subItem);
+                                    console.log(sub)
+                                    n.set({sub: sub});
+                                } else {
+                                    n.set({sub: [subItem]});
+                                }
+                                console.log(n.get('sub'))
+                            }
+                        });
+                    }
                     if($sEl.length > 0) {
-                        sectionListView = page.getSectionsView({el: $sEl[0]}).render();
+                        sectionListView = page.getSectionsView({el: $sEl[0]});
+                        listenToSection();
+                        sectionListView.render();
                     } else {
                         sectionListView = page.getSectionsView();
+                        listenToSection();
                         self.$el.find('.container.marketing').prepend(sectionListView.render().$el);
                     }
                     
@@ -125,9 +159,16 @@
             this.nav = nav;
             this.bindRouter(nav.router);
             nav.col.add({title:"Home", navigate:""});
+            
             if(window.account && (account.isUser() || account.isAdmin())) {
                 //nav.col.add({title:"New", navigate:"new"});
             }
+            this.nav.list.on('selectedSub', function(nav, sub){
+                console.log(sub);
+                var options = {};
+                if($(window).width()>700) options.offset = -100;
+                $.scrollTo($('h3#'+sub.toLowerCase().replace(/ |&|,/gi, '-')),1300,options);
+            });
         },
         bindRouter: function(router) {
             var self = this;
