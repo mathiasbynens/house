@@ -1,9 +1,11 @@
 {
   "name": "house",
-  "version": "0.0.425",
+  "version": "0.0.426",
   "dependencies": {
     "optimist": "latest",
     "formidable-plus": "latest",
+    "send": "latest",
+    "requirejs": "latest",
     "underscore": "latest",
     "socket.io": "latest",
     "oauth": "latest",
@@ -15,7 +17,7 @@
     "mongodb": "latest",
     "useragent": "latest",
     "imagemagick": "latest",
-    "ent": "latest"
+    "ent": "latest",
   },
   "devDependencies": {
     "mocha": "*"

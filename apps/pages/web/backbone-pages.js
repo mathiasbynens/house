@@ -630,7 +630,18 @@
     var SectionView = Backbone.View.extend({
         tagName: "div",
         className: "featurette",
+        initialize: function() {
+            var self = this;
+            if(window.hasOwnProperty('pages')) {
+                pages.on("refreshUser", function(user) {
+                    self.render();
+                });
+            }
+            this.model.bind("change", this.render, this);
+            this.model.bind("destroy", this.remove, this);
+        },
         render: function() {
+            var self = this;
             var desc = '';
             if(this.model.has('title')) {
                 desc = '<span class="muted">'+this.model.get('title')+'</span>';
@@ -649,6 +660,22 @@
                 }
             }
             
+            // check for H3's and add them to our subnav
+            var subs = [];
+            this.$el.find('.sectionHtml h3').each(function(i,e){
+                var $e = $(e);
+                var txt = $e.text();
+                $e.attr('id', txt.toLowerCase().replace(/ |&|,/gi, '-'));
+                if(txt && txt != '') {
+                    //self.options.list.trigger('addToNavSub', self.model, txt);
+                    subs.push(txt);
+                }
+            });
+            console.log('found h3s done')
+            if(subs.length > 0) {
+                self.options.list.trigger('addToNavSubs', self.model, subs);
+            }
+            
             if(window.account && (account.isAdmin()) && this.$el.find('.action').length == 0) {
                 this.$actions = $('<ul class="actions"></ul>');
                 this.$actions.append('<li><button class="edit">Edit</button></li><li><button class="moveUp" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove">Remove</button></li><li><button class="new">New</button></li>');
@@ -659,16 +686,6 @@
             this.$el.attr("id", this.model.get("id"));
             this.setElement(this.$el);
             return this;
-        },
-        initialize: function() {
-            var self = this;
-            if(window.hasOwnProperty('pages')) {
-                pages.on("refreshUser", function(user) {
-                    self.render();
-                });
-            }
-            this.model.bind("change", this.render, this);
-            this.model.bind("destroy", this.remove, this);
         },
         events: {
             //click: "select",
@@ -702,7 +719,7 @@
                 silent: true
             });
             var r = self.model.get("rank");
-            var sibId = this.$el.prev().attr("data-id");
+            var sibId = this.$el.prev().attr("id");
             if (sibId) {
                 var swapModel = self.model.collection.get(sibId);
                 if (swapModel) {
@@ -710,10 +727,11 @@
                     if (higherRank == r) {
                         r++;
                     }
-                    var sm = swapModel.save({
+                    swapModel.set({
                         rank: r
-                    }, {
-                        wait: true
+                    },{silent: true});
+                    var sm = swapModel.save(null, {
+                        wait: true, silent: false
                     }).done(function(s, typeStr, respStr) {
                         self.render();
                         self.model.collection.sort({
@@ -722,10 +740,11 @@
                         self.options.list.render();
                     });
                     if (higherRank != self.model.get("rank")) {
-                        var s = self.model.save({
+                        self.model.set({
                             rank: higherRank
-                        }, {
-                            wait: true
+                        }, {silent: true});
+                        var s = self.model.save(null, {
+                            wait: true, silent: false
                         }).done(function(s, typeStr, respStr) {
                             self.render();
                             self.model.collection.sort({
@@ -880,10 +899,11 @@
                     if (higherRank == r) {
                         r++;
                     }
-                    var sm = swapModel.save({
+                    swapModel.set({
                         rank: r
-                    }, {
-                        wait: true
+                    },{silent: true});
+                    var sm = swapModel.save(null, {
+                        wait: true, silent: false,
                     }).done(function(s, typeStr, respStr) {
                         self.render();
                         self.model.collection.sort({
@@ -892,10 +912,11 @@
                         self.options.list.render();
                     });
                     if (higherRank != self.model.get("rank")) {
-                        var s = self.model.save({
+                        self.model.set({
                             rank: higherRank
-                        }, {
-                            wait: true
+                        },{silent: true});
+                        var s = self.model.save(null, {
+                            wait: true, silent: false,
                         }).done(function(s, typeStr, respStr) {
                             self.render();
                             self.model.collection.sort({
@@ -1052,7 +1073,7 @@
             return false;
         },
         select: function(e) {
-            this.trigger('select');
+            this.trigger('gohome');
             return false;
         },
         remove: function() {

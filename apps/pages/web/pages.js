@@ -60,7 +60,7 @@
                     brandView.render();
                     
                     var sections = page.get('sections');
-                    // TODO sort on section.rank
+                    sections = _.sortBy(sections, 'rank');
                     for(var i in sections) {
                         var section = sections[i];
                         self.nav.col.add({title:section.name, navigate:section.id});
