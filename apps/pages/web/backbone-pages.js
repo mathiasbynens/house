@@ -410,7 +410,7 @@
             });
             this.collection.on("reset", function() {
             });
-            this.interval = 6400;
+            this.interval = 12400;
             this.isPlaying = false;
         },
         render: function() {
@@ -658,7 +658,8 @@
             this.$el.find('.sectionHtml h3').each(function(i,e){
                 var $e = $(e);
                 var txt = $e.text();
-                $e.attr('id', txt.toLowerCase().replace(/ |&|,/gi, '-'));
+                var elStr = txt.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
+                $e.attr('id', elStr);
                 if(txt && txt != '') {
                     //self.options.list.trigger('addToNavSub', self.model, txt);
                     subs.push(txt);
@@ -876,7 +877,7 @@
             //e.stopPropagation();
             //e.preventDefault();
             this.options.list.pause();
-            this.options.list.goto(this.options.list.$el.find('.item').length-1);
+            //this.options.list.goto(this.options.list.$el.find('.item').length-1);
             return false;
         },
         moveUp: function(e) {
@@ -931,7 +932,23 @@
             e.preventDefault();
             return false;
         },
-        select: function() {
+        select: function(e) {
+            var $e = $(e.target);
+            var $pv = this.$el.find('.playVideo');
+            if($pv.length > 0) {
+                if($pv.has($e).length > 0) {
+                    //$e.siblings().show();
+                    var ytid = $pv.attr('data-ytid');
+                    var ifr = '<iframe width="'+$pv.width()+'" height="'+$pv.height()+'" src="http://www.youtube.com/embed/'+ytid+'?autohide=1&fs=1&autoplay=1&iv_load_policy=3&rel=0&modestbranding=1&showinfo=0&hd=1" frameborder="0" allowfullscreen></iframe>';
+                    $e.hide();
+                    $pv.append(ifr);
+                    if(this.options.list) {
+                        this.options.list.pause();
+                    }
+                    
+                    return false;
+                }
+            }
             if (!this.$el.hasClass('editing') && this.options.list) {
                 this.options.list.trigger("selected", this);
             }

@@ -167,7 +167,8 @@
                 console.log(sub);
                 var options = {};
                 if($(window).width()>700) options.offset = -100;
-                $.scrollTo($('h3#'+sub.toLowerCase().replace(/ |&|,/gi, '-')),1300,options);
+                var elStr = 'h3#'+sub.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
+                $.scrollTo($(elStr),1300,options);
             });
         },
         bindRouter: function(router) {

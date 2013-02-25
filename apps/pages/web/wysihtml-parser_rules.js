@@ -188,7 +188,7 @@ var wysihtml5ParserRules = {
         },
         "a": {
             "check_attributes": {
-                "href": "url"
+                "href": "href"
             },
             "set_attributes": {
                 "rel": "nofollow",
