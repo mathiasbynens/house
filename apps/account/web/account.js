@@ -68,7 +68,11 @@
             }
         },
         url: function() {
-            return "https://"+window.location.hostname+"/api/auth";
+            if(window.config && window.config.authUrl) {
+                return window.config.authUrl;
+            } else {
+                return "https://"+window.location.hostname+"/api/auth";
+            }
         },
         renderAll: function() {
             for(var i in this.views){
@@ -97,7 +101,11 @@
     auth.Collection = Backbone.Collection.extend({
         model: auth.Model,
         url: function() {
-            return "https://"+window.location.hostname+"/api/auth";
+            if(window.config && window.config.authUrl) {
+                return window.config.authUrl;
+            } else {
+                return "https://"+window.location.hostname+"/api/auth";
+            }
         },
         initialize: function() {
             var self = this;
@@ -803,27 +811,37 @@
         initialize: function() {
             var self = this;
             this.$profile = $('<profile></profile>');
-            require(['/users/backbone-users.js'], function(UsersBackbone){
-                
-                self.UsersBackbone = UsersBackbone;
-                window.usersCollection = new UsersBackbone.Collection();
-                auth.get(function(err, loginStatus) {
-                    if (err) {
-                        alert(err);
-                    } else if (loginStatus) {
-                        window.account = self.loginStatus = loginStatus;
-                        loginStatus.getView().on("goToProfile", function(username) {
-                            self.router.navigate('user/'+username, true);
-                        });
-                        loginStatus.on("login", function() {
-                            loginStatus.getView().render();
-                            self.trigger('loggedIn', loginStatus);
-                        });
-                        self.$profile.append(loginStatus.getView().render().$el);
-                        if (loginStatus && loginStatus.has("user")) {} else {}
-                        self.trigger('init');
-                    }
+            var loadUsers = function() {
+                require(['/users/backbone-users.js'], function(UsersBackbone){
+                    self.UsersBackbone = UsersBackbone;
+                    window.usersCollection = new UsersBackbone.Collection();
+                    auth.get(function(err, loginStatus) {
+                        if (err) {
+                            alert(err);
+                        } else if (loginStatus) {
+                            window.account = self.loginStatus = loginStatus;
+                            loginStatus.getView().on("goToProfile", function(username) {
+                                self.router.navigate('user/'+username, true);
+                            });
+                            loginStatus.on("login", function() {
+                                loginStatus.getView().render();
+                                self.trigger('loggedIn', loginStatus);
+                            });
+                            self.$profile.append(loginStatus.getView().render().$el);
+                            if (loginStatus && loginStatus.has("user")) {} else {}
+                            self.trigger('init');
+                        }
+                    });
                 });
+            }
+            require(['/js/config.js'], function(config){
+                window.config = config;
+                loadUsers();
+            }, function (err) {
+                window.config = {
+                    "authUrl": "https://"+window.location.hostname+"/api/auth"
+                };
+                loadUsers();
             });
         },
         loadUser: function() {
