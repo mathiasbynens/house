@@ -1,4 +1,5 @@
 (function() {
+    
     var auth = {};
     auth.get = function(callback) {
         var self = this;
@@ -91,7 +92,7 @@
         },
         isOwner: function(ownerId) {
             return(this.has('user') && this.get('user') == ownerId);
-        },
+        }
     });
     auth.Collection = Backbone.Collection.extend({
         model: auth.Model,
@@ -109,7 +110,7 @@
                 success: function() {
                     self.trigger("loaded", self.url);
                     if (callback) callback();
-                },
+                }
             });
         }
     });
@@ -461,7 +462,7 @@
         },
         events: {
             "click .del": "deleteModel",
-            "click .edit": "editModel",
+            "click .edit": "editModel"
         },
         editModel: function() {
             var form = this.model.getForm();
@@ -788,7 +789,7 @@
                     }
                 });
             }
-        },
+        }
     });
     
     var ProfileView = Backbone.View.extend({
@@ -802,12 +803,14 @@
         initialize: function() {
             var self = this;
             this.$profile = $('<profile></profile>');
-            
             require(['/users/backbone-users.js'], function(UsersBackbone){
+                
                 self.UsersBackbone = UsersBackbone;
                 window.usersCollection = new UsersBackbone.Collection();
                 auth.get(function(err, loginStatus) {
-                    if (err) {} else if (loginStatus) {
+                    if (err) {
+                        alert(err);
+                    } else if (loginStatus) {
                         window.account = self.loginStatus = loginStatus;
                         loginStatus.getView().on("goToProfile", function(username) {
                             self.router.navigate('user/'+username, true);

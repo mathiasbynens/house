@@ -262,7 +262,7 @@
                 });
             }
             return this.view;
-        },
+        }
     });
     
     var ListView = Backbone.View.extend({
@@ -324,7 +324,7 @@
             }
         },
         events: {
-          "click .list-pager": "loadMore",
+          "click .list-pager": "loadMore"
         },
         loadMore: function() {
             var self = this;
@@ -431,7 +431,7 @@
         },
         events: {
           "click .publish": "publish",
-          "click .unpublish": "unpublish",
+          "click .unpublish": "unpublish"
         },
         publish: function() {
             var self = this;
@@ -472,7 +472,7 @@
         initialize: function() {
         },
         events: {
-          "click button": "select",
+          "click button": "select"
         },
         select: function() {
             var self = this;
@@ -500,7 +500,7 @@
         initialize: function() {
         },
         events: {
-          "click button": "select",
+          "click button": "select"
         },
         select: function() {
             var self = this;
@@ -1126,7 +1126,7 @@
             return groups;
         },
         events: {
-        },
+        }
     });
     var FormView = Backbone.View.extend({
         tagName: "div",

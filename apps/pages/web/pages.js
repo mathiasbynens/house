@@ -5,7 +5,7 @@
             var self = this;
             require(['/pages/backbone-pages.js'], function(ModelBackbone){
                 window.PagesBackbone = ModelBackbone;
-                window.pagesCollection = new ModelBackbone.Collection(); // collection
+                window.pagesCollection = new window.PagesBackbone.Collection(); // collection
                 
                 require(['/files/backbone-files.js'], function(FilesBackbone){
                     window.FilesBackbone = FilesBackbone;
@@ -17,7 +17,7 @@
                             self.trigger('initialized');
                         });
                     }
-                    if(window.hasOwnProperty('account')) {
+                    if(window.account) {
                         window.account.on('loggedIn', function(loginView){
                             loadCollections();
                         });

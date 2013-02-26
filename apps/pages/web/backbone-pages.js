@@ -625,7 +625,7 @@
         className: "featurette",
         initialize: function() {
             var self = this;
-            if(window.hasOwnProperty('pages')) {
+            if(window.pages) {
                 pages.on("refreshUser", function(user) {
                     self.render();
                 });
@@ -681,13 +681,12 @@
             return this;
         },
         events: {
-            //click: "select",
             "click .edit": "edit",
-            "click .new": "new",
+            "click .new": "newthing",
             "click .moveUp": "moveUp",
             "click .remove": "removeit",
         },
-        new: function(e) {
+        newthing: function(e) {
             var m = new Section();
             this.model.collection.add(m);
             m.getView().edit();
@@ -773,7 +772,7 @@
         className: "item",
         initialize: function() {
             var self = this;
-            if(window.hasOwnProperty('pages')) {
+            if(window.pages) {
                 pages.on("refreshUser", function(user) {
                     self.render();
                 });
@@ -849,15 +848,15 @@
             "click .carousel-caption": "select",
             "click .attach": "attachImage",
             "click .edit": "edit",
-            "click .new": "new",
+            "click .new": "newthing",
             "click .moveUp": "moveUp",
-            "click .remove": "removeit",
+            "click .remove": "removeit"
         },
         attachImage: function(e) {
             this.uploadFrame.pickFiles();
             return false;
         },
-        new: function(e) {
+        newthing: function(e) {
             var m = new Feature();
             this.model.collection.add(m);
             m.getView().edit();
@@ -1113,7 +1112,7 @@
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
-                if(window.hasOwnProperty('clock')) {
+                if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
                     $at.html(clock.moment(this.model.get('at')).calendar());
                 } else {
@@ -1192,7 +1191,7 @@
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
-                if(window.hasOwnProperty('clock')) {
+                if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
                     $at.html(clock.moment(this.model.get('at')).calendar());
                 } else {
@@ -1243,7 +1242,7 @@
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
-                if(window.hasOwnProperty('clock')) {
+                if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
                     $at.html(clock.moment(this.model.get('at')).calendar());
                 } else {
@@ -1716,7 +1715,6 @@
             this.$el.remove();
         }
     });
-    
     if(define) {
         define(function () {
             return {

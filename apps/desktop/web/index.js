@@ -7,14 +7,13 @@
 (function(){
 
     var index = {};
-
     index.init = function(callback) {
-        require(['underscore.js'], function(){
-            require(['backbone.js'], function(){
-                require(['backbone-house.js'], function(){
-                    require(['utils.js'], function(utils){
+        require(['/desktop/underscore.js'], function(){
+            require(['/desktop/backbone.js'], function(){
+                require(['/desktop/backbone-house.js'], function(){
+                    require(['/desktop/utils.js'], function(utils){
                         window.utils = utils;
-                        require(['../account/account.js'], function(account){
+                        require(['/account/account.js'], function(account){
                             account.on('init', function(){
                                 var $account = $('<account></account>');
                                 $('header').append($account);
@@ -72,7 +71,6 @@
                                                 $('body').removeClass('idle');
                                             });
                                         });
-                                        
                                         if(callback) {
                                             callback();
                                         }

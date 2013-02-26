@@ -2,10 +2,10 @@
     var index = {};
     index.init = function(callback) {
         require([ "/desktop/jquery.js" ], function() {
-            require([ "wysihtml-parser_rules.js" ], function() {
-                require([ "wysihtml5-0.4.0pre.min.js" ], function() {
-                    require(['js/bootstrap.js'], function(){
-                        require(['js/plugins.js'], function(){
+            require([ "/pages/wysihtml-parser_rules.js" ], function() {
+                require([ "/pages/wysihtml5-0.4.0pre.min.js" ], function() {
+                    require(['/pages/js/bootstrap.js'], function(){
+                        require(['/pages/js/plugins.js'], function(){
                             $(document).ready(function() {
                                 require([ "/desktop/underscore.js" ], function() {
                                     require([ "/desktop/backbone.js" ], function() {
@@ -31,7 +31,7 @@
                                                                         $("body").removeClass("loading");
                                                                     });
                                                                     //$("ul.nav").append(nav.list.render().$el);
-                                                                    require([ "pages.js" ], function(Pages) {
+                                                                    require([ "/pages/pages.js" ], function(Pages) {
                                                                         var pages = new Pages({el:$("body")[0]});
                                                                         pages.bindUser(account.loginStatus.getView().userModel);
                                                                         pages.on("initialized", function() {

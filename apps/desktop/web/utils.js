@@ -124,7 +124,7 @@
             };
             process();
             return false;
-        },
+        }
     });
 
     if(define) {
