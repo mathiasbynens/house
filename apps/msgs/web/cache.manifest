@@ -1,0 +1,9 @@
+CACHE MANIFEST
+# ver 0.1
+
+CACHE:
+/posts/index.js
+
+NETWORK:
+/
+*

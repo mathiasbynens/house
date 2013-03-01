@@ -3,7 +3,7 @@ exports = module.exports.config = {
     routes: [ {
         files: {
             "static": {
-                paper: {
+                send: {
                     publicFolder: __dirname + "/../web"
                     , otherwise: 'index.html'
                 }

@@ -646,10 +646,30 @@
             }
             
             if(this.model.has('html')) {
+                var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
                     this.$el.append('<span class="sectionHtml">'+this.model.get('html')+'</span>');
                 } else {
-                    this.$el.find('.sectionHtml').html(this.model.get('html'));
+                    this.$el.find('.sectionHtml').html(html);
+                }
+                var iof = html.indexOf('[[feedback]]');
+                if(iof !== -1) {
+                    console.log('feedback form in section')
+                    html = html.replace('[[feedback]]', '<span class="feedback"></span>');
+                    this.$el.find('.sectionHtml').html(html);
+                    if(MsgsBackbone) {
+                        
+                        this.msgForm = new window.MsgsBackbone.Form({
+                            collection: window.msgsCollection
+                        });
+                        this.msgForm.on("saved", function(doc) {
+                            alert('Thank you for your feedback!');
+                            self.msgForm.clear();
+                        });
+                        $form = this.msgForm.render().$el;
+                        $form.show();
+                        this.$el.find('.sectionHtml .feedback').html($form)
+                    }
                 }
             }
             

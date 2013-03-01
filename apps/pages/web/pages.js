@@ -3,26 +3,28 @@
         tag: 'body',
         initialize: function() {
             var self = this;
-            require(['/pages/backbone-pages.js'], function(ModelBackbone){
-                window.PagesBackbone = ModelBackbone;
-                window.pagesCollection = new window.PagesBackbone.Collection(); // collection
-                
-                require(['/files/backbone-files.js'], function(FilesBackbone){
-                    window.FilesBackbone = FilesBackbone;
-                    window.filesCollection = new FilesBackbone.Collection(); // collection
-                    
-                    var loadCollections = function() {
-                        window.pagesCollection.load(null, function(){
-                            self.initialized = true;
-                            self.trigger('initialized');
-                        });
-                    }
-                    if(window.account) {
-                        window.account.on('loggedIn', function(loginView){
-                            loadCollections();
-                        });
-                    }
-                    loadCollections();
+            require(['/msgs/msgs.js'], function(MsgsBackbone){
+                window.MsgsBackbone = MsgsBackbone;
+                window.msgsCollection = new MsgsBackbone.Collection(); // collection
+                require(['/pages/backbone-pages.js'], function(ModelBackbone){
+                    window.PagesBackbone = ModelBackbone;
+                    window.pagesCollection = new window.PagesBackbone.Collection(); // collection
+                    require(['/files/backbone-files.js'], function(FilesBackbone){
+                        window.FilesBackbone = FilesBackbone;
+                        window.filesCollection = new FilesBackbone.Collection(); // collection
+                        var loadCollections = function() {
+                            window.pagesCollection.load(null, function(){
+                                self.initialized = true;
+                                self.trigger('initialized');
+                            });
+                        }
+                        if(window.account) {
+                            window.account.on('loggedIn', function(loginView){
+                                loadCollections();
+                            });
+                        }
+                        loadCollections();
+                    });
                 });
             });
         },

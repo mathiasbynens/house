@@ -77,7 +77,8 @@ body {
 
 /* Carousel base class */
 .carousel {
-  margin-bottom: 60px;
+  margin: 0 0;
+  padding-bottom: 60px;
 }
 
 .carousel .container, .carousel .form {
@@ -453,16 +454,16 @@ box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.75);
   background: #999;
 }
 
-.marketing textarea {
+.marketing .editing textarea {
     position: relative;
-height: 100%;
-display: block;
-  background: transparent;
-  border: 0;
-  resize: none;
-  white-space: pre;
-  padding: 10px;
-  -ms-box-sizing: border-box;
+    height: 100%;
+    display: block;
+    background: transparent;
+    border: 0;
+    resize: none;
+    white-space: pre;
+    padding: 10px;
+    -ms-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -698,7 +699,7 @@ img.pull-left, img.pull-right {
 .featurette .actions li {
     float: left;
 }
-.sections .form {
+.sections .editing .form {
     position: absolute;
     top: 60px;
     bottom: 0px;
@@ -706,10 +707,10 @@ img.pull-left, img.pull-right {
     border: 2px dashed grey;
     background: rgba(255,255,255,1.0);
 }
-form.section, form.section fieldset {
+ .editing form.section, .editing form.section fieldset {
     height: 100%;
 }
-.sections .form form.section input[type="text"] {
+.sections .editing .form form.section input[type="text"] {
     font-size: 50px;
     font-weight: normal;
     line-height: 1;
@@ -719,7 +720,7 @@ form.section, form.section fieldset {
     float: left;
     width: 44%;
 }
-.sections .form form textarea {
+.sections .editing .form form textarea {
     color: black;
 }
 .sections .dropzone {
