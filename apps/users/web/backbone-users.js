@@ -106,6 +106,10 @@
                     socketOpts.secure = false;
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
+                if(socket.socket.connected) {
+                    console.log('already connected and now joining '+self.collectionName);
+                    socket.emit('join', self.collectionName);
+                }
                 socket.on('connect', function(data) {
                     console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);

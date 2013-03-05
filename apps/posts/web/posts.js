@@ -258,6 +258,9 @@
         },
         bindNav: function(nav) {
             this.nav = nav;
+            nav.list.on('home', function(){
+                nav.router.navigate('', true);
+            });
             this.bindRouter(nav.router);
             nav.col.add({title:"Posts", navigate:""});
             if(window.account && (account.isUser() || account.isAdmin())) {

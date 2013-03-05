@@ -110,6 +110,7 @@
         toggleMenu: function() {
             var v = this.$ul.css('visibility');
             if(v == 'visible') {
+                this.trigger('home');
                 this.hideMenu();
             } else {
                 this.$ul.css('visibility', 'visible');
