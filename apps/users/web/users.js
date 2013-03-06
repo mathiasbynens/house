@@ -27,7 +27,7 @@
                     window.usersCollection.load(null, function(){
                     });
                 }
-                if(window.hasOwnProperty('account')) {
+                if(window.account) {
                     window.account.on('loggedIn', function(loginView){
                         loadCollections();
                     });

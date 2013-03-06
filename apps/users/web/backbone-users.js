@@ -765,7 +765,7 @@
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
-                if(window.hasOwnProperty('clock')) {
+                if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
                     $at.html(clock.moment(this.model.get('at')).calendar());
                 } else {
@@ -856,7 +856,7 @@
             
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
-                if(window.hasOwnProperty('clock')) {
+                if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
                     $at.html(clock.moment(this.model.get('at')).calendar());
                 } else {
@@ -1002,7 +1002,7 @@
         },
         editAvatar: function() {
             var self = this;
-            if(window.hasOwnProperty('FilesBackbone')) {
+            if(window.FilesBackbone) {
                 self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
                 self.uploadFrame.on('uploaded', function(data){
                     if(_.isArray(data)) {

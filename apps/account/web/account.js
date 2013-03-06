@@ -907,7 +907,9 @@
                 if(self.userLightbox) {
                     self.userLightbox.remove();
                 }
-                account.loginStatus.getView().hideMenu();
+                if(account && account.loginStatus) {
+                    account.loginStatus.getView().hideMenu();
+                }
             });
         }
     });

@@ -747,7 +747,7 @@
             }
             if (this.model.has("d")) {
                 var $dur = $('<span class="duration"></span>');
-                if (window.hasOwnProperty("clock")) {
+                if (window.clock) {
                     $dur.html(clock.moment.duration(this.model.get('d'), "seconds").humanize());
                 } else {
                     $dur.html(this.model.get("lastAt"));
@@ -756,7 +756,7 @@
             }
             if (this.model.has("lastAt")) {
                 var $at = $('<span class="lastAt"></span>');
-                if (window.hasOwnProperty("clock")) {
+                if (window.clock) {
                     $at.attr("title", clock.moment(this.model.get("lastAt")).format("LLLL"));
                     $at.html(clock.moment(this.model.get("lastAt")).calendar());
                 } else {
@@ -765,7 +765,7 @@
                 this.$el.append($at);
             } else if (this.model.has("at")) {
                 var $at = $('<span class="at"></span>');
-                if (window.hasOwnProperty("clock")) {
+                if (window.clock) {
                     $at.attr("title", clock.moment(this.model.get("at")).format("LLLL"));
                     $at.html(clock.moment(this.model.get("at")).calendar());
                 } else {
@@ -857,7 +857,7 @@
             }
             if (this.model.has("at")) {
                 var $at = $('<span class="at"></span>');
-                if (window.hasOwnProperty("clock")) {
+                if (window.clock) {
                     $at.attr("title", clock.moment(this.model.get("at")).format("LLLL"));
                     $at.html(clock.moment(this.model.get("at")).calendar());
                 } else {
@@ -904,7 +904,7 @@
             }
             if (this.model.has("at")) {
                 var $at = $('<span class="at"></span>');
-                if (window.hasOwnProperty("clock")) {
+                if (window.clock) {
                     $at.attr("title", clock.moment(this.model.get("at")).format("LLLL"));
                     $at.html(clock.moment(this.model.get("at")).calendar());
                 } else {

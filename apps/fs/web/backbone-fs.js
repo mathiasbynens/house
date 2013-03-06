@@ -755,7 +755,7 @@
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
-                if(window.hasOwnProperty('clock')) {
+                if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
                     $at.html(clock.moment(this.model.get('at')).calendar());
                 } else {
@@ -806,7 +806,7 @@
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
-                if(window.hasOwnProperty('clock')) {
+                if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
                     $at.html(clock.moment(this.model.get('at')).calendar());
                 } else {
@@ -1258,7 +1258,7 @@
             }
             if(this.model.has('stat')) {
                 var $at = $('<span class="at"></span>');
-                if(window.hasOwnProperty('clock')) {
+                if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('stat').atime).format('LLLL'));
                     $at.html(clock.moment(this.model.get('stat').atime).calendar());
                 } else {
@@ -1351,12 +1351,20 @@
                     self.editor.setValue(self.model.get('data'));
                 } else {
                     // assume base64, but lets try to textify it
-                    if(window.hasOwnProperty('atob')) {
+                    if(window.atob) {
                         self.editor.setValue(atob(self.model.get('data')));
                     }
                 }
                 
-                self.editor.getSession().setMode("ace/mode/javascript");
+                console.log("self.model");
+                console.log(self.model);
+                if(self.model.get('filename').substr(-4) == '.css') {
+                    self.editor.getSession().setMode("ace/mode/css");
+                } else if(self.model.get('filename').substr(-5) == '.html') {
+                    self.editor.getSession().setMode("ace/mode/html");
+                } else {
+                    self.editor.getSession().setMode("ace/mode/javascript");
+                }
                 
                 self.editor.gotoLine(1);
                 //editor.getValue(); // or session.getValue

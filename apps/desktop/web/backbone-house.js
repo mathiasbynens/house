@@ -51,7 +51,7 @@ Backbone.Router.prototype.navigate = function(path, go) {
     _navigate.apply(this, arguments);
     var wl = window.location.toString();
     if(go && frag !== path) {
-        if(window.hasOwnProperty('ActionsBackbone')) {
+        if(window.ActionsBackbone) {
             var action = new ActionsBackbone.Model({});
             action.set({a:"GET "+wl},{silent:true});
             action.save();

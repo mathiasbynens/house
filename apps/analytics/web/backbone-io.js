@@ -778,7 +778,7 @@
             }
             if (this.model.has("time")) {
                 var $at = $('<span class="at"></span>');
-                if (window.hasOwnProperty("clock")) {
+                if (window.clock) {
                     $at.attr("title", clock.moment(this.model.get("time")).format("LLLL"));
                     $at.html(clock.moment(this.model.get("time")).calendar());
                 } else {
@@ -849,7 +849,7 @@
             }
             if (this.model.has("at")) {
                 var $at = $('<span class="at"></span>');
-                if (window.hasOwnProperty("clock")) {
+                if (window.clock) {
                     $at.attr("title", clock.moment(this.model.get("at")).format("LLLL"));
                     $at.html(clock.moment(this.model.get("at")).calendar());
                 } else {
@@ -896,7 +896,7 @@
             }
             if (this.model.has("at")) {
                 var $at = $('<span class="at"></span>');
-                if (window.hasOwnProperty("clock")) {
+                if (window.clock) {
                     $at.attr("title", clock.moment(this.model.get("at")).format("LLLL"));
                     $at.html(clock.moment(this.model.get("at")).calendar());
                 } else {

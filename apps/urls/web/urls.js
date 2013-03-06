@@ -33,7 +33,7 @@
                             self.initialized = true;
                             self.trigger('initialized');
                         });
-                        if(window.hasOwnProperty('account')) {
+                        if(window.account) {
                             window.account.on('loggedIn', function(loginView){
                                 console.log('refresh collection');
                                 self.collection.load(null, function(){

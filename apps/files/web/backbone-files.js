@@ -590,7 +590,7 @@
             this.$el.append('<span class="contentType">'+this.model.get('contentType')+'</span>');
             
             var $at = $('<span class="uploadDate">'+this.model.get('uploadDate')+'</span>');
-            if(window.hasOwnProperty('clock')) {
+            if(window.clock) {
                 $at.attr('title', clock.moment(this.model.get('uploadDate')).format('LLLL'));
                 $at.html(clock.moment(this.model.get('uploadDate')).calendar());
             }
