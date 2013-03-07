@@ -5,7 +5,6 @@
 
     var applications = {};
     
-    
     var App = Backbone.Model.extend({
         initialize: function() {
         },
@@ -35,7 +34,7 @@
                 error: function(collection, response){
                 }
             });
-        },
+        }
     });
     
     var AppList = Backbone.View.extend({
@@ -84,18 +83,14 @@
     });
     
     var AppView = Backbone.View.extend({
-        
         tagName: "li",
-        
         className: "app",
-    
         htmlTemplate: '<span class="icon">\
                             <a href="<%= url %>">\
                                 <img src="<%= iconSrc %>" />\
                                 <%= name %>\
                             </a>\
                         </span>',
-        
         template: function(doc) {
             doc.iconSrc = '';
             if(doc.iosicon) {
@@ -135,7 +130,6 @@
           $(this.el).remove();
         }
     });
-    
     
     applications.init = function(el) {
         this.col = new AppCollection();

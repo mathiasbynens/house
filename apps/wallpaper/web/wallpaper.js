@@ -1,6 +1,7 @@
 (function() {
     var BackgroundView = Backbone.View.extend({
-        tagName: 'wallpaper',
+        tagName: 'div',
+        className: 'wallpaper',
         initialize: function() {
             var self = this;
             this.collection.on('selected', function(paper){
@@ -26,7 +27,7 @@
                     this.$el.css('background', 'url("/api/files/'+filename+'") center center');
                 }
                 if(this.selectedPaper.has('css')) {
-                    this.$el.append('<style>wallpaper{ '+this.selectedPaper.get('css')+' }</style>');
+                    this.$el.append('<style>.wallpaper{ '+this.selectedPaper.get('css')+' }</style>');
                 }
                 if(this.selectedPaper.has('script')) {
                     setTimeout(function(){
@@ -34,7 +35,6 @@
                     }, 200);
                 }
             }
-            
             this.setElement(this.$el);
             return this;
         },
@@ -213,7 +213,6 @@
             return this.backgroundView;
         },
         render: function() {
-            
         }
     });
     

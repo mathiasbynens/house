@@ -865,10 +865,6 @@
     var ImageRow = Backbone.View.extend({
         tagName: "li",
         className: "row",
-        htmlTemplate: ' <span class="info">\
-                            <span class="filename"><%= filename %></span>\
-                            <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
-                        </span>',
         template: function(doc) {
             if(doc.hasOwnProperty('at')) {
                 var createdAtFormatted = new Date(doc.at);
@@ -885,7 +881,9 @@
                 doc.createdAtFormatted = '';
                 doc.createdAtShort = '';
             }
-            var template = $(_.template(this.htmlTemplate, doc));
+            var template = $('<span class="info"><span class="filename">'+doc.filename+'</span>\
+                            <span class="at" data-datetime="'+doc.at+'" title="'+doc.createdAtFormatted+'">created: '+doc.createdAtShort+'</span>\
+                        </span>');
             this.$el.attr('data-images-id', this.model.get("_id"));
             return template;
         },

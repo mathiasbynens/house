@@ -243,7 +243,7 @@
                 });
             }
             return this.view;
-        },
+        }
     });
     
     var ListView = Backbone.View.extend({
@@ -465,11 +465,8 @@
     });
     
     var FileActions = Backbone.View.extend({
-        
         tagName: "div",
-        
         className: "fileActions",
-        
         render: function() {
             var self = this;
             this.$el.html('');
@@ -495,32 +492,24 @@
         }
     });
     
-    
     var FileActionProcess = Backbone.View.extend({
-        
         tagName: "span",
-        
         className: "process",
-        
         render: function() {
-            
             var $btn = $('<button>process</button>');
             var metadata = this.model.get('metadata');
             if(metadata.hasOwnProperty('proc')) {
                 $btn.attr('processed', metadata.proc);
             }
-            
             this.$el.html($btn);
-            
             this.$el.removeAttr('id');
             this.setElement(this.$el);
             return this;
         },
         initialize: function() {
-            
         },
         events: {
-          "click": "select",
+          "click": "select"
         },
         select: function() {
             if(confirm("Are you sure that you want to process this file?")) {
@@ -536,23 +525,18 @@
     });
     
     var FileActionDelete = Backbone.View.extend({
-        
         tagName: "span",
-        
         className: "delete",
-        
         render: function() {
             this.$el.html('<button>delete</button>');
-            
             this.$el.removeAttr('id');
             this.setElement(this.$el);
             return this;
         },
         initialize: function() {
-            
         },
         events: {
-          "click": "select",
+          "click": "select"
         },
         select: function() {
             console.log(this.model);
@@ -613,7 +597,7 @@
             this.$checkbox = $('<input type="checkbox" name="select" />');
         },
         events: {
-          "click": "select",
+          "click": "select"
         },
         select: function() {
         },
@@ -647,7 +631,6 @@
                 doc.uploadDateFormatted = '';
                 doc.uploadDateShort = '';
             }
-            
             doc.refsHtml = 'Refs: ';
             if(doc.metadata.hasOwnProperty('refs')) {
                 for(var i in doc.metadata.refs) {
@@ -655,30 +638,21 @@
                     doc.refsHtml += ' '+refDoc.col +'/'+ refDoc.id;
                 }
             }
-            
             var template = $(_.template(this.htmlTemplate, doc));
-            
             this.$el.attr('data-files-id', this.model.get("_id"));
-            
             return template;
         },
         render: function() {
             this.$el.html(this.template(this.model.toJSON()));
-            
             this.$el.append(this.$actions);
-            
             this.fileActions.render();
-            
             this.trigger('resize');
-            
             this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
-            
             return this;
         },
         initialize: function() {
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
-            
             this.$actions = $('<div class="actions"></div>');
             this.fileActions = new FileActions({id: this.id, model: this.model});
             this.$actions.append(this.fileActions.render().el);
@@ -749,7 +723,7 @@
             "keyup input": "debouncedSearch",
             "click .clearBox": "clear",
             "submit form": "submit",
-            'change select[name="type"]': 'changeType',
+            'change select[name="type"]': 'changeType'
         },
         clear: function() {
             this.$search.val('');

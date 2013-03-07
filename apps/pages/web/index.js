@@ -17,9 +17,9 @@
                                                     clock.on("init", function() {
                                                         require([ "/account/account.js" ], function(account) {
                                                             account.on("init", function() {
-                                                                var $account = $("<account></account>");
-                                                                $("header").append($account);
-                                                                $account.append(account.render().$el);
+                                                                //var $account = $('<div id="account"></div>');
+                                                                //$("#header").append($account);
+                                                                //$account.append(account.render().$el);
                                                                 require([ "nav.js" ], function(nav) {
                                                                     index.nav = nav;
                                                                     nav.init('.nav-collapse.collapse');

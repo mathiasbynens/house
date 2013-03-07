@@ -158,6 +158,7 @@
             self.trigger('refreshUser', user);
         },
         bindNav: function(nav) {
+            var self = this;
             this.nav = nav;
             this.bindRouter(nav.router);
             nav.col.add({title:"Home", navigate:""});
@@ -166,11 +167,13 @@
                 //nav.col.add({title:"New", navigate:"new"});
             }
             this.nav.list.on('selectedSub', function(nav, sub){
-                console.log(sub);
                 var options = {};
                 if($(window).width()>700) options.offset = -100;
                 var elStr = 'h3#'+sub.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
                 $.scrollTo($(elStr),1300,options);
+                if(nav.model.has("navigate")) {
+                    self.nav.router.navigate(nav.model.get("navigate"), {replace: true, trigger: false});
+                }
             });
         },
         bindRouter: function(router) {
@@ -181,7 +184,7 @@
             }
             self.router = router;
             router.on('title', function(title){
-                var $e = $('header h1');
+                var $e = $('#header h1');
                 $e.html(title);
                 $e.attr('class', '');
                 var eh = $e.height();

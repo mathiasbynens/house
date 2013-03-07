@@ -71,7 +71,7 @@
         }
     });
     var NavList = Backbone.View.extend({
-        tagName: "navigation",
+        tagName: "div",
         className: "navList",
         initialize: function() {
             var self = this;
@@ -95,7 +95,7 @@
         },
         render: function() {
             var self = this;
-            //this.$ul.html("");
+            this.$el.attr('id', 'navigation');
             this.collection.each(function(doc) {
                 var view;
                 view = doc.getRow({

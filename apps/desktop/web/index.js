@@ -15,23 +15,23 @@
                         window.utils = utils;
                         require(['/account/account.js'], function(account){
                             account.on('init', function(){
-                                var $account = $('<account></account>');
-                                $('header').append($account);
+                                var $account = $('<div id="account"></div>');
+                                $('#header').append($account);
                                 $account.append(account.render().$el);
                                 
                                 require(['windows.js'], function(windows){
                                     index.windows = windows;
                                     windows.render($('body'));
                                     
-                                    require(['../clock/clock.js'], function(Clock){
+                                    require(['/clock/clock.js'], function(Clock){
                                         var clock = new Clock();
-                                        $('header').append(clock.render().$el);
+                                        $('#header').append(clock.render().$el);
                                     });
                                     
                                     require(['nav.js'], function(nav){
                                         index.nav = nav;
                                         nav.init();
-                                        $('header').append(nav.list.render().$el);
+                                        $('#header').append(nav.list.render().$el);
                                         
                                         //
                                         // Example of simple model we generate on the fly to build our nav
@@ -39,7 +39,7 @@
                                         // nav.col.add({a:"Wikipedia", href:"http://Wikipedia.com", imgSrc: "http://Wikipedia.com/favicon.ico"});
                                         // nav.col.add({a:"home", href:"/", imgSrc: "/favicon.ico"});
                                         //
-                                        require(['../applications/applications.js'], function(apps){
+                                        require(['/applications/applications.js'], function(apps){
                                             apps.init();
                                             apps.col.bind("add", function(doc) {
                                                 nav.col.add({title: doc.get("name"), url: doc.get("url"), imgSrc: doc.get("icon")});
@@ -51,7 +51,7 @@
                                             index.windows.openUrl(navRow.model.get('url'), navRow.model.get('name'))
                                         });
                                         
-                                        require(['../wallpaper/wallpaper.js'], function(wallpaper){
+                                        require(['/wallpaper/wallpaper.js'], function(wallpaper){
                                             wallpaper.on('initialized', function(){
                                                 var wallpaperBackground = wallpaper.getBackgroundView();
                                                 $('body').append(wallpaperBackground.render().$el);

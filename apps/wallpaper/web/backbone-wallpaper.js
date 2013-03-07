@@ -225,7 +225,7 @@
                 });
             }
             return this.view;
-        },
+        }
     });
     
     var WallpaperList = Backbone.View.extend({
@@ -253,7 +253,7 @@
             });
         },
         events: {
-          "click #wallpaper-list-pager": "loadMore",
+          "click #wallpaper-list-pager": "loadMore"
         },
         loadMore: function() {
             this.collection.getNextPage();
@@ -329,7 +329,7 @@
             return this;
         },
         events: {
-          "click": "select",
+          "click": "select"
         },
         select: function() {
             var self = this;
@@ -359,7 +359,7 @@
             
         },
         events: {
-          "click": "select",
+          "click": "select"
         },
         select: function() {
             var self = this;

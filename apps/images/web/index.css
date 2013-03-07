@@ -42,7 +42,7 @@ input, textarea, select, button {
     text-shadow: 0px 0px 1px black;
     z-index: 2000;
 }
-header {
+#header {
     position: fixed;
     top: 0;
     left: 0;
@@ -50,7 +50,7 @@ header {
     height: 44px;
     text-align: center;
 }
-clock {
+#clock {
     position: absolute;
     top: 0;
     left: 0;
@@ -59,14 +59,14 @@ clock {
     height: 44px;
     line-height: 44px;
 }
-account {
+#account {
     position: absolute;
     top: 0;
     right: 0;
     width: 25%;
     text-align: right;
 }
-account menu {
+#account menu {
     position: absolute;
     top: 0;
     right: 0;
@@ -74,7 +74,7 @@ account menu {
     text-align: right;
 }
 
-navigation, account {
+#navigation, #account {
     display: table;
     position: absolute;
     top: 0;
@@ -82,36 +82,36 @@ navigation, account {
     width: 60px;
     margin: 0 0;
 }
-navigation {
+#navigation {
     left: 0;
     text-align: left;
 }
-navigation .opener, account .profile {
+#navigation .opener, #account .profile {
     display: table-cell;
     vertical-align: middle;
     text-align: center;
 }
-navigation .opener {
+#navigation .opener {
 }
-account .profile {
+#account .profile {
 }
-header h1 {
+#header h1 {
     line-height: 44px;
 }
-navigation menu {
+#navigation menu {
     left: 0;
 }
-navigation menu, account menu {
+#navigation menu, #account menu {
     position: fixed;
     top: 0px;
     margin: 40px 0 0;
     width: 100%;
     visibility: hidden;
 }
-account menu {
+#account menu {
     right: 0;
 }
-navigation menu {
+#navigation menu {
 }
 menu {
     background: rgba(170, 170, 170, 0.8);
@@ -946,17 +946,17 @@ img.rotateNinety {
     .carousel-control {
         display: none;
     }
-    header menu li {
+    #header menu li {
     }
     
-    header menu li h1, header menu li h2 {
+    #header menu li h1, #header menu li h2 {
         padding: 0 0;
     }
     
-    header h1 {
+    #header h1 {
         font-size: 1em;
     }
-    header h2 {
+    #header h2 {
         font-size: .77em;
     }
     ul li {
@@ -964,7 +964,7 @@ img.rotateNinety {
         width: 23%;
         font-size: .7em;
     }
-    navigation menu, account menu {
+    #navigation menu, #account menu {
         width: 200%;
     }
 }
@@ -977,7 +977,7 @@ img.rotateNinety {
         background: yellow;
         color: black;
     }
-    header menu li:not([selected]):hover {
+    #header menu li:not([selected]):hover {
         color: yellow;
         cursor: pointer;
     }
@@ -985,7 +985,7 @@ img.rotateNinety {
     }
     ul li:hover img {
     }
-    navigation:hover menu, account:hover menu {
+    #navigation:hover menu, #account:hover menu {
         visibility: visible !important;
     }
 }

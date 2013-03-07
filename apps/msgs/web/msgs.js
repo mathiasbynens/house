@@ -1132,10 +1132,10 @@
             }
             this.$inputTxt = $('<textarea name="txt" placeholder="Your message" autocomplete="off"></textarea>');
             this.$inputSub = $('<input type="text" name="sub" placeholder="Subject of your message" autocomplete="off" />');
-            this.$form = $('<form class="post"><span class="from"></span><fieldset></fieldset><controls></controls></form>');
+            this.$form = $('<form class="post"><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
             this.$form.find('fieldset').append(this.$inputSub);
             this.$form.find('fieldset').append(this.$inputTxt);
-            this.$form.find('controls').append('<input type="submit" value="SEND" />');
+            this.$form.find('.controls').append('<input type="submit" value="SEND" />');
         },
         render: function() {
             var self = this;

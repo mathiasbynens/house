@@ -9,7 +9,7 @@
         routes: {
             "_=_": "gohome",
             "_-_": "gohome",
-            "": "root",
+            "": "root"
         },
         gohome: function() {
             this.navigate('', {trigger: true, replace: true});
@@ -74,7 +74,7 @@
     });
 
     var NavList = Backbone.View.extend({
-        tagName: "navigation",
+        tagName: "div",
         className: "navList",
         initialize: function() {
             var self = this;
@@ -92,6 +92,7 @@
         },
         render: function() {
             var self = this;
+            this.$el.attr('id', 'navigation');
             this.$el.append(this.$open);
             this.$el.append(this.$ul);
             this.$ul.html('');

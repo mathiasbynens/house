@@ -849,8 +849,10 @@
             }
             if(this.model.has('youtube')) {
                 var yt = this.model.get('youtube');
-                var ytid = yt.id;
-                this.$el.append('<span class="youtube"><div id="ytapiplayer-'+ytid+'"><iframe width="640" height="480" src="https://www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
+                if(yt.id) {
+                    var ytid = yt.id;
+                    this.$el.append('<span class="youtube"><div id="ytapiplayer-'+ytid+'"><iframe width="640" height="480" src="https://www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
+                }
             }
             if(this.model.has('msg')) {
                 var $msg = $('<span class="msg"></span>');
