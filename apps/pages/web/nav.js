@@ -139,7 +139,7 @@
         render: function() {
             this.$el.attr('data-id', this.model.id);
             var href = this.model.get('navigate') || 'home';
-            var $e = this.$el.find('a');
+            var $e = this.$el.find('> a');
             if($e.length > 0) {
             } else {
                 $e = $('<a href="#'+href+'"></a>'); // hash for scrollspy
@@ -160,12 +160,15 @@
                 $e.append(' <b class="caret"></b>');
                 $e.attr('data-toggle', 'dropdown');
                 $e.addClass('dropdown-toggle');
-                var $ul = $('<ul class="dropdown-menu"></ul>');
-                for(var s in sub) {
-                    var subName = sub[s];
-                    $ul.append('<li><a href="#">'+subName+'</a></li>');
+                var $ul = this.$el.find('ul.dropdown-menu');
+                if($ul.length === 0) {
+                    $ul = $('<ul class="dropdown-menu"></ul>');
+                    for(var s in sub) {
+                        var subName = sub[s];
+                        $ul.append('<li><a href="#">'+subName+'</a></li>');
+                    }
+                    this.$el.append($ul);
                 }
-                this.$el.append($ul);
             }
             this.setElement(this.$el);
             return this;
@@ -204,6 +207,7 @@
             this.$el.siblings().removeClass("active");
             this.$el.attr("selected", "selected");
             this.$el.addClass("active");
+            return false;
         },
         remove: function() {
             $(this.el).remove();

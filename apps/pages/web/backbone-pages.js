@@ -10,9 +10,6 @@
             this.sectionsCollection = new SectionsCollection(attr.sections, colOpts);
             attr.features = attr.features || [];
             this.featuresCollection = new FeaturesCollection(attr.features, colOpts);
-            this.on("change", function(model, options){
-                console.log(arguments);
-            });
             this.views = {};
         },
         findSectionById: function(id) {
@@ -130,7 +127,7 @@
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
                 socket.on('connect', function(data) {
-                    console.log('connected and now joining '+self.collectionName);
+                    //console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
@@ -424,11 +421,14 @@
             });
             //this.$el.append(this.$actions);
             if(!this.hasOwnProperty('featureCarosel')) {
-                self.featureCarosel = $('#home').carousel({
+                var $c = $('#home');
+                self.featureCarosel = $c.carousel({
                     interval: false,
                     hover: "pause"
                 });
-                self.featureCarosel.carousel('next');
+                if($c.find('.active').length === 0) {
+                    self.featureCarosel.carousel('next');
+                }
                 self.play(); 
             }
             this.setElement(this.$el);
@@ -654,7 +654,7 @@
                 }
                 var iof = html.indexOf('[[feedback]]');
                 if(iof !== -1) {
-                    console.log('feedback form in section')
+                    //console.log('feedback form in section')
                     html = html.replace('[[feedback]]', '<span class="feedback"></span>');
                     this.$el.find('.sectionHtml').html(html);
                     if(MsgsBackbone) {
