@@ -4,9 +4,8 @@
         collectionName: "msgs",
         initialize: function(attr, opts) {
             var self = this;
-            this.on("change", function(model, options){
-                console.log(arguments);
-            });
+            //this.on("change", function(model, options){
+            //});
             this.views = {};
         },
         getFrom: function(callback) {
@@ -1130,12 +1129,24 @@
             if(window.app && window.app.user) {
                 this.from = window.app.user.getNewAvatarNameView();
             }
-            this.$inputTxt = $('<textarea name="txt" placeholder="Your message" autocomplete="off"></textarea>');
-            this.$inputSub = $('<input type="text" name="sub" placeholder="Subject of your message" autocomplete="off" />');
+            var msgs = {
+                sendPlaceholder: "SEND",
+                msgPlaceholder: "Your message",
+                subjectPlaceholder: "Subject of your message",
+                msgLabel: "",
+                subjectLabel: ""
+            }
+            if(this.options.ui) {
+                for(var i in this.options.ui) {
+                    msgs[i] = this.options.ui[i];
+                }
+            }
+            this.$inputTxt = $('<label>'+msgs.msgLabel+'</label><textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"></textarea>');
+            this.$inputSub = $('<label>'+msgs.subjectLabel+'</label><input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off" />');
             this.$form = $('<form class="post"><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
             this.$form.find('fieldset').append(this.$inputSub);
             this.$form.find('fieldset').append(this.$inputTxt);
-            this.$form.find('.controls').append('<input type="submit" value="SEND" />');
+            this.$form.find('.controls').append('<input type="submit" value="'+msgs.sendPlaceholder+'" />');
         },
         render: function() {
             var self = this;

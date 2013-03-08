@@ -652,18 +652,33 @@
                 } else {
                     this.$el.find('.sectionHtml').html(html);
                 }
-                var iof = html.indexOf('[[feedback]]');
+                var fstropen = '[[feedback';
+                var iof = html.indexOf(fstropen);
+                var iofend = html.indexOf(']]');
                 if(iof !== -1) {
                     //console.log('feedback form in section')
+                    var opts = {};
+                    var feedbackOpts = html.substring(iof+fstropen.length+1, iofend);
+                    feedbackOpts = feedbackOpts.split('|');
+                    for(var i in feedbackOpts){
+                        var option = feedbackOpts[i].split('=');
+                        opts[option[0]] = option[1];
+                    }
+                    html = html.substr(0, iof+fstropen.length) + html.substr(iofend);
+                    console.log(opts)
                     html = html.replace('[[feedback]]', '<span class="feedback"></span>');
                     this.$el.find('.sectionHtml').html(html);
+                    
+                    var saveMsg = opts.saveMsg || 'Thank you for your feedback!';
+                    
                     if(MsgsBackbone) {
                         
                         this.msgForm = new window.MsgsBackbone.Form({
-                            collection: window.msgsCollection
+                            collection: window.msgsCollection,
+                            ui: opts
                         });
                         this.msgForm.on("saved", function(doc) {
-                            alert('Thank you for your feedback!');
+                            alert(saveMsg);
                             self.msgForm.clear();
                         });
                         $form = this.msgForm.render().$el;
