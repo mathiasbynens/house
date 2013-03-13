@@ -13,8 +13,8 @@
                                     clock.on('init', function(){
                                         require(['../account/account.js'], function(account){
                                             account.on('init', function(){
-                                                var $account = $('<account></account>');
-                                                $('header').append($account);
+                                                var $account = $('<div id="account"></div>');
+                                                $('#header').append($account);
                                                 $account.append(account.render().$el);
                                                 require(['../desktop/nav.js'], function(nav){
                                                     index.nav = nav;
@@ -25,7 +25,7 @@
                                                     nav.router.on('loadingComplete', function(){
                                                         $('body').removeClass('loading');
                                                     });
-                                                    $('header').append(nav.list.render().$el);
+                                                    $('#header').append(nav.list.render().$el);
                                                     require(['analytics.js'], function(Analytics) {
                                                         window.analytics = new Analytics();
                                                         analytics.bindUser(account.loginStatus.getView().userModel);

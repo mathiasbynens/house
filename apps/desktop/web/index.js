@@ -13,12 +13,12 @@
                 require(['/desktop/backbone-house.js'], function(){
                     require(['/desktop/utils.js'], function(utils){
                         window.utils = utils;
-                        require(['/account/account.js'], function(account){
-                            account.on('init', function(){
+                        require(['/account/account.js'], function(accountProfile){
+                            accountProfile.on('init', function(){
                                 var $account = $('<div id="account"></div>');
                                 $('#header').append($account);
-                                $account.append(account.render().$el);
-                                
+                                $account.append(accountProfile.render().$el);
+                                account.welcome($('#welcome'));
                                 require(['windows.js'], function(windows){
                                     index.windows = windows;
                                     windows.render($('body'));
@@ -59,7 +59,7 @@
                                             });
                                         });
                                         
-                                        account.bindRouter(nav.router);
+                                        accountProfile.bindRouter(nav.router);
                                         nav.startRouter('/desktop/');
                                         
                                         require(['jquery.idle-timer.js'], function() {

@@ -138,7 +138,7 @@
                 type: "HEAD",
                 url: self.url,
                 data: {},
-                success: function(json) {
+                complete: function(json) {
                     callback(aj.getResponseHeader("X-Count"));
                 },
                 xhrFields: {
@@ -712,7 +712,7 @@
             var $byline = $('<span class="byline"></span>');
             if (this.model.has("agent") && this.model.get('headers')["user-agent"]) {
                 var str = this.model.get('headers')["user-agent"];
-                var $ua = $('<userAgent><span class="string">' + str + '</span><span class="os"></span><span class="browser"></span></userAgent>');
+                var $ua = $('<span class="userAgent"><span class="string">' + str + '</span><span class="os"></span><span class="browser"></span></span>');
                 if (this.model.has("agent")) {
                     var $os = $ua.find('.os');
                     var $browser = $ua.find('.browser');
@@ -754,13 +754,13 @@
                 });
             }
             if (this.model.has("host")) {
-                this.$el.append('<host><span class="ip">' + this.model.get("host").ip + "</span></host>");
+                this.$el.append('<span class="host"><span class="ip">' + this.model.get("host").ip + "</span></span>");
                 if(this.model.get("host").name) {
                     this.$el.find('host').append('<span class="name">' + this.model.get("host").name + "</span>");
                 }
             }
             if (this.model.has("referer")) {
-                this.$el.append('<referer>' + this.model.get("referer") + "</referer>");
+                this.$el.append('<span class="referer">' + this.model.get("referer") + "</span>");
             }
             if (this.model.has("sid")) {
                 //this.$el.append('<span class="sid">' + this.model.get("sid") + "</span>");

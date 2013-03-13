@@ -122,7 +122,7 @@
                 type: "HEAD",
                 url: self.url,
                 data: {},
-                success: function(json) {
+                complete: function(json) {
                     callback(aj.getResponseHeader("X-Count"));
                 },
                 xhrFields: {
@@ -690,19 +690,35 @@
             if (options.list) {
                 this.list = options.list;
             }
+            this.$span = $('<span></span>');
+            
+            this.$name = $('<strong class="name"></strong>');
+            this.$ua = $('<span class="userAgent"><span class="string"></span><span class="os"></span><span class="browser"></span></span>');
+            this.$byline = $('<span class="byline"></span>');
+            this.$geo = $('<span class="geo"><span class="city"></span> <span class="state"></span></span>');
+            this.$at = $('<span class="lastAt"></span>');
+            this.$dur = $('<span class="duration"></span>');
+            this.$host = $('<span class="host"><span class="ip"></span><span class="name"></span></span>');
+            
+            this.$span.append(this.$byline);
+            this.$span.append(this.$name);
+            this.$span.append(this.$host);
+            this.$span.append(this.$ua);
+            this.$span.append(this.$geo);
+            this.$span.append('<span class="actionCount"></span> actions');
+            this.$span.append('<span class="referer"></span>');
+            this.$span.append(this.$at);
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
         },
         render: function() {
             var self = this;
-            this.$el.html("");
-            var $byline = $('<span class="byline"></span>');
             if (this.model.has("userAgent")) {
                 var str = this.model.get('userAgent');
-                var $ua = $('<userAgent><span class="string">' + str + '</span><span class="os"></span><span class="browser"></span></userAgent>');
+                this.$span.find('.userAgent .string').html(str);
                 if (this.model.has("agent")) {
-                    var $os = $ua.find('.os');
-                    var $browser = $ua.find('.browser');
+                    var $os = this.$ua.find('.os');
+                    var $browser = this.$ua.find('.browser');
                     var agent = this.model.get('agent');
                     if(agent && agent.os) {
                         $os.addClass(agent.os.replace(/\s/g, ''));
@@ -713,78 +729,71 @@
                         $browser.attr('title', agent.family + ' ' + agent.major);
                     }
                 }
-                this.$el.append($ua);
             }
-            var $name = $('<strong class="name">' + this.model.get("name") + "</strong>");
-            this.$el.append($name);
             if (this.model.has("user")) {
-                $name.attr("data-owner-id", this.model.get("user"));
+                this.$name.attr("data-owner-id", this.model.get("user"));
                 var owner = this.model.getOwner(function(owner) {
                     if (owner) {
-                        $name.html("");
-                        var ownerAvatarName = owner.getNewAvatarNameView();
-                        ownerAvatarName.on("goToProfile", function(user) {
-                            self.trigger("goToProfile", user);
-                        });
-                        $name.append(ownerAvatarName.render().$el);
+                        if(!self.ownerNameView) {
+                            self.$name.html("");
+                            self.ownerNameView = owner.getNewAvatarNameView();
+                            self.ownerNameView.on("goToProfile", function(user) {
+                                self.trigger("goToProfile", user);
+                            });
+                            self.$name.append(self.ownerNameView.render().$el);
+                        }
+                        self.ownerNameView.render();
                     }
                 });
             }
             if (this.model.has("host")) {
-                this.$el.append('<host><span class="ip">' + this.model.get("host").ip + "</span></host>");
+                this.$host.find('.ip').html(this.model.get("host").ip);
                 if(this.model.get("host").name) {
-                    this.$el.find('host').append('<span class="name">' + this.model.get("host").name + "</span>");
+                    this.$host.find('.name').html(this.model.get("host").name);
                 }
             }
             if (this.model.has("referer")) {
-                this.$el.append('<referer>' + this.model.get("referer") + "</referer>");
+                this.$span.find('.referer').html(this.model.get("referer"));
             }
             if (this.model.has("sid")) {
-                //this.$el.append('<span class="sid">' + this.model.get("sid") + "</span>");
+                //this.$span.append('<span class="sid">' + this.model.get("sid") + "</span>");
             }
             if (this.model.has("c")) {
-                this.$el.append('<span class="actionCount">' + this.model.get("c") + "</span> actions");
+                this.$span.find('.actionCount').html(this.model.get("c"));
             }
             if (this.model.has("d")) {
-                var $dur = $('<span class="duration"></span>');
                 if (window.clock) {
-                    $dur.html(clock.moment.duration(this.model.get('d'), "seconds").humanize());
+                    this.$dur.html(clock.moment.duration(this.model.get('d'), "seconds").humanize());
                 } else {
-                    $dur.html(this.model.get("lastAt"));
+                    this.$dur.html(this.model.get("lastAt"));
                 }
-                this.$el.append($dur);
+                this.$span.append(this.$dur);
             }
             if (this.model.has("lastAt")) {
-                var $at = $('<span class="lastAt"></span>');
                 if (window.clock) {
-                    $at.attr("title", clock.moment(this.model.get("lastAt")).format("LLLL"));
-                    $at.html(clock.moment(this.model.get("lastAt")).calendar());
+                    this.$at.attr("title", clock.moment(this.model.get("lastAt")).format("LLLL"));
+                    this.$at.html(clock.moment(this.model.get("lastAt")).calendar());
                 } else {
-                    $at.html(this.model.get("lastAt"));
+                    this.$at.html(this.model.get("lastAt"));
                 }
-                this.$el.append($at);
             } else if (this.model.has("at")) {
-                var $at = $('<span class="at"></span>');
                 if (window.clock) {
-                    $at.attr("title", clock.moment(this.model.get("at")).format("LLLL"));
-                    $at.html(clock.moment(this.model.get("at")).calendar());
+                    this.$at.attr("title", clock.moment(this.model.get("at")).format("LLLL"));
+                    this.$at.html(clock.moment(this.model.get("at")).calendar());
                 } else {
-                    $at.html(this.model.get("at"));
+                    this.$at.html(this.model.get("at"));
                 }
-                this.$el.append($at);
             }
-            this.$el.append($byline);
             if (this.model.has("geo")) {
                 var geo = this.model.get('geo');
-                var $geo = $('<geo></geo>');
                 if(geo.city && geo.city !== "N/A") {
-                    $geo.append('<city>'+geo.city+'</city>, ');
+                    this.$geo.find('.city').html(geo.city);
                 }
                 if(geo.state && geo.state !== "N/A") {
-                    $geo.append('<state>'+geo.state+'</state>');
+                    this.$geo.find('.state').html(geo.state);
                 }
-                this.$el.append($geo);
             }
+            this.$el.append(this.$span);
             this.$el.attr("data-id", this.model.get("id"));
             this.setElement(this.$el);
             return this;

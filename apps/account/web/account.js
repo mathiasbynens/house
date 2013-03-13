@@ -96,6 +96,20 @@
         },
         isOwner: function(ownerId) {
             return(this.has('user') && this.get('user') == ownerId);
+        },
+        welcome: function($el, callback) {
+            var self = this;
+            if(this.isUser()) {
+                this.getView().getUserModel(function(user){
+                    var $e = user.getWelcomeView().render().$el;
+                    $e.show();
+                    $el.html($e);
+                });
+            } else {
+                return auth.prompt($el, function(){
+                    self.welcome($el);
+                });
+            }
         }
     });
     auth.Collection = Backbone.Collection.extend({
@@ -123,35 +137,95 @@
         }
     });
     auth.collection = new auth.Collection;
+    auth.ConnectForm = Backbone.View.extend({
+        tagName: "div",
+        className: "connections",
+        initialize: function() {
+            var self = this;
+        },
+        render: function() {
+            var loginWelcomMsg = '';
+            
+            if(this.options.welcomeMsg) {
+                loginWelcomMsg = this.options.welcomeMsg;
+            }
+            
+            this.$el.html(loginWelcomMsg);
+            this.$el.append(this.$form);
+            this.$el.append('or Connect <span class="connect"><button class="connectTwitter">Twitter</button><button class="connectFacebook">Facebook</button></span>');
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click .connectTwitter": "twitter",
+            "click .connectFacebook": "facebook",
+            "click .connectGoogle": "google"
+        },
+        twitter: function() {
+            window.location = this.model.url() + '/twitter';
+            return false;
+        },
+        facebook: function() {
+            window.location = this.model.url() + '/facebook';
+            return false;
+        },
+        google: function() {
+            window.location = this.model.url() + '/google';
+            return false;
+        }
+    });
     auth.LoginForm = Backbone.View.extend({
         tagName: "div",
         className: "authentication",
         render: function() {
-            this.$el.html('<h4>Welcome,</h4><p>Join now!</p>');
-            this.$el.append('<span class="connect"><button class="connectTwitter">Connect Twitter</button><button class="connectFacebook">Connect Facebook</button></span>');
-            var $form = $('<form id="houseAuth"><input name="email" type="email" placeholder="Email" value="" required autocomplete="off" /><input type="password" name="pass" required placeholder="Password" /><input type="submit" name="Join" value="Join" /><span class="msg"></span></form>');
-            this.$el.append($form);
+            var loginWelcomMsg = '';
+            
+            if(this.options.welcomeMsg) {
+                loginWelcomMsg = this.options.welcomeMsg;
+            }
+            
+            this.$el.html(loginWelcomMsg);
+            this.$el.append(this.$form);
+            //this.$el.append('or Connect <span class="connect"><button class="connectTwitter">Twitter</button><button class="connectFacebook">Facebook</button></span>');
+            this.$el.append(this.connectionView.render().$el);
             this.setElement(this.$el);
             return this;
         },
         initialize: function() {
             var self = this;
+            this.$form = $('<form id="houseAuth"><input name="email" type="email" placeholder="my@email.com" value="" required autocomplete="off" /><input style="display:none;" type="password" name="pass" placeholder="Secret password" /><input style="display:none;" type="submit" name="Join" value="Join" /><span class="msg"></span></form>');
+            this.$submit = this.$form.find('input[type="submit"]');
+            this.$pass = this.$form.find('input[name="pass"]');
             this.model.on("badPass", function(msg) {
-                self.model.set({
-                    pass: ""
-                }, {
-                    silent: true
-                });
-                self.render();
-                self.$el.find('input[name="pass"]').focus();
-                self.$el.find(".msg").html("Bad password");
+                if(self.model.has('pass') && self.model.get('pass')) {
+                    self.model.set({
+                        pass: ""
+                    }, {
+                        silent: true
+                    });
+                    self.render();
+                    self.$el.find('input[name="pass"]').focus();
+                    self.$el.find(".msg").html('Bad password. <a class="resetPass" href="/">reset password</a>');
+                } else {
+                    self.$pass.show();
+                    self.$pass.focus();
+                    self.$submit.show();
+                }
             });
+            
+            this.connectionView = new auth.ConnectForm({model: this.model});
         },
         events: {
             "submit form": "submit",
-            "click .connectTwitter": "twitter",
-            "click .connectFacebook": "facebook",
-            "click .connectGoogle": "google"
+            'blur form input[name="email"]': "submit",
+            'keyup input[name="email"]': "keyupsubmit",
+            "click .resetPass": "resetPass"
+        },
+        keyupsubmit: function(e) {
+            if(e.keyCode == 13) {
+                this.submit(e);
+            }
+            return false;
         },
         twitter: function() {
             window.location = window.location.origin + '/api/auth/twitter';
@@ -167,17 +241,32 @@
         },
         submit: function() {
             var email = this.$el.find('input[name="email"]').val();
+            if(email == '') {
+                return false;
+            }
+            if(email.indexOf('@') === -1) {
+                alert('valid email required');
+                return false;
+            }
             var pass = this.$el.find('input[name="pass"]').val();
-            if (pass.length < 6) {
+            if (false && pass.length < 6) {
                 alert("longer password required");
             } else if (email.length < 4) {
-                alert("please enter an email address");
+                //alert("please enter an email address");
             } else {
                 var name = email.substr(0,email.indexOf('@'));
                 this.model.set({
                     email: email,
                     pass: pass,
                     name: name
+                });
+            }
+            return false;
+        },
+        resetPass: function() {
+            if(confirm("Would you like to reset your password?")) {
+                this.model.set({
+                    resetPass: true
                 });
             }
             return false;
@@ -206,7 +295,7 @@
             var name = this.model.get('name');
             var loginbtn;
             if (this.model.get('user')) {
-                loginbtn = '<li><span class="avatar" title="'+name+'"></span><span class="name">Profile</span></li><li class="logout">Sign out</li>';
+                loginbtn = '<li><span class="avatar" title="'+name+'"></span></li><li class="logout">Sign out</li>';
             } else {
                 loginbtn = '<li class="login">Sign in</li>';
             }
@@ -250,7 +339,7 @@
         events: {
             "click .logout": "logout",
             "click .login": "login",
-            "click .name": "goToProfile",
+            "click .avatar": "goToProfile",
             "click button": "toggleMenu"
         },
         toggleMenu: function() {

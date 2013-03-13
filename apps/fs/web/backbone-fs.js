@@ -128,7 +128,7 @@
         headCount: function(callback) {
             var self = this;
             var aj = $.ajax({type: "HEAD",url: self.url,data: {},
-                success: function(json) {
+                complete: function(json) {
                     callback(aj.getResponseHeader('X-Count'));
                 },xhrFields: {withCredentials: true}
             });

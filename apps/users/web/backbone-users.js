@@ -31,6 +31,18 @@
             }
             return this.fullView;
         },
+        getWelcomeView: function(options) {
+            options = options || {};
+            options.model = this;
+            if (!this.welcomeView) {
+                var view = this.welcomeView = new WelcomeView(options);
+                view.on('goToProfile', function(model){
+                    options.list.trigger('goToProfile', model);
+                });
+                this.views.welcomeView = view;
+            }
+            return this.welcomeView;
+        },
         getAvatar: function(options) {
             options = options || {};
             options.id = this.get("_id");
@@ -152,7 +164,7 @@
         headCount: function(callback) {
             var self = this;
             var aj = $.ajax({type: "HEAD",url: self.url,data: {},
-                success: function(json) {
+                complete: function(json) {
                     callback(aj.getResponseHeader('X-Count'));
                 },xhrFields: {withCredentials: true}
             });
@@ -704,20 +716,23 @@
         className: "avatarName",
         render: function() {
             var self = this;
+            this.$el.append(this.$span);
+            this.setElement(this.$el);
+            return this;
+        },
+        initialize: function() {
+            this.$span = $('<span></span>');
+            this.$img = $('<img class="avatar" />');
+            this.$span.append(this.$img);
+            this.$span.append(this.model.get('name'));
             if (this.model.has("avatar")) {
                 var src = this.model.get("avatar");
                 if (src.indexOf("http") === 0) {} else {
                     src = "/api/files/" + src;
                 }
-                this.$el.html('<img src="' + src + '" />');
-            } else {
-                this.$el.html("");
+                this.$img.attr('src', src);
             }
-            this.$el.append(this.model.get('name'));
-            this.setElement(this.$el);
-            return this;
         },
-        initialize: function() {},
         events: {
             click: "goToProfile"
         },
@@ -725,7 +740,7 @@
             this.trigger("goToProfile", this.model);
         },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
         }
     });
 
@@ -865,17 +880,27 @@
                 $byline.append(' member since ');
                 $byline.append($at);
             }
+            var $msg = $('<div class="email"></div>');
             if(this.model.has('email')) {
-                var $msg = $('<div class="email"></div>');
                 $msg.html(this.model.get('email'));
-                
-                if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
-                    $msg.append('<a class="editEmail" title="Edit email address" href="#">edit email</a>');
-                }
-                
-                this.$el.append($msg);
+            }
+            this.$el.append($msg);
+            if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
+                $msg.append('<a class="editEmail" title="Edit email address" href="#">edit email</a>');
             }
             this.$el.append($byline);
+            
+            var $loc = $('<div class="location"></div>');
+            if(this.model.has('location')) {
+                $loc.html(this.model.get('location'));
+            }
+            this.$el.append($loc);
+            
+            var $bio = $('<div class="bio"></div>');
+            if(this.model.has('bio')) {
+                $bio.html(this.model.get('bio'));
+            }
+            this.$el.append($bio);
             
             if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
                 this.$el.append(this.actions.render().$el);
@@ -901,7 +926,7 @@
         editPass: function() {
             var self = this;
             var txt = prompt("Enter your current, soon to be old password");
-            if(txt) {
+            if(true || txt) {
                 var newPass = prompt("Enter a new password");
                 var newPassCheck = prompt("And prove that you didn't forget it already");
                 if(newPass && newPassCheck && newPass == newPassCheck) {
@@ -1039,6 +1064,209 @@
         },
         remove: function() {
             $(this.el).remove();
+        }
+    });
+    
+    var WelcomeView = Backbone.View.extend({
+        tagName: "div",
+        className: "welcomeUser",
+        initialize: function(options) {
+            var self = this;
+            if(options.list) {
+                this.list = options.list;
+            }
+            this.model.bind('change', this.render, this);
+        },
+        render: function() {
+            var self = this;
+            var isa = (window.account && (account.isAdmin() || account.isOwner(this.model.id)));
+            this.$el.html('Welcome ');
+            var $byline = $('<span></span>');
+            var displayName = this.model.get('displayName') || '';
+            this.$el.append('<span class="avatar"></span>');
+            if(isa) {
+                this.$el.append('<input title="Edit your display name" class="editDisplayName" type="text" name="displayName" placeholder="Your name" value="'+displayName+'"/>');
+                
+                if(!this.model.has('email')) {
+                    var $inputEmail = $('<span class="inputEmail"><input class="editEmail" type="email" name="email" placeholder="your@email.com" /></span>');
+                    this.$el.append($inputEmail);
+                }
+                if(this.model.has('pass')) {
+                    var $setPass = $('<span class="inputPass"><a href="/" class="showPassForm">set your password</a><form style="display: none"><span class="passwordOnce" style=""><label>Password: </label><input type="password" name="pass" /></span> <span class="passwordAgain" style="display: none"><label>Again: </label><input type="password" name="pass_again" /></span></form></span>');
+                    this.$el.append($setPass);
+                }
+            }
+            if (this.model.has("avatar") && this.model.get("avatar")) {
+                var src = this.model.get("avatar");
+                if (typeof src == 'string') {
+                } else if(src.hasOwnProperty('url')) {
+                    src = src.url;
+                }
+                if (src.indexOf("http") === 0) {
+                    
+                } else {
+                    src = "/api/files/" + src;
+                }
+                this.$el.find('.avatar').append('<img class="editAvatar" src="' + src + '" />');
+            } else if(isa) {
+                this.$el.find('.avatar').append('<button class="editAvatar" title="Upload your avatar">☺</button>');
+            }
+            
+            this.setElement(this.$el);
+            return this;
+        },
+        renderActions: function() {
+            this.actions.render();
+        },
+        show: function() {
+            this.$el.show();
+        },
+        events: {
+            "keyup .editDisplayName": "submit",
+            "click .showPassForm": "showPassForm",
+            'blur input[name="pass"]': "showPassAgain",
+            'keyup input[name="pass"]': "showPassAgainKeyup",
+            'keyup input[name="pass_again"]': "changePassword",
+            "blur .editDisplayName": "editDisplayName",
+            "blur .editEmail": "editEmail",
+            "click .editAvatar": "editAvatar"
+        },
+        submit: function(e) {
+            if(e.keyCode == 13) {
+                this.editDisplayName(e);
+            }
+            return false;
+        },
+        showPassAgainKeyup: function(e) {
+            if(e.keyCode == 13) {
+                this.showPassAgain(e);
+            }
+            return false;
+        },
+        showPassForm: function(e) {
+            var $e = $(e.target);
+            $e.siblings().show();
+            $e.hide();
+            this.$el.find('input[name="pass"]').focus();
+            this.$el.find('.passwordAgain').hide();
+            return false;
+        },
+        showPassAgain: function() {
+            this.$el.find('.passwordAgain').show();
+            this.$el.find('.passwordOnce').hide();
+            this.$el.find('.passwordAgain input').focus();
+        },
+        changePassword: function(e) {
+            if(e.keyCode == 13) {
+                var self = this;
+                var newPass = this.$el.find('input[name="pass"]').val();
+                var newPassCheck = this.$el.find('input[name="pass_again"]').val();
+                if(!newPassCheck) {
+                    return false;
+                }
+                if(newPass && newPassCheck && newPass == newPassCheck) {
+                    this.model.set({'oldPass': '', 'pass': newPass}, {silent: true});
+                    var saveModel = this.model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    if(saveModel) {
+                        saveModel.done(function() {
+                            alert('Password changed.');
+                            delete self.model.attributes.pass;
+                            self.render();
+                        });
+                        saveModel.fail(function(s, typeStr, respStr) {
+                            alert('Your password was incorrect');
+                        });
+                    }
+                } else {
+                    alert("Passwords mismatch!");
+                    this.$el.find('.inputPass input').val('');
+                    this.$el.find('.passwordOnce').show();
+                    this.$el.find('.passwordAgain').hide();
+                    this.$el.find('input[name="pass"]').focus();
+                }
+            }
+        },
+        editEmail: function(e) {
+            var self = this;
+            var txt = $(e.target).val();
+            if(txt && txt !== this.model.get('email')) {
+                this.model.set({'email': txt}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false ,
+                    wait: true
+                });
+                if(saveModel) {
+                    saveModel.done(function() {
+                        self.render();
+                    });
+                    saveModel.fail(function(s, typeStr, respStr) {
+                        alert('That email address is already in use.');
+                    });
+                }
+            }
+            return false;
+        },
+        editDisplayName: function(e) {
+            var self = this;
+            var d = this.model.get('displayName') || this.model.get('name');
+            //var txt = prompt("Enter your new display name", d);
+            var txt = $(e.target).val();
+            if(txt && txt !== d) {
+                this.model.set({'displayName': txt}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false ,
+                    wait: true
+                });
+                if(saveModel) {
+                    saveModel.done(function() {
+                        self.render();
+                    });
+                }
+            }
+            return false;
+        },
+        editAvatar: function() {
+            var self = this;
+            if(window.FilesBackbone) {
+                self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
+                self.uploadFrame.on('uploaded', function(data){
+                    if(_.isArray(data)) {
+                        data = _.first(data);
+                    }
+                    if(data.image) {
+                        var setDoc = {
+                            image: data.image
+                        }
+                        var avatar = data.image.filename;
+                        if(data.image.sizes) {
+                            if(data.image.sizes.thumb) {
+                                avatar = data.image.sizes.thumb.filename;
+                            }
+                        }
+                        setDoc.avatar = avatar;
+                        self.model.set(setDoc, {silent: true});
+                        var saveModel = self.model.save(null, {
+                            silent: false,
+                            wait: true
+                        });
+                        if(saveModel) {
+                            saveModel.done(function() {
+                                self.render();
+                                self.uploadFrame.remove();
+                            });
+                        }
+                    }
+                });
+                this.$el.find('.avatar').append(this.uploadFrame.render().$el);
+                self.uploadFrame.pickFiles();
+            }
+            return false;
+        },
+        remove: function() {
+            this.$el.remove();
         }
     });
     

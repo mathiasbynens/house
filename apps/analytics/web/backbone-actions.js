@@ -156,7 +156,7 @@
                 type: "HEAD",
                 url: self.url,
                 data: options,
-                success: function(json) {
+                complete: function(json) {
                     callback(aj.getResponseHeader("X-Count"));
                 },
                 xhrFields: {
