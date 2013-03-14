@@ -119,11 +119,11 @@
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
                 if(socket.socket.connected) {
-                    console.log('already connected and now joining '+self.collectionName);
+                    //console.log('already connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 }
                 socket.on('connect', function(data) {
-                    console.log('connected and now joining '+self.collectionName);
+                    //console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
@@ -1080,7 +1080,7 @@
         render: function() {
             var self = this;
             var isa = (window.account && (account.isAdmin() || account.isOwner(this.model.id)));
-            this.$el.html('Welcome ');
+            this.$el.html('');
             var $byline = $('<span></span>');
             var displayName = this.model.get('displayName') || '';
             this.$el.append('<span class="avatar"></span>');
@@ -1242,7 +1242,9 @@
                         }
                         var avatar = data.image.filename;
                         if(data.image.sizes) {
-                            if(data.image.sizes.thumb) {
+                            if(data.image.sizes.small) {
+                                avatar = data.image.sizes.small.filename;
+                            } else if(data.image.sizes.thumb) {
                                 avatar = data.image.sizes.thumb.filename;
                             }
                         }

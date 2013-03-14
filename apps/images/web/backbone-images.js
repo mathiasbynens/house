@@ -1104,7 +1104,6 @@
         className: "avatar",
         render: function() {
             var imageThumbSrc = this.model.get('filename');
-            console.log(this.model);
             if(this.model.has('sizes')) {
                 var sizes = this.model.get('sizes');
                 for(var sizeName in sizes) {

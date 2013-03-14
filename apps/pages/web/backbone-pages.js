@@ -670,9 +670,7 @@
                     this.$el.find('.sectionHtml').html(html);
                     
                     var saveMsg = opts.saveMsg || 'Thank you for your feedback!';
-                    
                     if(MsgsBackbone) {
-                        
                         this.msgForm = new window.MsgsBackbone.Form({
                             collection: window.msgsCollection,
                             ui: opts
@@ -683,7 +681,7 @@
                         });
                         $form = this.msgForm.render().$el;
                         $form.show();
-                        this.$el.find('.sectionHtml .feedback').html($form)
+                        this.$el.find('.sectionHtml .feedback').html($form);
                     }
                 }
             }
