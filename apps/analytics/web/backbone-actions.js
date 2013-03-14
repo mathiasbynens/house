@@ -709,23 +709,7 @@
         },
         render: function() {
             this.$el.html("");
-            var $byline = $('<span class="byline"></span>');
-            if (this.model.has("userAgent")) {
-                var str = this.model.get('userAgent');
-                var $ua = $('<userAgent><span class="string">' + str + '</span><span class="os"></span><span class="browser"></span></userAgent>');
-                if (this.model.has("agent")) {
-                    var $os = $ua.find('.os');
-                    var $browser = $ua.find('.browser');
-                    var agent = this.model.get('agent');
-                    $os.addClass(agent.os.replace(/\s/g, ''));
-                    $os.html(agent.os);
-                    $os.attr('title', agent.os);
-                    $browser.addClass(agent.family.replace(/\s/g, ''));
-                    $browser.html(agent.family);
-                    $browser.attr('title', agent.family);
-                }
-                this.$el.append($ua);
-            }
+            //console.log(this.model.attributes)
             var $name = $('<strong class="name">' + this.model.get("a") + "</strong>");
             this.$el.append($name);
             if (this.model.has("user")) {
@@ -742,13 +726,13 @@
                 });
             }
             if (this.model.has("host")) {
-                this.$el.append('<host><span class="ip">' + this.model.get("host").ip + "</span></host>");
+                this.$el.append('<span class="host"><span class="ip">' + this.model.get("host").ip + "</span></span>");
                 if(this.model.get("host").name) {
                     this.$el.find('host').append('<span class="name">' + this.model.get("host").name + "</span>");
                 }
             }
             if (this.model.has("referer")) {
-                this.$el.append('<referer>' + this.model.get("referer") + "</referer>");
+                this.$el.append('<span class="referer">' + this.model.get("referer") + "</span>");
             }
             if (this.model.has("s")) {
                 this.$el.append('<span class="sid">' + this.model.get("s") + "</span>");
@@ -763,7 +747,6 @@
                 }
                 this.$el.append($at);
             }
-            this.$el.append($byline);
             this.setElement(this.$el);
             return this;
         },

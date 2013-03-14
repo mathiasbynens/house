@@ -1220,6 +1220,12 @@ ul li.row {
     height: 45px;
     border-bottom: 1px inset #DBD5D5;
 }
+ul li[selected].row {
+    height: auto;
+}
+ul li[selected].row .userAgent .string {
+    display: inline;
+}
 .row strong {
     font-size: 1em;
     line-height: 45px;
@@ -1294,10 +1300,16 @@ ul li.row {
 }
 @media only screen and (min-width: 1024px) {
 }
-.useragent .string {
+.userAgent {
+    display: block;
+    height: 28px;
+    width: 50px;
+    float: left;
+}
+.userAgent .string {
     display: none;
 }
-.useragent .browser {
+.userAgent .browser {
     display: block;
     height: 24px;
     width: 24px;
@@ -1305,7 +1317,7 @@ ul li.row {
     text-indent: -1000px;
     margin-top: 8px;
 }
-.useragent .os {
+.userAgent .os {
     display: block;
     height: 24px;
     width: 24px;
@@ -1313,46 +1325,46 @@ ul li.row {
     text-indent: -1000px;
     margin-top: 8px;
 }
-.useragent .browser.Chrome {
+.userAgent .browser.Chrome {
     background: url("icn_chrome.png") top left no-repeat;
 }
-.useragent .browser.Firefox {
+.userAgent .browser.Firefox {
     background: url("icn_firefox.png");
 }
-.useragent .browser.IE {
+.userAgent .browser.IE {
     background: url("icn_internet_explorer.png");
 }
-.useragent .browser.IOS {
+.userAgent .browser.IOS {
     background: url("icn_ios.png");
 }
-.useragent .browser.Opera {
+.userAgent .browser.Opera {
     background: url("icn_opera.png");
 }
-.useragent .browser.Safari {
+.userAgent .browser.Safari {
     background: url("icn_safari.png");
 }
-.useragent .browser.iPhone {
+.userAgent .browser.iPhone {
     background: url("icn_safari.png");
 }
-.useragent .browser.Chromium {
+.userAgent .browser.Chromium {
     background: url("icn_chromium.png");
 }
-.useragent .os.Ubuntu {
+.userAgent .os.Ubuntu {
     background: url("icn_ubuntu.png");
 }
-.useragent .os.MacOSX {
+.userAgent .os.MacOSX {
     background: url("icn_apple.png");
 }
-.useragent .os.iOS {
+.userAgent .os.iOS {
     background: url("icn_ios.png");
 }
-.useragent .os.Windows {
+.userAgent .os.Windows {
     background: url("icn_windows.png");
 }
-.useragent .os.Linux {
+.userAgent .os.Linux {
     background: url("icn_linux.png");
 }
-.useragent .os.Android {
+.userAgent .os.Android {
     background: url("icn_android.png");
 }
 .row .ip {

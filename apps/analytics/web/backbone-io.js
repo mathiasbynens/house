@@ -712,22 +712,24 @@
             var $byline = $('<span class="byline"></span>');
             if (this.model.has("agent") && this.model.get('headers')["user-agent"]) {
                 var str = this.model.get('headers')["user-agent"];
-                var $ua = $('<span class="userAgent"><span class="string">' + str + '</span><span class="os"></span><span class="browser"></span></span>');
+                var $ua = $('<span class="userAgent" title="'+str+'"><span class="string">' + str + '</span><span class="os"></span><span class="browser"></span></span>');
                 if (this.model.has("agent")) {
                     var $os = $ua.find('.os');
                     var $browser = $ua.find('.browser');
                     var agent = this.model.get('agent');
+                    console.log(agent)
                     if(agent.os) {
                         var agentStr = '';
                         if(typeof agent.os == 'string') {
                             agentStr = agent.os;
+                            $os.addClass(agentStr.replace(/\s/g, ''));
                         } else if(agent.os.family) {
                             agentStr = agent.os.family;
                             if(agent.os.major) {
                                 agentStr = agentStr + ' ' + agent.os.major;
                             }
+                            $os.addClass(agent.os.family.replace(/\s/g, ''));
                         }
-                        $os.addClass(agentStr.replace(/\s/g, ''));
                         $os.html(agentStr);
                         $os.attr('title', agentStr);
                     }

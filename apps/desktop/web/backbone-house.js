@@ -119,7 +119,7 @@ Backbone.sync = function(method, model, options) {
       var restObj = {};
       var fullPut = true;
       var changedAttr = model.changedAttributes();
-      console.log(changedAttr);
+      //console.log(changedAttr);
       for(var i in changedAttr) {
           if(_.isUndefined(changedAttr[i])) {
               if(!restObj.hasOwnProperty("$unset")) {
@@ -130,7 +130,7 @@ Backbone.sync = function(method, model, options) {
               fullPut = false;
           }
       }
-      console.log(changedAttr);
+      //console.log(changedAttr);
       if(changedAttr) {
           restObj["$set"] = changedAttr;
           fullPut = false;

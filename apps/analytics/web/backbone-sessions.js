@@ -706,6 +706,7 @@
             this.$span.append(this.$ua);
             this.$span.append(this.$geo);
             this.$span.append('<span class="actionCount"></span> actions');
+            this.$span.append(this.$dur);
             this.$span.append('<span class="referer"></span>');
             this.$span.append(this.$at);
             this.model.bind("change", this.render, this);
@@ -715,19 +716,30 @@
             var self = this;
             if (this.model.has("userAgent")) {
                 var str = this.model.get('userAgent');
+                this.$ua.attr('title', str);
                 this.$span.find('.userAgent .string').html(str);
                 if (this.model.has("agent")) {
                     var $os = this.$ua.find('.os');
                     var $browser = this.$ua.find('.browser');
                     var agent = this.model.get('agent');
                     if(agent && agent.os) {
-                        $os.addClass(agent.os.replace(/\s/g, ''));
-                        $os.html(agent.os);
-                        $os.attr('title', agent.os);
-                        $browser.addClass(agent.family.replace(/\s/g, ''));
-                        $browser.html(agent.family);
-                        $browser.attr('title', agent.family + ' ' + agent.major);
+                        var agentStr = '';
+                        if(typeof agent.os == 'string') {
+                            agentStr = agent.os;
+                            $os.addClass(agentStr.replace(/\s/g, ''));
+                        } else if(agent.os.family) {
+                            agentStr = agent.os.family;
+                            if(agent.os.major) {
+                                agentStr = agentStr + ' ' + agent.os.major;
+                            }
+                            $os.addClass(agent.os.family.replace(/\s/g, ''));
+                        }
+                        $os.html(agentStr);
+                        $os.attr('title', agentStr);
                     }
+                    $browser.addClass(agent.family.replace(/\s/g, ''));
+                    $browser.html(agent.family);
+                    $browser.attr('title', agent.family + ' ' + agent.major);
                 }
             }
             if (this.model.has("user")) {
@@ -767,7 +779,6 @@
                 } else {
                     this.$dur.html(this.model.get("lastAt"));
                 }
-                this.$span.append(this.$dur);
             }
             if (this.model.has("lastAt")) {
                 if (window.clock) {
