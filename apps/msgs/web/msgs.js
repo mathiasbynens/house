@@ -1141,17 +1141,19 @@
                     msgs[i] = this.options.ui[i];
                 }
             }
-            this.$inputTxt = $('<label>'+msgs.msgLabel+'</label><textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"></textarea>');
-            this.$inputSub = $('<label>'+msgs.subjectLabel+'</label><input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off" />');
+            this.$inputTxt = $('<textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"></textarea>');
+            this.$inputSub = $('<input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off" />');
             this.$form = $('<form class="post"><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
+            
+            this.$form.find('fieldset').append('<label>'+msgs.subjectLabel+'</label>');
             this.$form.find('fieldset').append(this.$inputSub);
+            this.$form.find('fieldset').append('<label>'+msgs.msgLabel+'</label>');
             this.$form.find('fieldset').append(this.$inputTxt);
             this.$form.find('.controls').append('<input type="submit" value="'+msgs.sendPlaceholder+'" />');
         },
         render: function() {
             var self = this;
             if(this.$el.find('form').length === 0) {
-                console.log('append form');
                 this.$el.append(this.$form);
             }
             if(this.from) {
@@ -1189,8 +1191,10 @@
             if(sub !== '' && sub !== this.model.get('sub')) {
                 setDoc.sub = sub;
             }
-            console.log('setDoc')
-            console.log(setDoc)
+            if(_.size(setDoc) === 0) {
+                alert('A message is required!');
+                return false;
+            }
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,
@@ -1215,6 +1219,9 @@
         clear: function() {
             this.$inputTxt.val('');
             this.$inputSub.val('');
+            this.model = new Model({}, {
+                collection: this.collection
+            });
         }
     });
     
