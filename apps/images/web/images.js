@@ -80,10 +80,10 @@
             //options["metadata.proc"] = {"$exists": false};
             this.$upload = $('<span class="upload"></span>');
             self.newFileForm = new FilesBackbone.FileForm({collection: self.filesCollection, type: 'image'});
-            self.newFileForm.on('upload', function(data){
-                if(data.image) {
-                    self.imagesCollection.add(data.image);
-                    self.router.navigate('image/'+data.image.id, true);
+            self.newFileForm.on('uploaded', function(data){
+                if(data.data && data.data.image) {
+                    self.imagesCollection.add(data.data.image);
+                    self.router.navigate('image/'+data.data.image.id, true);
                 }
             });
             
@@ -224,7 +224,6 @@
                         }
                         console.log(imageEl[0]);
                         var currentPage = self.carousel.masterPages[1];
-                        console.log(currentPage);
                         currentPage.innerHTML = '';
                         currentPage.dataset.id = image.id;
                         currentPage.appendChild(imageEl[0])
