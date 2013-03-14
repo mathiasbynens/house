@@ -1189,7 +1189,6 @@ input[type="submit"]:active, button:active {
 	-webkit-box-orient:vertical;
 	-webkit-box-pack:center;
 	-webkit-box-align:center;
-	overflow:auto;
 }
 
 #swipeview-slider > span {

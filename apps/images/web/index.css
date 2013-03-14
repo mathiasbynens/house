@@ -6,7 +6,7 @@ body {
     margin-top: 50px;
 }
 body {
-    margin-top: 44px;
+    margin: 0 0;
 }
 a {
     color: #888888;
@@ -826,17 +826,17 @@ button.ui-button::-moz-focus-inner { border: 0; padding: 0; } /* reset extra pad
 .ui-widget-overlay { background: #aaaaaa/*{bgColorOverlay}*/ url(images/ui-bg_flat_0_aaaaaa_40x100.png)/*{bgImgUrlOverlay}*/ 50%/*{bgOverlayXPos}*/ 50%/*{bgOverlayYPos}*/ repeat-x/*{bgOverlayRepeat}*/; opacity: .3;filter:Alpha(Opacity=30)/*{opacityOverlay}*/; }
 .ui-widget-shadow { margin: -8px/*{offsetTopShadow}*/ 0 0 -8px/*{offsetLeftShadow}*/; padding: 8px/*{thicknessShadow}*/; background: #aaaaaa/*{bgColorShadow}*/ url(images/ui-bg_flat_0_aaaaaa_40x100.png)/*{bgImgUrlShadow}*/ 50%/*{bgShadowXPos}*/ 50%/*{bgShadowYPos}*/ repeat-x/*{bgShadowRepeat}*/; opacity: .3;filter:Alpha(Opacity=30)/*{opacityShadow}*/; -moz-border-radius: 8px/*{cornerRadiusShadow}*/; -khtml-border-radius: 8px/*{cornerRadiusShadow}*/; -webkit-border-radius: 8px/*{cornerRadiusShadow}*/; border-radius: 8px/*{cornerRadiusShadow}*/; }
 
-body header, body .info, body .actions {
+body #header, body .info, body .actions {
     -webkit-transition: opacity 0.3s ease;
     -moz-transition: opacity 0.3s ease;
     -o-transition: opacity 0.3s ease;
     transition: opacity 0.3s ease;
 }
-body.idle header {
+body.idle #header {
     opacity: 0;
     display: block;
 }
-header {
+#header {
     position: fixed;
     top:0;
     left:0;
@@ -1102,8 +1102,6 @@ button:active {
 #image-viewer {
 	width:100%;
 	min-width:320px;
-    margin-top: -44px;
-    padding-top: -44px;
 }
 
 #swipeview-slider > div {
@@ -1125,4 +1123,14 @@ button:active {
 
 .row .actions {
     display: none;
+}
+#image-viewer {
+    height: 100%;
+}
+html, body, .app {
+    height: 100%;
+}
+.app {
+    box-sizing: border-box;
+    padding-top: 44px;
 }

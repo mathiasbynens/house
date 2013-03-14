@@ -3,15 +3,15 @@
 
     var ImagesView = Backbone.View.extend({
         tag: 'span',
-        className: 'menu',
+        className: 'app',
         initialize: function() {
             var self = this;
-            require(['../desktop/swipeview.js'], function(){
-            require(['../files/backbone-files.js'], function(FilesBackbone){
+            require(['/desktop/swipeview.js'], function(){
+            require(['/files/backbone-files.js'], function(FilesBackbone){
                 window.FilesBackbone = FilesBackbone;
                 require(['backbone-images.js'], function(ImagesBackbone){
                     window.ImagesBackbone = ImagesBackbone;
-                    require(['../checkins/backbone-checkins.js'], function(CheckinsBackbone){
+                    require(['/checkins/backbone-checkins.js'], function(CheckinsBackbone){
                         window.CheckinsBackbone = CheckinsBackbone;
                         self.initFiles(function(){
                             self.initImages(function(){
