@@ -742,6 +742,7 @@
                     $browser.attr('title', agent.family + ' ' + agent.major);
                 }
             }
+            self.$name.html(self.model.get("name"));
             if (this.model.has("user")) {
                 this.$name.attr("data-owner-id", this.model.get("user"));
                 var owner = this.model.getOwner(function(owner) {
