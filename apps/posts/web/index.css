@@ -11,6 +11,9 @@ body {
 .app > .form {
     margin-bottom: 44px;
 }
+.app > .form, .app > .form form.post, .app > .form form.post fieldset {
+    height: 100%;
+}
 a {
     color: #888888;
     cursor: pointer;

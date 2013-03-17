@@ -742,7 +742,7 @@
                     $browser.attr('title', agent.family + ' ' + agent.major);
                 }
             }
-            self.$name.html(self.model.get("name"));
+            
             if (this.model.has("user")) {
                 this.$name.attr("data-owner-id", this.model.get("user"));
                 var owner = this.model.getOwner(function(owner) {
@@ -756,8 +756,12 @@
                             self.$name.append(self.ownerNameView.render().$el);
                         }
                         self.ownerNameView.render();
+                    } else {
+                        self.$name.html(self.model.get("name"));
                     }
                 });
+            } else {
+                self.$name.html(self.model.get("name"));
             }
             if (this.model.has("host")) {
                 this.$host.find('.ip').html(this.model.get("host").ip);

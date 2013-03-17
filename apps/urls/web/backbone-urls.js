@@ -61,8 +61,12 @@
                     socketOpts.secure = false;
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
+                if(socket.socket.connected) {
+                    //console.log('already connected and now joining '+self.collectionName);
+                    socket.emit('join', self.collectionName);
+                }
                 socket.on('connect', function(data) {
-                    console.log('connected and now joining '+self.collectionName);
+                    //console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
@@ -763,10 +767,13 @@
                 
             }
             this.$inputUrl = $('<input type="url" name="url" placeholder="http://example.com" />');
+            this.$public = $('<input type="checkbox" name="group" value="public" id="public_url_check" />');
         },
         render: function() {
             var self = this;
             this.$el.html('<h4>URL</h4><form class="urlForm"><input type="submit" value="Save" /></form>');
+            this.$el.find('form').prepend(this.$public);
+            this.$el.find('form').prepend('<label for="public_url_check">Make public</label>');
             this.$el.find('form').prepend(this.$inputUrl);
             if(this.model) {
                 this.$inputUrl.val(this.model.get('url'));
@@ -796,6 +803,11 @@
                 return false;
             }
             setDoc.url = url;
+            
+            if(this.$public.is(':checked')) {
+                setDoc.groups = ['public'];
+            }
+            
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false,

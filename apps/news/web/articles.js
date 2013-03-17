@@ -1,17 +1,22 @@
 (function() {
     
     var Model = Backbone.Model.extend({
-        collectionName: "msgs",
+        collectionName: "articles",
         initialize: function(attr, opts) {
-            var self = this;
-            //this.on("change", function(model, options){
-            //});
+            var colOpts = {
+                image: this
+            };
+            //attr.sizes = attr.sizes || [];
+            //this.imageSizeCollection = new ImageSizeCollection(attr.sizes, colOpts);
+            this.on("change", function(model, options){
+                console.log(arguments);
+            });
             this.views = {};
         },
-        getFrom: function(callback) {
-            if(this.has('from')) {
-                var from = this.get('from');
-                var user = window.usersCollection.getOrFetch(from.id, callback);
+        getOwner: function(callback) {
+            if(this.has('owner')) {
+                var owner = this.get('owner');
+                var user = window.usersCollection.getOrFetch(owner.id, callback);
             }
         },
         getFullView: function(options) {
@@ -30,29 +35,10 @@
             options = options || {};
             options.model = this;
             if (!this.avatar) {
-                var view = this.avatar = this.getNewAvatarNameView(options);
+                var view = this.avatar = new AvatarView(options);
                 this.views.avatar = view;
             }
             return this.avatar;
-        },
-        getAvatarView: function(options) {
-            return this.getAvatar(options);
-        },
-        getNewAvatarNameView: function(options) {
-            if (!options) options = {};
-            options.model = this;
-            return new AvatarNameView(options)
-        },
-        getAvatarNameView: function(options) {
-            if (!options) options = {};
-            options.model = this;
-            if (!this.hasOwnProperty("avatarNameView")) {
-                this.avatarNameView = this.getNewAvatarNameView(options);
-            }
-            return this.avatarNameView;
-        },
-        getUserView: function(options) {
-            return this.getFullView(options);
         },
         getRow: function(options) {
             options = options || {};
@@ -69,20 +55,20 @@
             }
         },
         slugStr: function(str) {
-            return str.toLowerCase().replace(/ /gi, '-');
+            return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
         },
         setSlug: function(slug) {
             this.set('slug', this.slugStr(slug));
         },
         getNavigatePath: function() {
-            return 'id/'+this.id;
+            return 'articles/'+this.id;
         }
     });
     
     var Collection = Backbone.Collection.extend({
         model: Model,
-        collectionName: 'msgs',
-        url: '/api/msgs',
+        collectionName: 'articles',
+        url: '/api/articles',
         initialize: function() {
             var self = this;
             self.pageSize = 10;
@@ -120,16 +106,16 @@
                         model.renderViews();
                     }
                 }
-                socket.on('insertedMsgs', function(doc) {
-                    console.log('inserted msgs');
+                socket.on('insertedArticles', function(doc) {
+                    console.log('inserted article');
                     insertOrUpdateDoc(doc);
                     self.count++;
                     self.trigger('count', self.count);
                 });
-                socket.on('updatedMsgs', function(doc) {
+                socket.on('updatedArticles', function(doc) {
                     insertOrUpdateDoc(doc);
                 });
-                socket.on('deletedMsgs', function(id) {
+                socket.on('deletedArticles', function(id) {
                     self.remove(id);
                     self.count--;
                     self.trigger('count', self.count);
@@ -169,7 +155,7 @@
                 options.sort = "at-";
             }
             this.applyFilters(options);
-            return this.fetch({data: options, update: true, remove: false, success: function(collection, response){
+            this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                     if(success) {
                         success();
                     }
@@ -208,7 +194,7 @@
             if(doc) {
                 callback(doc);
             } else {
-                var options = { "id": id };
+                var options = { "_id": id };
                 this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = self.get(id);
@@ -223,17 +209,17 @@
                 });
             }
         },
-        getOrFetchName: function(slug, callback) {
+        getOrFetchSlug: function(slug, callback) {
             var self = this;
             var doc;
-            doc = _.first(this.where({name:slug}));
+            doc = _.first(this.where({slug:slug}));
             if(doc) {
                 callback(doc);
             } else {
-                var options = { "name": slug };
+                var options = { "slug": slug };
                 this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
-                            doc = _.first(self.where({name:slug}));
+                            doc = _.first(self.where({slug:slug}));
                             callback(doc);
                         } else {
                             callback(false);
@@ -256,7 +242,19 @@
                 });
             }
             return this.view;
-        }
+        },
+        getSelectView: function(options) {
+            var self = this;
+            if (!options) options = {};
+            if (!this.hasOwnProperty("selectView")) {
+                options.collection = this;
+                this.selectView = new SelectListView(options);
+                this.selectView.on("selected", function(m) {
+                    self.trigger("selected", m);
+                });
+            }
+            return this.selectView;
+        },
     });
     
     var ListView = Backbone.View.extend({
@@ -264,8 +262,8 @@
         initialize: function() {
             var self = this;
             self.loading = false;
-            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> messages</div>');
-            var $ul = this.$ul = $('<ul class="images"></ul>');
+            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> articles</div>');
+            var $ul = this.$ul = $('<ul class="articles"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -318,7 +316,7 @@
             }
         },
         events: {
-          "click .list-pager": "loadMore"
+          "click .list-pager": "loadMore",
         },
         loadMore: function() {
             var self = this;
@@ -329,9 +327,9 @@
         getDocLayoutView: function(doc) {
             var view;
             if(this.layout === 'row') {
-                view = doc.getRow({list: this});
+                view = doc.getRow({list: self});
             } else if(this.layout === 'avatar') {
-                view = doc.getAvatar({list: this});
+                view = doc.getAvatar({list: self});
             }
             return view;
         },
@@ -385,6 +383,53 @@
         }
     });
     
+    var SelectListView = Backbone.View.extend({
+        tagName: "select",
+        className: "selectPost",
+        initialize: function() {
+            var self = this;
+        },
+        events: {
+        },
+        render: function() {
+            var self = this;
+            this.$el.html('');
+            this.$el.append('<option></option>');
+            //this.collection.sort({silent:true});
+            postsCollection.each(function(doc){
+                self.$el.append('<option value="'+doc.id+'">'+doc.get('title')+'</option>');
+            });
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v) {
+                this.$el.val(v.id);
+            } else {
+                var post_id = this.$el.val();
+                if(post_id) {
+                    var post = postsCollection.get(post_id);
+                    var p = {
+                        id: post_id
+                    }
+                    p.title = post.title;
+                    if(post.has('slug')) {
+                        p.slug = post.get('slug');
+                    }
+                    if(post.has('seq')) {
+                        p.seq = post.get('seq');
+                    }
+                    if(post.has('youtube') && post.get('youtube').id) {
+                        p.youtube = post.get('youtube');
+                    }
+                    return p;
+                } else {
+                    return false;
+                }
+            }
+        }
+    });
+    
     var ActionsView = Backbone.View.extend({
         tagName: "span",
         className: "actions",
@@ -393,8 +438,8 @@
             this.$el.html('');
             //self.$el.append(this.tagsView.render().$el);
             //self.$el.append(this.groupsView.render().$el);
-            //self.$el.append(this.editView.render().$el);
-            self.$el.append(this.deleteView.render().$el);
+            self.$el.append(this.editView.render().$el);
+            //self.$el.append(this.deleteView.render().$el);
             this.setElement(this.$el);
             return this;
         },
@@ -402,8 +447,8 @@
             this.actions = [];
             //this.groupsView = new GroupsView({id: this.id, model: this.model});
             //this.tagsView = new TagsView({id: this.id, model: this.model});
-            this.deleteView = new ActionDeleteView({model: this.model});
-            //this.editView = new ActionEditView({id: this.id, model: this.model});
+            //this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
+            this.editView = new ActionEditView({id: this.id, model: this.model});
         }
     });
 
@@ -424,7 +469,7 @@
         },
         events: {
           "click .publish": "publish",
-          "click .unpublish": "unpublish"
+          "click .unpublish": "unpublish",
         },
         publish: function() {
             var self = this;
@@ -465,15 +510,15 @@
         initialize: function() {
         },
         events: {
-          "click button": "select"
+          "click button": "select",
         },
         select: function() {
             var self = this;
-            if(confirm("Are you sure that you want to delete this message?")) {
+            if(confirm("Are you sure that you want to delete this post?")) {
                 this.model.destroy({success: function(model, response) {
-                    self.trigger('deleted');
+                  window.history.back(-1);
                 }, 
-                error: function(model, response) {
+                errorr: function(model, response) {
                     console.log(arguments);
                 },
                 wait: true});
@@ -493,7 +538,7 @@
         initialize: function() {
         },
         events: {
-          "click button": "select"
+          "click button": "select",
         },
         select: function() {
             var self = this;
@@ -687,36 +732,7 @@
             }
         }
     });
-    
-    var AvatarNameView = Backbone.View.extend({
-        tagName: "span",
-        className: "avatarName",
-        render: function() {
-            var self = this;
-            if (this.model.has("avatar")) {
-                var src = this.model.get("avatar");
-                if (src.indexOf("http") === 0) {} else {
-                    src = "/api/files/" + src;
-                }
-                this.$el.html('<img src="' + src + '" />');
-            } else {
-                this.$el.html("");
-            }
-            this.$el.append(this.model.get('name'));
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {},
-        events: {
-            click: "goToProfile"
-        },
-        goToProfile: function() {
-            this.trigger("goToProfile", this.model);
-        },
-        remove: function() {
-            $(this.el).remove();
-        }
-    });
+
 
     var RowView = Backbone.View.extend({
         tagName: "li",
@@ -727,26 +743,13 @@
             }
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
-            this.actions = new ActionsView({model: this.model});
+            //this.actions = new ActionsView({id: this.id, model: this.model});
         },
         render: function() {
-            var self = this;
             this.$el.html('');
             var $byline = $('<span class="byline"></span>');
-            this.$el.append('<span class="avatar"></span>');
-            if(this.model.has('from')) {
-                this.$el.append('<strong class="from">'+this.model.get('from').name+'</strong>');
-                this.model.getFrom(function(from){
-                    if(from) {
-                        self.$el.find('.from').html(from.getNewAvatarNameView().render().$el);
-                    }
-                });
-            }
-            if(this.model.has('to')) {
-                this.$el.append('<strong class="to">'+this.model.get('to').name+'</strong>');
-            }
-            if(this.model.has('txt')) {
-                this.$el.append('<span class="txt">'+this.model.get('txt')+'</span>');
+            if(this.model.has('title')) {
+                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
@@ -758,9 +761,17 @@
                 }
                 $byline.append($at);
             }
+            if(this.model.has('owner')) {
+                $byline.append(' by '+this.model.get('owner').name);
+            }
+            if(this.model.has('msg')) {
+                var $msg = $('<span class="msg"></span>');
+                $msg.html(this.model.get('msg'));
+                this.$el.append($msg);
+            }
             this.$el.append($byline);
-            this.$el.attr('data-id', this.model.get("id"));
-            this.$el.append(this.actions.render().$el);
+            this.$el.attr('data-id', this.model.get("_id"));
+            //this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
         },
@@ -785,6 +796,7 @@
           $(this.el).remove();
         }
     });
+    
     var FullView = Backbone.View.extend({
         tagName: "div",
         className: "fullView",
@@ -799,43 +811,28 @@
         },
         render: function() {
             var self = this;
-            var isa = (window.account && (account.isAdmin() || account.isOwner(this.model.id)));
             this.$el.html('');
             var $byline = $('<span></span>');
-            var displayName = this.model.get('displayName') || this.model.get('name');
-            this.$el.append('<h1 class="displayName">'+displayName+'</h1>');
-            this.$el.append('<h2 class="name">'+this.model.get('name')+'</h2>');
-            
-            this.$el.append('<span class="avatar"></span>');
-            if (this.model.has("avatar") && this.model.get("avatar")) {
-                var src = this.model.get("avatar");
-                if (typeof src == 'string') {
-                } else if(src.hasOwnProperty('url')) {
-                    src = src.url;
-                }
-                if (src.indexOf("http") === 0) {
-                    
-                } else {
-                    src = "/api/files/" + src;
-                }
-                this.$el.find('.avatar').append('<img src="' + src + '" />');
+            if(this.model.has('title')) {
+                this.$el.append('<h1 class="title">'+this.model.get('title')+'</h1>');
             }
-            
-            if(isa) {
-                this.$el.find('h1').append('<a class="editDisplayName" title="Edit display name" href="#">edit real name</a>');
-                this.$el.find('h2').append('<a class="editName" title="Edit user name" href="#">edit user name</a>');
-                this.$el.find('h2').append('<a class="editPass" title="Edit user password" href="#">change password</a>');
-                this.$el.find('.avatar').append('<a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
+            if(this.model.has('seq')) {
+                this.$el.append('<span class="seq">#'+this.model.get('seq')+'</span>');
             }
-            
-            if (this.model.has("url") || isa) {
-                var src = this.model.get("url") || 'http://yourwebsite.com/';
-                this.$el.append('<span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
-                if(isa) {
-                    this.$el.find('.url').append('<a class="editUrl" title="Edit web address" href="#">edit URL</a>');
-                }
+            if(this.model.has('owner')) {
+                $byline.append(' <i>by</i> <span class="owner">'+this.model.get('owner').name+'</span>');
+                $byline.attr('data-owner-id', this.model.get('owner').id);
+                var owner = this.model.getOwner(function(owner){
+                    if(owner) {
+                        $byline.find('.owner').html('');
+                        var ownerAvatarName = owner.getNewAvatarNameView();
+                        ownerAvatarName.on('goToProfile', function(user){
+                            self.trigger('goToProfile', user);
+                        });
+                        $byline.find('.owner').append(ownerAvatarName.render().$el);
+                    }
+                });
             }
-            
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
                 if(window.clock) {
@@ -844,25 +841,28 @@
                 } else {
                     $at.html(this.model.get('at'));
                 }
-                $byline.append(' member since ');
+                $byline.append(' ');
                 $byline.append($at);
             }
-            if(this.model.has('email')) {
-                var $msg = $('<div class="email"></div>');
-                $msg.html(this.model.get('email'));
-                
-                if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
-                    $msg.append('<a class="editEmail" title="Edit email address" href="#">edit email</a>');
+            if(this.model.has('youtube')) {
+                var yt = this.model.get('youtube');
+                if(yt.id) {
+                    var ytid = yt.id;
+                    this.$el.append('<span class="youtube"><div id="ytapiplayer-'+ytid+'"><iframe width="640" height="480" src="https://www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
                 }
-                
+            }
+            if(this.model.has('msg')) {
+                var $msg = $('<span class="msg"></span>');
+                $msg.html(this.model.get('msg'));
                 this.$el.append($msg);
             }
             this.$el.append($byline);
             
-            if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
+            if(window.account && (account.isAdmin() || account.isOwner(this.model.get('owner').id))) {
                 this.$el.append(this.actions.render().$el);
             }
-            this.setElement(this.$el);
+            this.trigger('resize');
+            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
             return this;
         },
         renderActions: function() {
@@ -872,151 +872,6 @@
             this.$el.show();
         },
         events: {
-            "click .editEmail": "editEmail",
-            "click .editName": "editName",
-            "click .editPass": "editPass",
-            "click .editDisplayName": "editDisplayName",
-            "click .editUrl": "editUrl",
-            "click .editAvatar": "editAvatar"
-        },
-        editPass: function() {
-            var self = this;
-            var txt = prompt("Enter your current, soon to be old password");
-            if(txt) {
-                var newPass = prompt("Enter a new password");
-                var newPassCheck = prompt("And prove that you didn't forget it already");
-                if(newPass && newPassCheck && newPass == newPassCheck) {
-                    this.model.set({'oldPass': txt, 'pass': newPass}, {silent: true});
-                    var saveModel = this.model.save(null, {
-                        silent: false ,
-                        wait: true
-                    });
-                    if(saveModel) {
-                        saveModel.done(function() {
-                            self.render();
-                            alert('Password changed.');
-                        });
-                        saveModel.fail(function(s, typeStr, respStr) {
-                            alert('Your password was incorrect');
-                        });
-                    }
-                } else {
-                    alert("That didn't take long!");
-                }
-            }
-            return false;
-        },
-        editEmail: function() {
-            var self = this;
-            var txt = prompt("Enter your new email address", this.model.get('email'));
-            if(txt && txt !== this.model.get('email')) {
-                this.model.set({'email': txt}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false ,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                    saveModel.fail(function(s, typeStr, respStr) {
-                        alert('That email address is already in use.');
-                    });
-                }
-            }
-            return false;
-        },
-        editName: function() {
-            var self = this;
-            var txt = prompt("Enter your new user name", this.model.get('name'));
-            if(txt && txt !== this.model.get('name')) {
-                this.model.set({'name': txt}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false ,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                    saveModel.fail(function(s, typeStr, respStr) {
-                        alert('That username is unavailable.');
-                    });
-                }
-            }
-            return false;
-        },
-        editDisplayName: function() {
-            var self = this;
-            var d = this.model.get('displayName') || this.model.get('name');
-            var txt = prompt("Enter your new display name", d);
-            if(txt && txt !== this.model.get('name')) {
-                this.model.set({'displayName': txt}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false ,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                }
-            }
-            return false;
-        },
-        editUrl: function() {
-            var self = this;
-            var txt = prompt("Enter your URL", this.model.get('url'));
-            if(txt && txt !== this.model.get('url')) {
-                this.model.set({'url': txt}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false ,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                }
-            }
-            return false;
-        },
-        editAvatar: function() {
-            var self = this;
-            if(window.FilesBackbone) {
-                self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
-                self.uploadFrame.on('uploaded', function(data){
-                    if(_.isArray(data)) {
-                        data = _.first(data);
-                    }
-                    if(data.image) {
-                        var setDoc = {
-                            image: data.image
-                        }
-                        var avatar = data.image.filename;
-                        if(data.image.sizes) {
-                            if(data.image.sizes.thumb) {
-                                avatar = data.image.sizes.thumb.filename;
-                            }
-                        }
-                        setDoc.avatar = avatar;
-                        self.model.set(setDoc, {silent: true});
-                        var saveModel = self.model.save(null, {
-                            silent: false,
-                            wait: true
-                        });
-                        if(saveModel) {
-                            saveModel.done(function() {
-                                self.render();
-                                self.uploadFrame.remove();
-                            });
-                        }
-                    }
-                });
-                this.$el.find('.avatar').append(this.uploadFrame.render().$el);
-                self.uploadFrame.pickFiles();
-            }
-            return false;
         },
         remove: function() {
             $(this.el).remove();
@@ -1036,6 +891,16 @@
             if(this.model.has('title')) {
                 this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
             }
+            if(this.model.has('at')) {
+                var $at = $('<span class="at"></span>');
+                if(window.clock) {
+                    $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
+                    $at.html(clock.moment(this.model.get('at')).calendar());
+                } else {
+                    $at.html(this.model.get('at'));
+                }
+                $byline.append($at);
+            }
             if(this.model.has('owner')) {
                 $byline.append(' by '+this.model.get('owner').name);
             }
@@ -1051,13 +916,12 @@
             return this;
         },
         initialize: function(options) {
-            if(options && options.list) {
+            if(options.list) {
                 this.list = options.list;
             }
-            if(this.model) {
-                this.model.bind('change', this.render, this);
-                this.model.bind('destroy', this.remove, this);
-            }
+            
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
         },
         events: {
           "click": "select"
@@ -1095,8 +959,8 @@
             this.$el.append(this.$options);
             if(this.model && this.model.has('groups') && this.model.get('groups').indexOf('public') !== -1) {
                 this.$el.val('public');
+                this.$options.find('option[value="public"]').attr('selected','selected');
             } else {
-                console.log('rpv')
                 this.$el.val('private');
                 this.$options.find('option[value="private"]').attr('selected','selected');
             }
@@ -1105,23 +969,54 @@
         },
         val: function() {
             var groups = [];
-            if(this.$el.find('input').val() == 'public') {
+            if(this.$el.val() == 'public') {
                 groups = ['public'];
             }
             return groups;
         },
         events: {
-        }
+        },
     });
+    
+    var YoutubeView = Backbone.View.extend({
+        tagName: "span",
+        className: "youtube",
+        initialize: function() {
+            this.$input = $('<input name="youtube_id" placeholder="youtube id" />');
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$input);
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v) {
+                this.$input.val(v);
+            } else {
+                var ytid = this.$input.val();
+                var y = {};
+                if(this.model.has('youtube')) {
+                    _.clone(this.model.get('youtube'));
+                }
+                y.id = ytid;
+                return y;
+            }
+        },
+        events: {
+            
+        },
+    });
+    
     var FormView = Backbone.View.extend({
         tagName: "div",
         className: "form",
         initialize: function() {
             var self = this;
-            this.$from = $('');
+            this.$owner = $('');
             if(this.model && this.model.id) {
                 this.$el.attr('data-id', this.model.id);
-                this.$from = $(''+this.model.get('from').name);
+                this.$owner = $(''+this.model.get('owner').name);
             } else {
                 if(!this.model) {
                     this.model = new Model({}, {
@@ -1130,75 +1025,302 @@
                 } else {
                 }
             }
-            if(window.app && window.app.user) {
-                this.from = window.app.user.getNewAvatarNameView();
-            }
-            var msgs = {
-                sendPlaceholder: "SEND",
-                msgPlaceholder: "Your message",
-                subjectPlaceholder: "Subject of your message",
-                msgLabel: "",
-                subjectLabel: ""
-            }
-            if(this.options.ui) {
-                for(var i in this.options.ui) {
-                    msgs[i] = this.options.ui[i];
+            self.uploadAvatarFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
+            self.uploadAvatarFrame.on('uploaded', function(data){
+                if(_.isArray(data)) {
+                    data = _.first(data);
                 }
-            }
-            this.$inputTxt = $('<textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"></textarea>');
-            this.$inputSub = $('<input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off" />');
-            this.$form = $('<form class="post"><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
+                if(data.image) {
+                    if(!self.model.isNew()) {
+                        var setDoc = {
+                            avatar: data.image
+                        }
+                        self.model.set(setDoc, {silent: true});
+                        var saveModel = self.model.save(null, {
+                            silent: false,
+                            wait: true
+                        });
+                        if(saveModel) {
+                            saveModel.done(function() {
+                                self.trigger("newImage", self.model);
+                                self.render();
+                            });
+                        }
+                    } else {
+                        
+                    }
+                }
+            });
+            self.uploadMediaAudioFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'audio', metadata:{groups: ['public']}});
+            self.uploadMediaAudioFrame.on('uploaded', function(data){
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                if(!self.model.isNew()) {
+                    var setDoc = {
+                        audio: data.file
+                    }
+                    self.model.set(setDoc, {silent: true});
+                    var saveModel = self.model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    if(saveModel) {
+                        saveModel.done(function() {
+                            self.trigger("newAudio", self.model);
+                            self.render();
+                        });
+                    }
+                } else {
+                    
+                }
+            });
+            self.uploadMediaVideoFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'video', metadata:{groups: ['public']}});
+            self.uploadMediaVideoFrame.on('uploaded', function(data){
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                if(!self.model.isNew()) {
+                    var setDoc = {
+                        video: data.file
+                    }
+                    self.model.set(setDoc, {silent: true});
+                    var saveModel = self.model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    if(saveModel) {
+                        saveModel.done(function() {
+                            self.trigger("newVideo", self.model);
+                            self.render();
+                        });
+                    }
+                } else {
+                    
+                }
+            });
             
-            this.$form.find('fieldset').append('<label>'+msgs.subjectLabel+'</label>');
-            this.$form.find('fieldset').append(this.$inputSub);
-            this.$form.find('fieldset').append('<label>'+msgs.msgLabel+'</label>');
-            this.$form.find('fieldset').append(this.$inputTxt);
-            this.$form.find('.controls').append('<input type="submit" value="'+msgs.sendPlaceholder+'" />');
+            this.wsyi_id = 'wysihtml5-'+this.cid;
+            this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your post" autocomplete="off" />');
+            this.$msgToolbar = $('<div class="wysihtml5-toolbar" id="'+this.wsyi_id+'-toolbar"><header><ul class="commands">\
+                  <li data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command"></li>\
+                  <li data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command"></li>\
+                  <li data-wysihtml5-command="insertUnorderedList" title="Insert an unordered list" class="command"></li>\
+                  <li data-wysihtml5-command="insertOrderedList" title="Insert an ordered list" class="command"></li>\
+                  <li data-wysihtml5-command="createLink" title="Insert a link" class="command"></li>\
+                  <li data-wysihtml5-command="insertImage" title="Insert an image" class="command"></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1" title="Insert headline 1" class="command"></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2" title="Insert headline 2" class="command"></li>\
+                  <li data-wysihtml5-command="insertSpeech" title="Insert speech" class="command"></li>\
+                  <li data-wysihtml5-action="change_view" title="Show HTML" class="action"></li></ul></header>\
+              <div data-wysihtml5-dialog="createLink" style="display: none;"><label>Link:<input data-wysihtml5-dialog-field="href" value="http://"></label><a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a></div>\
+              <div data-wysihtml5-dialog="insertImage" style="display: none;">\
+                <label>Image:<input data-wysihtml5-dialog-field="src" value="http://"></label>\
+                <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a></div></div>');
+            this.$inputMsg = $('<textarea id="'+this.wsyi_id+'-textarea" name="msg" placeholder="Your message..."></textarea>');
+            this.$inputSlug = $('<input type="text" name="slug" placeholder="post-title" />');
+            this.$slugShare = $('<span class="slugShare"></span>');
+            this.$slugShare.html('/posts/'); //window.location.origin+
+            this.$slugShare.append(this.$inputSlug);
+            
+            this.$inputAtDate = $('<input name="at-date" type="date" />');
+            this.$inputAtTime = $('<input name="at-time" type="time" />');
+            
+            this.$inputSeq = $('<input type="text" name="seq" placeholder="sequence #" />');
+            
+            this.atPublished = $('<span class="published"><span class="by">by <span class="owner"></span></span><br /><span class="at">at </span></span>');
+            this.atPublished.find('.owner').append(this.$owner);
+            this.atPublished.find('.at').append(this.$inputAtDate);
+            this.atPublished.find('.at').append(this.$inputAtTime);
+            
+            this.youtubeView = new YoutubeView({model: this.model});
+            this.inputGroupsView = new SelectGroupsView({model: this.model});
+            this.feedView = new ActionFeedView({model: this.model});
+            this.deleteView = new ActionDeleteView({model: this.model});
+            
+            this.$form = $('<form class="post"><fieldset></fieldset><controls></controls></form>');
+            this.$form.find('fieldset').append(this.$inputTitle);
+            this.$form.append(this.$msgToolbar);
+            this.$form.find('fieldset').append(this.$inputMsg);
+            this.$form.find('fieldset').append('<hr />');
+            this.$form.find('fieldset').append(this.$slugShare);
+            this.$form.find('fieldset').append(this.$inputSeq);
+            this.$form.find('fieldset').append(this.atPublished);
+            this.$form.find('fieldset').append(this.youtubeView.render().$el);
+            
+            this.$form.find('fieldset').append('<span class="avatar"><span class="embed"></span><button class="attachImage">Attach Image</button></span>');
+            this.$form.find('fieldset').append('<span class="audio"><span class="embed"></span><button class="attachAudio">Attach Audio</button></span>');
+            this.$form.find('fieldset').append('<span class="video"><span class="embed"></span><button class="attachVideo">Attach Video</button></span>');
+            
+            this.$form.find('fieldset').append(this.uploadAvatarFrame.render().$el.hide());
+            this.$form.find('fieldset').append(this.uploadMediaAudioFrame.render().$el.hide());
+            this.$form.find('fieldset').append(this.uploadMediaVideoFrame.render().$el.hide());
+            
+            this.$form.find('fieldset').append(this.feedView.render().$el);
+            this.$form.find('fieldset').append(this.deleteView.render().$el);
+            this.$form.find('controls').append(this.inputGroupsView.render().$el);
+            this.$form.find('controls').append('<input type="submit" value="POST" />');
         },
         render: function() {
             var self = this;
             if(this.$el.find('form').length === 0) {
+                console.log('append form');
                 this.$el.append(this.$form);
             }
-            if(this.from) {
-                this.$el.find('.from').append(this.from.render().$el);
-            }
             if(this.model) {
-                if(this.model.has('txt')) {
-                    this.$inputTxt.val(this.model.get('txt'));
+                if(this.model.has('title')) {
+                    this.$inputTitle.val(this.model.get('title'));
                 }
-                if(this.model.has('sub')) {
-                    this.$inputSub.val(this.model.get('sub'));
+                if(this.model.has('seq')) {
+                    this.$inputSeq.val(this.model.get('seq'));
+                } else if(this.model.isNew()) {
+                    var ii = parseInt(this.model.collection.count) + 1;
+                    this.$inputSeq.val(ii);
                 }
-                if(this.model.has('from')) {
-                    this.model.getFrom(function(from){
-                        if(from) {
-                            self.$el.find('.from').html(from.getAvatarNameView().render().$el);
+                if(this.model.has('msg')) {
+                    this.$inputMsg.val(this.model.get('msg'));
+                }
+                if(this.model.has('slug')) {
+                    this.$inputSlug.val(this.model.get('slug'));
+                }
+                if(this.model.has('youtube')) {
+                    var youtube = this.model.get('youtube');
+                    this.youtubeView.val(youtube.id);
+                }
+                
+                if(this.model.has('avatar')) {
+                    var avatarImage = this.model.get('avatar');
+                    var $avatarImg = $('<img src="/api/files/'+avatarImage.filename+'" />');
+                    // TODO detatch media
+                    this.$form.find('.avatar .embed').html($avatarImg);
+                }
+                if(this.model.has('audio')) {
+                    var media = this.model.get('audio');
+                    var $mediaEmbed = $('<audio controls preload="none" src="/api/files/'+media.filename+'" />');
+                    // TODO detatch media
+                    this.$form.find('.audio .embed').html($mediaEmbed);
+                }
+                if(this.model.has('video')) {
+                    var media = this.model.get('video');
+                    var $mediaEmbed = $('<video controls preload="none" src="/api/files/'+media.filename+'" />');
+                    // TODO detatch media
+                    this.$form.find('.video .embed').html($mediaEmbed);
+                }
+                
+                if(this.model.has('groups')) {
+                    this.inputGroupsView.val(this.model.get('groups'));
+                }
+                if(this.model.has('at')) {
+                    var m = moment(this.model.get('at'));
+                    this.$inputAtTime.val(m.format('HH:mm'));
+                    this.$inputAtDate.val(m.format('YYYY-MM-DD'));
+                }
+                if(this.model.has('owner')) {
+                    this.model.getOwner(function(owner){
+                        if(owner) {
+                            self.$owner.html(owner.getNewAvatarNameView().render().$el);
                         }
                     });
+                } else {
+                    // logged in user
                 }
             }
             this.setElement(this.$el);
             return this;
         },
+        wysiEditor: function() {
+            // set h/w of textarea
+            $('#'+this.wsyi_id+'-textarea').css('height', $('#'+this.wsyi_id+'-textarea').outerHeight());
+            $('#'+this.wsyi_id+'-textarea').css('width', $('#'+this.wsyi_id+'-textarea').outerWidth());
+            this.editor = new wysihtml5.Editor(this.wsyi_id+"-textarea", { // id of textarea element
+              toolbar:      this.wsyi_id+"-toolbar", // id of toolbar element
+              parserRules:  wysihtml5ParserRules // defined in parser rules set 
+            });
+        },
         events: {
-            "submit form": "submit"
+            "submit form": "submit",
+            'keyup input[name="title"]': "throttleTitle",
+            'blur input[name="title"]': "blurTitle",
+            "click .attachImage": "attachImage",
+            "click .attachAudio": "attachAudio",
+            "click .attachVideo": "attachVideo"
+        },
+        attachImage: function() {
+            this.uploadAvatarFrame.pickFiles();
+            this.uploadAvatarFrame.$el.show();
+            return false;
+        },
+        attachAudio: function() {
+            this.uploadMediaAudioFrame.pickFiles();
+            this.uploadMediaAudioFrame.$el.show();
+            return false;
+        },
+        attachVideo: function() {
+            this.uploadMediaVideoFrame.pickFiles();
+            this.uploadMediaVideoFrame.$el.show();
+            return false;
+        },
+        blurTitle: function() {
+            console.log('blur title');
+            var titleStr = this.$inputTitle.val().trim();
+            if(titleStr != '') {
+                // autosave
+            }
+        },
+        throttleTitle: _.debounce(function(){
+            this.refreshTitle.call(this, arguments);
+        }, 300),
+        refreshTitle: function(e) {
+            var titleStr = this.$inputTitle.val().trim();
+            this.trigger('title', titleStr);
+            //this.model.set('title', titleStr);
+            if(!this.model.has('slug') || this.model.isNew()) {
+                //this.model.setSlug(titleStr);
+                 this.$inputSlug.val(this.model.slugStr(titleStr));
+            }
+            //this.render();
+            //this.focus();
         },
         submit: function() {
             var self = this;
             var setDoc = {};
-            var txt = this.$inputTxt.val();
-            var sub = this.$inputSub.val();
-            if(txt !== '' && txt !== this.model.get('txt')) {
-                setDoc.txt = txt;
+            var title = this.$inputTitle.val();
+            var seq = this.$inputSeq.val();
+            var msg = this.$inputMsg.val();
+            var slug = this.$inputSlug.val();
+            var groups = this.inputGroupsView.val();
+            var youtube = this.youtubeView.val();
+            
+            var atDate = this.$inputAtDate.val();
+            var atTime = this.$inputAtTime.val();
+            
+            if(atDate && atTime) {
+                var formDate = moment(atDate+' '+atTime, "YYYY-MM-DD HH:mm");
+                var at = new Date(this.model.get('at'));
+                if(formDate && at.getTime() !== formDate.toDate().getTime()) {
+                    setDoc.at = formDate.toDate();
+                }
             }
-            if(sub !== '' && sub !== this.model.get('sub')) {
-                setDoc.sub = sub;
+            if(title !== '' && title !== this.model.get('title')) {
+                setDoc.title = title;
             }
-            if(_.size(setDoc) === 0) {
-                alert('A message is required!');
-                return false;
+            if(seq !== '' && seq !== this.model.get('seq')) {
+                setDoc.seq = parseInt(seq, 10);
             }
+            if(msg !== '' && msg !== this.model.get('msg')) {
+                setDoc.msg = msg;
+            }
+            if(slug !== '' && slug !== this.model.get('slug')) {
+                setDoc.slug = slug;
+            }
+            if(groups.length > 0 && groups !== this.model.get('groups')) {
+                setDoc.groups = groups;
+            }
+            if(youtube && !_.isEqual(youtube, this.model.get('youtube'))) {
+                setDoc.youtube = youtube;
+            }
+            console.log('setDoc')
+            console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,
@@ -1215,17 +1337,10 @@
             return false;
         },
         focus: function() {
-            this.$inputTxt.focus();
+            this.$inputTitle.focus();
         },
         remove: function() {
-            this.$el.remove();
-        },
-        clear: function() {
-            this.$inputTxt.val('');
-            this.$inputSub.val('');
-            this.model = new Model({}, {
-                collection: this.collection
-            });
+            $(this.el).remove();
         }
     });
     

@@ -1,6 +1,6 @@
 {
   "name": "house",
-  "version": "0.0.444",
+  "version": "0.0.445",
   "dependencies": {
     "optimist": "latest",
     "formidable-plus": "latest",
@@ -18,7 +18,8 @@
     "useragent": "latest",
     "imagemagick": "latest",
     "ent": "latest",
-    "moment": "latest"
+    "moment": "latest",
+    "feedparser": "latest"
   },
   "devDependencies": {
     "mocha": "*"

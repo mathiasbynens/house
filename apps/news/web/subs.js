@@ -1,17 +1,22 @@
 (function() {
     
     var Model = Backbone.Model.extend({
-        collectionName: "msgs",
+        collectionName: "subs",
         initialize: function(attr, opts) {
-            var self = this;
-            //this.on("change", function(model, options){
-            //});
+            var colOpts = {
+                image: this
+            };
+            //attr.sizes = attr.sizes || [];
+            //this.imageSizeCollection = new ImageSizeCollection(attr.sizes, colOpts);
+            this.on("change", function(model, options){
+                console.log(arguments);
+            });
             this.views = {};
         },
-        getFrom: function(callback) {
-            if(this.has('from')) {
-                var from = this.get('from');
-                var user = window.usersCollection.getOrFetch(from.id, callback);
+        getOwner: function(callback) {
+            if(this.has('owner')) {
+                var owner = this.get('owner');
+                var user = window.usersCollection.getOrFetch(owner.id, callback);
             }
         },
         getFullView: function(options) {
@@ -26,33 +31,19 @@
             }
             return this.fullView;
         },
+        getNewAvatar: function(options) {
+            options = options || {};
+            options.model = this;
+            return new AvatarView(options);
+        },
         getAvatar: function(options) {
             options = options || {};
             options.model = this;
             if (!this.avatar) {
-                var view = this.avatar = this.getNewAvatarNameView(options);
+                var view = this.avatar = this.getNewAvatar(options);
                 this.views.avatar = view;
             }
             return this.avatar;
-        },
-        getAvatarView: function(options) {
-            return this.getAvatar(options);
-        },
-        getNewAvatarNameView: function(options) {
-            if (!options) options = {};
-            options.model = this;
-            return new AvatarNameView(options)
-        },
-        getAvatarNameView: function(options) {
-            if (!options) options = {};
-            options.model = this;
-            if (!this.hasOwnProperty("avatarNameView")) {
-                this.avatarNameView = this.getNewAvatarNameView(options);
-            }
-            return this.avatarNameView;
-        },
-        getUserView: function(options) {
-            return this.getFullView(options);
         },
         getRow: function(options) {
             options = options || {};
@@ -69,20 +60,20 @@
             }
         },
         slugStr: function(str) {
-            return str.toLowerCase().replace(/ /gi, '-');
+            return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
         },
         setSlug: function(slug) {
             this.set('slug', this.slugStr(slug));
         },
         getNavigatePath: function() {
-            return 'id/'+this.id;
+            return 'subs/'+this.id;
         }
     });
     
     var Collection = Backbone.Collection.extend({
         model: Model,
-        collectionName: 'msgs',
-        url: '/api/msgs',
+        collectionName: 'subs',
+        url: '/api/subs',
         initialize: function() {
             var self = this;
             self.pageSize = 10;
@@ -120,16 +111,16 @@
                         model.renderViews();
                     }
                 }
-                socket.on('insertedMsgs', function(doc) {
-                    console.log('inserted msgs');
+                socket.on('insertedSubs', function(doc) {
+                    console.log('inserted subs');
                     insertOrUpdateDoc(doc);
                     self.count++;
                     self.trigger('count', self.count);
                 });
-                socket.on('updatedMsgs', function(doc) {
+                socket.on('updatedSubs', function(doc) {
                     insertOrUpdateDoc(doc);
                 });
-                socket.on('deletedMsgs', function(id) {
+                socket.on('deletedSubs', function(id) {
                     self.remove(id);
                     self.count--;
                     self.trigger('count', self.count);
@@ -169,7 +160,7 @@
                 options.sort = "at-";
             }
             this.applyFilters(options);
-            return this.fetch({data: options, update: true, remove: false, success: function(collection, response){
+            this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                     if(success) {
                         success();
                     }
@@ -208,7 +199,7 @@
             if(doc) {
                 callback(doc);
             } else {
-                var options = { "id": id };
+                var options = { "_id": id };
                 this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = self.get(id);
@@ -223,17 +214,17 @@
                 });
             }
         },
-        getOrFetchName: function(slug, callback) {
+        getOrFetchUrl: function(url, callback) {
             var self = this;
             var doc;
-            doc = _.first(this.where({name:slug}));
+            doc = _.first(this.where({url:url}));
             if(doc) {
                 callback(doc);
             } else {
-                var options = { "name": slug };
+                var options = { "url": url };
                 this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
-                            doc = _.first(self.where({name:slug}));
+                            doc = _.first(self.where({url:url}));
                             callback(doc);
                         } else {
                             callback(false);
@@ -256,7 +247,19 @@
                 });
             }
             return this.view;
-        }
+        },
+        getSelectView: function(options) {
+            var self = this;
+            if (!options) options = {};
+            if (!this.hasOwnProperty("selectView")) {
+                options.collection = this;
+                this.selectView = new SelectListView(options);
+                this.selectView.on("selected", function(m) {
+                    self.trigger("selected", m);
+                });
+            }
+            return this.selectView;
+        },
     });
     
     var ListView = Backbone.View.extend({
@@ -264,8 +267,8 @@
         initialize: function() {
             var self = this;
             self.loading = false;
-            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> messages</div>');
-            var $ul = this.$ul = $('<ul class="images"></ul>');
+            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> subs</div>');
+            var $ul = this.$ul = $('<ul class="subs"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -318,7 +321,7 @@
             }
         },
         events: {
-          "click .list-pager": "loadMore"
+          "click .list-pager": "loadMore",
         },
         loadMore: function() {
             var self = this;
@@ -329,9 +332,9 @@
         getDocLayoutView: function(doc) {
             var view;
             if(this.layout === 'row') {
-                view = doc.getRow({list: this});
+                view = doc.getRow({list: self});
             } else if(this.layout === 'avatar') {
-                view = doc.getAvatar({list: this});
+                view = doc.getAvatar({list: self});
             }
             return view;
         },
@@ -385,6 +388,53 @@
         }
     });
     
+    var SelectListView = Backbone.View.extend({
+        tagName: "select",
+        className: "selectPost",
+        initialize: function() {
+            var self = this;
+        },
+        events: {
+        },
+        render: function() {
+            var self = this;
+            this.$el.html('');
+            this.$el.append('<option></option>');
+            //this.collection.sort({silent:true});
+            postsCollection.each(function(doc){
+                self.$el.append('<option value="'+doc.id+'">'+doc.get('title')+'</option>');
+            });
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v) {
+                this.$el.val(v.id);
+            } else {
+                var post_id = this.$el.val();
+                if(post_id) {
+                    var post = postsCollection.get(post_id);
+                    var p = {
+                        id: post_id
+                    }
+                    p.title = post.title;
+                    if(post.has('slug')) {
+                        p.slug = post.get('slug');
+                    }
+                    if(post.has('seq')) {
+                        p.seq = post.get('seq');
+                    }
+                    if(post.has('youtube') && post.get('youtube').id) {
+                        p.youtube = post.get('youtube');
+                    }
+                    return p;
+                } else {
+                    return false;
+                }
+            }
+        }
+    });
+    
     var ActionsView = Backbone.View.extend({
         tagName: "span",
         className: "actions",
@@ -402,7 +452,7 @@
             this.actions = [];
             //this.groupsView = new GroupsView({id: this.id, model: this.model});
             //this.tagsView = new TagsView({id: this.id, model: this.model});
-            this.deleteView = new ActionDeleteView({model: this.model});
+            this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
             //this.editView = new ActionEditView({id: this.id, model: this.model});
         }
     });
@@ -424,7 +474,7 @@
         },
         events: {
           "click .publish": "publish",
-          "click .unpublish": "unpublish"
+          "click .unpublish": "unpublish",
         },
         publish: function() {
             var self = this;
@@ -465,15 +515,15 @@
         initialize: function() {
         },
         events: {
-          "click button": "select"
+          "click button": "select",
         },
         select: function() {
             var self = this;
-            if(confirm("Are you sure that you want to delete this message?")) {
+            if(confirm("Are you sure that you want to unsubscribe?")) {
                 this.model.destroy({success: function(model, response) {
                     self.trigger('deleted');
                 }, 
-                error: function(model, response) {
+                errorr: function(model, response) {
                     console.log(arguments);
                 },
                 wait: true});
@@ -493,7 +543,7 @@
         initialize: function() {
         },
         events: {
-          "click button": "select"
+          "click button": "select",
         },
         select: function() {
             var self = this;
@@ -687,36 +737,6 @@
             }
         }
     });
-    
-    var AvatarNameView = Backbone.View.extend({
-        tagName: "span",
-        className: "avatarName",
-        render: function() {
-            var self = this;
-            if (this.model.has("avatar")) {
-                var src = this.model.get("avatar");
-                if (src.indexOf("http") === 0) {} else {
-                    src = "/api/files/" + src;
-                }
-                this.$el.html('<img src="' + src + '" />');
-            } else {
-                this.$el.html("");
-            }
-            this.$el.append(this.model.get('name'));
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {},
-        events: {
-            click: "goToProfile"
-        },
-        goToProfile: function() {
-            this.trigger("goToProfile", this.model);
-        },
-        remove: function() {
-            $(this.el).remove();
-        }
-    });
 
     var RowView = Backbone.View.extend({
         tagName: "li",
@@ -727,26 +747,32 @@
             }
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
-            this.actions = new ActionsView({model: this.model});
+            this.actions = new ActionsView({id: this.id, model: this.model});
         },
         render: function() {
-            var self = this;
             this.$el.html('');
             var $byline = $('<span class="byline"></span>');
-            this.$el.append('<span class="avatar"></span>');
-            if(this.model.has('from')) {
-                this.$el.append('<strong class="from">'+this.model.get('from').name+'</strong>');
-                this.model.getFrom(function(from){
-                    if(from) {
-                        self.$el.find('.from').html(from.getNewAvatarNameView().render().$el);
+            if(this.model.has('title')) {
+                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
+            }
+            
+            if(this.model.has('urlDoc')) {
+                var urlDoc = this.model.get('urlDoc');
+                if(urlDoc.channel) {
+                    var $channel = $('<span class="channel"></span>');
+                    if(urlDoc.channel.title) {
+                        if(urlDoc.channel.link) {
+                            $channel.append('<span class="title"><a href="'+urlDoc.channel.link+'" target="_new">'+urlDoc.channel.title+'</a></span>');
+                        } else {
+                            $channel.append('<span class="title">'+urlDoc.channel.title+'</span>');
+                        }
                     }
-                });
+                    this.$el.append($channel);
+                }
             }
-            if(this.model.has('to')) {
-                this.$el.append('<strong class="to">'+this.model.get('to').name+'</strong>');
-            }
-            if(this.model.has('txt')) {
-                this.$el.append('<span class="txt">'+this.model.get('txt')+'</span>');
+            
+            if(this.model.has('url')) {
+                this.$el.append('<span class="url">'+this.model.get('url')+'</span>');
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
@@ -758,8 +784,11 @@
                 }
                 $byline.append($at);
             }
+            if(this.model.has('owner')) {
+                $byline.append(' by '+this.model.get('owner').name);
+            }
             this.$el.append($byline);
-            this.$el.attr('data-id', this.model.get("id"));
+            this.$el.attr('data-id', this.model.get("_id"));
             this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
@@ -785,6 +814,7 @@
           $(this.el).remove();
         }
     });
+    
     var FullView = Backbone.View.extend({
         tagName: "div",
         className: "fullView",
@@ -799,43 +829,28 @@
         },
         render: function() {
             var self = this;
-            var isa = (window.account && (account.isAdmin() || account.isOwner(this.model.id)));
             this.$el.html('');
             var $byline = $('<span></span>');
-            var displayName = this.model.get('displayName') || this.model.get('name');
-            this.$el.append('<h1 class="displayName">'+displayName+'</h1>');
-            this.$el.append('<h2 class="name">'+this.model.get('name')+'</h2>');
-            
-            this.$el.append('<span class="avatar"></span>');
-            if (this.model.has("avatar") && this.model.get("avatar")) {
-                var src = this.model.get("avatar");
-                if (typeof src == 'string') {
-                } else if(src.hasOwnProperty('url')) {
-                    src = src.url;
-                }
-                if (src.indexOf("http") === 0) {
-                    
-                } else {
-                    src = "/api/files/" + src;
-                }
-                this.$el.find('.avatar').append('<img src="' + src + '" />');
+            if(this.model.has('title')) {
+                this.$el.append('<h1 class="title">'+this.model.get('title')+'</h1>');
             }
-            
-            if(isa) {
-                this.$el.find('h1').append('<a class="editDisplayName" title="Edit display name" href="#">edit real name</a>');
-                this.$el.find('h2').append('<a class="editName" title="Edit user name" href="#">edit user name</a>');
-                this.$el.find('h2').append('<a class="editPass" title="Edit user password" href="#">change password</a>');
-                this.$el.find('.avatar').append('<a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
+            if(this.model.has('seq')) {
+                this.$el.append('<span class="seq">#'+this.model.get('seq')+'</span>');
             }
-            
-            if (this.model.has("url") || isa) {
-                var src = this.model.get("url") || 'http://yourwebsite.com/';
-                this.$el.append('<span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
-                if(isa) {
-                    this.$el.find('.url').append('<a class="editUrl" title="Edit web address" href="#">edit URL</a>');
-                }
+            if(this.model.has('owner')) {
+                $byline.append(' <i>by</i> <span class="owner">'+this.model.get('owner').name+'</span>');
+                $byline.attr('data-owner-id', this.model.get('owner').id);
+                var owner = this.model.getOwner(function(owner){
+                    if(owner) {
+                        $byline.find('.owner').html('');
+                        var ownerAvatarName = owner.getNewAvatarNameView();
+                        ownerAvatarName.on('goToProfile', function(user){
+                            self.trigger('goToProfile', user);
+                        });
+                        $byline.find('.owner').append(ownerAvatarName.render().$el);
+                    }
+                });
             }
-            
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
                 if(window.clock) {
@@ -844,25 +859,28 @@
                 } else {
                     $at.html(this.model.get('at'));
                 }
-                $byline.append(' member since ');
+                $byline.append(' ');
                 $byline.append($at);
             }
-            if(this.model.has('email')) {
-                var $msg = $('<div class="email"></div>');
-                $msg.html(this.model.get('email'));
-                
-                if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
-                    $msg.append('<a class="editEmail" title="Edit email address" href="#">edit email</a>');
+            if(this.model.has('youtube')) {
+                var yt = this.model.get('youtube');
+                if(yt.id) {
+                    var ytid = yt.id;
+                    this.$el.append('<span class="youtube"><div id="ytapiplayer-'+ytid+'"><iframe width="640" height="480" src="https://www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
                 }
-                
+            }
+            if(this.model.has('msg')) {
+                var $msg = $('<span class="msg"></span>');
+                $msg.html(this.model.get('msg'));
                 this.$el.append($msg);
             }
             this.$el.append($byline);
             
-            if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
+            if(window.account && (account.isAdmin() || account.isOwner(this.model.get('owner').id))) {
                 this.$el.append(this.actions.render().$el);
             }
-            this.setElement(this.$el);
+            this.trigger('resize');
+            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
             return this;
         },
         renderActions: function() {
@@ -872,151 +890,6 @@
             this.$el.show();
         },
         events: {
-            "click .editEmail": "editEmail",
-            "click .editName": "editName",
-            "click .editPass": "editPass",
-            "click .editDisplayName": "editDisplayName",
-            "click .editUrl": "editUrl",
-            "click .editAvatar": "editAvatar"
-        },
-        editPass: function() {
-            var self = this;
-            var txt = prompt("Enter your current, soon to be old password");
-            if(txt) {
-                var newPass = prompt("Enter a new password");
-                var newPassCheck = prompt("And prove that you didn't forget it already");
-                if(newPass && newPassCheck && newPass == newPassCheck) {
-                    this.model.set({'oldPass': txt, 'pass': newPass}, {silent: true});
-                    var saveModel = this.model.save(null, {
-                        silent: false ,
-                        wait: true
-                    });
-                    if(saveModel) {
-                        saveModel.done(function() {
-                            self.render();
-                            alert('Password changed.');
-                        });
-                        saveModel.fail(function(s, typeStr, respStr) {
-                            alert('Your password was incorrect');
-                        });
-                    }
-                } else {
-                    alert("That didn't take long!");
-                }
-            }
-            return false;
-        },
-        editEmail: function() {
-            var self = this;
-            var txt = prompt("Enter your new email address", this.model.get('email'));
-            if(txt && txt !== this.model.get('email')) {
-                this.model.set({'email': txt}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false ,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                    saveModel.fail(function(s, typeStr, respStr) {
-                        alert('That email address is already in use.');
-                    });
-                }
-            }
-            return false;
-        },
-        editName: function() {
-            var self = this;
-            var txt = prompt("Enter your new user name", this.model.get('name'));
-            if(txt && txt !== this.model.get('name')) {
-                this.model.set({'name': txt}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false ,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                    saveModel.fail(function(s, typeStr, respStr) {
-                        alert('That username is unavailable.');
-                    });
-                }
-            }
-            return false;
-        },
-        editDisplayName: function() {
-            var self = this;
-            var d = this.model.get('displayName') || this.model.get('name');
-            var txt = prompt("Enter your new display name", d);
-            if(txt && txt !== this.model.get('name')) {
-                this.model.set({'displayName': txt}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false ,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                }
-            }
-            return false;
-        },
-        editUrl: function() {
-            var self = this;
-            var txt = prompt("Enter your URL", this.model.get('url'));
-            if(txt && txt !== this.model.get('url')) {
-                this.model.set({'url': txt}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false ,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                }
-            }
-            return false;
-        },
-        editAvatar: function() {
-            var self = this;
-            if(window.FilesBackbone) {
-                self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
-                self.uploadFrame.on('uploaded', function(data){
-                    if(_.isArray(data)) {
-                        data = _.first(data);
-                    }
-                    if(data.image) {
-                        var setDoc = {
-                            image: data.image
-                        }
-                        var avatar = data.image.filename;
-                        if(data.image.sizes) {
-                            if(data.image.sizes.thumb) {
-                                avatar = data.image.sizes.thumb.filename;
-                            }
-                        }
-                        setDoc.avatar = avatar;
-                        self.model.set(setDoc, {silent: true});
-                        var saveModel = self.model.save(null, {
-                            silent: false,
-                            wait: true
-                        });
-                        if(saveModel) {
-                            saveModel.done(function() {
-                                self.render();
-                                self.uploadFrame.remove();
-                            });
-                        }
-                    }
-                });
-                this.$el.find('.avatar').append(this.uploadFrame.render().$el);
-                self.uploadFrame.pickFiles();
-            }
-            return false;
         },
         remove: function() {
             $(this.el).remove();
@@ -1030,34 +903,37 @@
     var AvatarView = Backbone.View.extend({
         tagName: "span",
         className: "avatar",
+        initialize: function(options) {
+            if(options.list) {
+                this.list = options.list;
+            }
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
+        },
         render: function() {
             this.$el.html('');
-            var $byline = $('<span class="byline"></span>');
             if(this.model.has('title')) {
                 this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
             }
-            if(this.model.has('owner')) {
-                $byline.append(' by '+this.model.get('owner').name);
+            
+            if(this.model.has('urlDoc')) {
+                var urlDoc = this.model.get('urlDoc');
+                if(urlDoc.channel) {
+                    var $channel = $('<span class="channel"></span>');
+                    if(urlDoc.channel.title) {
+                        if(urlDoc.channel.link) {
+                            $channel.append('<span class="title"><a href="'+urlDoc.channel.link+'" target="_new">'+urlDoc.channel.title+'</a></span>');
+                        } else {
+                            $channel.append('<span class="title">'+urlDoc.channel.title+'</span>');
+                        }
+                    }
+                    this.$el.append($channel);
+                }
             }
-            if(this.model.has('msg')) {
-                var $msg = $('<span class="msg"></span>');
-                $msg.html(this.model.get('msg'));
-                this.$el.append($msg);
-            }
-            this.$el.append($byline);
-            this.$el.attr('data-id', this.model.get("_id"));
-            //this.$el.append(this.actions.render().$el);
+            
+            this.$el.attr('data-id', this.model.id);
             this.setElement(this.$el);
             return this;
-        },
-        initialize: function(options) {
-            if(options && options.list) {
-                this.list = options.list;
-            }
-            if(this.model) {
-                this.model.bind('change', this.render, this);
-                this.model.bind('destroy', this.remove, this);
-            }
         },
         events: {
           "click": "select"
@@ -1095,8 +971,8 @@
             this.$el.append(this.$options);
             if(this.model && this.model.has('groups') && this.model.get('groups').indexOf('public') !== -1) {
                 this.$el.val('public');
+                this.$options.find('option[value="public"]').attr('selected','selected');
             } else {
-                console.log('rpv')
                 this.$el.val('private');
                 this.$options.find('option[value="private"]').attr('selected','selected');
             }
@@ -1105,23 +981,54 @@
         },
         val: function() {
             var groups = [];
-            if(this.$el.find('input').val() == 'public') {
+            if(this.$el.val() == 'public') {
                 groups = ['public'];
             }
             return groups;
         },
         events: {
-        }
+        },
     });
+    
+    var YoutubeView = Backbone.View.extend({
+        tagName: "span",
+        className: "youtube",
+        initialize: function() {
+            this.$input = $('<input name="youtube_id" placeholder="youtube id" />');
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$input);
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v) {
+                this.$input.val(v);
+            } else {
+                var ytid = this.$input.val();
+                var y = {};
+                if(this.model.has('youtube')) {
+                    _.clone(this.model.get('youtube'));
+                }
+                y.id = ytid;
+                return y;
+            }
+        },
+        events: {
+            
+        },
+    });
+    
     var FormView = Backbone.View.extend({
         tagName: "div",
         className: "form",
         initialize: function() {
             var self = this;
-            this.$from = $('');
+            this.$owner = $('');
             if(this.model && this.model.id) {
                 this.$el.attr('data-id', this.model.id);
-                this.$from = $(''+this.model.get('from').name);
+                this.$owner = $(''+this.model.get('owner').name);
             } else {
                 if(!this.model) {
                     this.model = new Model({}, {
@@ -1130,52 +1037,38 @@
                 } else {
                 }
             }
-            if(window.app && window.app.user) {
-                this.from = window.app.user.getNewAvatarNameView();
-            }
-            var msgs = {
-                sendPlaceholder: "SEND",
-                msgPlaceholder: "Your message",
-                subjectPlaceholder: "Subject of your message",
-                msgLabel: "",
-                subjectLabel: ""
-            }
-            if(this.options.ui) {
-                for(var i in this.options.ui) {
-                    msgs[i] = this.options.ui[i];
-                }
-            }
-            this.$inputTxt = $('<textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"></textarea>');
-            this.$inputSub = $('<input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off" />');
-            this.$form = $('<form class="post"><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
+            this.$inputUrl = $('<input type="url" name="url" placeholder="URL to subscribe to" autocomplete="off" />');
             
-            this.$form.find('fieldset').append('<label>'+msgs.subjectLabel+'</label>');
-            this.$form.find('fieldset').append(this.$inputSub);
-            this.$form.find('fieldset').append('<label>'+msgs.msgLabel+'</label>');
-            this.$form.find('fieldset').append(this.$inputTxt);
-            this.$form.find('.controls').append('<input type="submit" value="'+msgs.sendPlaceholder+'" />');
+            //this.inputGroupsView = new SelectGroupsView({model: this.model});
+            //this.feedView = new ActionFeedView({model: this.model});
+            //this.deleteView = new ActionDeleteView({model: this.model});
+            
+            this.$form = $('<form class="post"><span class="owner"></span><fieldset></fieldset><controls></controls></form>');
+            this.$form.find('fieldset').append(this.$inputUrl);
+            //this.$form.find('fieldset').append('<hr />');
+            //this.$form.find('fieldset').append(this.deleteView.render().$el);
+            //this.$form.find('controls').append(this.inputGroupsView.render().$el);
+            this.$form.find('controls').append('<input type="submit" value="Subscribe" />');
         },
         render: function() {
             var self = this;
             if(this.$el.find('form').length === 0) {
+                console.log('append form');
                 this.$el.append(this.$form);
             }
-            if(this.from) {
-                this.$el.find('.from').append(this.from.render().$el);
-            }
             if(this.model) {
-                if(this.model.has('txt')) {
-                    this.$inputTxt.val(this.model.get('txt'));
+                if(this.model.has('url')) {
+                    this.$inputUrl.val(this.model.get('url'));
                 }
-                if(this.model.has('sub')) {
-                    this.$inputSub.val(this.model.get('sub'));
-                }
-                if(this.model.has('from')) {
-                    this.model.getFrom(function(from){
-                        if(from) {
-                            self.$el.find('.from').html(from.getAvatarNameView().render().$el);
+                
+                if(this.model.has('owner')) {
+                    this.model.getOwner(function(owner){
+                        if(owner) {
+                            self.$owner.html(owner.getNewAvatarNameView().render().$el);
                         }
                     });
+                } else {
+                    // logged in user
                 }
             }
             this.setElement(this.$el);
@@ -1187,18 +1080,13 @@
         submit: function() {
             var self = this;
             var setDoc = {};
-            var txt = this.$inputTxt.val();
-            var sub = this.$inputSub.val();
-            if(txt !== '' && txt !== this.model.get('txt')) {
-                setDoc.txt = txt;
+            var url = this.$inputUrl.val();
+            
+            if(url !== '' && url !== this.model.get('url')) {
+                setDoc.url = url;
             }
-            if(sub !== '' && sub !== this.model.get('sub')) {
-                setDoc.sub = sub;
-            }
-            if(_.size(setDoc) === 0) {
-                alert('A message is required!');
-                return false;
-            }
+            console.log('setDoc')
+            console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,
@@ -1215,17 +1103,10 @@
             return false;
         },
         focus: function() {
-            this.$inputTxt.focus();
+            this.$inputUrl.focus();
         },
         remove: function() {
             this.$el.remove();
-        },
-        clear: function() {
-            this.$inputTxt.val('');
-            this.$inputSub.val('');
-            this.model = new Model({}, {
-                collection: this.collection
-            });
         }
     });
     

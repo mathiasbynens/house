@@ -296,7 +296,7 @@
                 }
             });
             router.on('reset', function(){
-                $('header').removeAttr('class');
+                $('#header').removeAttr('class');
                 self.nav.unselect();
             });
             router.on('root', function(){
@@ -309,7 +309,7 @@
             });
             router.route(':slug/edit', 'editSlug', function(slug){
                 routerReset();
-                $('header').addClass('hideTitle');
+                $('#header').addClass('hideTitle');
                 self.findPostBySlug(slug, function(doc){
                     if(doc) {
                         self.editDoc(doc);
@@ -368,7 +368,7 @@
             });
             router.route('new', 'new', function(){
                 routerReset();
-                $('header').addClass('hideTitle');
+                $('#header').addClass('hideTitle');
                 self.editDoc();
                 router.trigger('loadingComplete');
                 self.nav.selectByNavigate('new');

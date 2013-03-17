@@ -72,3 +72,6 @@ img {
     font-size: 24px;
     text-indent: 4px;
 }
+.urlForm input[type="checkbox"] {
+    -webkit-appearance: checkbox;
+}
