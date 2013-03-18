@@ -268,9 +268,9 @@
             var self = this;
             self.loading = false;
             this.filterRead = true;
-            this.$controls = $('<div class="list-controls"><a href="/" class="allNew"><b>new</b> / all</a> <a href="/" class="expandCollapse">list / <b>expanded</b></a></div>');
+            this.$controls = $('<div class="list-controls"><a href="/" class="allNew"><b>new</b> / all</a> <a href="/" class="expandCollapse"><b>expanded</b> / list</a></div>');
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> news</div>');
-            var $ul = this.$ul = $('<ul class="news"></ul>');
+            var $ul = this.$ul = $('<ul class="news expanded"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -295,9 +295,10 @@
                 self.render();
             });
             
-            $(window).scroll(function(){
+            self.$el.scroll(function(){
                 if(self.$el.is(":visible")) {
-                  if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()){
+                  if(!self.loading && $(this).scrollTop() + $(this).innerHeight() + 250 >= $(this)[0].scrollHeight){
+                      console.log(self.$el.height())
                     self.loading = true;
                     self.loadMore();
                   }
@@ -305,6 +306,7 @@
             });
         },
         filter: function(f) {
+            console.log(f)
             var self = this;
             if(f && typeof f == 'function') {
                 this.currentFilter = f;
@@ -315,6 +317,41 @@
                   }
                   self.getDocLayoutView(model).$el.hide();
                   return false;
+                });
+                
+            } else if(f) {
+                this.currentFilterO = _.clone(f);
+                this.currentFilter = function(model) {
+                    var l = _.size(this.currentFilterO);
+                    for(var i in this.currentFilterO) {
+                      if(this.currentFilterO[i] instanceof RegExp) {
+                          if(this.currentFilterO[i].test(model.get(i))) {
+                              l--;
+                          }
+                      } else {
+                        if (this.currentFilterO[i] === model.get(i)) l--;
+                      }
+                    }
+                    if(l === 0) {
+                        return true;
+                    }
+                    return false;
+                }
+                var flen = this.collection.filter(function(model) {
+                    if (self.currentFilter(model)) {
+                        self.getDocLayoutView(model).$el.show();
+                        return true;
+                    }
+                    self.getDocLayoutView(model).$el.hide();
+                    return false;
+                }).length;
+                delete this.collection.count;
+                this.filterLength = flen;
+                self.filterLoadOptions = _.clone(f);
+                var loadO = _.clone(f);
+                loadO.skip = 0; //flen;
+                this.collection.load(loadO, function(){
+                    self.filterLength = self.collection.filter(self.currentFilter).length
                 });
             } else {
                 // show all
@@ -330,9 +367,9 @@
         expandCollapse: function(e) {
             this.$ul.toggleClass('expanded');
             if(this.$ul.hasClass('expanded')) {
-                this.$el.find('.expandCollapse').html('list / <b>expanded</b>')
+                this.$el.find('.expandCollapse').html('<b>expanded</b> / list')
             } else {
-                this.$el.find('.expandCollapse').html('<b>list</b> / expanded')
+                this.$el.find('.expandCollapse').html('expanded / <b>list</b>')
             }
             return false;
         },
@@ -581,17 +618,21 @@
         events: {
             "change input": "select",
         },
+        markRead: function() {
+            var self = this;
+            this.model.set({"read": true}, {silent: true});
+            var saveModel = this.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            saveModel.done(function() {
+                self.render();
+            });
+        },
         select: function() {
             var self = this;
             if(!this.model.has('read') || !this.model.get('read')) {
-                this.model.set({"read": true}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function() {
-                    self.render();
-                });
+                this.markRead();
             } else {
                 this.model.set({"read": null}, {silent: true});
                 var saveModel = this.model.save(null, {
@@ -833,8 +874,8 @@
             if(this.model.has('title')) {
                 this.$el.find('.title').html(this.model.get('title'));
             }
-            if(this.model.has('guid')) {
-                this.$el.find('.title').attr('href', this.model.get('guid'));
+            if(this.model.has('link')) {
+                this.$el.find('.title').attr('href', this.model.get('link'));
             }
             if(this.model.has('summary')) {
                 this.$el.find('.summary').html(this.model.get('summary'));
@@ -863,6 +904,7 @@
                     if(sub) {
                         self.$el.find('.fromUrl').html('from ');
                         self.$el.find('.fromUrl').append(sub.getNewAvatar().render().$el);
+                        sub.bind('destroy', self.remove, self);
                     }
                 });
             }
@@ -874,6 +916,9 @@
         events: {
             "click .title": "selectTitle",
             "click": "select"
+        },
+        markAsRead: function(e) {
+            this.actions.readView.markRead();
         },
         selectTitle: function(e) {
             if(this.$el.hasClass("selected")) {

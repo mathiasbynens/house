@@ -7,10 +7,10 @@
         initialize: function() {
             var self = this;
             self.editForms = {};
-            require(['/desktop/swipeview.js'], function(){
-                require(['articles.js'], function(ModelBackbone){
-                    window.ArticlesBackbone = ModelBackbone;
-                    window.articlesCollection = new ModelBackbone.Collection(); // collection
+            require(['/desktop/jquery.scrollTo.min.js'], function(){
+                //require(['articles.js'], function(ModelBackbone){
+                    //window.ArticlesBackbone = ModelBackbone;
+                    //window.articlesCollection = new ModelBackbone.Collection(); // collection
                     require(['news.js'], function(ModelBackbone){
                         window.NewsBackbone = ModelBackbone;
                         window.newsCollection = new ModelBackbone.Collection(); // collection
@@ -29,6 +29,11 @@
                                 
                                 self.listView = new window.NewsBackbone.List({el: self.$newsList, collection: window.newsCollection});
                                 self.listView.on('select', function(row) {
+                                    if(row.model.has('read')) {
+                                    } else {
+                                        row.markAsRead();
+                                    }
+                                    self.$newsList.scrollTo(row.$el);
                                     self.router.navigate(row.model.getNavigatePath(), true);
                                 });
                                 self.listView.on('goToProfile', function(user){
@@ -37,7 +42,11 @@
                                 
                                 self.subListView = new window.SubsBackbone.List({el: self.$subsList, collection: window.subsCollection});
                                 self.subListView.on('select', function(row) {
-                                    self.router.navigate(row.model.getNavigatePath(), true);
+                                    if(row.model.getRow().$el.hasClass('selected')) {
+                                        self.router.navigate('/', true);
+                                    } else {
+                                        self.router.navigate(row.model.getNavigatePath(), true);
+                                    }
                                 });
                                 self.subListView.on('goToProfile', function(user){
                                     self.router.navigate('from/'+user.get('name'), true);
@@ -60,7 +69,7 @@
                             });
                         });
                     });
-                });
+                //});
             });
             
             /*require(['../desktop/jquery.idle-timer.js'], function() {
@@ -179,7 +188,16 @@
                     }
                 });
             });
-            router.route('news/:id', 'newsStory', function(id){
+            router.route('subs/url/*path', 'subsByUrl', function(path){
+                console.log('subs')
+                console.log(path)
+                routerReset();
+                self.listView.filter({fromUrl: path});
+                self.listView.$el.show();
+                self.subListView.$el.show();
+                router.setTitle('News from '+path);
+            });
+            router.route('anews/:id', 'newsStory', function(id){
                 routerReset();
                 self.$newsViewer.siblings().hide();
                 self.$newsViewer.show();
@@ -201,6 +219,7 @@
                     collection: window.subsCollection
                 });
                 self.subscribeForm.on("saved", function(doc) {
+                    self.subscribeForm.remove();
                     self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
                 });
                 var $form = self.subscribeForm.render().$el;

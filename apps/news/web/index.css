@@ -1203,9 +1203,14 @@ html, body, .app {
 	font-size:1.4em;
 	padding:0 20px;
 }
-
+.favicon img {
+    max-height: 100%;
+}
 .subs .row .actions {
     display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
 }
 .subs .row:hover .actions {
     display: block;
@@ -1225,8 +1230,7 @@ img {
     max-width: 100%;
 }
 ul li.row {
-    height: 45px;
-    border-bottom: 1px inset #DBD5D5;
+    height: 42px;
 }
 .row a.title {
     font-size: 1em;
@@ -1567,8 +1571,12 @@ textarea:focus {
     left: 251px;
     overflow: auto;
 }
-
-.subs .byline {
+.subscribe input {
+    text-indent: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.subs .byline, .subs .list-pager {
     display: none;
 }
 .subs .byline, .subs .list-pager, .subs .row .url {
@@ -1580,7 +1588,7 @@ textarea:focus {
     bottom: 0px;
     left: 0px;
     width: 250px;
-    height: 100px;
+    height: 32px;
     z-index: 2;
     border-bottom: 1px dashed black;
 }
@@ -1604,10 +1612,13 @@ textarea:focus {
 .news .row .summary {
     display: inline;
 }
-ul li.row .fromUrl {
+.news .row .summary iframe {
+    display: none;
+}
+ul.news li.row .fromUrl {
     margin-right: 8px;
 }
-ul li.row[selected] .summary, ul.news.expanded li.row .summary {
+ul.news li.row[selected] .summary, ul.news.expanded li.row .summary, ul.news li.row[selected] .summary iframe, ul.news.expanded .row .summary iframe {
     padding: 12px;
     display: block;
 }
@@ -1616,7 +1627,7 @@ ul li.row[selected] .summary, ul.news.expanded li.row .summary {
     font-weight: normal;
     font-size: 1em;
 }
-ul li.row[selected], ul.news.expanded li.row {
+ul.news li.row[selected], ul.news.expanded li.row {
     height: auto !important;
 }
 ul.news li.row[selected] a.title, ul.news.expanded a.title {

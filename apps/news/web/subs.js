@@ -59,13 +59,10 @@
                 this.views[i].render();
             }
         },
-        slugStr: function(str) {
-            return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
-        },
-        setSlug: function(slug) {
-            this.set('slug', this.slugStr(slug));
-        },
         getNavigatePath: function() {
+            if(this.has('url')) {
+                return 'subs/url/'+(this.get('url')); //encodeURIComponent
+            }
             return 'subs/'+this.id;
         }
     });
@@ -88,15 +85,15 @@
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
                 if(socket.socket.connected) {
-                    //console.log('already connected and now joining '+self.collectionName);
+                    console.log('already connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 }
                 socket.on('connect', function(data) {
-                    //console.log('connected and now joining '+self.collectionName);
+                    console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                        console.log(doc);
+                    console.log(doc);
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;s
@@ -752,28 +749,31 @@
         render: function() {
             this.$el.html('');
             var $byline = $('<span class="byline"></span>');
-            if(this.model.has('title')) {
-                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
-            }
             
             if(this.model.has('urlDoc')) {
                 var urlDoc = this.model.get('urlDoc');
                 if(urlDoc.channel) {
                     var $channel = $('<span class="channel"></span>');
+                    if(urlDoc.channel.url && urlDoc.channel.url.faviconfile) {
+                        $channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span>');
+                    }
                     if(urlDoc.channel.title) {
                         if(urlDoc.channel.link) {
                             $channel.append('<span class="title"><a href="'+urlDoc.channel.link+'" target="_new">'+urlDoc.channel.title+'</a></span>');
                         } else {
                             $channel.append('<span class="title">'+urlDoc.channel.title+'</span>');
                         }
+                    } else {
+                        this.$el.append('<strong class="title">'+this.model.get('url')+'</strong>');
                     }
                     this.$el.append($channel);
+                } else {
+                    this.$el.append('<strong class="title">'+this.model.get('url')+'</strong>');
                 }
+            } else {
+                this.$el.append('<strong class="title">'+this.model.get('url')+'</strong>');
             }
             
-            if(this.model.has('url')) {
-                this.$el.append('<span class="url">'+this.model.get('url')+'</span>');
-            }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
                 if(window.clock) {
@@ -1043,12 +1043,12 @@
             //this.feedView = new ActionFeedView({model: this.model});
             //this.deleteView = new ActionDeleteView({model: this.model});
             
-            this.$form = $('<form class="post"><span class="owner"></span><fieldset></fieldset><controls></controls></form>');
+            this.$form = $('<form class="subscribe"><span class="owner"></span><fieldset></fieldset><controls></controls></form>');
             this.$form.find('fieldset').append(this.$inputUrl);
             //this.$form.find('fieldset').append('<hr />');
             //this.$form.find('fieldset').append(this.deleteView.render().$el);
             //this.$form.find('controls').append(this.inputGroupsView.render().$el);
-            this.$form.find('controls').append('<input type="submit" value="Subscribe" />');
+            this.$form.find('controls').append('<input style="display:none;" type="submit" value="Subscribe" />');
         },
         render: function() {
             var self = this;
@@ -1104,6 +1104,12 @@
         },
         focus: function() {
             this.$inputUrl.focus();
+        },
+        clear: function() {
+            this.$inputUrl.val('');
+            this.model = new Model({}, {
+                collection: this.collection
+            });
         },
         remove: function() {
             this.$el.remove();

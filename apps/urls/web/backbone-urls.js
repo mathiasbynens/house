@@ -62,11 +62,11 @@
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
                 if(socket.socket.connected) {
-                    //console.log('already connected and now joining '+self.collectionName);
+                    console.log('already connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 }
                 socket.on('connect', function(data) {
-                    //console.log('connected and now joining '+self.collectionName);
+                    console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
@@ -641,7 +641,7 @@
         },
         render: function() {
             var self = this;
-            this.$el.html('<span class="url"><a href="'+this.model.get('url')+'" target="_new">'+this.model.get('url')+'</a></span><actions><button class="handle">▼</button></actions>');
+            this.$el.html('<span class="faviconfile"><img class="favicon" /></span><span class="url"><a href="'+this.model.get('url')+'" target="_new">'+this.model.get('url')+'</a></span><actions><button class="handle">▼</button></actions>');
             this.$el.find('actions').append(this.actions.render().$el);
             if(this.model.has('title')) {
                 this.$el.find('.url').after('<span class="title">'+this.model.get('title')+'</span>');
@@ -649,6 +649,12 @@
                 if(this.model.has('file')) {
                     this.$el.find('.url').after('<span class="contentType">'+this.model.get('file').contentType+'</span>');
                 }
+            }
+            
+            if(this.model.has('faviconfile')) {
+                var $fav = $('');
+                self.$el.find('.faviconfile img').attr('src', '/api/files/'+this.model.get('faviconfile').filename);
+                self.$el.append($fav);
             }
             
             if(this.model.has('image')) {
