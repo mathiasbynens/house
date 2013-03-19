@@ -142,9 +142,9 @@
         
         <div id="welcome"></div>
         
-        <script type="text/javascript" src="require.js"></script>
+        <script type="text/javascript" src="/desktop/require.js"></script>
         <script type="text/javascript">
-        require(['jquery.js'], function(){
+        require(['/desktop/jquery.js'], function(){
             require(['index.js'], function(desktop){
                 desktop.init(function(){
                    $('body').removeClass('loading');

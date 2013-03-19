@@ -28,7 +28,7 @@
                                         $('#header').append(clock.render().$el);
                                     });
                                     
-                                    require(['nav.js'], function(nav){
+                                    require(['/desktop/nav.js'], function(nav){
                                         index.nav = nav;
                                         nav.init();
                                         $('#header').append(nav.list.render().$el);
@@ -62,7 +62,7 @@
                                         accountProfile.bindRouter(nav.router);
                                         nav.startRouter('/desktop/');
                                         
-                                        require(['jquery.idle-timer.js'], function() {
+                                        require(['/desktop/jquery.idle-timer.js'], function() {
                                             var idleTimer = $(document).idleTimer(3200);
                                             $(document).bind("idle.idleTimer", function(e){
                                                 $('body').addClass('idle');
