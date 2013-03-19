@@ -159,6 +159,11 @@
             if(!options.sort) {
                 options.sort = "date-";
             }
+            
+            if(window.account && window.account.isUser()) {
+                options.user_id = window.account.get('user');
+            }
+            
             this.applyFilters(options);
             this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                     if(success) {
@@ -268,6 +273,7 @@
             var self = this;
             self.loading = false;
             this.filterRead = true;
+            this.$filters = $('<div class="list-filters"></div>');
             this.$controls = $('<div class="list-controls"><a href="/" class="allNew"><b>new</b> / all</a> <a href="/" class="expandCollapse"><b>expanded</b> / list</a></div>');
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> news</div>');
             var $ul = this.$ul = $('<ul class="news expanded"></ul>');
@@ -349,12 +355,20 @@
                 this.filterLength = flen;
                 self.filterLoadOptions = _.clone(f);
                 var loadO = _.clone(f);
+                if(!this.filterRead) {
+                    loadO.read = true;
+                }
                 loadO.skip = 0; //flen;
                 this.collection.load(loadO, function(){
                     self.filterLength = self.collection.filter(self.currentFilter).length
                 });
             } else {
                 // show all
+                var loadO = {};
+                if(!this.filterRead) {
+                    loadO.read = true;
+                }
+                this.collection.load(loadO);
                 self.$ul.children().show();
                 self.currentFilter = false;
             }
@@ -378,7 +392,6 @@
                 this.filterRead = false;
                 this.$el.find('.allNew').html('new / <b>all</b>')
                 this.filter(false);
-                this.collection.load({read: true});
             } else {
                 this.filterRead = true;
                 this.$el.find('.allNew').html('<b>new</b> / all')
@@ -408,6 +421,7 @@
         },
         render: function() {
             var self = this;
+            this.$el.append(this.$filters);
             this.$el.append(this.$controls);
             this.$el.append(this.$ul);
             //this.collection.sort({silent:true});
@@ -879,6 +893,8 @@
             }
             if(this.model.has('summary')) {
                 this.$el.find('.summary').html(this.model.get('summary'));
+            } else if(this.model.has('description')) {
+                this.$el.find('.summary').html(this.model.get('description'));
             }
             if(this.model.has('author')) {
                 this.$el.find('.author').html(''+this.model.get('author')+'');

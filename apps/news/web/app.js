@@ -26,14 +26,15 @@
                                 self.$newsList = $('<div class="news-list"></div>');
                                 self.$newsViewer = $('<div class="news-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
                                 window.newsCollection.pageSize = pageSize;
+                                window.subsCollection.pageSize = 1000;
                                 
                                 self.listView = new window.NewsBackbone.List({el: self.$newsList, collection: window.newsCollection});
                                 self.listView.on('select', function(row) {
+                                    self.$newsList.scrollTo(row.$el);
                                     if(row.model.has('read')) {
                                     } else {
                                         row.markAsRead();
                                     }
-                                    self.$newsList.scrollTo(row.$el);
                                     self.router.navigate(row.model.getNavigatePath(), true);
                                 });
                                 self.listView.on('goToProfile', function(user){
@@ -42,11 +43,10 @@
                                 
                                 self.subListView = new window.SubsBackbone.List({el: self.$subsList, collection: window.subsCollection});
                                 self.subListView.on('select', function(row) {
-                                    if(row.model.getRow().$el.hasClass('selected')) {
-                                        self.router.navigate('/', true);
-                                    } else {
-                                        self.router.navigate(row.model.getNavigatePath(), true);
-                                    }
+                                    self.router.navigate(row.model.getNavigatePath(), true);
+                                });
+                                self.subListView.on('deselect', function(row) {
+                                    self.router.navigate('/', true);
                                 });
                                 self.subListView.on('goToProfile', function(user){
                                     self.router.navigate('from/'+user.get('name'), true);
@@ -105,6 +105,9 @@
         findNewsStoryById: function(id, callback) {
             window.newsCollection.getOrFetch(id, callback);
         },
+        findSubByUrl: function(id, callback) {
+            window.subsCollection.getOrFetchUrl(id, callback);
+        },
         userIs: function(userId) {
             return (this.user && this.user.id == userId);
         },
@@ -129,6 +132,7 @@
             nav.col.add({title:"News", navigate:""});
             if(window.account && (account.isUser() || account.isAdmin())) {
                 nav.col.add({title:"Subscribe", navigate:"subscribe"});
+                nav.col.add({title:"Feeds", navigate:"feeds"});
             }
         },
         bindRouter: function(router) {
@@ -139,7 +143,7 @@
             }
             self.router = router;
             router.on('title', function(title){
-                var $e = $('header h1');
+                var $e = $('#header h1');
                 $e.html(title);
                 $e.attr('class', '');
                 var eh = $e.height();
@@ -161,6 +165,7 @@
             });
             router.on('reset', function(){
                 $('#header').removeAttr('class');
+                self.$el.removeAttr('data-nav');
                 self.nav.unselect();
             });
             router.on('root', function(){
@@ -168,6 +173,7 @@
                 self.listView.$el.show();
                 self.subListView.$el.show();
                 router.setTitle('News');
+                self.$newsList.find('.list-filters').html('');
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
             });
@@ -196,6 +202,28 @@
                 self.listView.$el.show();
                 self.subListView.$el.show();
                 router.setTitle('News from '+path);
+                
+                self.findSubByUrl(path, function(doc){
+                    if(doc) {
+                        if(doc.has('urlDoc')) {
+                            self.router.setTitle(doc.get('urlDoc').channel.title);
+                        }
+                        self.$newsList.find('.list-filters').html(doc.getNewAvatar().render().$el);
+                    } else {
+                        router.navigate('', {replace: true, trigger: true});
+                    }
+                    router.trigger('loadingComplete');
+                });
+                self.nav.selectByNavigate('news');
+            });
+            router.route('feeds', 'feeds', function(){
+                routerReset();
+                //self.listView.filter({fromUrl: path});
+                //self.listView.$el.show();
+                self.$el.attr('data-nav', 'feeds')
+                self.subListView.$el.show();
+                router.setTitle('Feeds');
+                self.nav.selectByNavigate('feeds');
             });
             router.route('anews/:id', 'newsStory', function(id){
                 routerReset();

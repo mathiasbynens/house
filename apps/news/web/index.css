@@ -982,9 +982,7 @@ ul li[selected] .info {
     display: block;
 }
 
-ul li[selected] {
-    background: rgba(255, 255, 0, 0.25);
-}
+
 ul li[selected] .filename, ul li[selected] .time {
     display: inline;
 }
@@ -1046,10 +1044,12 @@ img.rotateNinety {
 @media only screen and (min-width: 767px) {
     ul li {
         font-size: .7em;
+        border-left: 1px solid white;
     }
     ul li:hover {
-        background: yellow;
+        background: white;
         color: black;
+        border-left: 1px dashed grey;
     }
     #header menu li:not([selected]):hover {
         color: yellow;
@@ -1067,6 +1067,10 @@ img.rotateNinety {
     ul li {
         font-size: .7em;
     }
+}
+ul li[selected] {
+    background: rgba(255, 255, 0, 0.25);
+    border-left: 1px solid grey;
 }
 .fileForm {
     padding: 6px;
@@ -1204,7 +1208,8 @@ html, body, .app {
 	padding:0 20px;
 }
 .favicon img {
-    max-height: 100%;
+    height: 16px;
+    width: 16px;
 }
 .subs .row .actions {
     display: none;
@@ -1298,8 +1303,39 @@ ul li.row {
     .row .at {
         line-height: 44px;
     }
+    .app .subs-list {
+        display: none !important;
+    }
+    .app[data-nav="feeds"] .subs-list {
+        display: block !important;
+    }
+    .app[data-nav="feeds"] .news-list {
+        display: none !important;
+    }
 }
 @media only screen and (min-width: 767px) {
+    .subs-list {
+        position: fixed;
+        top: 90px;
+        bottom: 0px;
+        left: 0px;
+        width: 250px;
+        overflow: auto;
+    }
+    .subs .title {
+        font-size: 14px;
+        line-height: 42px;
+    }
+    .subs .title a {
+    }
+    .news-list {
+        position: fixed;
+        top: 90px;
+        bottom: 0px;
+        right: 0px;
+        left: 251px;
+        overflow: auto;
+    }
 }
 @media only screen and (min-width: 1024px) {
 }
@@ -1554,32 +1590,18 @@ textarea:focus {
   outline: 0;
 }
 
-.subs-list {
-    position: fixed;
-    top: 90px;
-    bottom: 0px;
-    left: 0px;
-    width: 250px;
-    overflow: auto;
+.subs .title {
 }
-
+.subs .title a {
+}
 .news-list {
-    position: fixed;
-    top: 90px;
-    bottom: 0px;
-    right: 0px;
-    left: 251px;
-    overflow: auto;
 }
 .subscribe input {
     text-indent: 4px;
     width: 100%;
     box-sizing: border-box;
 }
-.subs .byline, .subs .list-pager {
-    display: none;
-}
-.subs .byline, .subs .list-pager, .subs .row .url {
+.subs .byline, .subs-list .list-pager {
     display: none;
 }
 .app > .form {
@@ -1609,6 +1631,9 @@ textarea:focus {
     padding: 12px;
     color: #999;
 }
+.news .row .actions {
+    padding: 12px;
+}
 .news .row .summary {
     display: inline;
 }
@@ -1634,7 +1659,7 @@ ul.news li.row[selected] a.title, ul.news.expanded a.title {
     display: inline;
 }
 ul.news li.row[selected] .summary img, ul.news.expanded .summary img {
-    display: block;
+    display: inline;
 }
 ul.news li.row[selected] .summary p, ul.news.expanded .summary p,
 ul.news li.row[selected] .summary h1, ul.news.expanded .summary h1,  

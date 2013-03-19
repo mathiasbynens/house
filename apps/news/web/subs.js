@@ -73,7 +73,7 @@
         url: '/api/subs',
         initialize: function() {
             var self = this;
-            self.pageSize = 10;
+            self.pageSize = 25;
             this.resetFilters();
             
             require(['//'+window.location.host+'/desktop/socket.io.min.js'], function() {
@@ -505,7 +505,7 @@
         tagName: "span",
         className: "delete",
         render: function() {
-            this.$el.html('<button>delete</button>');
+            this.$el.html('<button title="unsubscribe">x</button>');
             this.setElement(this.$el);
             return this;
         },
@@ -749,7 +749,7 @@
         render: function() {
             this.$el.html('');
             var $byline = $('<span class="byline"></span>');
-            
+            this.$el.attr('title', this.model.get('url'));
             if(this.model.has('urlDoc')) {
                 var urlDoc = this.model.get('urlDoc');
                 if(urlDoc.channel) {
@@ -764,14 +764,14 @@
                             $channel.append('<span class="title">'+urlDoc.channel.title+'</span>');
                         }
                     } else {
-                        this.$el.append('<strong class="title">'+this.model.get('url')+'</strong>');
+                        this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
                     }
                     this.$el.append($channel);
                 } else {
-                    this.$el.append('<strong class="title">'+this.model.get('url')+'</strong>');
+                    this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
                 }
             } else {
-                this.$el.append('<strong class="title">'+this.model.get('url')+'</strong>');
+                this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
             }
             
             if(this.model.has('at')) {
@@ -802,12 +802,21 @@
                 el.siblings().removeAttr('selected');
             }
             deselectSiblings(this.$el);
-            this.$el.addClass("selected");
-            this.$el.attr("selected", true);
-            if(this.hasOwnProperty('list')) {
-                this.list.trigger('select', this);
+            if(this.$el.hasClass("selected")) {
+                this.$el.removeClass("selected");
+                this.$el.removeAttr("selected");
+                if(this.hasOwnProperty('list')) {
+                    this.list.trigger('deselect', this);
+                }
+                this.trigger('deselect');
+            } else {
+                this.$el.addClass("selected");
+                this.$el.attr("selected", true);
+                if(this.hasOwnProperty('list')) {
+                    this.list.trigger('select', this);
+                }
+                this.trigger('select');
             }
-            this.trigger('select');
             this.trigger('resize');
         },
         remove: function() {
