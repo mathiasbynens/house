@@ -152,7 +152,7 @@
             
             this.$el.html(loginWelcomMsg);
             this.$el.append(this.$form);
-            this.$el.append('or connect <span class="connect"><button class="connectTwitter">Twitter</button><button class="connectFacebook">Facebook</button></span>');
+            this.$el.append('or connect <span class="connect"><button class="connectTwitter">Twitter</button><button class="connectFacebook">Facebook</button><button class="connectGoogle">Google</button></span>');
             this.setElement(this.$el);
             return this;
         },
