@@ -30,7 +30,11 @@
                                 
                                 self.listView = new window.NewsBackbone.List({el: self.$newsList, collection: window.newsCollection});
                                 self.listView.on('select', function(row) {
-                                    self.$newsList.scrollTo(row.$el);
+                                    if(self.$newsList.css('position') == 'fixed') {
+                                        self.$newsList.scrollTo(row.$el);
+                                    } else {
+                                        $(window).scrollTo(row.$el, 0, {offset:-50});
+                                    }
                                     if(row.model.has('read')) {
                                     } else {
                                         row.markAsRead();
@@ -92,12 +96,29 @@
                 });
                 return this;
             }
+            this.$el.append('<button class="subscriptions">Subscriptions</button><button class="addSubscription">+</button>');
             this.$el.append(self.subListView.render().$el);
             this.$el.append(self.listView.render().$el);
             this.$el.append(this.$postViewer);
             return this;
         },
         events: {
+            "click .subscriptions": "subscriptions",
+            "click .addSubscription": "addSubscription"
+        },
+        addSubscription: function() {
+            this.router.navigate('subscribe', true);
+            return false;
+        },
+        subscriptions: function() {
+            if(this.$el.attr('data-nav') == 'feeds') {
+                this.router.navigate('', true);
+            } else if(this.$el.attr('data-nav') == 'feed') {
+                this.router.navigate('', true);
+            } else {
+                this.router.navigate('feeds', true);
+            }
+            return false;
         },
         findSubById: function(id, callback) {
             window.subsCollection.getOrFetch(id, callback);
@@ -206,7 +227,9 @@
                 self.findSubByUrl(path, function(doc){
                     if(doc) {
                         if(doc.has('urlDoc')) {
-                            self.router.setTitle(doc.get('urlDoc').channel.title);
+                            if(doc.get('urlDoc').channel) {
+                                self.router.setTitle(doc.get('urlDoc').channel.title);
+                            }
                         }
                         self.$newsList.find('.list-filters').html(doc.getNewAvatar().render().$el);
                     } else {

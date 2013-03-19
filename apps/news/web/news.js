@@ -275,7 +275,7 @@
             this.filterRead = true;
             this.$filters = $('<div class="list-filters"></div>');
             this.$controls = $('<div class="list-controls"><a href="/" class="allNew"><b>new</b> / all</a> <a href="/" class="expandCollapse"><b>expanded</b> / list</a></div>');
-            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> news</div>');
+            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> news articles</div>');
             var $ul = this.$ul = $('<ul class="news expanded"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
@@ -300,14 +300,38 @@
             this.collection.on('reset', function(){
                 self.render();
             });
-            
             self.$el.scroll(function(){
                 if(self.$el.is(":visible")) {
-                  if(!self.loading && $(this).scrollTop() + $(this).innerHeight() + 250 >= $(this)[0].scrollHeight){
-                      console.log(self.$el.height())
+                    if(self.$ul.hasClass('expanded')) {
+                        self.collection.each(function(doc){
+                            if(!doc.has('read')) {
+                                if(doc.getRow().$el.offset().top < 0) {
+                                    doc.getRow().markAsRead();
+                                }
+                            }
+                        });
+                    }
+                  if(!self.loading && $(this).scrollTop() + $(this).innerHeight() + 250 >= $(this)[0].scrollHeight) {
                     self.loading = true;
                     self.loadMore();
                   }
+                }
+            });
+             $(window).scroll(function(){
+                if(self.$el.is(":visible")) {
+                    if(self.$ul.hasClass('expanded')) {
+                        self.collection.each(function(doc){
+                            if(!doc.has('read')) {
+                                if(doc.getRow().$el.offset().top < 0) {
+                                    doc.getRow().markAsRead();
+                                }
+                            }
+                        });
+                    }
+                    if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()) {
+                        self.loading = true;
+                        self.loadMore();
+                    }
                 }
             });
         },
@@ -391,7 +415,11 @@
             if(this.filterRead) {
                 this.filterRead = false;
                 this.$el.find('.allNew').html('new / <b>all</b>')
-                this.filter(false);
+                if(this.filterLoadOptions) {
+                    this.filter(this.filterLoadOptions);
+                } else {
+                    this.filter(false);
+                }
             } else {
                 this.filterRead = true;
                 this.$el.find('.allNew').html('<b>new</b> / all')

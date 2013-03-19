@@ -818,6 +818,7 @@
                 this.trigger('select');
             }
             this.trigger('resize');
+            return false;
         },
         remove: function() {
           $(this.el).remove();
@@ -1094,8 +1095,12 @@
             if(url !== '' && url !== this.model.get('url')) {
                 setDoc.url = url;
             }
-            console.log('setDoc')
-            console.log(setDoc)
+            //console.log('setDoc')
+            //console.log(setDoc)
+            if(_.size(setDoc) == 0) {
+                this.remove();
+                return false;
+            }
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,

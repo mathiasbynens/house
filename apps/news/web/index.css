@@ -1287,6 +1287,12 @@ ul li.row {
 #header h1.f7, #header h1.f8, #header h1.f9 {
     font-size: 0.5em;
 }
+.list-controls {
+    text-align: right;
+}
+.list-controls a {
+    padding: 6px;
+}
 @media only screen and (max-width: 767px) {
     #header h1 {
     }
@@ -1311,6 +1317,9 @@ ul li.row {
     }
     .app[data-nav="feeds"] .news-list {
         display: none !important;
+    }
+    .news .row .byline {
+        display: none;
     }
 }
 @media only screen and (min-width: 767px) {
@@ -1339,7 +1348,6 @@ ul li.row {
 }
 @media only screen and (min-width: 1024px) {
 }
-
 .wysihtml5-toolbar header {
   display: block;
   border-radius: 4px;
@@ -1630,6 +1638,7 @@ textarea:focus {
     float: right;
     padding: 12px;
     color: #999;
+    font-size: 12px;
 }
 .news .row .actions {
     padding: 12px;
@@ -1652,11 +1661,20 @@ ul.news li.row[selected] .summary, ul.news.expanded li.row .summary, ul.news li.
     font-weight: normal;
     font-size: 1em;
 }
+ul.news {
+    margin-top: 40px;
+}
+ul.news li.row {
+    border-bottom: 1px solid grey;
+}
 ul.news li.row[selected], ul.news.expanded li.row {
     height: auto !important;
+    padding-bottom: 32px;
 }
 ul.news li.row[selected] a.title, ul.news.expanded a.title {
     display: inline;
+    line-height: 28px;
+    padding-left: 12px;
 }
 ul.news li.row[selected] .summary img, ul.news.expanded .summary img {
     display: inline;
@@ -1669,4 +1687,8 @@ ul.news li.row[selected] .summary h4, ul.news.expanded .summary h4 {
     display: block;
     font-weight: initial !important;
     font-size: initial !important;
+}
+
+.subs .favicon {
+    padding: 6px;
 }

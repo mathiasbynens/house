@@ -1,3 +1,6 @@
+html, body, .app, .user-viewer {
+    height: 100%;
+}
 body, textarea, input {
     font-family: Helvetica, Arial, Verdana;
 }
