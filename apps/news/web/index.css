@@ -1692,3 +1692,26 @@ ul.news li.row[selected] .summary h4, ul.news.expanded .summary h4 {
 .subs .favicon {
     padding: 6px;
 }
+
+li.row .rating {
+    cursor: pointer;
+}
+.rating {
+  unicode-bidi: bidi-override;
+}
+.rating > span {
+  display: inline-block;
+  position: relative;
+}
+.rating > span:hover:before,
+.rating > span:hover ~ span:before {
+   content: "\2605";
+   position: absolute;
+   color: yellow;
+}
+.rating > span.selected:before,
+.rating > span.selected ~ span:before {
+   content: "\2605";
+   position: absolute;
+   color: yellow;
+}

@@ -903,7 +903,11 @@
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             //this.$span = $('<span></span>');
+            this.starEmpty = '☆';
+            this.starFull = '★';
+            this.$star = $('<span class="rating"><span class="star">'+this.starEmpty+'</span></span>'); // ★☆
             this.$byline = $('<span class="byline"><span class="author"></span> <span class="date"></span></span>');
+            this.$el.append(this.$star);
             this.$el.append(this.$byline);
             this.$el.append('<a target="_new" class="title"></a>');
             this.$el.append('<span class="fromUrl"></span>');
@@ -952,14 +956,43 @@
                     }
                 });
             }
+            if(this.model.has('fav')) {
+                this.$star.find('.star').html(this.starFull);
+            }
             this.$el.attr('data-id', this.model.id);
             this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
         },
         events: {
+            "click .star": "fav",
             "click .title": "selectTitle",
             "click": "select"
+        },
+        fav: function() {
+            if(!this.model.has('fav')) {
+                this.model.set({"fav": true}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                if(saveModel) {
+                    saveModel.done(function() {
+                        self.render();
+                    });
+                }
+            } else {
+                this.model.set({"fav": null}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                if(saveModel) {
+                    saveModel.done(function() {
+                        self.render();
+                    });
+                }
+            }
         },
         markAsRead: function(e) {
             this.actions.readView.markRead();

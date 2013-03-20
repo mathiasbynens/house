@@ -218,6 +218,7 @@
             router.route('subs/url/*path', 'subsByUrl', function(path){
                 console.log('subs')
                 console.log(path)
+                path = decodeURIComponent(path);
                 routerReset();
                 self.listView.filter({fromUrl: path});
                 self.listView.$el.show();
@@ -233,7 +234,16 @@
                         }
                         self.$newsList.find('.list-filters').html(doc.getNewAvatar().render().$el);
                     } else {
-                        router.navigate('', {replace: true, trigger: true});
+                        self.subscribeForm = new window.SubsBackbone.Form({
+                            collection: window.subsCollection
+                        });
+                        self.subscribeForm.$inputUrl.val(path);
+                        self.subscribeForm.submit();
+                        self.subscribeForm.on("saved", function(doc) {
+                            //self.subscribeForm.remove();
+                            self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
+                        });
+                        //router.navigate('', {replace: true, trigger: true});
                     }
                     router.trigger('loadingComplete');
                 });
