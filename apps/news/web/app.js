@@ -57,8 +57,8 @@
                                 });
                                 
                                 var loadCollections = function() {
-                                    window.newsCollection.load(null, function(){
-                                        window.subsCollection.load(null, function(){
+                                    window.subsCollection.load(null, function(){
+                                        window.newsCollection.load(null, function(){
                                             self.initialized = true;
                                             self.trigger('initialized');
                                         });
