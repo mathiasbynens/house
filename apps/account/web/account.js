@@ -71,7 +71,11 @@
             if(window.config && window.config.authUrl) {
                 return window.config.authUrl;
             } else {
-                return "https://"+window.location.hostname+"/api/auth";
+                var hostPath = window.location.hostname;
+                if(window.location.port) {
+                    hostPath = hostPath + ':' + window.location.port;
+                }
+                return "https://"+hostPath+"/api/auth";
             }
         },
         renderAll: function() {
