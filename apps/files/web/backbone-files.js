@@ -1,5 +1,15 @@
 (function() {
     
+    var mimeIcons = {
+        "text/html": "",
+        "application/xml": "",
+        "image/jpeg": "",
+        "image/png": "",
+        "image/gif": "",
+        "application/x-gzip": "",
+        "application/pdf": ""
+    }
+    
     var Model = Backbone.Model.extend({
         collectionName: "files",
         initialize: function() {

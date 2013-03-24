@@ -641,13 +641,14 @@
         },
         render: function() {
             var self = this;
-            this.$el.html('<span class="faviconfile"><img class="favicon" /></span><span class="url"><a href="'+this.model.get('url')+'" target="_new">'+this.model.get('url')+'</a></span><actions><button class="handle">▼</button></actions>');
-            this.$el.find('actions').append(this.actions.render().$el);
+            this.$el.html('<span class="faviconfile"><img class="favicon" /></span><span class="url"><a href="'+this.model.get('url')+'" target="_new">'+this.model.get('url')+'</a></span><span class="details"><button class="handle">▼</button></span>');
+            this.$el.find('.details').append(this.actions.render().$el);
             if(this.model.has('title')) {
                 this.$el.find('.url').after('<span class="title">'+this.model.get('title')+'</span>');
             } else {
                 if(this.model.has('file')) {
-                    this.$el.find('.url').after('<span class="contentType">'+this.model.get('file').contentType+'</span>');
+                    var contentTypeKlass = 'mime-'+this.model.get('file').contentType.replace(/\//gi, '-');
+                    this.$el.find('.url').after('<span title="'+this.model.get('file').contentType+'" class="contentType '+contentTypeKlass+'">'+this.model.get('file').contentType+'</span>');
                 }
             }
             

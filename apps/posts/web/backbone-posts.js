@@ -446,7 +446,7 @@
             //self.$el.append(this.tagsView.render().$el);
             //self.$el.append(this.groupsView.render().$el);
             self.$el.append(this.editView.render().$el);
-            //self.$el.append(this.deleteView.render().$el);
+            self.$el.append(this.deleteView.render().$el);
             this.setElement(this.$el);
             return this;
         },
@@ -454,7 +454,7 @@
             this.actions = [];
             //this.groupsView = new GroupsView({id: this.id, model: this.model});
             //this.tagsView = new TagsView({id: this.id, model: this.model});
-            //this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
+            this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
             this.editView = new ActionEditView({id: this.id, model: this.model});
         }
     });
