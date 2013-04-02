@@ -1,0 +1,142 @@
+#newWallpaperForm textarea {
+    width: 94%;
+}
+#newWallpaperForm textarea {
+    width: 94%;
+    margin: 2%;
+    height: 240px;
+}
+#newWallpaperForm img {
+    width: 94%;
+}
+img {
+    max-width: 100%;
+}
+.idle #wallpaper {
+    display: none;
+}
+.row {
+    position: relative;
+    display: block;
+    height: 64px;
+    line-height: 64px;
+    border-top: 1px dashed #fff;
+    border-bottom: 1px dashed #fff;
+}
+.row:hover {
+    border-top: 1px dashed #ccc;
+    border-bottom: 1px dashed #ccc;
+}
+.row .details {
+    z-index: 1;
+    position: absolute;
+    top:0;
+    right: 0;
+    text-align: right;
+    display: none;
+}
+.row:hover .details {
+    display: block;
+}
+.row .actions
+{
+    display: none;
+    margin-top: -2px;
+    background: rgba(0,0,0,0.5);
+    padding: 4px;
+    border-radius: 6px;
+    z-index: 2;
+}
+.row .actions span {
+    display: block;
+}
+.row .details:hover .actions {
+    display: block;
+}
+
+.row .title, .row .contentType {
+    margin-left: 12px;
+    margin: 16px;
+}
+.row .avatar {
+    position: absolute;
+    top:0;
+    bottom: 0;
+    right:0;
+}
+.row .avatar img {
+    height: 100%;
+}
+.row .faviconfile img {
+    max-height: 32px;
+    vertical-align: top;
+    padding: 16px;
+}
+.urlForm {
+}
+.urlForm input[type="url"] {
+    width: 100%;
+    font-size: 24px;
+    text-indent: 4px;
+}
+.urlForm input[type="checkbox"] {
+    -webkit-appearance: checkbox;
+}
+
+[class*='mime-'] {
+    display: block;
+    height: 32px;
+    width: 32px;
+    float: left;
+    background: url("/files/icon/unkown.png") top left;
+    background-size: 32px;
+    text-indent: 40px;
+    overflow: hidden;
+}
+
+.mime-text-plain {
+    background: url("/files/icon/text-plain.png") top left;
+    background-size: 32px;
+}
+.mime-text-html {
+    background: url("/files/icon/text-html.png") top left;
+    background-size: 32px;
+}
+.mime-application-javascript {
+    background: url("/files/icon/application-javascript.png") top left;
+    background-size: 32px;
+}
+.mime-application-xml {
+    background: url("/files/icon/application-rss+xml.png") top left;
+    background-size: 32px;
+}
+.mime-application-pdf {
+    background: url("/files/icon/application-pdf.png") top left;
+    background-size: 32px;
+}
+.mime-application-octet-stream {
+    background: url("/files/icon/application-octet-stream.png") top left;
+    background-size: 32px;
+}
+.mime-application-x-gzip {
+    
+}
+.mime-application-x-empty {
+    
+}
+.mime-audio-mpeg {
+    background: url("/files/icon/audio-mpeg.png") top left;
+    background-size: 32px;
+}
+.mime-image-jpeg {
+    background: url("/files/icon/image-x-generic.png") top left;
+    background-size: 32px;
+}
+.mime-image-png {
+    background: url("/files/icon/image-x-generic.png") top left;
+    background-size: 32px;
+}
+.mime-image-gif {
+    background: url("/files/icon/image-x-generic.png") top left;
+    background-size: 32px;
+}

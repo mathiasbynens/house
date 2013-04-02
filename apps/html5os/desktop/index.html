@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+        <meta charset="utf-8">
+		<title>House Desktop</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <base href="/desktop/" />
+        <link rel="apple-touch-startup-image" href="startup-splash.png" />
+        <link rel="stylesheet" href="index.css">
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <link rel="apple-touch-icon-precomposed" href="iosicon.png"/>
+        <link rel="icon" href="favicon.ico"/>
+        
+        <meta name="viewport" content="initial-scale = 1.0, user-scalable = no">
+        <style>
+            body {
+                font-family: Helvetica, Arial, sans-serif;
+            }
+            #splash {
+                position: fixed;
+                z-index: 1000;
+                top:0;
+                right:0;
+                left:0;
+                bottom:0;
+                background: rgba(255,255,255,1);
+                margin: 0 0;
+                padding: 0 0;
+            }
+            #loading {
+                display: block;
+            }
+            #loadingSpinner {
+                display: block;
+                position:relative;
+                width:128px;
+                height:128px;
+                -webkit-transform:scale(0.6);
+                -moz-transform:scale(0.6);
+            }
+            #loadingSpinner > div {
+                position:absolute;
+                background-color:#FFFFFF;
+                height:23px;
+                width:23px;
+                -moz-border-radius:12px;
+                -webkit-border-radius:12px;
+                -webkit-animation-name:spin_fade;
+                -webkit-animation-duration:1.04s;
+                -webkit-animation-iteration-count:infinite;
+                -webkit-animation-direction:linear;
+                -moz-animation-name:spin_fade;
+                -moz-animation-duration:1.04s;
+                -moz-animation-iteration-count:infinite;
+                -moz-animation-direction:linear;
+            }
+            #loadingSpinner > div:nth-child(1) {
+                left:0;
+                top:52px;
+                -webkit-animation-delay:0.39s;
+                -moz-animation-delay:0.39s;
+            }
+            #loadingSpinner > div:nth-child(2) {
+                left:15px;
+                top:15px;
+                -webkit-animation-delay:0.52s;
+                -moz-animation-delay:0.52s;
+            }
+            #loadingSpinner > div:nth-child(3) {
+                left:52px;
+                top:0;
+                -webkit-animation-delay:0.65s;
+                -moz-animation-delay:0.65s;
+            }
+            #loadingSpinner > div:nth-child(4) {
+                right:15px;
+                top:15px;
+                -webkit-animation-delay:0.78s;
+                -moz-animation-delay:0.78s;
+            }
+            #loadingSpinner > div:nth-child(5) {
+                right:0;
+                top:52px;
+                -webkit-animation-delay:0.9099999999999999s;
+                -moz-animation-delay:0.9099999999999999s;
+            }
+            #loadingSpinner > div:nth-child(6) {
+                right:15px;
+                bottom:15px;
+                -webkit-animation-delay:1.04s;
+                -moz-animation-delay:1.04s;
+            }
+            #loadingSpinner > div:nth-child(7) {
+                left:52px;
+                bottom:0;
+                -webkit-animation-delay:1.1700000000000002s;
+                -moz-animation-delay:1.1700000000000002s;
+            }
+            #loadingSpinner > div:nth-child(8) {
+                left:15px;
+                bottom:15px;
+                -webkit-animation-delay:1.3s;
+                -moz-animation-delay:1.3s;
+            }
+            @-webkit-keyframes spin_fade{
+                0%{background-color:#000000}
+                100%{background-color:#FFFFFF}
+            }
+            @-moz-keyframes spin_fade{
+                0% {background-color:#000000;}
+                100% {background-color:#FFFFFF;}
+            }
+            .table { display: table; height: 100%; }
+            .table-cell { display: table-cell; vertical-align: middle; }
+            #loading .table { margin: 0 auto; }
+            body:not(.loading) #splash {
+                background: rgba(255,255,255,0.0);
+                opacity: 0;
+                visibility: hidden;
+            }
+            body.loading {
+                cursor: wait;
+            }
+            body.loading #splash {
+                background: rgba(255,255,255,1.0);
+            }
+            body #splash {
+                opacity: 1;
+                -webkit-transition: all 1s linear;
+                -moz-transition: all 1s linear;
+                transition: all 1s linear;
+            }
+            #welcome {
+                position: fixed;
+                z-index: 2;
+            }
+        </style>
+	</head>
+	<body class="loading">
+        <div id="header"></div>
+        
+        <div id="welcome"></div>
+        
+        <!--<script type="text/javascript" src="/desktop/require.js"></script>-->
+        <script type="text/javascript" src="/desktop/require.js?/desktop/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/desktop/windows.js/clock/clock.js/desktop/nav.js/applications/applications.js/files/backbone-files.js/wallpaper/backbone-wallpaper.js/wallpaper/wallpaper.js/desktop/jquery.idle-timer.js"></script>
+        <script type="text/javascript">
+        //require.config({baseUrl: '/'});
+        require(['/desktop/index.js'], function(desktop){
+            desktop.init(function(){
+               $('body').removeClass('loading');
+            });
+        });
+        </script>
+        <div id="splash"><div>
+            <div id="loading">
+                <div class="table"><div class="table-cell">
+                    <div id="loadingSpinner">
+                        <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                </div></div>
+            </div>
+        </div></div>
+	</body>
+</html>
