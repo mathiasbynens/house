@@ -8,8 +8,6 @@
 
     var index = {};
     index.init = function(callback) {
-        console.log('test')
-        //require(['js/r.js?/desktop/index.js'], function(){
         require(['/desktop/jquery.js'], function(){
             $(document).ready(function() {
         require(['/desktop/underscore.js'], function(){
