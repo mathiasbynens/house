@@ -67,7 +67,7 @@
             if(this.has('slug')) {
                 return this.get('slug');
             } else {
-                return 'post/'+this.id;
+                return 'id/'+this.id;
             }
         }
     });

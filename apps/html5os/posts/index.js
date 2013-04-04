@@ -29,7 +29,12 @@
                                                 });
                                                 $('#header').append(nav.list.render().$el);
                                                 require(['/posts/posts.js'], function(Posts) {
-                                                    window.posts = new Posts();
+                                                    var $app = $('.app');
+                                                    var postOpts = {};
+                                                    if($app.length > 0) {
+                                                        postOpts.el = $app;
+                                                    }
+                                                    window.posts = new Posts(postOpts);
                                                     posts.bindUser(account.loginStatus.getView().userModel);
                                                     posts.on('initialized', function(){
                                                         $('body').append(posts.render().$el);

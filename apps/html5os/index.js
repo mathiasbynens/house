@@ -17,7 +17,7 @@
                     'msgs',
                     'news',
                     'pages',
-                    'posts',
+                    //'posts',
                     'todos',
                     'urls',
                     'users',
@@ -39,6 +39,13 @@
         };
         routes.push(o);
     }
+    routes.push({"posts": {"static": {
+        "send": {
+            "publicFolder": __dirname + "/posts"
+            , "cachedHtml": process.cwd() + "/cache"
+            , "otherwise": 'index.html'
+        }
+    }}});
     app.config = {routes: routes};
     if(routes) {
         house.addRoutes(routes);

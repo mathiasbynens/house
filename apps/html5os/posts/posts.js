@@ -275,7 +275,7 @@
             }
             self.router = router;
             router.on('title', function(title){
-                var $e = $('header h1');
+                var $e = $('#header h1');
                 $e.html(title);
                 $e.attr('class', '');
                 var eh = $e.height();
@@ -349,7 +349,19 @@
                     }
                 });
             });
-            router.route('post/:id', 'post', function(id){
+            router.route('id/:id/edit', 'editPost', function(id){
+                routerReset();
+                $('#header').addClass('hideTitle');
+                self.findPostById(id, function(doc){
+                    if(doc) {
+                        self.editDoc(doc);
+                    } else {
+                        router.navigate('new', {replace: true, trigger: true});
+                    }
+                    router.trigger('loadingComplete');
+                });
+            });
+            router.route('id/:id', 'post', function(id){
                 routerReset();
                 self.$postViewer.siblings().hide();
                 self.$postViewer.show();
