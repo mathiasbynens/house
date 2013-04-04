@@ -908,23 +908,29 @@
                 require(['/users/backbone-users.js'], function(UsersBackbone){
                     self.UsersBackbone = UsersBackbone;
                     window.usersCollection = new UsersBackbone.Collection();
-                    auth.get(function(err, loginStatus) {
-                        if (err) {
-                            alert(err);
-                        } else if (loginStatus) {
-                            window.account = self.loginStatus = loginStatus;
-                            loginStatus.getView().on("goToProfile", function(username) {
-                                self.router.navigate('user/'+username, true);
-                            });
-                            loginStatus.on("login", function() {
-                                loginStatus.getView().render();
-                                self.trigger('loggedIn', loginStatus);
-                            });
-                            self.$profile.append(loginStatus.getView().render().$el);
-                            if (loginStatus && loginStatus.has("user")) {} else {}
-                            self.trigger('init');
-                        }
-                    });
+                    if(navigator.userAgent.indexOf('HouseJs HTML Cacher') !== -1) {
+                        window.account = self.loginStatus = new auth.Model();
+                        self.$profile.append(self.loginStatus.getView().render().$el);
+                        self.trigger('init');
+                    } else {
+                        auth.get(function(err, loginStatus) {
+                            if (err) {
+                                alert(err);
+                            } else if (loginStatus) {
+                                window.account = self.loginStatus = loginStatus;
+                                loginStatus.getView().on("goToProfile", function(username) {
+                                    self.router.navigate('user/'+username, true);
+                                });
+                                loginStatus.on("login", function() {
+                                    loginStatus.getView().render();
+                                    self.trigger('loggedIn', loginStatus);
+                                });
+                                self.$profile.append(loginStatus.getView().render().$el);
+                                if (loginStatus && loginStatus.has("user")) {} else {}
+                                self.trigger('init');
+                            }
+                        });
+                    }
                 });
             }
             var confPath = '/js/config.js';
