@@ -877,7 +877,7 @@
                 callback(doc);
             } else {
                 var options = { "_id": id };
-                this.fetch({data: options, add: true, success: function(collection, response){
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
                         if(response) {
                             doc = self.get(id);
                             callback(doc);

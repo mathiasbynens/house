@@ -108,6 +108,16 @@ Backbone.sync = function(method, model, options) {
   if (!options.url) {
     params.url = getValue(model, 'url') || urlError();
   }
+  
+  if (!options.hasOwnProperty('withCredentials')) {
+      params.xhrFields = {
+         withCredentials: true
+      }
+  } else {
+      params.xhrFields = {
+         withCredentials: options.withCredentials
+      }
+  }
 
   // Ensure that we have the appropriate request data.
   if (!options.data && model && (method == 'create' || method == 'update')) {
@@ -161,9 +171,7 @@ Backbone.sync = function(method, model, options) {
   if (params.type !== 'GET' && !Backbone.emulateJSON) {
     params.processData = false;
   }
-  params.xhrFields = {
-     withCredentials: true
-  }
+  
   // Make the request, allowing the user to override any Ajax options.
   return $.ajax(_.extend(params, options));
 };

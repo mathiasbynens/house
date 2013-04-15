@@ -88,7 +88,7 @@
             self.pageSize = 10;
             this.resetFilters();
             
-            require(['//'+window.location.host+'/desktop/socket.io.min.js'], function() {
+            require(['/desktop/socket.io.min.js'], function() {
                 var socketOpts = {};
                 if(window.location.protocol.indexOf('https') !== -1) {
                     socketOpts.secure = true;

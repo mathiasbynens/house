@@ -18,10 +18,10 @@ img {
 .row {
     position: relative;
     display: block;
-    height: 64px;
-    line-height: 64px;
+    min-height: 64px;
     border-top: 1px dashed #fff;
     border-bottom: 1px dashed #fff;
+    padding-left: 42px;
 }
 .row:hover {
     border-top: 1px dashed #ccc;
@@ -54,9 +54,15 @@ img {
     display: block;
 }
 
-.row .title, .row .contentType {
+.row .title {
     margin-left: 12px;
     margin: 16px;
+}
+.row .contentType {
+    margin: 0px;
+    position: absolute;
+    top:0;
+    left: 0;
 }
 .row .avatar {
     position: absolute;
@@ -67,10 +73,15 @@ img {
 .row .avatar img {
     height: 100%;
 }
+.row .faviconfile {
+    position: absolute;
+    top: 0;
+    left: 0px;
+}
 .row .faviconfile img {
     max-height: 32px;
     vertical-align: top;
-    padding: 16px;
+    padding: 16px 16px 16px 0px;
 }
 .urlForm {
 }
@@ -85,38 +96,31 @@ img {
 
 [class*='mime-'] {
     display: block;
-    height: 32px;
-    width: 32px;
-    float: left;
+    height: 18px;
+    width: 18px;
     background: url("/files/icon/unkown.png") top left;
-    background-size: 32px;
+    background-size: 18px;
     text-indent: 40px;
     overflow: hidden;
 }
 
 .mime-text-plain {
-    background: url("/files/icon/text-plain.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/text-plain.png");
 }
 .mime-text-html {
-    background: url("/files/icon/text-html.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/text-html.png");
 }
 .mime-application-javascript {
-    background: url("/files/icon/application-javascript.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/application-javascript.png");
 }
 .mime-application-xml {
-    background: url("/files/icon/application-rss+xml.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/application-rss+xml.png");
 }
 .mime-application-pdf {
-    background: url("/files/icon/application-pdf.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/application-pdf.png");
 }
 .mime-application-octet-stream {
-    background: url("/files/icon/application-octet-stream.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/application-octet-stream.png");
 }
 .mime-application-x-gzip {
     
@@ -125,18 +129,14 @@ img {
     
 }
 .mime-audio-mpeg {
-    background: url("/files/icon/audio-mpeg.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/audio-mpeg.png");
 }
 .mime-image-jpeg {
-    background: url("/files/icon/image-x-generic.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/image-x-generic.png");
 }
 .mime-image-png {
-    background: url("/files/icon/image-x-generic.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/image-x-generic.png");
 }
 .mime-image-gif {
-    background: url("/files/icon/image-x-generic.png") top left;
-    background-size: 32px;
+    background-image: url("/files/icon/image-x-generic.png");
 }

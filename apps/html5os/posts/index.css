@@ -1562,3 +1562,9 @@ textarea:focus {
     right: 0;
     z-index: 10;
 }
+
+.owner img.avatar {
+    max-height: 32px;
+    border-radius: 50%;
+    vertical-align: middle;
+}

@@ -70,6 +70,14 @@
                 	var i;
                     var id = self.carousel.masterPages[self.carousel.currentMasterPage].dataset.id;
                     var doc = window.postsCollection.get(id);
+                    var docNext = doc.next();
+                    var docPrev = doc.prev();
+                    if(docPrev) {
+                        self.$postViewer.find('a.carousel-control.left').attr('href', docPrev.getNavigatePath());
+                    }
+                    if(docNext) {
+                        self.$postViewer.find('a.carousel-control.right').attr('href', docNext.getNavigatePath());
+                    }
                     if(doc.has('title')) {
                         self.router.setTitle(doc.get('title'));
                     }
@@ -133,6 +141,15 @@
         },
         carouselDoc: function(doc) {
             var self = this;
+            var docNext = doc.next();
+            var docPrev = doc.prev();
+            if(docPrev) {
+                self.$postViewer.find('a.carousel-control.left').attr('href', docPrev.getNavigatePath());
+            }
+            if(docNext) {
+                self.$postViewer.find('a.carousel-control.right').attr('href', docNext.getNavigatePath());
+            }
+            
             if(doc.has('title')) {
                 self.router.setTitle(doc.get('title'));
             }
@@ -176,8 +193,6 @@
                 prevPageNum = maxPageNum;
             }
             var renderSiblings = function() {
-                var docNext = doc.next();
-                var docPrev = doc.prev();
                 var pageNext = self.carousel.masterPages[nextPageNum];
                 var pagePrev = self.carousel.masterPages[prevPageNum];
                 if(docNext) {

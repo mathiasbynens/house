@@ -27,6 +27,9 @@
             }
             return this.avatar;
         },
+        getRow: function(options) {
+            return this.getRowView(options);
+        },
         getRowView: function(options) {
             options = options || {};
             options.id = this.get("_id");
@@ -38,7 +41,7 @@
             return this.row;
         },
         renderViews: function() {
-            console.log(this.views);
+            //console.log(this.views);
             for(var i in this.views) {
                 this.views[i].render();
             }
@@ -148,9 +151,9 @@
                 }
             });
         },
-        getNextPage: function() {
+        getNextPage: function(callback) {
             if(this.length < this.count) {
-                this.load({skip:this.length});
+                this.load({skip:this.length}, callback);
             }
         },
         applyFilters: function(options) {
@@ -212,7 +215,7 @@
         initialize: function() {
             var self = this;
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> urls</div>');
-            var $ul = this.$ul = $('<ul id="wallpaper"></ul>');
+            var $ul = this.$ul = $('<ul class="urlsList"></ul>');
             
             this.collection.bind("add", function(doc) {
                 var view;
@@ -223,19 +226,68 @@
                 } else if(self.layout === 'fullView') {
                     view = doc.getFullView({list: self});
                 }
-                self.appendRow(view.render().el);
+                self.appendRow(view);
                 self.renderPager();
+                doc.on('remove', function(){
+                    view.$el.remove();
+                    return false;
+                });
             });
             
             this.collection.on('reset', function(){
                 self.render();
             });
+            this.collection.on('count', function() {
+                self.renderPager();
+            });
+            this.collection.on('reset', function(){
+                self.render();
+            });
+            
+            $(window).scroll(function(){
+                if(self.$el.is(":visible")) {
+                  if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()){
+                    self.loading = true;
+                    self.loadMore();
+                  }
+                }
+            });
+        },
+        filter: function(f) {
+            var self = this;
+            if(f && typeof f == 'function') {
+                this.currentFilter = f;
+                this.collection.filter(function(model) {
+                  if(f(model)) {
+                      self.getDocLayoutView(model).$el.show();
+                      return true;
+                  }
+                  self.getDocLayoutView(model).$el.hide();
+                  return false;
+                });
+            } else {
+                // show all
+                self.$ul.children().show();
+                self.currentFilter = false;
+            }
         },
         events: {
           "click .list-pager": "loadMore",
         },
         loadMore: function() {
-            this.collection.getNextPage();
+            var self = this;
+            this.collection.getNextPage(function(){
+                self.loading = false;
+            });
+        },
+        getDocLayoutView: function(doc) {
+            var view;
+            if(this.layout === 'row') {
+                view = doc.getRow({list: self});
+            } else if(this.layout === 'avatar') {
+                view = doc.getAvatar({list: self});
+            }
+            return view;
         },
         render: function() {
             var self = this;
@@ -244,16 +296,8 @@
             this.$ul.html('');
             //this.collection.sort({silent:true});
             this.collection.each(function(doc){
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRowView({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatarView({list: self});
-                } else if(self.layout === 'fullView') {
-                    view = doc.getFullView({list: self});
-                }
-                
-                self.appendRow(view.render().el);
+                var view = self.getDocLayoutView(doc);
+                self.appendRow(view);
             });
             this.$el.append(this.$pager);
             this.renderPager();
@@ -270,7 +314,31 @@
         refreshPager: function() {
         },
         appendRow: function(row) {
-            this.$ul.append(row);
+            console.log(row.model)
+            var rank = new Date(row.model.get('at'));
+            rank = rank.getTime();
+            var rowEl = row.render().$el;
+            if(this.currentFilter && !this.currentFilter(row.model)) {
+                rowEl.hide();
+            }
+            rowEl.attr('data-sort-rank', rank);
+            var d = false;
+            var $lis = this.$ul.children();
+            var last = $lis.last();
+            var lastRank = parseInt(last.attr('data-sort-rank'), 10);
+            if(rank > lastRank) {
+                $lis.each(function(i,e){
+                    if(d) return;
+                    var r = parseInt($(e).attr('data-sort-rank'), 10);
+                    if(rank > r) {
+                        $(e).before(rowEl);
+                        d = true;
+                    }
+                });
+            }
+            if(!d) {
+                this.$ul.append(rowEl);
+            }
         }
     });
     
