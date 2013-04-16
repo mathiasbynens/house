@@ -11,7 +11,21 @@
         getFrom: function(callback) {
             if(this.has('from')) {
                 var from = this.get('from');
-                var user = window.usersCollection.getOrFetch(from.id, callback);
+                if(from.id) {
+                    window.usersCollection.getOrFetch(from.id, callback);
+                } else if(to.name) {
+                    window.usersCollection.getOrFetchName(from.name, callback);
+                }
+            }
+        },
+        getTo: function(callback) {
+            if(this.has('to')) {
+                var to = this.get('to');
+                if(to.id) {
+                    window.usersCollection.getOrFetch(to.id, callback);
+                } else if(to.name) {
+                    window.usersCollection.getOrFetchName(to.name, callback);
+                }
             }
         },
         getFullView: function(options) {
@@ -1133,6 +1147,19 @@
             if(window.app && window.app.user) {
                 this.from = window.app.user.getNewAvatarNameView();
             }
+            
+            if(this.options.to) {
+                if(this.options.to.id) {
+                    this.model.set({to: this.options.to}, {silent: true});
+                    
+                    this.model.getTo(function(to){
+                        if(to) {
+                            self.to = to.getAvatarNameView();
+                        }
+                    });
+                }
+            }
+            
             var msgs = {
                 sendPlaceholder: "SEND",
                 msgPlaceholder: "Your message",
@@ -1147,7 +1174,7 @@
             }
             this.$inputTxt = $('<textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"></textarea>');
             this.$inputSub = $('<input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off" />');
-            this.$form = $('<form class="post"><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
+            this.$form = $('<form class="post"><span class="to"></span><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
             
             this.$form.find('fieldset').append('<label>'+msgs.subjectLabel+'</label>');
             this.$form.find('fieldset').append(this.$inputSub);
@@ -1160,6 +1187,9 @@
             if(this.$el.find('form').length === 0) {
                 this.$el.append(this.$form);
             }
+            if(this.to) {
+                this.$el.find('.to').append(this.to.render().$el);
+            }
             if(this.from) {
                 this.$el.find('.from').append(this.from.render().$el);
             }
@@ -1169,6 +1199,13 @@
                 }
                 if(this.model.has('sub')) {
                     this.$inputSub.val(this.model.get('sub'));
+                }
+                if(this.model.has('to')) {
+                    this.model.getTo(function(to){
+                        if(to) {
+                            self.$el.find('.to').html(to.getAvatarNameView().render().$el);
+                        }
+                    });
                 }
                 if(this.model.has('from')) {
                     this.model.getFrom(function(from){
@@ -1199,6 +1236,15 @@
                 alert('A message is required!');
                 return false;
             }
+            
+            if(this.to) {
+                console.log('has to')
+                setDoc.to = {
+                    id: this.to.model.id,
+                    name: this.to.model.get('name')
+                }
+            }
+            console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,

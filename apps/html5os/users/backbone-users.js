@@ -861,6 +861,10 @@
                 this.$el.find('.avatar').append('<a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
             }
             
+            if(true) {
+                this.$el.append('<button class="sendMsg">Send Message</button>');
+            }
+            
             if (this.model.has("url") || isa) {
                 var src = this.model.get("url") || 'http://yourwebsite.com/';
                 this.$el.append('<span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
@@ -921,7 +925,38 @@
             "click .editPass": "editPass",
             "click .editDisplayName": "editDisplayName",
             "click .editUrl": "editUrl",
-            "click .editAvatar": "editAvatar"
+            "click .editAvatar": "editAvatar",
+            "click .sendMsg": "sendMsg"
+        },
+        sendMsg: function() {
+            var self = this;
+            require(['/msgs/msgs.js'], function(MsgsBackbone){
+                if(!window.MsgsBackbone) {
+                    window.MsgsBackbone = MsgsBackbone;
+                }
+                if(!window.msgsCollection) {
+                    window.msgsCollection = new MsgsBackbone.Collection(); // collection
+                }
+                var msgOpts = {
+                    subjectLabel: "Send a message to "+self.model.get('name')
+                };
+                if(MsgsBackbone) {
+                    self.msgForm = new MsgsBackbone.Form({
+                        collection: window.msgsCollection,
+                        ui: msgOpts,
+                        to: {
+                            id: self.model.id,
+                            name: self.model.get('name')
+                        }
+                    });
+                    var lightbox = utils.appendLightBox(self.msgForm.render().$el);
+                    self.msgForm.on("saved", function(doc) {
+                        alert('Thank you for your message!');
+                        self.msgForm.clear();
+                        lightbox.remove();
+                    });
+                }
+            });
         },
         editPass: function() {
             var self = this;
