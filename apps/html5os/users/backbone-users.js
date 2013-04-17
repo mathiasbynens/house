@@ -1110,6 +1110,15 @@
             if(options.list) {
                 this.list = options.list;
             }
+            this.ui = {
+                regInfoLabel: 'Complete your profile: ',
+                passwordLabel: 'Set a password',
+                emailLabel: 'Email Address',
+                defaultAvatar: '☺'
+            }
+            for(var i in options.ui) {
+                this.ui[i] = options.ui[i];
+            }
             this.model.bind('change', this.render, this);
         },
         render: function() {
@@ -1122,12 +1131,14 @@
             if(isa) {
                 this.$el.append('<input title="Edit your display name" class="editDisplayName" type="text" name="displayName" placeholder="Your name" value="'+displayName+'"/>');
                 
+                this.$el.append(this.ui.regInfoLabel);
+                
                 if(!this.model.has('email')) {
-                    var $inputEmail = $('<span class="inputEmail"><input class="editEmail" type="email" name="email" placeholder="your@email.com" /></span>');
+                    var $inputEmail = $('<span class="inputEmail"><button class="connectEmail zocial email">'+this.ui.emailLabel+'</button><input style="display:none;" class="editEmail" type="email" name="email" placeholder="your@email.com" /></span>');
                     this.$el.append($inputEmail);
                 }
                 if(this.model.has('pass')) {
-                    var $setPass = $('<span class="inputPass"><a href="/" class="showPassForm">set your password</a><form style="display: none"><span class="passwordOnce" style=""><label>Password: </label><input type="password" name="pass" /></span> <span class="passwordAgain" style="display: none"><label>Again: </label><input type="password" name="pass_again" /></span></form></span>');
+                    var $setPass = $('<span class="inputPass"><a href="/" class="showPassForm zocial guest">'+this.ui.passwordLabel+'</a><form style="display: none"><span class="passwordOnce" style=""><label>Password: </label><input type="password" name="pass" /></span> <span class="passwordAgain" style="display: none"><label>Again: </label><input type="password" name="pass_again" /></span></form></span>');
                     this.$el.append($setPass);
                 }
             }
@@ -1144,7 +1155,7 @@
                 }
                 this.$el.find('.avatar').append('<img class="editAvatar" src="' + src + '" />');
             } else if(isa) {
-                this.$el.find('.avatar').append('<button class="editAvatar" title="Upload your avatar">☺</button>');
+                this.$el.find('.avatar').append('<button class="editAvatar" title="Upload your avatar">'+this.ui.defaultAvatar+'</button>');
             }
             
             this.setElement(this.$el);
@@ -1164,7 +1175,13 @@
             'keyup input[name="pass_again"]': "changePassword",
             "blur .editDisplayName": "editDisplayName",
             "blur .editEmail": "editEmail",
-            "click .editAvatar": "editAvatar"
+            "click .editAvatar": "editAvatar",
+            "click .connectEmail": "connectEmail"
+        },
+        connectEmail: function() {
+            this.$el.find('.connectEmail').hide();
+            this.$el.find('input[name="email"]').show();
+            this.$el.find('input[name="email"]').focus();
         },
         submit: function(e) {
             if(e.keyCode == 13) {
