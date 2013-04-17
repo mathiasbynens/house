@@ -1026,7 +1026,20 @@
                     return;
                 }
                 self.router.navigate('join');
-                
+                self.loginLightbox = new utils.LightboxView().render();
+                self.loginLightbox.on('close', function(){
+                    window.history.back();
+                });
+                auth.prompt(self.loginLightbox.$container, self.authFormOptions).authorized(function() {
+                    self.loginLightbox.trigger('close');
+                });
+            });
+            router.route("join/*path", "joinPath", function(path) {
+                if(self.loginStatus.has('user')) {
+                    self.router.navigate(path, true);
+                    return;
+                }
+                //self.router.navigate('join');
                 self.loginLightbox = new utils.LightboxView().render();
                 self.loginLightbox.on('close', function(){
                     window.history.back();
