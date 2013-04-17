@@ -855,21 +855,21 @@
             }
             
             if(isa) {
-                this.$el.find('h1').append('<a class="editDisplayName" title="Edit display name" href="#">edit real name</a>');
-                this.$el.find('h2').append('<a class="editName" title="Edit user name" href="#">edit user name</a>');
-                this.$el.find('h2').append('<a class="editPass" title="Edit user password" href="#">change password</a>');
-                this.$el.find('.avatar').append('<a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
+                this.$el.find('h1').append(' <a class="editDisplayName" title="Edit display name" href="#">edit real name</a>');
+                this.$el.find('h2').append(' <a class="editName" title="Edit user name" href="#">edit user name</a>');
+                this.$el.find('h2').append(' <a class="editPass" title="Edit user password" href="#">change password</a>');
+                this.$el.find('.avatar').append(' <a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
             }
             
-            if(true) {
+            if(!account.isOwner(this.model.id)) {
                 this.$el.append('<button class="sendMsg">Send Message</button>');
             }
             
             if (this.model.has("url") || isa) {
                 var src = this.model.get("url") || 'http://yourwebsite.com/';
-                this.$el.append('<span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
+                this.$el.append(' <span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
                 if(isa) {
-                    this.$el.find('.url').append('<a class="editUrl" title="Edit web address" href="#">edit URL</a>');
+                    this.$el.find('.url').append(' <a class="editUrl" title="Edit web address" href="#">edit URL</a>');
                 }
             }
             
@@ -890,7 +890,7 @@
             }
             this.$el.append($msg);
             if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
-                $msg.append('<a class="editEmail" title="Edit email address" href="#">edit email</a>');
+                $msg.append(' <a class="editEmail" title="Edit email address" href="#">edit email</a>');
             }
             this.$el.append($byline);
             

@@ -9,8 +9,15 @@
         });
         this.collection.load();
     };
-    auth.prompt = function($el, callback) {
+    auth.prompt = function($el, options, callback) {
         var thisPrompt = this;
+        if(typeof options === 'function') {
+            callback = options;
+            options = {};
+        }
+        if(!options) {
+            options = {};
+        }
         if (!this.hasOwnProperty("model")) {
             this.model = new this.Model({}, {
                 collection: this.collection
@@ -25,9 +32,8 @@
                 silent: true
             });
         }
-        this.authView = new this.LoginForm({
-            model: this.model
-        });
+        options.model = this.model;
+        this.authView = new this.LoginForm(options);
         this.model.on("login", function() {
             if (callback) callback();
             if (thisPrompt.hasOwnProperty("onAuthCb")) {
@@ -101,8 +107,15 @@
         isOwner: function(ownerId) {
             return(this.has('user') && this.get('user') == ownerId);
         },
-        welcome: function($el, callback) {
+        welcome: function($el, options, callback) {
             var self = this;
+            if(typeof options === 'function') {
+                callback = options;
+                options = {};
+            }
+            if(!options) {
+                options = {};
+            }
             if(this.isUser()) {
                 this.getView().getUserModel(function(user){
                     var $e = user.getWelcomeView().render().$el;
@@ -110,7 +123,7 @@
                     $el.html($e);
                 });
             } else {
-                return auth.prompt($el, function(){
+                return auth.prompt($el, options, function(){
                     self.welcome($el);
                 });
             }
@@ -146,6 +159,12 @@
         className: "connections",
         initialize: function() {
             var self = this;
+            this.ui = {
+                connectLabel: "or connect with: "
+            }
+            for(var i in this.options.ui) {
+                this.ui[i] = this.options.ui[i];
+            }
         },
         render: function() {
             var loginWelcomMsg = '';
@@ -156,7 +175,7 @@
             
             this.$el.html(loginWelcomMsg);
             this.$el.append(this.$form);
-            this.$el.append('or connect <span class="connect"><button class="connectTwitter">Twitter</button><button class="connectFacebook">Facebook</button><button class="connectGoogle">Google</button></span>');
+            this.$el.append('<span class="connectLabel">'+this.ui.connectLabel+'</span><span class="connect"><button class="connectTwitter zocial twitter">Twitter</button><button class="connectFacebook zocial facebook">Facebook</button><button class="connectGoogle zocial googleplus">Google</button></span>');
             this.setElement(this.$el);
             return this;
         },
@@ -197,7 +216,16 @@
         },
         initialize: function() {
             var self = this;
-            this.$form = $('<form id="houseAuth"><input name="email" type="email" placeholder="my@email.com" value="" required autocomplete="off" /><input style="display:none;" type="password" name="pass" placeholder="Secret password" /><input style="display:none;" type="submit" name="Join" value="Join" /><span class="msg"></span></form>');
+            this.ui = {
+                emailLabel: "Email",
+                connectLabel: "or connect ",
+                footerLabel: "",
+                welcomeLabel: ""
+            }
+            for(var i in this.options.ui) {
+                this.ui[i] = this.options.ui[i];
+            }
+            this.$form = $('<form id="houseAuth"><span class="welcomeLabel">'+this.ui.welcomeLabel+'</span><button class="zocial email">'+this.ui.emailLabel+'</button><input name="email" type="email" placeholder="my@email.com" value="" required autocomplete="off" /><input style="display:none;" type="password" name="pass" placeholder="Secret password" /><input style="display:none;" type="submit" name="Join" value="Join" /><span class="msg"></span><span class="footerLabel">'+this.ui.footerLabel+'</span></form>');
             this.$submit = this.$form.find('input[type="submit"]');
             this.$pass = this.$form.find('input[name="pass"]');
             this.model.on("badPass", function(msg) {
@@ -217,7 +245,7 @@
                 }
             });
             
-            this.connectionView = new auth.ConnectForm({model: this.model});
+            this.connectionView = new auth.ConnectForm({model: this.model, ui: {connectLabel: this.ui.connectLabel}});
         },
         events: {
             "submit form": "submit",
@@ -904,6 +932,11 @@
         initialize: function() {
             var self = this;
             this.$profile = $('<profile></profile>');
+            self.authFormOptions = {
+                ui: {
+                    welcomeLabel: "Join now!"
+                }
+            }
             var loadUsers = function() {
                 require(['/users/backbone-users.js'], function(UsersBackbone){
                     self.UsersBackbone = UsersBackbone;
@@ -991,7 +1024,7 @@
                 self.loginLightbox.on('close', function(){
                     window.history.back();
                 });
-                auth.prompt(self.loginLightbox.$container).authorized(function() {
+                auth.prompt(self.loginLightbox.$container, self.authFormOptions).authorized(function() {
                     self.loginLightbox.trigger('close');
                 });
             });
