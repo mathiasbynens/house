@@ -225,7 +225,7 @@
             for(var i in this.options.ui) {
                 this.ui[i] = this.options.ui[i];
             }
-            this.$form = $('<form id="houseAuth"><span class="welcomeLabel">'+this.ui.welcomeLabel+'</span><button class="zocial email">'+this.ui.emailLabel+'</button><input name="email" type="email" placeholder="my@email.com" value="" required autocomplete="off" /><input style="display:none;" type="password" name="pass" placeholder="Secret password" /><input style="display:none;" type="submit" name="Join" value="Join" /><span class="msg"></span><span class="footerLabel">'+this.ui.footerLabel+'</span></form>');
+            this.$form = $('<form id="houseAuth"><span class="welcomeLabel">'+this.ui.welcomeLabel+'</span><button class="connectEmail zocial email">'+this.ui.emailLabel+'</button><input style="display:none;" name="email" type="email" placeholder="my@email.com" value="" required autocomplete="off" /><input style="display:none;" type="password" name="pass" placeholder="Secret password" /><input style="display:none;" type="submit" name="Join" value="Join" /><span class="msg"></span><span class="footerLabel">'+this.ui.footerLabel+'</span></form>');
             this.$submit = this.$form.find('input[type="submit"]');
             this.$pass = this.$form.find('input[name="pass"]');
             this.model.on("badPass", function(msg) {
@@ -251,7 +251,14 @@
             "submit form": "submit",
             'blur form input[name="email"]': "submit",
             'keyup input[name="email"]': "keyupsubmit",
-            "click .resetPass": "resetPass"
+            "click .resetPass": "resetPass",
+            "click .connectEmail": "connectEmail"
+        },
+        connectEmail: function() {
+            this.$el.find('.connectEmail').hide();
+            this.$el.find('input[name="email"]').show();
+            this.$el.find('input[name="email"]').focus();
+            return false;
         },
         keyupsubmit: function(e) {
             if(e.keyCode == 13) {

@@ -219,6 +219,10 @@ input[name="user[pass]"] {
     margin: 24px auto;
     text-align: center;
 }
+.footerLabel {
+    font-size: 13px;
+    color: #999;
+}
 #helpMenu { }
 #helpMenu ul { width: 49%; }
 #helpMenu ul li {
@@ -1555,6 +1559,7 @@ body .zocial {
 }
 
 #houseAuth input[name="email"] {
-    line-height: 22px;
+    line-height: 26px;
     text-indent: 4px;
+    margin: 6px 8px;
 }

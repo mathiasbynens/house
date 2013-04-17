@@ -18,23 +18,27 @@
                         require(['/account/account.js'], function(accountProfile){
                             accountProfile.authFormOptions = {ui: {
                                 "welcomeLabel": "Join using ",
-                                "connectLabel": "or connect with: ",
+                                "connectLabel": "",
                             }};
                             accountProfile.auth(function(){
                                 var $account = $('<div id="account"></div>');
                                 $('#header').append($account);
                                 $account.append(accountProfile.render().$el);
-                                if(!account.isUser() || !account.has('email')) {
-                                    account.welcome($('#welcome'), {ui: {
-                                        "welcomeLabel": "Join using ",
-                                        "welcomeBackLabel": "Welcome back ",
-                                        "noEmailLabel": "Input your email: ",
-                                        "noPassLabel": "Don't forget to ",
-                                        "emailLabel": "Email",
-                                        "connectLabel": "or connect with: ",
-                                        "footerLabel": " * we'll never spam you, really."
-                                    }});
-                                }
+                                
+                                account.getView().getUserModel(function(accountUser){
+                                    if(!account.isUser() || (account.isUser() && !accountUser.has('email'))) {
+                                        account.welcome($('#welcome'), {ui: {
+                                            "welcomeLabel": "Join using ",
+                                            "welcomeBackLabel": "Welcome back ",
+                                            "noEmailLabel": "Input your email: ",
+                                            "noPassLabel": "Don't forget to ",
+                                            "emailLabel": "Email",
+                                            "connectLabel": "or connect with: ",
+                                            "footerLabel": " * we'll never spam you, really."
+                                        }});
+                                    }
+                                });
+                                
                                 require(['/desktop/windows.js'], function(windows){
                                     index.windows = windows;
                                     windows.render($('body'));
