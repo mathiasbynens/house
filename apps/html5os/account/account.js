@@ -328,15 +328,24 @@
             if (!this.userModel) {
                 //this.getUserModel(); // requires waiting for callback to be useful
             }
+            require(['/msgs/msgs.js'], function(MsgsBackbone){
+                if(!window.MsgsBackbone) {
+                    window.MsgsBackbone = MsgsBackbone;
+                }
+                if(!window.msgsCollection) {
+                    window.msgsCollection = new MsgsBackbone.Collection(); // collection
+                }
+                
+            });
         },
         render: function(recursive) {
             var self = this;
             var name = this.model.get('name');
             var loginbtn;
             if (this.model.get('user')) {
-                loginbtn = '<li><span class="avatar" title="'+name+'"></span></li><li class="logout">Sign out</li>';
+                loginbtn = '<li><span class="avatar" title="'+name+'"></span></li><li class="feedback">Feedback</li><li class="logout">Sign out</li>';
             } else {
-                loginbtn = '<li class="login">Sign in</li>';
+                loginbtn = '<li class="login">Sign in</li><li class="feedback">Feedback</li>';
             }
             
             this.$el.html('<button>⚙</button><menu>'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
@@ -379,6 +388,7 @@
             "click .logout": "logout",
             "click .login": "login",
             "click .avatar": "goToProfile",
+            "click .feedback": "feedback",
             "click button": "toggleMenu"
         },
         toggleMenu: function() {
@@ -397,6 +407,32 @@
         },
         goToProfile: function() {
             this.trigger("goToProfile", this.model.get("name"));
+        },
+        feedback: function() {
+            var self = this;
+            require(['/msgs/msgs.js'], function(MsgsBackbone){
+                if(MsgsBackbone) {
+                    var msgOpts = {
+                        sendPlaceholder: "SEND",
+                        msgPlaceholder: "Your feedback",
+                        subjectPlaceholder: "Subject of your feedback",
+                        msgLabel: "Leave details needed to reproduce bugs, and schematics for feature ideas.",
+                        subjectLabel: "Please tell us how we can get better: "
+                    };
+                    self.feedbackForm = new window.MsgsBackbone.Form({
+                        collection: window.msgsCollection,
+                        ui: msgOpts
+                    });
+                    var lightbox = utils.appendLightBox(self.feedbackForm.render().$el);
+                    self.feedbackForm.focus();
+                    self.feedbackForm.on("saved", function(doc) {
+                        self.feedbackForm.clear();
+                        lightbox.remove();
+                        alert('Thank you for your feedback!');
+                    });
+                    
+                }
+            });
         },
         login: function() {
             var self = this;
@@ -421,7 +457,7 @@
             }
         },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
         }
     });
     var users = {};

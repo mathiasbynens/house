@@ -1146,6 +1146,11 @@
             }
             if(window.app && window.app.user) {
                 this.from = window.app.user.getNewAvatarNameView();
+            } else if(window.account && window.account.has('user')) {
+                window.account.getView().getUserModel(function(user){
+                    self.from = user.getNewAvatarNameView();
+                });
+                //this.from = window.app.user.getNewAvatarNameView();
             }
             
             if(this.options.to) {
@@ -1174,7 +1179,7 @@
             }
             this.$inputTxt = $('<textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"></textarea>');
             this.$inputSub = $('<input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off" />');
-            this.$form = $('<form class="post"><span class="to"></span><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
+            this.$form = $('<form class="msg"><span class="to"></span><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
             
             this.$form.find('fieldset').append('<label>'+msgs.subjectLabel+'</label>');
             this.$form.find('fieldset').append(this.$inputSub);

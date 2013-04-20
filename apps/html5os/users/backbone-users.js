@@ -834,7 +834,7 @@
             var self = this;
             var isa = (window.account && (account.isAdmin() || account.isOwner(this.model.id)));
             this.$el.html('');
-            var $byline = $('<span></span>');
+            var $byline = $('<span class="membership"></span>');
             var displayName = this.model.get('displayName') || this.model.get('name');
             this.$el.append('<h1 class="displayName">'+displayName+'</h1>');
             this.$el.append('<h2 class="name">'+this.model.get('name')+'</h2>');
@@ -905,6 +905,13 @@
                 $bio.html(this.model.get('bio'));
             }
             this.$el.append($bio);
+            
+            if(account.SubProfileView) {
+                if(!this.subProfileView) {
+                    this.subProfileView = new account.SubProfileView({model: this.model});
+                }
+                this.$el.append(this.subProfileView.render().$el);
+            }
             
             if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
                 this.$el.append(this.actions.render().$el);
