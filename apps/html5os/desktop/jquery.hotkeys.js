@@ -10,8 +10,13 @@
  * Binny V A, http://www.openjs.com/scripts/events/keyboard_shortcuts/
 */
 
+/*
+ * One small change is: now keys are passed by object { keys: '...' }
+ * Might be useful, when you want to pass some other data to your handler
+ */
+
 (function(jQuery){
-	
+    
 	jQuery.hotkeys = {
 		version: "0.8",
 
@@ -22,7 +27,8 @@
 			96: "0", 97: "1", 98: "2", 99: "3", 100: "4", 101: "5", 102: "6", 103: "7",
 			104: "8", 105: "9", 106: "*", 107: "+", 109: "-", 110: ".", 111 : "/", 
 			112: "f1", 113: "f2", 114: "f3", 115: "f4", 116: "f5", 117: "f6", 118: "f7", 119: "f8", 
-			120: "f9", 121: "f10", 122: "f11", 123: "f12", 144: "numlock", 145: "scroll", 191: "/", 224: "meta"
+			120: "f9", 121: "f10", 122: "f11", 123: "f12", 144: "numlock", 145: "scroll", 186: ";", 191: "/",
+			220: "\\", 222: "'", 224: "meta"
 		},
 	
 		shiftNums: {
@@ -33,18 +39,23 @@
 	};
 
 	function keyHandler( handleObj ) {
+		if ( typeof handleObj.data === "string" ) {
+			handleObj.data = { keys: handleObj.data };
+		}
+
 		// Only care when a possible input has been specified
-		if ( typeof handleObj.data !== "string" ) {
+		if ( !handleObj.data || !handleObj.data.keys || typeof handleObj.data.keys !== "string" ) {
 			return;
 		}
-		
+
 		var origHandler = handleObj.handler,
-			keys = handleObj.data.toLowerCase().split(" ");
+			keys = handleObj.data.keys.toLowerCase().split(" "),
+			textAcceptingInputTypes = ["text", "password", "number", "email", "url", "range", "date", "month", "week", "time", "datetime", "datetime-local", "search", "color"];
 	
 		handleObj.handler = function( event ) {
 			// Don't fire in text-accepting inputs that we didn't directly bind to
 			if ( this !== event.target && (/textarea|select/i.test( event.target.nodeName ) ||
-				 event.target.type === "text") ) {
+				jQuery.inArray(event.target.type, textAcceptingInputTypes) > -1 ) ) {
 				return;
 			}
 			

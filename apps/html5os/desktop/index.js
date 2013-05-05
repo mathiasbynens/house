@@ -72,11 +72,18 @@
                                         });
                                         
                                         require(['/wallpaper/wallpaper.js'], function(wallpaper){
-                                            wallpaper.on('initialized', function(){
+                                            var startWallpaper = function() {
                                                 var wallpaperBackground = wallpaper.getBackgroundView();
                                                 $('body').append(wallpaperBackground.render().$el);
                                                 wallpaperBackground.transitionEvery(60000*15);
-                                            });
+                                            }
+                                            if(wallpaper.initialized) {
+                                                startWallpaper();
+                                            } else {
+                                                wallpaper.on('initialized', function(){
+                                                    startWallpaper();
+                                                });
+                                            }
                                         });
                                         
                                         accountProfile.bindRouter(nav.router);
