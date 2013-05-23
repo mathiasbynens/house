@@ -46,6 +46,21 @@
             , "otherwise": 'index.html'
         }
     }}});
+    
+    // Offer default app exlusions 
+    if(house.config.excludeApps) {
+        for(var i in house.config.excludeApps) {
+            var excludedApp = house.config.excludeApps[i];
+            for(var r in routes) {
+                for(var k in routes[r]) {
+                    if(k == excludedApp) {
+                        delete routes[r][k];
+                    }
+                }
+            }
+        }
+    }
+    
     app.config = {routes: routes};
     if(routes) {
         house.addRoutes(routes);
