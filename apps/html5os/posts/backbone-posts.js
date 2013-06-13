@@ -419,7 +419,9 @@
                     var p = {
                         id: post_id
                     }
-                    p.title = post.title;
+                    if(post.has('title')) {
+                        p.title = post.get('title');
+                    }
                     if(post.has('slug')) {
                         p.slug = post.get('slug');
                     }

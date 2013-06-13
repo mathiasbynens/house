@@ -414,9 +414,9 @@
                 if(MsgsBackbone) {
                     var msgOpts = {
                         sendPlaceholder: "SEND",
-                        msgPlaceholder: "Your feedback",
+                        msgPlaceholder: "Your feedback details and contact info",
                         subjectPlaceholder: "Subject of your feedback",
-                        msgLabel: "Leave details needed to reproduce bugs, and schematics for feature ideas.",
+                        msgLabel: "Leave any details that will help us understand your feedback, and a way to reach you if you'd like us to follow up.",
                         subjectLabel: "Please tell us how we can get better: "
                     };
                     self.feedbackForm = new window.MsgsBackbone.Form({
