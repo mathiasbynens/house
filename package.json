@@ -20,7 +20,8 @@
     "ent": "latest",
     "moment": "latest",
     "feedparser": "latest",
-    "mkdirp": "latest"
+    "mkdirp": "latest",
+    "string": "~1.4.0"
   },
   "devDependencies": {
     "mocha": "*"
