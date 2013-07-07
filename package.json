@@ -1,6 +1,6 @@
 {
   "name": "house",
-  "version": "0.0.4616",
+  "version": "0.0.4618",
   "dependencies": {
     "optimist": "latest",
     "formidable-plus": "latest",
@@ -21,7 +21,7 @@
     "moment": "latest",
     "feedparser": "latest",
     "mkdirp": "latest",
-    "string": "~1.4.0"
+    "string": "latest"
   },
   "devDependencies": {
     "mocha": "*"
