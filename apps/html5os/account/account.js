@@ -94,6 +94,9 @@
             if (!this.hasOwnProperty("view")) {
                 if (!options) options = {};
                 options.model = this;
+                if(this.ui) {
+                    options.ui = this.ui;
+                }
                 this.view = new auth.View(options);
             }
             return this.view;
@@ -322,6 +325,12 @@
         className: "authView",
         initialize: function() {
             var self = this;
+            this.ui = {
+                accountMenuLabel: "⚙"
+            }
+            for(var i in this.options.ui) {
+                this.ui[i] = this.options.ui[i];
+            }
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
             this.userModel = window.usersCollection.get(this.model.get("user"));
@@ -335,7 +344,15 @@
                 if(!window.msgsCollection) {
                     window.msgsCollection = new MsgsBackbone.Collection(); // collection
                 }
-                
+            });
+            
+            require(['/desktop/nav.js'], function(nav){
+                self.nav = nav;
+                nav.init();
+                nav.list.on('selected', function(navRow){
+                    self.hideMenu();
+                });
+                self.trigger('navInit');
             });
         },
         render: function(recursive) {
@@ -343,12 +360,23 @@
             var name = this.model.get('name');
             var loginbtn;
             if (this.model.get('user')) {
-                loginbtn = '<li><span class="avatar" title="'+name+'"></span></li><li class="feedback">Feedback</li><li class="logout">Sign out</li>';
+                loginbtn = '<li><span class="avatar" title="'+name+'"></span></li><li class="appNav"></li><li class="feedback">Feedback</li><li class="logout">Sign out</li>';
             } else {
-                loginbtn = '<li class="login">Sign in</li><li class="feedback">Feedback</li>';
+                loginbtn = '<li class="login">Sign in</li><li class="appNav"></li><li class="feedback">Feedback</li>';
             }
             
-            this.$el.html('<button>⚙</button><menu>'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
+            var accountMenuStr = this.ui.accountMenuLabel;
+            
+            this.$el.html('<button>'+accountMenuStr+'</button><menu>'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
+            
+            if(!self.nav) {
+                self.on('navInit', function(){
+                    self.$el.find('.appNav').append(self.nav.list.render().$el);
+                });
+            } else {
+                this.$el.find('.appNav').append(self.nav.list.render().$el);
+            }
+            
             if (this.userModel) {
                 this.$el.find(".avatar").append(this.userModel.getAvatarView().render().el);
             } else if (this.model.has("user")) {
@@ -360,6 +388,11 @@
             }
             this.setElement(this.$el);
             return this;
+        },
+        updateUi: function(ui) {
+            //loginStatus.getView().render();
+            this.ui = ui;
+            this.render();
         },
         refresh: function() {
             var self = this;
@@ -1019,6 +1052,19 @@
                 };
                 loadUsers();
             });
+        },
+        updateUi: function(ui) {
+            console.log(ui)
+            var self = this;
+            self.authFormOptions.ui = ui;
+            //loginStatus.getView().render();
+            if(self.loginStatus) {
+                self.loginStatus.getView().updateUi(ui);
+            } else {
+                self.on('init', function(){
+                    self.loginStatus.getView().updateUi(ui);
+                });
+            }
         },
         auth: function(callback) {
             if(this.loginStatus) {

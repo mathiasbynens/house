@@ -99,9 +99,11 @@ input[type="url"]:disabled, input[type="button"]:disabled, input[type="submit"]:
 #navigation menu, #account menu {
     position: fixed;
     top: 0px;
-    margin: 40px 0 0;
+    bottom: 0px;
     width: 100%;
+    margin: 40px 0 0;
     visibility: hidden;
+    overflow-y: auto;
 }
 #account menu {
     right: 0;
@@ -124,7 +126,33 @@ menu li[selected] {
     color: orange;
     cursor: auto;
 }
+.authView menu li #navigation menu {
+    color: white !important;
+}
+.authView menu:hover li #navigation menu {
+}
+.authView menu #navigation {
+    position: relative;
+    display: block;
+    height: auto;
+    width: auto;
+}
+.authView menu #navigation menu {
+    position: relative;
+    margin: 0px 0 0;
+    width: auto;
+    visibility: visible;
+}
 
+.authView menu #navigation .opener {
+    display: none;
+}
+.authView img.avatar {
+    height: 40px;
+    vertical-align: middle;
+    margin: 4px;
+    border-radius: 50%;
+}
 
 /*
  *  Only bother with hover events on larger screens

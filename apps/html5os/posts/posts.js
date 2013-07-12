@@ -204,7 +204,9 @@
             }
             var currentPage = self.carousel.masterPages[currentPageNum];
             self.carouselPageRender(currentPage, doc);
-            renderSiblings();
+            if(!navigator || !navigator.userAgent || navigator.userAgent.indexOf('HouseJs HTML Cacher') === -1) {
+                renderSiblings();
+            }
         },
         editDoc: function(doc) {
             var self = this;
