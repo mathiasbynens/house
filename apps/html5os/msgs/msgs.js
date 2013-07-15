@@ -1146,8 +1146,8 @@
             }
             if(window.app && window.app.user) {
                 this.from = window.app.user.getNewAvatarNameView();
-            } else if(window.account && window.account.has('user')) {
-                window.account.getView().getUserModel(function(user){
+            } else if(window.account && window.account.loginStatus && window.account.loginStatus.has('user')) {
+                window.account.loginStatus.getView().getUserModel(function(user){
                     self.from = user.getNewAvatarNameView();
                 });
                 //this.from = window.app.user.getNewAvatarNameView();

@@ -4,6 +4,7 @@
     
     nav.Router = Backbone.Router.extend({
         initialize: function(options) {
+            console.log('init router')
         },
         routes: {
             "_=_": "gohome",
@@ -21,6 +22,7 @@
             }
         },
         root: function() {
+            console.log('rooooooot')
             this.reset();
             this.trigger('root');
         },
@@ -38,6 +40,7 @@
         if(window.navigator.standalone) {
             historyOptions.silent = true; // lets use our localStorage history instead
         }
+        console.log(historyOptions)
         if(window.historyStarted) {
             return;
         }
@@ -45,15 +48,18 @@
         if(!Backbone.history.start(historyOptions)) {
             if(window.navigator.standalone) {
                 var history = nav.router.localStorageNavigationHistory();
+                console.log('window.navigator.standalone')
                 if(history) {
                     nav.router.navigate(history.pop(), true);
                 } else {
                     nav.router.navigate('', true);
                 }
             } else {
+                console.log('!window.navigator.standalone')
                 nav.router.navigate('', true);
             }
         } else {
+            console.log('! else')
         }
     }
 

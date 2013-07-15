@@ -346,7 +346,7 @@
                 }
             });
             
-            require(['/desktop/nav.js'], function(nav){
+            require(['/account/nav.js'], function(nav){
                 self.nav = nav;
                 nav.init();
                 nav.list.on('selected', function(navRow){
@@ -463,7 +463,7 @@
                         lightbox.remove();
                         alert('Thank you for your feedback!');
                     });
-                    
+                } else {
                 }
             });
         },
@@ -857,7 +857,7 @@
         events: {
         },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
         }
     });
     users.ModalView = Backbone.View.extend({
@@ -1054,7 +1054,6 @@
             });
         },
         updateUi: function(ui) {
-            console.log(ui)
             var self = this;
             self.authFormOptions.ui = ui;
             //loginStatus.getView().render();
@@ -1084,15 +1083,17 @@
         },
         navToUser: function(user) {
             var self = this;
-            var $e = user.getUserView({profile: this}).render().$el;
+            var $e = user.getUserView({profile: this});
+            
+            $e = $e.render().$el;
             $e.show();
             this.userLightbox = utils.appendLightBox($e);
+            
             this.userLightbox.on('close', function(){
                 window.history.back();
             });
         },
         navToMe: function() {
-            console.log(this.loginStatus.getView().userModel);
             var user = this.loginStatus.getView().userModel;
             this.navToUser(user);
         },
@@ -1150,7 +1151,10 @@
                     self.userLightbox.remove();
                 }
                 if(account && account.loginStatus) {
-                    account.loginStatus.getView().hideMenu();
+                    var accountLoginStatusView = account.loginStatus.getView();
+                    if(accountLoginStatusView) {
+                        accountLoginStatusView.hideMenu();
+                    }
                 }
             });
         }
