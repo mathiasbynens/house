@@ -8,7 +8,7 @@
             var date = new Date( parseInt( timestamp, 16 ) * 1000 )
             this.attributes.at = date;
             this.on("change", function(model, options){
-                console.log(arguments);
+                //console.log(arguments);
             });
             this.views = {};
         },
@@ -127,7 +127,7 @@
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                        console.log(doc);
+                        //console.log(doc);
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;s
@@ -137,13 +137,13 @@
                         var model = new self.model(doc);
                         self.add(model);
                     } else {
-                        console.log(model);
+                        //console.log(model);
                         model.set(doc, {silent:true});
                         model.renderViews();
                     }
                 }
                 socket.on('insertedUsers', function(doc) {
-                    console.log('inserted user');
+                    //console.log('inserted user');
                     insertOrUpdateDoc(doc);
                     self.count++;
                     self.trigger('count', self.count);
@@ -451,7 +451,7 @@
         },
         publish: function() {
             var self = this;
-            console.log(this.model);
+            //console.log(this.model);
             this.model.set({"feed": 0},{silent: true});
             var saveModel = this.model.save(null, {
                 silent: false,
@@ -464,7 +464,7 @@
         },
         unpublish: function() {
             var self = this;
-            console.log(this.model);
+            //console.log(this.model);
             this.model.unset("feed", {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false,
@@ -497,7 +497,7 @@
                   window.history.back(-1);
                 }, 
                 errorr: function(model, response) {
-                    console.log(arguments);
+                    //console.log(arguments);
                 },
                 wait: true});
             }
@@ -594,7 +594,7 @@
                             wait: true
                         });
                         saveModel.done(function() {
-                            console.log('tags saved');
+                            //console.log('tags saved');
                         });
                     } else {
                         this.model.pushAll({"tags": tagName}, {silent: true});
@@ -832,7 +832,6 @@
         },
         render: function() {
             var self = this;
-            var isa = (window.account && (account.isAdmin() || account.isOwner(this.model.id)));
             this.$el.html('');
             var $byline = $('<span class="membership"></span>');
             var displayName = this.model.get('displayName') || this.model.get('name');
@@ -854,68 +853,78 @@
                 this.$el.find('.avatar').append('<img src="' + src + '" />');
             }
             
-            if(isa) {
-                this.$el.find('h1').append(' <a class="editDisplayName" title="Edit display name" href="#">edit real name</a>');
-                this.$el.find('h2').append(' <a class="editName" title="Edit user name" href="#">edit user name</a>');
-                this.$el.find('h2').append(' <a class="editPass" title="Edit user password" href="#">change password</a>');
-                this.$el.find('.avatar').append(' <a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
+            if(window.account) {
+                
+                account.isAdmin(function(isAdmin){
+                    console.log('gggggg')
+                    var isa = (isAdmin || account.isOwner(self.model.id));
+                    if(isa) {
+                        self.$el.find('h1').append(' <a class="editDisplayName" title="Edit display name" href="#">edit real name</a>');
+                        self.$el.find('h2').append(' <a class="editName" title="Edit user name" href="#">edit user name</a>');
+                        self.$el.find('h2').append(' <a class="editPass" title="Edit user password" href="#">change password</a>');
+                        self.$el.find('.avatar').append(' <a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
+                    }
+                    if (self.model.has("url") || isa) {
+                        var src = self.model.get("url") || 'http://yourwebsite.com/';
+                        self.$el.append(' <span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
+                        if(isa) {
+                            self.$el.find('.url').append(' <a class="editUrl" title="Edit web address" href="#">edit URL</a>');
+                        }
+                    }
+                    
+                    if(!account.isOwner(self.model.id)) {
+                        self.$el.append('<button class="sendMsg">Send Message</button>');
+                    }
+                    
+                    if(self.model.has('at')) {
+                        var $at = $('<span class="at"></span>');
+                        if(window.clock) {
+                            $at.attr('title', clock.moment(self.model.get('at')).format('LLLL'));
+                            $at.html(clock.moment(self.model.get('at')).calendar());
+                        } else {
+                            $at.html(self.model.get('at'));
+                        }
+                        $byline.append(' member since ');
+                        $byline.append($at);
+                    }
+                    var $msg = $('<div class="email"></div>');
+                    if(self.model.has('email')) {
+                        $msg.html(self.model.get('email'));
+                    }
+                    self.$el.append($msg);
+                    if(isa) {
+                        $msg.append(' <a class="editEmail" title="Edit email address" href="#">edit email</a>');
+                    }
+                    self.$el.append($byline);
+                    
+                    var $loc = $('<div class="location"></div>');
+                    if(self.model.has('location')) {
+                        $loc.html(self.model.get('location'));
+                    }
+                    self.$el.append($loc);
+                    
+                    var $bio = $('<div class="bio"></div>');
+                    if(self.model.has('bio')) {
+                        $bio.html(self.model.get('bio'));
+                    }
+                    self.$el.append($bio);
+                    
+                    if(account.SubProfileView) {
+                        if(!self.subProfileView) {
+                            self.subProfileView = new account.SubProfileView({model: self.model});
+                        }
+                        self.$el.append(self.subProfileView.render().$el);
+                    }
+                    
+                    if(isa) {
+                        self.$el.append(self.actions.render().$el);
+                    }
+                });
+            } else {
+                console.log('aaaaa')
             }
             
-            if(!account.isOwner(this.model.id)) {
-                this.$el.append('<button class="sendMsg">Send Message</button>');
-            }
             
-            if (this.model.has("url") || isa) {
-                var src = this.model.get("url") || 'http://yourwebsite.com/';
-                this.$el.append(' <span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
-                if(isa) {
-                    this.$el.find('.url').append(' <a class="editUrl" title="Edit web address" href="#">edit URL</a>');
-                }
-            }
-            
-            if(this.model.has('at')) {
-                var $at = $('<span class="at"></span>');
-                if(window.clock) {
-                    $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
-                    $at.html(clock.moment(this.model.get('at')).calendar());
-                } else {
-                    $at.html(this.model.get('at'));
-                }
-                $byline.append(' member since ');
-                $byline.append($at);
-            }
-            var $msg = $('<div class="email"></div>');
-            if(this.model.has('email')) {
-                $msg.html(this.model.get('email'));
-            }
-            this.$el.append($msg);
-            if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
-                $msg.append(' <a class="editEmail" title="Edit email address" href="#">edit email</a>');
-            }
-            this.$el.append($byline);
-            
-            var $loc = $('<div class="location"></div>');
-            if(this.model.has('location')) {
-                $loc.html(this.model.get('location'));
-            }
-            this.$el.append($loc);
-            
-            var $bio = $('<div class="bio"></div>');
-            if(this.model.has('bio')) {
-                $bio.html(this.model.get('bio'));
-            }
-            this.$el.append($bio);
-            
-            if(account.SubProfileView) {
-                if(!this.subProfileView) {
-                    this.subProfileView = new account.SubProfileView({model: this.model});
-                }
-                this.$el.append(this.subProfileView.render().$el);
-            }
-            
-            if(window.account && (account.isAdmin() || account.isOwner(this.model.id))) {
-                this.$el.append(this.actions.render().$el);
-            }
             this.trigger('resize');
             this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
             return this;
@@ -1130,39 +1139,43 @@
         },
         render: function() {
             var self = this;
-            var isa = (window.account && (account.isAdmin() || account.isOwner(this.model.id)));
             this.$el.html('');
             var $byline = $('<span></span>');
             var displayName = this.model.get('displayName') || '';
             this.$el.append('<span class="avatar"></span>');
-            if(isa) {
-                this.$el.append('<input title="Edit your display name" class="editDisplayName" type="text" name="displayName" placeholder="Your name" value="'+displayName+'"/>');
-                
-                this.$el.append(this.ui.regInfoLabel);
-                
-                if(!this.model.has('email')) {
-                    var $inputEmail = $('<span class="inputEmail"><button class="connectEmail zocial email">'+this.ui.emailLabel+'</button><input style="display:none;" class="editEmail" type="email" name="email" placeholder="your@email.com" /></span>');
-                    this.$el.append($inputEmail);
-                }
-                if(this.model.has('pass')) {
-                    var $setPass = $('<span class="inputPass"><a href="/" class="showPassForm zocial guest">'+this.ui.passwordLabel+'</a><form style="display: none"><span class="passwordOnce" style=""><label>Password: </label><input type="password" name="pass" /></span> <span class="passwordAgain" style="display: none"><label>Again: </label><input type="password" name="pass_again" /></span></form></span>');
-                    this.$el.append($setPass);
-                }
-            }
-            if (this.model.has("avatar") && this.model.get("avatar")) {
-                var src = this.model.get("avatar");
-                if (typeof src == 'string') {
-                } else if(src.hasOwnProperty('url')) {
-                    src = src.url;
-                }
-                if (src.indexOf("http") === 0) {
+            if(window.account) {
+                account.isAdmin(function(isAdmin){
+                    if(isAdmin || account.isOwner(self.model.id)) {
+                        self.$el.append('<input title="Edit your display name" class="editDisplayName" type="text" name="displayName" placeholder="Your name" value="'+displayName+'"/>');
+                        
+                        self.$el.append(self.ui.regInfoLabel);
+                        
+                        if(!self.model.has('email')) {
+                            var $inputEmail = $('<span class="inputEmail"><button class="connectEmail zocial email">'+self.ui.emailLabel+'</button><input style="display:none;" class="editEmail" type="email" name="email" placeholder="your@email.com" /></span>');
+                            self.$el.append($inputEmail);
+                        }
+                        if(self.model.has('pass')) {
+                            var $setPass = $('<span class="inputPass"><a href="/" class="showPassForm zocial guest">'+self.ui.passwordLabel+'</a><form style="display: none"><span class="passwordOnce" style=""><label>Password: </label><input type="password" name="pass" /></span> <span class="passwordAgain" style="display: none"><label>Again: </label><input type="password" name="pass_again" /></span></form></span>');
+                            self.$el.append($setPass);
+                        }
+                    }
                     
-                } else {
-                    src = "/api/files/" + src;
-                }
-                this.$el.find('.avatar').append('<img class="editAvatar" src="' + src + '" />');
-            } else if(isa) {
-                this.$el.find('.avatar').append('<button class="editAvatar" title="Upload your avatar">'+this.ui.defaultAvatar+'</button>');
+                    if (self.model.has("avatar") && self.model.get("avatar")) {
+                        var src = self.model.get("avatar");
+                        if (typeof src == 'string') {
+                        } else if(src.hasOwnProperty('url')) {
+                            src = src.url;
+                        }
+                        if (src.indexOf("http") === 0) {
+                            
+                        } else {
+                            src = "/api/files/" + src;
+                        }
+                        self.$el.find('.avatar').append('<img class="editAvatar" src="' + src + '" />');
+                    } else if(isAdmin || account.isOwner(self.model.id)) {
+                        self.$el.find('.avatar').append('<button class="editAvatar" title="Upload your avatar">'+self.ui.defaultAvatar+'</button>');
+                    }
+                });
             }
             
             this.setElement(this.$el);
@@ -1404,7 +1417,6 @@
             if(this.model && this.model.has('groups') && this.model.get('groups').indexOf('public') !== -1) {
                 this.$el.val('public');
             } else {
-                console.log('rpv')
                 this.$el.val('private');
                 this.$options.find('option[value="private"]').attr('selected','selected');
             }
@@ -1473,7 +1485,6 @@
         render: function() {
             var self = this;
             if(this.$el.find('form').length === 0) {
-                console.log('append form');
                 this.$el.append(this.$form);
             }
             if(this.model) {
@@ -1520,7 +1531,6 @@
             'blur input[name="title"]': "blurTitle"
         },
         blurTitle: function() {
-            console.log('blur title');
             var titleStr = this.$inputTitle.val().trim();
             if(titleStr != '') {
                 // autosave
@@ -1559,8 +1569,6 @@
             if(groups.length > 0 && groups !== this.model.get('groups')) {
                 setDoc.groups = groups;
             }
-            console.log('setDoc')
-            console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,

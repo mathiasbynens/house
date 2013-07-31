@@ -14,7 +14,7 @@
                 self.startClocks();
                 self.moment = moment;
             });
-            this.$clock = $('<clock></clock>');
+            this.$clock = $('<span class="clock"></span>');
         },
         render: function() {
             var self = this;

@@ -1,6 +1,6 @@
 {
   "name": "house",
-  "version": "0.0.4619123",
+  "version": "0.0.46201",
   "dependencies": {
     "optimist": "latest",
     "formidable-plus": "latest",
@@ -10,7 +10,7 @@
     "socket.io": "latest",
     "oauth": "latest",
     "emailjs": "latest",
-    "imap": "latest",
+    "imap": "0.7",
     "mailcomposer": "latest",
     "simplesmtp": "latest",
     "uglify-js": "latest",

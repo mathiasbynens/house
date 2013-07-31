@@ -131,16 +131,11 @@
             var docEl = doc.getFullView({list: self.listView}).render().$el;
             var foundDoc = false;
             self.carousel.masterPages.forEach(function(e,i){
-                console.log(e.dataset.id);
-                console.log(doc.id);
                 if(e.dataset.id == doc.id) {
-                    console.log(e);
                     foundDoc = i;
                 }
             });
-            console.log(self.carousel.currentMasterPage);
             if(foundDoc !== false) {
-                console.log(foundDoc);
                 if(self.carousel.currentMasterPage > foundDoc) {
                     if(self.carousel.currentMasterPage - foundDoc > 1) {
                         self.carousel.next();

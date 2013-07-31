@@ -101,8 +101,12 @@
             }
             return this.view;
         },
-        isAdmin: function() {
-            return(this.has('groups') && this.get('groups').indexOf('admin') !== -1);
+        isAdmin: function(callback) {
+            var b = (this.has('groups') && this.get('groups').indexOf('admin') !== -1);
+            if(callback) {
+                callback(b);
+            }
+            return b;
         },
         isUser: function() {
             return(this.has('user'));
@@ -352,8 +356,18 @@
                 nav.list.on('selected', function(navRow){
                     self.hideMenu();
                 });
-                self.trigger('navInit');
+                self.trigger('navInit', self.nav);
             });
+        },
+        onNavInit: function(callback) {
+            var self = this;
+            if(this.nav) {
+                callback(this.nav);
+            } else {
+                this.on('navInit', function(){
+                    callback(self.nav);
+                });
+            }
         },
         render: function(recursive) {
             var self = this;

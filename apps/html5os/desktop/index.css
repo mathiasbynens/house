@@ -50,7 +50,7 @@ input[type="url"]:disabled, input[type="button"]:disabled, input[type="submit"]:
     height: 44px;
     text-align: center;
 }
-#clock {
+#header .clock {
     line-height: 44px;
     height: 44px;
 }
@@ -141,7 +141,7 @@ menu li[selected] {
     position: relative;
     margin: 0px 0 0;
     width: auto;
-    visibility: visible;
+    visibility: inherit;
 }
 
 .authView menu #navigation .opener {

@@ -41,7 +41,7 @@
                                     }
                                 });
                                 
-                                var doThis = function() {
+                                account.getView().onNavInit(function(nav){
                                     require(['/desktop/windows.js'], function(windows){
                                         index.windows = windows;
                                         windows.render($('body'));
@@ -54,7 +54,7 @@
                                         require(['/applications/applications.js'], function(apps){
                                             apps.init();
                                             apps.col.bind("add", function(doc) {
-                                                account.getView().nav.col.add({title: doc.get("name"), url: doc.get("url"), imgSrc: doc.get("icon")});
+                                                nav.col.add({title: doc.get("name"), url: doc.get("url"), imgSrc: doc.get("icon")});
                                             });
                                             apps.col.load();
                                         });
@@ -66,7 +66,7 @@
                                         // nav.col.add({a:"home", href:"/", imgSrc: "/favicon.ico"});
                                         //
                                         
-                                        account.getView().nav.list.on('selected', function(navRow){
+                                        nav.list.on('selected', function(navRow){
                                             index.windows.openUrl(navRow.model.get('url'), navRow.model.get('name'))
                                         });
                                         
@@ -85,8 +85,8 @@
                                             }
                                         });
                                         
-                                        accountProfile.bindRouter(account.getView().nav.router);
-                                        account.getView().nav.startRouter('/desktop/');
+                                        accountProfile.bindRouter(nav.router);
+                                        nav.startRouter('/desktop/');
                                         
                                         require(['/desktop/jquery.idle-timer.js'], function() {
                                             var idleTimer = $(document).idleTimer(3200);
@@ -101,15 +101,7 @@
                                             callback();
                                         }
                                     });
-                                }
-                                
-                                if(account.getView().nav) {
-                                    doThis();
-                                } else {
-                                    account.getView().on('navInit', function(){
-                                        doThis();
-                                    });
-                                }
+                                });
                             });
                         });
                     });
