@@ -123,7 +123,8 @@
                         self.$el.find('.container.marketing').prepend(sectionListView.render().$el);
                     }
                     
-                    self.nav.startRouter("/pages/");
+                    var routerStartPath = $('base[href]').attr('href') || "/pages/";
+                    self.nav.startRouter(routerStartPath);
                     
                     $('.navbar').scrollspy();
                     $('[data-spy="scroll"]').each(function () {
