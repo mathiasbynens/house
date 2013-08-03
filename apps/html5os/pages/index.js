@@ -20,7 +20,7 @@
                                                                 //var $account = $('<div id="account"></div>');
                                                                 //$("#header").append($account);
                                                                 //$account.append(account.render().$el);
-                                                                require([ "nav.js" ], function(nav) {
+                                                                require([ "/pages/nav.js" ], function(nav) {
                                                                     index.nav = nav;
                                                                     nav.init('.nav-collapse.collapse');
                                                                     nav.list.render();
