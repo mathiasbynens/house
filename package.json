@@ -17,7 +17,7 @@
     "mongodb": "latest",
     "useragent": "latest",
     "imagemagick": "latest",
-    "ent": "latest",
+    "ent": "0.0.7",
     "moment": "latest",
     "feedparser": "latest",
     "mkdirp": "latest",
