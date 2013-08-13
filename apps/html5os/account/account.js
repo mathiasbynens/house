@@ -353,6 +353,7 @@
             require(['/account/nav.js'], function(nav){
                 self.nav = nav;
                 nav.init();
+                nav.list.showMenu();
                 nav.list.on('selected', function(navRow){
                     self.hideMenu();
                 });
@@ -381,7 +382,7 @@
             
             var accountMenuStr = this.ui.accountMenuLabel;
             
-            this.$el.html('<button>'+accountMenuStr+'</button><menu>'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
+            this.$el.html('<button>'+accountMenuStr+'</button><menu class="mainMenu">'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
             
             if(!self.nav) {
                 self.on('navInit', function(){
@@ -436,10 +437,18 @@
             "click .login": "login",
             "click .avatar": "goToProfile",
             "click .feedback": "feedback",
+            "click menu.mainMenu": "clickMenu",
             "click button": "toggleMenu"
         },
+        clickMenu: function(e) {
+            if(e.target.className == 'mainMenu') {
+                this.toggleMenu();
+            } else {
+                
+            }
+        },
         toggleMenu: function() {
-            var v = this.$el.find('menu').css('visibility');
+            var v = this.$el.find('menu.mainMenu').css('visibility');
             if(v == 'visible') {
                 this.hideMenu();
             } else {

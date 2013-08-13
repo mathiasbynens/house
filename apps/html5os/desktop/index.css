@@ -100,24 +100,30 @@ input[type="url"]:disabled, input[type="button"]:disabled, input[type="submit"]:
     position: fixed;
     top: 0px;
     bottom: 0px;
-    width: 100%;
     margin: 40px 0 0;
     visibility: hidden;
     overflow-y: auto;
+    text-align: left;
 }
 #account menu {
+}
+#account menu.mainMenu {
     right: 0;
+    min-width: 225px;
+    background: rgba(170, 170, 170, 0.8);
+}
+#account menu.mainMenu > li {
+    padding: 10px;
 }
 #navigation menu {
 }
 menu {
-    background: rgba(170, 170, 170, 0.8);
     list-style: none;
 }
 menu li {
-    padding: 10px;
     cursor: pointer;
-    text-shadow: 0px 0px 3px black;
+    text-shadow: 0px 0px 1px black;
+    border-bottom: 1px solid grey;
 }
 menu li:hover {
     color: yellow;
@@ -126,6 +132,13 @@ menu li[selected] {
     color: orange;
     cursor: auto;
 }
+.appNav menu li {
+    padding: 6px;
+}
+.appNav menu li:last-child {
+    border-bottom: 0px;
+}
+
 .authView menu li #navigation menu {
     color: white !important;
 }
@@ -874,7 +887,6 @@ body.idle #header, body.idle .info, body.idle .actions {
         font-size: .77em;
     }
     #navigation menu, #account menu {
-        width: 200%;
     }
 }
 @media only screen and (min-width: 767px) {
@@ -1590,4 +1602,62 @@ body .zocial {
     line-height: 26px;
     text-indent: 4px;
     margin: 6px 8px;
+}
+
+form.msg {
+    
+}
+form.msg fieldset {
+    border: 0px;
+}
+form.msg input[name="sub"] {
+    width: 98%;
+    margin: 0 auto;
+    display: block;
+    clear: both;
+    text-indent: 6px;
+    margin-bottom: 6px;
+}
+form.msg label {
+    font-size: 0.8em;
+    color: grey;
+    display: block;
+    margin: 20px 0px;
+}
+form.msg textarea {
+    width: 98%;
+    margin: 0 auto;
+    display: block;
+    clear: both;
+    text-indent: 6px;
+    margin-bottom: 6px;
+    min-height: 67px;
+}
+form.msg .controls {
+    float: right;
+    clear: both;
+    overflow: auto;
+}
+form.msg .controls input {
+    padding: 6px;
+    margin: 12px;
+}
+form.msg ::-webkit-input-placeholder {
+   color: rgb(56, 56, 56);
+}
+form.msg :-moz-placeholder {
+   color: rgb(56, 56, 56);  
+}
+form.msg ::-moz-placeholder {
+   color: rgb(56, 56, 56);
+}
+form.msg :-ms-input-placeholder {
+   color: rgb(56, 56, 56);
+}
+form.msg .to, form.msg .from {
+    margin-left: 6px;
+}
+form.msg .to img, form.msg .from img {
+    max-height: 36px;
+    vertical-align: middle;
 }

@@ -121,7 +121,10 @@
             }
         },
         hideMenu: function() {
-            this.$ul.css('visibility', 'hidden');
+            //this.$ul.css('visibility', 'hidden');
+        },
+        showMenu: function() {
+            this.$ul.css('visibility', 'visible');
         },
         appendRow: function(row) {
             this.$ul.append(row.render().el);
