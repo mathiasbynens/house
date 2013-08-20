@@ -105,17 +105,20 @@ input[type="url"]:disabled, input[type="button"]:disabled, input[type="submit"]:
     overflow-y: auto;
     text-align: left;
 }
-#account menu {
+#navigation menu {
+    min-width: 225px;
+    background: rgba(170, 170, 170, 0.8);
 }
 #account menu.mainMenu {
     right: 0;
     min-width: 225px;
-    background: rgba(170, 170, 170, 0.8);
+    background: rgba(66, 66, 66, 0.9);
 }
-#account menu.mainMenu > li {
+#account menu.mainMenu > li, #navigation menu > li {
     padding: 10px;
 }
-#navigation menu {
+#account menu.mainMenu #navigation menu {
+    background: transparent;
 }
 menu {
     list-style: none;
@@ -1073,7 +1076,7 @@ li.window.minimized {
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#515151', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
     color: black;
     -webkit-appearance: none;
-    -webkit-box-shadow: 2px 2px 6px white;
+    -webkit-box-shadow: 2px 2px 2px white;
     -webkit-border-radius: 12px;
     margin-left: -45%;
     width: 90%;
