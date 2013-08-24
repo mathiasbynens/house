@@ -12,26 +12,27 @@
                                 window.clock = new Clock();
                                 clock.on('init', function(){
                                     require(['/account/account.js'], function(accountProfile){
-                                        accountProfile.on('init', function(){
+                                        accountProfile.updateUi({
+                                            "accountMenuLabel": "≡"
+                                        });
+                                        accountProfile.auth(function(){
                                             var $account = $('<div id="account"></div>');
                                             $('#header').append($account);
                                             $account.append(accountProfile.render().$el);
-                                            require(['/desktop/nav.js'], function(nav){
+                                            account.getView().onNavInit(function(nav){
                                                 index.nav = nav;
-                                                nav.init();
                                                 nav.router.on('loading', function(){
                                                     $('body').addClass('loading');
                                                 });
                                                 nav.router.on('loadingComplete', function(){
                                                     $('body').removeClass('loading');
                                                 });
-                                                $('#header').append(nav.list.render().$el);
-                                                require(['todos.js'], function(App) {
+                                                require(['/todos/app.js'], function(App) {
                                                     window.app = new App();
                                                     window.app.bindUser(accountProfile.loginStatus.getView().userModel);
                                                     window.app.on('initialized', function(){
-                                                        $('body').append(window.app.render().$el);
                                                         window.app.bindNav(nav);
+                                                        $('body').append(window.app.render().$el);
                                                         accountProfile.bindRouter(nav.router);
                                                         nav.startRouter('/todos/');
                                                         if(callback) callback(window.app);

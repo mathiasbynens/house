@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-    	<title>Todo</title>
+        <title>To Do</title>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <base href="/todos/" />
         <link rel="stylesheet" href="/desktop/index.css">
         <link rel="stylesheet" href="index.css">
         <link rel="icon" href="favicon.ico" />
@@ -12,8 +13,6 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
         <meta name="viewport" content="initial-scale = 1.0, user-scalable = no" />
         <link rel="apple-touch-icon-precomposed" href="iosicon.png"/>
-        <base href="/todos/" />
-        
         <style>
             body.loading {
                 cursor: wait;
@@ -22,11 +21,12 @@
 
             }
             #loadingSpinner{
-            position:relative;
-            width:128px;
-            height:128px;
-            -webkit-transform:scale(0.6);
-            -moz-transform:scale(0.6)}
+                position:relative;
+                width:128px;
+                height:128px;
+                -webkit-transform:scale(0.6);
+                -moz-transform:scale(0.6);
+            }
             
             #loadingSpinner > div{
             position:absolute;
@@ -121,10 +121,9 @@
                 display: block;
             }
         </style>
-	</head>
+    </head>
     <body class="loading">
-        <div id="header"><h1>Todos</h1></div>
-        <div id="scroller"><div id="container"></div></div>
+        <div id="header"><h1>To Do</h1></div>
         <div id="splash" class="lightbox"><div>
         <div id="loading">
             <div class="table"><div class="table-cell">
@@ -135,13 +134,14 @@
         </div>
         </div></div>
         <script type="text/javascript" src="/desktop/require.js"></script>
+        <!--<script type="text/javascript" src="/desktop/require.js?/todos/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/files/backbone-files.js/clock/clock.js/desktop/nav.js/desktop/jquery.scrollTo.min.js/todos/todos.js/todos/app.js"></script>-->
         <script type="text/javascript">
-        require(['index.js'], function(index){
+        require(['/todos/index.js'], function(index){
             index.init(function(app){
                 window.app = app;
                 $('body').removeAttr('class');
             });
         });
         </script>
-    </body>
+	</body>
 </html>

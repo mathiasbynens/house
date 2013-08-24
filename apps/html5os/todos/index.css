@@ -1,0 +1,194 @@
+body {
+    background: rgb(235, 235, 235);
+    color: rgb(15, 15, 15);
+    margin: 44px 0;
+}
+
+input[type="checkbox"] {
+    border: 1px inset rgb(151, 151, 151);
+    margin: 2px 12px 2px 6px;
+    padding: 12px;
+    vertical-align: middle;
+}
+input:checked {
+    background: rgb(146, 146, 146);
+    border: 1px outset rgb(151, 151, 151);
+}
+.todos .row, .todoLists .row {
+    padding: 8px 0px; 
+}
+.allTodos .form, .allTodoLists .form {
+    height: 40px;
+}
+.allTodos .form fieldset, .allTodoLists .form fieldset {
+    margin: 0 0;
+    padding: 0 0;
+    border: 0;
+}
+.allTodos .form input[type="text"], .allTodoLists .form input[type="text"] {
+    left: 0px;
+    right: 50px;
+    height: 34px;
+    position: absolute;
+    text-indent: 12px;
+}
+.allTodos .form input[type="submit"], .allTodoLists .form input[type="submit"] {
+    right: 0px;
+    width: 50px;
+    height: 40px;
+    position: absolute;
+}
+
+.todos .row, .todoLists .row {
+    border-bottom: 1px solid rgb(214, 214, 214);
+    border-left: 12px solid rgb(255, 255, 255);
+    position: relative;
+}
+.todos .row.selected, .todoLists .row.selected {
+    background: rgb(255, 255, 255);
+    border-left: 12px solid rgb(214, 214, 214);
+    position: relative;
+}
+.todos .row input[name="title"], .todos .row .title {
+    background: transparent;
+    font-size: 0.9em;
+    border: 0;
+    left: 40px;
+    right: 200px;
+    display: block;
+    position: absolute;
+    bottom: 10px;
+    margin: 0 0;
+    padding: 0 0;
+    outline: none;
+}
+.todos .row .title {
+    right: 0px;
+    overflow: hidden;
+}
+.todos .row input[name="title"], .todoLists .row input[name="name"], .todoLists .row input[name="color"] {
+    display: none;
+}
+.todos .row.selected input[name="title"], .todoLists .row.selected input[name="name"] {
+    display: inline;
+}
+.todoLists .row.selected input[name="color"] {
+    display: inline-block;
+    width: 18px;
+    position: absolute;
+    right: 100%;
+    padding: 0 0;
+    margin: 0 0;
+    border: 0;
+    height: 100%;
+    top: 0px;
+}
+.todos .row.selected .title, .todoLists .row.selected .name {
+    display: none;
+}
+.todos .row .actions, .todoLists .row .actions {
+    display: none;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+}
+.todos .row.selected .actions, .todoLists .row.selected .actions {
+    display: block;
+}
+ 
+.todos .row .due {
+    font-size: 0.6em;
+    position: absolute;
+    bottom: 0;
+    right: 6px;
+    display: none;
+}
+
+.todos .row .due[data-at] {
+    display: inline;
+}
+
+.allTodos .todos .row select.todoListSelect {
+    z-index: 4;
+    position: absolute;
+    top: auto;
+    bottom: 0px;
+    left: 36px;
+    margin: 0 0;
+    padding: 0 0;
+    display: none;
+    background: transparent;
+    border: 0;
+    -webkit-box-shadow: none;
+    -webkit-appearance: none;
+    outline: none;
+    color: rgb(116, 116, 116);
+}
+.allTodos .todos .row select.todoListSelect option {
+    background: black;
+}
+.allTodos .todos .row.selected select.todoListSelect {
+    display: block;
+}
+.allTodos .todos .row.selected input[name="dueAt-date"] {
+    display: block;
+}
+.allTodos .todos .row.selected .due {
+    display: none;
+}
+.allTodos .todos .row.selected .listRef {
+    display: none;
+}
+
+.allTodos .todos input[name="dueAt-date"] {
+    z-index: 4;
+    position: absolute;
+    top: 4px;
+    bottom: 6px;
+    right: 50px;
+    display: none;
+}
+
+ul.todos[data-filter-list-id] .listRef {
+    display: none;
+}
+
+.todos .row .listRef {
+    font-size: 0.6em;
+    position: absolute;
+    bottom: 0;
+    left: 42px;
+}
+.list-pager {
+    margin-left: 40px;
+    font-size: 0.8em;
+    color: grey;
+    text-decoration: overline;
+}
+.todoLists .name {
+    text-decoration: underline;
+    cursor: pointer;
+    padding-left: 8px;
+}
+input:focus, textarea:focus, select:focus {
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+}
+@media only screen and (min-width: 768px) {
+}
+
+@media only screen and (min-width: 1280px) {
+    .todos .row:hover, .todoLists .row:hover {
+        border-left: 12px solid rgb(155, 155, 155);
+    }
+}
+
+@media only screen and (min-width: 1440px) {
+}
+
+@media only screen and (orientation: landscape) {
+}
+
+@media only screen and (orientation: portrait) {
+}
