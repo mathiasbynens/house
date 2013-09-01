@@ -823,7 +823,7 @@
                 });
                 if(saveModel) {
                     saveModel.done(function() {
-                        self.render();
+                        self.model.trigger('change', self.model);
                     });
                 }
             }
@@ -844,6 +844,7 @@
             var s = this.model.save(null, {silent: false, wait: true});
             if(s) {
                 s.done(function(s, typeStr, respStr) {
+                    self.model.trigger('change', self.model);
                 });
                 s.fail(function(s, typeStr, respStr) {
                     if(s.status === 403) {

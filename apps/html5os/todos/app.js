@@ -6,9 +6,7 @@
         className: 'allTodos',
         initialize: function(options) {
             var self = this;
-            console.log('alltodosinit')
             self.todosView = window.todosCollection.getView();
-            console.log(self.todosView.cid)
             self.todosView.on('select', function(row) {
                 options.app.router.navigate(row.model.getNavigatePath(), true);
             });
@@ -24,17 +22,18 @@
             self.todosFormView.on('saved', function(todo){
                 self.todosFormView.render().$el.remove();
                 self.getNewFormView();
-                //self.todosFormView.focus();
+                self.todosFormView.focus();
                 setTimeout(function(){
                     $('body').scrollTo($(todo.getRow().$el[0]));
                 },100);
             });
-            self.$el.prepend(self.todosFormView.render().$el);
+            this.$el.find('ul.todos').after(self.todosFormView.render().$el);
         },
         render: function() {
             var self = this;
-            this.$el.append(self.todosFormView.render().$el);
+            this.$el.append('<button class="focusForm" title="New Todo">+</button>');
             this.$el.append(self.todosView.render().$el);
+            this.$el.find('ul.todos').after(self.todosFormView.render().$el);
             return this;
         },
         filterByTodoList: function(todoList) {
@@ -46,6 +45,11 @@
             //this.todosView.filter(false);
         },
         events: {
+            "click .focusForm": "focusForm"
+        },
+        focusForm: function() {
+            this.todosFormView.focus();
+            return false;
         }
     });
     
@@ -225,6 +229,7 @@
             
             router.on('root', function(){
                 routerReset();
+                self.allTodosView.todosView.deselectAll();
                 self.allTodosView.$el.show();
                 self.allTodosView.$el.siblings().hide();
                 self.allTodosView.resetFilters();
@@ -233,13 +238,17 @@
                 router.trigger('loadingComplete');
             });
             
-            router.route('todo/:id', 'todo', function(id){
+            router.route('id/:id', 'todoById', function(id){
                 routerReset();
                 
                 self.findTodoById(id, function(doc){
                     if(doc) {
-                        //router.setTitle(doc.get('name'));
-                        //doc.getRow().expand();
+                        router.setTitle(doc.get('title'));
+                        self.allTodosView.$el.show();
+                        self.allTodosView.$el.siblings().hide();
+                        if(!doc.getRow().isSelected()) {
+                            doc.getRow().select();
+                        }
                     }
                     router.trigger('loadingComplete');
                 });
@@ -248,7 +257,7 @@
             
             router.route('list/id/:id', 'todoList', function(id){
                 routerReset();
-                
+                self.allTodosView.todosView.deselectAll();
                 self.allTodosView.$el.show();
                 self.allTodosView.$el.siblings().hide();
                 self.findTodoListById(id, function(doc){
@@ -262,6 +271,7 @@
             });
             router.route('list/:slug', 'todoListSlug', function(slug){
                 routerReset();
+                self.allTodosView.todosView.deselectAll();
                 self.allTodosView.$el.show();
                 self.allTodosView.$el.siblings().hide();
                 self.findTodoListBySlug(slug, function(doc){

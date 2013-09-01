@@ -147,6 +147,7 @@ input:checked {
     bottom: 6px;
     right: 50px;
     display: none;
+    min-width: 40px;
 }
 
 ul.todos[data-filter-list-id] .listRef {
@@ -160,10 +161,34 @@ ul.todos[data-filter-list-id] .listRef {
     left: 42px;
 }
 .list-pager {
-    margin-left: 40px;
     font-size: 0.8em;
-    color: grey;
+    color: #D8D8D8;
+    margin: 2px 4px;
+    text-align: right;
     text-decoration: overline;
+}
+.list-filters {
+    float: left;
+    padding: 8px;
+}
+.app button.focusForm {
+    position: fixed;
+    top: 6px;
+    left: 6px;
+    z-index: 200;
+}
+.app button {
+    background: rgb(223, 223, 223);
+    border: 1px inset black;
+    border-radius: 4px;
+    color: #272727;
+}
+.app button:hover {
+    background: rgb(255,255,255);
+    color: #000000;
+}
+.list-filters[data-filter="showTodo"] .showTodo, .list-filters[data-filter="showAll"] .showAll {
+    display:none;
 }
 .todoLists .name {
     text-decoration: underline;
