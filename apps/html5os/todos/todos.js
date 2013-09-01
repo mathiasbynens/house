@@ -52,7 +52,7 @@
             }
         },
         getNavigatePath: function() {
-            return 'todo/'+this.id;
+            return 'id/'+this.id;
         },
         getList: function(callback) {
             if(this.has('list')) {
@@ -280,6 +280,7 @@
         initialize: function() {
             var self = this;
             self.loading = false;
+            this.$filters = $('<div class="list-filters" data-filter="showTodo"><button class="showTodo">show todos</button> <button class="showAll">show all</button></div>');
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> todos</div>');
             var $ul = this.$ul = $('<ul class="todos"></ul>');
             this.collection.on('add', function(doc) {
@@ -303,14 +304,19 @@
             this.collection.on('reset', function(){
                 self.render();
             });
+            
+            this.filterShowTodo();
         },
-        filterByTodoList: function(todoList, callback){
+        getFilterDefault: function() {
+            return {"done": 0};
+        },
+        filterByTodoList: function(todoList, callback) {
             var self = this;
             console.log(todoList)
             console.log(self.todoList)
             if(!todoList) {
                 delete self.todoList;
-                this.filter(false);
+                this.filter(this.getFilterDefault());
                 return;
             }
             self.todoList = todoList.clone();
@@ -321,6 +327,18 @@
                 //self.todoList = todoList;
                 console.log(self.todoList)
             });
+        },
+        applyFilter: function(obj) {
+            if(!this.currentFilterO) {
+                this.currentFilterO = {};
+            }
+            for(var o in obj) {
+                this.currentFilterO[o] = obj[o];
+                if(_.isNull(obj[o])) {
+                    delete this.currentFilterO[o];
+                }
+            }
+            this.filter(this.currentFilterO);
         },
         filter: function(f, callback) {
             var self = this;
@@ -410,14 +428,30 @@
                 });
             }
         },
+        deselectAll: function() {
+            this.$ul.children().removeClass('selected');
+            this.$ul.children().removeAttr('selected');
+        },
         events: {
           "click .list-pager": "loadMore",
+          "click .list-filters .showTodo": "filterShowTodo",
+          "click .list-filters .showAll": "filterShowAll"
         },
         loadMore: function() {
             var self = this;
             this.collection.getNextPage(function(){
                 self.loading = false;
             });
+        },
+        filterShowTodo: function() {
+            var self = this;
+            this.$filters.attr('data-filter', 'showTodo');
+            this.applyFilter({"done": 0});
+        },
+        filterShowAll: function() {
+            var self = this;
+            this.$filters.attr('data-filter', 'showAll');
+            this.applyFilter({"done": null});
         },
         getDocLayoutView: function(doc) {
             var view;
@@ -438,6 +472,7 @@
                 var view = self.getDocLayoutView(doc);
                 self.appendRow(view);
             });
+            this.$el.append(this.$filters);
             this.$el.append(this.$pager);
             this.renderPager();
             this.trigger('resize');
@@ -854,13 +889,14 @@
             
             this.$titleInput = $('<input type="text" name="title" />');
             this.$dueAtInput = $('<span class="due">due on <span class="dueAt"></span></span>');
-            this.$dueAtDateInput = $('<input name="dueAt-date" type="date" />');
+            this.$dueAtDateInput = $('<input name="dueAt-date" type="date" title="Due At" />');
             //this.$dueAtTimeInput = $('<input name="dueAt-time" type="time" />');
             
             this.selectTodoListView = new todoListsCollection.getSelectView({todo: this.model});
         },
         render: function() {
             var self = this;
+            console.log('render todo row');
             if(this.model.get('done')) {
                 this.$check.attr('checked', 'checked');
             } else {
@@ -890,6 +926,12 @@
                     
                     // improve the list data from src
                     this.model.getList(function(list){
+                        
+                        list.on('change', function(){
+                            console.log('`````````````````listchanged');
+                            self.render();
+                        });
+                        
                         var $listA = '<a href="'+list.getNavigatePath()+'">'+list.get('name')+'</a>';
                         self.$listRef.html($listA);
                         
@@ -931,6 +973,9 @@
                 this.$el.toggleClass('expanded');
             }
         },
+        isSelected: function() {
+            return (this.$el.hasClass('selected'));
+        },
         events: {
           "click input[type=checkbox]" : "toggleDone",
           "click": "select",
@@ -948,7 +993,7 @@
             }
             deselectSiblings(this.$el);
             var deselect = false;
-            if(this.$el.hasClass('selected')) {
+            if(this.isSelected()) {
                 deselect = true;
             }
             this.$el.addClass("selected");
