@@ -12,8 +12,10 @@
             this.featuresCollection = new FeaturesCollection(attr.features, colOpts);
             this.views = {};
         },
-        findSectionById: function(id) {
-            return this.sectionsCollection.get(id);
+        findSectionById: function(id, callback) {
+            if(callback) {
+                callback(this.sectionsCollection.get(id));
+            }
         },
         getOwner: function(callback) {
             if(this.has('owner')) {
@@ -399,9 +401,11 @@
     
     var FeatureList = Backbone.View.extend({
         tag: "div",
-        className: "carousel-inner",
+        className: "carousel slide",
         initialize: function() {
             var self = this;
+            this.$indicators = $('<ol class="carousel-indicators"></ol>');
+            this.$inner = $('<div class="carousel-inner"></div>');
             this.collection.on("add", function(m) {
                 self.appendModel(m);
             });
@@ -409,6 +413,8 @@
             });
             this.interval = 12400;
             this.isPlaying = false;
+            this.$el.prepend(this.$inner);
+            this.$el.prepend(this.$indicators);
         },
         render: function() {
             var self = this;
@@ -422,14 +428,17 @@
             //this.$el.append(this.$actions);
             if(!this.hasOwnProperty('featureCarosel')) {
                 var $c = $('#home');
+                console.log('car');
+                window.car = self.featureCarosel = $c;
+                if($c.find('.active').length === 0) {
+                    $c.find('.carousel-inner').children().first().addClass('active');
+                    $c.find('ol').children().first().addClass('active');
+                }
                 self.featureCarosel = $c.carousel({
                     interval: false,
                     hover: "pause"
                 });
-                if($c.find('.active').length === 0) {
-                    self.featureCarosel.carousel('next');
-                }
-                self.play(); 
+                self.play();
             }
             this.setElement(this.$el);
             return this;
@@ -465,7 +474,13 @@
         },
         events: {},
         appendModel: function(m) {
-            var el = this.$el.find('[data-id="'+m.id+'"]')[0];
+            if(!this.modelSeq) {
+                this.modelSeq = {};
+            }
+            if(!this.modelSeq.hasOwnProperty(m.id)) {
+                this.modelSeq[m.id] = _.size(this.modelSeq);
+            }
+            var el = this.$inner.find('[data-id="'+m.id+'"]')[0];
             var row = m.getView({
                 list: this,
                 el: el
@@ -475,7 +490,7 @@
             var rank = row.model.get('rank');
             rowEl.attr('data-sort-rank', rank);
             var d = false;
-            var $lis = this.$el.children();
+            var $lis = this.$inner.children();
             var last = $lis.last();
             var lastRank = parseInt(last.attr('data-sort-rank'), 10);
             if(rank < lastRank) {
@@ -489,8 +504,10 @@
                 });
             }
             if(!d) {
-                this.$el.append(rowEl);
+                this.$inner.append(rowEl);
             }
+            var $r = this['$r'+m.id] = $('<li data-target="#home" data-slide-to="'+this.modelSeq[m.id]+'"></li>');
+            this.$indicators.append($r);
         }
     });
     
@@ -734,6 +751,10 @@
                 self.$el.removeClass('editing');
                 self.form.$el.remove();
             });
+            this.form.on('cancelled', function(model){
+                self.$el.removeClass('editing');
+                self.form.$el.remove();
+            });
             this.$el.append(this.form.render().$el);
             this.form.wysiEditor();
             this.form.focus();
@@ -832,6 +853,10 @@
                     }
                 }
             });
+            this.$actions = $('<ul class="actions"></ul>');
+            if(window.account && (account.isAdmin())) {
+                this.$actions.append('<li><button class="edit">Edit</button></li><li class="image"><button class="attach">Attach image</button></li><li><button class="moveUp" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove">Remove</button></li><li><button class="new">New</button></li>');
+            }
             
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
@@ -867,8 +892,6 @@
             }
             
             if(window.account && (account.isAdmin()) && $e.find('.action').length == 0) {
-                this.$actions = $('<ul class="actions"></ul>');
-                this.$actions.append('<li><button class="edit">Edit</button></li><li class="image"><button class="attach">Attach image</button></li><li><button class="moveUp" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove">Remove</button></li><li><button class="new">New</button></li>');
                 this.$el.append(self.uploadFrame.render().$el); //this.$actions.find('.image')
                 this.$el.append(this.$actions);
             }
@@ -899,8 +922,12 @@
             var self = this;
             this.$el.addClass('editing');
             this.form = new FeatureForm({model: this.model, collection: this.model.collection});
-            this.form.on('saved', function(){
+            this.form.on('saved', function(model){
                 self.model.trigger('change');
+                self.$el.removeClass('editing');
+                self.form.$el.remove();
+            });
+            this.form.on('cancelled', function(model){
                 self.$el.removeClass('editing');
                 self.form.$el.remove();
             });
@@ -1345,7 +1372,7 @@
                 }
             }
             
-            self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image'});
+            self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
             self.uploadFrame.on('uploaded', function(data){
                 if(_.isArray(data)) {
                     data = _.first(data);
@@ -1371,13 +1398,13 @@
             this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your page" autocomplete="off" />');
             this.$inputDesc = $('<input type="text" name="desc" placeholder="Description" autocomplete="off" />');
             this.$inputPath = $('<input type="text" name="path" placeholder="/ path" autocomplete="off" />');
-            this.$form = $('<form class="page"><fieldset></fieldset><controls></controls></form>');
+            this.$form = $('<form class="page"><fieldset></fieldset><div class="controls"></div></form>');
             this.$form.find('fieldset').append(this.$inputTitle);
             this.$form.find('fieldset').append(this.$inputDesc);
             this.$form.find('fieldset').append(this.$inputPath);
             this.$el.append('<button class="attach">Upload logo</button>');
             this.$el.append('<button class="publish">Publish site</button>');
-            this.$form.find('controls').append('<input type="submit" value="Save" />');
+            this.$form.find('.controls').append('<input type="submit" value="Save" />');
         },
         render: function() {
             var self = this;
@@ -1498,12 +1525,12 @@
             this.$inputA = $('<input type="text" name="a" placeholder="Show more" autocomplete="off" />');
             this.$inputHref = $('<input type="text" name="href" placeholder="section name ex. about, contact or http://google.com" autocomplete="off" />');
             
-            this.$form = $('<form class="feature"><fieldset></fieldset><controls></controls></form>');
+            this.$form = $('<form class="feature"><fieldset></fieldset><div class="controls"></div></form>');
             this.$form.find('fieldset').append(this.$inputTitle);
             this.$form.find('fieldset').append(this.$inputDesc);
             this.$form.find('fieldset').append(this.$inputA);
             this.$form.find('fieldset').append(this.$inputHref);
-            this.$form.find('controls').append('<input type="submit" value="Save" />');
+            this.$form.find('.controls').append('<input type="submit" value="Save" /> <button class="cancel">cancel</button>');
         },
         render: function() {
             var self = this;
@@ -1530,8 +1557,16 @@
         events: {
             "submit form": "submit",
             'click [type="submit"]': "submit",
+            'click .cancel': "cancel",
             'keyup input[name="title"]': "throttleTitle",
             'blur input[name="title"]': "blurTitle"
+        },
+        cancel: function() {
+            var self = this;
+            if(confirm("Are you sure that you want to cancel your chagnes?")) {
+                self.trigger("cancelled", this.model);
+            }
+            return false;
         },
         blurTitle: function() {
             var titleStr = this.$inputTitle.val().trim();
@@ -1665,12 +1700,13 @@
             this.$inputTitle = $('<input type="text" name="title" placeholder="Sub title of the section" autocomplete="off" />');
             this.$inputHtml = $('<textarea id="'+this.wsyi_id+'-textarea" name="html" placeholder="Your section html..."></textarea>');
             
-            this.$form = $('<form class="section"><fieldset></fieldset><controls></controls></form>');
+            this.$form = $('<form class="section"><fieldset></fieldset><div class="controls"></div></form>');
             this.$form.find('fieldset').append(this.$inputName);
             this.$form.find('fieldset').append(this.$inputTitle);
             this.$el.append(this.$htmlToolbar);
             this.$form.find('fieldset').append(this.$inputHtml);
-            this.$form.find('controls').append('<input type="submit" value="Save" />');
+            this.$form.find('.controls').append('<input type="submit" value="Save" />');
+            this.$form.find('.controls').append(' <button class="cancel">cancel</button>');
         },
         render: function() {
             var self = this;
@@ -1706,10 +1742,18 @@
         events: {
             "submit form": "submit",
             'click [type="submit"]': "submit",
+            'click .cancel': "cancel",
             'click [data-wysihtml5-command="insertImage"]': "attachImage"
         },
         attachImage: function() {
             this.wysiImagePicker.uploadFrame.pickFiles();
+        },
+        cancel: function() {
+            var self = this;
+            if(confirm("Are you sure that you want to cancel your chagnes?")) {
+                self.trigger("cancelled", this.model);
+            }
+            return false;
         },
         submit: function() {
             var self = this;

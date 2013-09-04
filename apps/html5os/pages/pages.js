@@ -50,13 +50,13 @@
                     self.pageSelected = page;
                     // Set title
                     if(page.get('title')) {
-                        $('.brand').html(page.get('title')); // TODO relative selector
+                        $('.navbar-brand').html(page.get('title')); // TODO relative selector
                     }
                     
-                    var $brand = $('.brand');
+                    var $brand = $('.navbar-brand');
                     if($brand.length == 0) {
                         $brand = $('<a class="brand" href="#">'+page.get('title')+'</a>');
-                        self.$el.find('.navbar .container').append($brand);
+                        self.$el.find('.navbar .navbar-header').append($brand);
                     }
                     var brandView = page.getBrandView({el: $brand[0]});
                     brandView.on('gohome', function(){
@@ -70,7 +70,7 @@
                         var section = sections[i];
                         self.nav.col.add({title:section.name, navigate:section.id});
                     }
-                    var $fEl = self.$el.find('.carousel-inner');
+                    var $fEl = self.$el.find('#home');
                     var featureListView;
                     if($fEl.length > 0) {
                         featureListView = page.getFeaturesView({el: $fEl[0]}).render();
@@ -88,7 +88,6 @@
                     var listenToSection = function(){
                         sectionListView.on('addToNavSubs', function(section, subItems){
                             var n = self.nav.col.get(section.id);
-                            console.log(n)
                             if(n) {
                                 n.set({sub: subItems});
                                 n.trigger('change');
@@ -232,9 +231,11 @@
             });
             router.route(':section', 'pageSection', function(sectionId){
                 routerReset();
+                console.log(sectionId)
                 self.pageSelected.findSectionById(sectionId, function(doc){
                     if(doc) {
-                        var docEl = doc.getFullView({list: self.listView}).render().$el;
+                        router.setTitle(doc.get('name'));
+                        //var docEl = doc.getFullView({list: self.listView}).render().$el;
                     } else {
                         router.navigate('new', {replace: true, trigger: true});
                     }

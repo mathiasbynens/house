@@ -79,7 +79,7 @@
             if(this.$el.find('.nav').length > 0) {
                 this.$ul = this.$el.find('.nav');
             } else {
-                this.$ul = $('<ul class="nav"></ul>');
+                this.$ul = $('<ul class="nav navbar-nav"></ul>');
             }
             
             this.collection.bind("add", function(doc) {
@@ -130,8 +130,6 @@
             this.$ul.children().removeClass("active");
         }
     });
-    
-    
     
     var NavRow = Backbone.View.extend({
         tagName: "li",
