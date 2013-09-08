@@ -28,7 +28,7 @@
                                 $account.append(accountProfile.render().$el);
                                 
                                 account.getView().getUserModel(function(accountUser){
-                                    if(!account.isUser() || (account.isUser() && !accountUser.has('email'))) {
+                                    if(!account.isUser() || (account.isUser() && (!accountUser.has('email') || (accountUser.has('pass') && accountUser.get('pass') === false)))) {
                                         account.welcome($('#welcome'), {ui: {
                                             "welcomeLabel": "Join using ",
                                             "welcomeBackLabel": "Welcome back ",
@@ -87,7 +87,7 @@
                                         
                                         accountProfile.bindRouter(nav.router);
                                         nav.startRouter('/desktop/');
-                                        
+                                        /*
                                         require(['/desktop/jquery.idle-timer.js'], function() {
                                             var idleTimer = $(document).idleTimer(3200);
                                             $(document).bind("idle.idleTimer", function(e){
@@ -96,7 +96,7 @@
                                             $(document).bind("active.idleTimer", function(){
                                                 $('body').removeClass('idle');
                                             });
-                                        });
+                                        });*/
                                         if(callback) {
                                             callback();
                                         }

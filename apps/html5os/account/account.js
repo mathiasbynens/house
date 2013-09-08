@@ -244,7 +244,7 @@
                     });
                     self.render();
                     self.$el.find('input[name="pass"]').focus();
-                    self.$el.find(".msg").html('Bad password. <a class="resetPass" href="/">reset password</a>');
+                    self.$el.find(".msg").html('Bad login. <a class="resetPass" href="/">reset</a>');
                 } else {
                     self.$pass.show();
                     self.$pass.focus();
@@ -314,6 +314,7 @@
                 this.model.set({
                     resetPass: true
                 });
+                alert("Please check your email for a message from us with steps to reset your password.");
             }
             return false;
         },
@@ -321,7 +322,7 @@
             this.$el.find("input").first().focus();
         },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
         }
     });
     auth.View = Backbone.View.extend({

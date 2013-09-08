@@ -854,9 +854,7 @@
             }
             
             if(window.account) {
-                
                 account.isAdmin(function(isAdmin){
-                    console.log('gggggg')
                     var isa = (isAdmin || account.isOwner(self.model.id));
                     if(isa) {
                         self.$el.find('h1').append(' <a class="editDisplayName" title="Edit display name" href="#">edit real name</a>');
