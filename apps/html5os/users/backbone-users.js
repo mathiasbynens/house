@@ -861,6 +861,24 @@
                         self.$el.find('h2').append(' <a class="editName" title="Edit user name" href="#">edit user name</a>');
                         self.$el.find('h2').append(' <a class="editPass" title="Edit user password" href="#">change password</a>');
                         self.$el.find('.avatar').append(' <a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
+                        
+                        self.$el.append('<span class="groups"></span>');
+                        if(self.model.has('groups')) {
+                            var groups = self.model.get('groups');
+                            for(var g in groups) {
+                                var group = groups[g];
+                                if(isAdmin) {
+                                    self.$el.find('.groups').append('<a href="#" class="removeGroup" data-group="'+group+'" title="Remove group">'+group+'</a>');
+                                } else {
+                                    self.$el.find('.groups').append('<span class="group">'+group+'</span>');
+                                }
+                            }
+                        } else {
+                            
+                        }
+                        if(isAdmin) {
+                            self.$el.find('.groups').append('<a href="#" class="addGroup" title="Add group">add group</a>');
+                        }
                     }
                     if (self.model.has("url") || isa) {
                         var src = self.model.get("url") || 'http://yourwebsite.com/';
@@ -919,7 +937,6 @@
                     }
                 });
             } else {
-                console.log('aaaaa')
             }
             
             
@@ -940,7 +957,40 @@
             "click .editDisplayName": "editDisplayName",
             "click .editUrl": "editUrl",
             "click .editAvatar": "editAvatar",
-            "click .sendMsg": "sendMsg"
+            "click .sendMsg": "sendMsg",
+            "click .removeGroup": "removeGroup",
+            "click .addGroup": "addGroup"
+        },
+        removeGroup: function(e) {
+            var self = this;
+            if(confirm("Are you sure that you want to remove this group?")) {
+                var groups = this.model.get("groups");
+                var name = e.target.innerHTML;
+                this.model.pull({"groups": name}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.render();
+                });
+            }
+            return false;
+        },
+        addGroup: function() {
+            var self = this;
+            var groupName = prompt("Enter group name");
+            if(groupName) {
+                this.model.push({"groups": groupName}, {silent: true});
+                var saveModel = this.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.render();
+                });
+            }
+            return false;
         },
         sendMsg: function() {
             var self = this;
