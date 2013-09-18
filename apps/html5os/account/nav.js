@@ -4,6 +4,8 @@
     
     nav.Router = Backbone.Router.extend({
         initialize: function(options) {
+            this.routesHit = 0;
+            Backbone.history.on('route', function() { this.routesHit++; }, this);
         },
         routes: {
             "_=_": "gohome",
@@ -27,6 +29,14 @@
         setTitle: function(title) {
             document.title = title;
             this.trigger('title', title);
+        },
+        back: function() {
+            console.log(this.routesHit)
+            if(this.routesHit > 1) {
+              window.history.back();
+            } else {
+              this.navigate('', {trigger: true});
+            }
         }
     });
     
@@ -77,17 +87,14 @@
     });
 
     var NavList = Backbone.View.extend({
-        tagName: "div",
-        className: "navList",
         initialize: function() {
             var self = this;
-            var openerTxt = this.options.openerTxt || '≡';
-            var $ul = this.$ul = $('<menu></menu>');
-            this.$open = $('<span class="opener" title="Navigation Menu"><button>'+openerTxt+'</button></span>');
+            // var openerTxt = this.options.openerTxt || '≡';
+            // this.$open = $('<span class="opener" title="Navigation Menu"><button>'+openerTxt+'</button></span>');
+            this.$menu = this.$el.find('#siteNav');
             this.collection.bind("add", function(doc) {
-                var view;
-                view = doc.getRow({list: self});
-                self.appendRow(view);
+                //self.appendRow(doc.getRow({list: self}));
+                self.appendDoc(doc);
             });
             this.collection.on('reset', function(){
                 self.render();
@@ -95,66 +102,170 @@
         },
         render: function() {
             var self = this;
-            this.$el.attr('id', 'navigation');
-            this.$el.append(this.$open);
-            this.$el.append(this.$ul);
-            this.$ul.html('');
             //this.collection.sort({silent:true});
             this.collection.each(function(doc){
-                var view;
-                view = doc.getRow({list: self});
-                //self.appendRow(view.render().el);
-                self.$ul.append(view.render().el);
+                //self.appendRow(doc.getRow({list: self, el: $row}));
+                self.appendDoc(doc);
             });
             return this;
         },
         events: {
-            "click .opener": "toggleMenu"
+            "click .homeBtn": "goHome",
+            "click .pageTitle": "titleClick"
+        },
+        goHome: function() {
+            nav.router.gohome();
+            return false;
+        },
+        titleClick: function(e) {
+            return false;
         },
         toggleMenu: function() {
-            var v = this.$ul.css('visibility');
-            if(v == 'visible') {
-                this.trigger('home');
-                this.hideMenu();
-            } else {
-                this.$ul.css('visibility', 'visible');
-            }
         },
         hideMenu: function() {
-            this.$ul.css('visibility', 'hidden');
         },
         showMenu: function() {
-            this.$ul.css('visibility', 'visible');
+        },
+        appendDoc: function(doc) {
+            var row;
+            if(!doc.hasOwnProperty('row')) {
+                var $row = $('<li></li>');
+                this.$menu.append($row);
+                row = doc.getRow({list: this, el: $row});
+            } else {
+                row = doc.getRow();
+            }
+            this.appendRow(row);
         },
         appendRow: function(row) {
-            this.$ul.append(row.render().el);
+            if(row.model.has('renderCondition')) {
+                var c = row.model.get('renderCondition');
+                if(c == 'isAdmin') {
+                    if(window.account && (!account.isUser() || !account.isAdmin())) {
+                        return false;
+                    }
+                } else if(c == 'isUser') {
+                    if(window.account && (!account.isUser())) {
+                        return false;
+                    }
+                } else {
+                    // remove
+                    row.remove();
+                    return false;
+                }
+            } else {
+            }
+            
+            row.render();
         },
         deselectAll: function() {
-            this.$ul.children().removeAttr('selected');
+            //this.$ul.children().removeAttr('selected');
         }
     });
     
-    var NavRow = Backbone.View.extend({
-        tagName: "li",
-        className: "navRow",
+    var NavDropdownList = Backbone.View.extend({
+        tagName: "ul",
+        className: "dropdown-menu",
+        initialize: function() {
+            var self = this;
+            this.collection.bind("add", function(doc) {
+                self.appendDoc(doc);
+            });
+            this.collection.on('reset', function(){
+                self.render();
+            });
+        },
         render: function() {
-            var $e = $('<span class="navLink"></span>');
-            this.$el.html($e);
-            if(this.model.has('title')) {
-                $e.append(this.model.get('title'));
-            }
-            if(this.model.has('el')) {
-                $e.append(this.model.get('el'));
-            }
-            if(this.model.has('class')) {
-                this.$el.addClass(this.model.get('class'));
-            }
-            this.$el.append('<div class="bg"></div>');
+            var self = this;
+            this.collection.each(function(doc){
+                self.appendDoc(doc);
+            });
+            this.setElement(this.$el);
             return this;
         },
+        events: {
+        },
+        appendDoc: function(doc) {
+            var row;
+            if(!doc.hasOwnProperty('row')) {
+                var $row = $('<li></li>');
+                this.$el.append($row);
+                row = doc.getRow({list: this, el: $row});
+            } else {
+                row = doc.getRow();
+            }
+            this.appendRow(row);
+        },
+        appendRow: function(row) {
+            if(row.model.has('renderCondition')) {
+                var c = row.model.get('renderCondition');
+                if(c == 'isAdmin') {
+                    if(window.account && (!account.isUser() || !account.isAdmin())) {
+                        return false;
+                    }
+                } else if(c == 'isUser') {
+                    if(window.account && (!account.isUser())) {
+                        return false;
+                    }
+                } else {
+                    // remove
+                    row.remove();
+                    return false;
+                }
+            } else {
+            }
+            
+            row.render();
+        }
+    });
+    //<ul class="dropdown-menu" id="accountMenu">
+      //<!--- <li><a href="#">Action</a></li> -->
+    //</ul>
+    var NavRow = Backbone.View.extend({
         initialize: function() {
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
+            this.$e = $('<a href="#"></a>');
+        },
+        render: function() {
+            this.setElement(this.$el);
+            this.$e.html('');
+            this.$el.append(this.$e);
+            
+            if(this.model.has('title')) {
+                this.$e.append(this.model.get('title'));
+                if(this.model.has('navigate')) {
+                    this.$e.attr('href', this.model.get('navigate'));
+                } else if(this.model.has('href')) {
+                    this.$e.attr('href', this.model.get('href'));
+                }
+            }
+            if(this.model.has('subNav')) {
+                this.$el.addClass('dropdown');
+                this.$e.addClass('dropdown-toggle');
+                this.$e.attr('data-toggle', 'dropdown');
+                this.$e.append('<b class="caret"></b>');
+                if(!this.model.has('title') && !this.model.has('class')) {
+                    this.$e.addClass('glyphicon glyphicon-th');
+                }
+                
+                if(!this.model.subNav) {
+                    console.log(this.options.list.collection)
+                    this.model.subNavCol = new NavCollection();
+                    this.model.subNavCol.list = new NavDropdownList({collection: this.model.subNavCol});
+                    this.$el.append(this.model.subNavCol.list.render().$el);
+                }
+                
+            } else {
+            }
+            if(this.model.has('el')) {
+                this.$e.append(this.model.get('el'));
+            }
+            if(this.model.has('class')) {
+                this.$e.addClass(this.model.get('class'));
+            }
+            //this.$el.append('<div class="bg"></div>');
+            return this;
         },
         events: {
           "click": "userSelect",
@@ -163,23 +274,23 @@
         touchstartstopprop: function(e) {
             e.stopPropagation();
         },
-        userSelect: function() {
-            this.options.list.hideMenu();
+        userSelect: function(e) {
             this.$el.siblings().removeAttr('selected');
             this.select();
             if(this.model.has('navigate')) {
-                nav.router.navigate(this.model.get('navigate'), true);
+                nav.router.navigate(this.model.get('navigate'), {trigger: true});
             } else if(this.model.has('href')) {
                 window.location = this.model.get('href');
-            } else {
+            } else if(!this.model.subNav) {
                 this.options.list.trigger('selected', this);
             }
+            e.preventDefault();
         },
         select: function() {
             this.$el.attr('selected', 'selected');
         },
         remove: function() {
-          $(this.el).remove();
+            this.$el.remove();
         }
     });
     
@@ -200,7 +311,7 @@
             e.stopPropagation();
         },
         select: function() {
-            window.history.back()
+            nav.router.back();
         }
     });
     
