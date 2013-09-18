@@ -118,6 +118,7 @@
             return false;
         },
         titleClick: function(e) {
+            this.trigger('titleClick');
             return false;
         },
         toggleMenu: function() {
@@ -129,8 +130,16 @@
         appendDoc: function(doc) {
             var row;
             if(!doc.hasOwnProperty('row')) {
-                var $row = $('<li></li>');
-                this.$menu.append($row);
+                if(!doc.id) {
+                    doc.id = doc.get('title');
+                }
+                var $row = $('#nav-'+doc.id);
+                if($row.length === 0) {
+                    $row = $('<li id="nav-'+doc.id+'"></li>');
+                    this.$menu.append($row);
+                } else {
+                    $row.html('');
+                }
                 row = doc.getRow({list: this, el: $row});
             } else {
                 row = doc.getRow();
