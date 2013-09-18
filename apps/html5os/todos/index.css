@@ -170,6 +170,8 @@ ul.todos[data-filter-list-id] .listRef {
 }
 .list-filters {
     float: left;
+}
+.list-filters, .list-pager {
     padding: 8px;
 }
 .app button.focusForm {

@@ -40,6 +40,9 @@ var wysihtml5ParserRules = {
     "classes": {
         "pull-right": 1,
         "pull-left": 1,
+        "img-circle": 1,
+        "col-lg-4": 1,
+        "row": 1,
         "wysiwyg-clear-both": 1,
         "wysiwyg-clear-left": 1,
         "wysiwyg-clear-right": 1,

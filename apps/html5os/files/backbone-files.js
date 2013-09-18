@@ -383,9 +383,9 @@
         },
         toggleSelectAll: function() {
             if(this.$el.find('.batch input[type="checkbox"]').attr('checked') == 'checked') {
-                this.$el.find('input[type="checkbox"]:visible').attr('checked', 'checked');
+                this.$ul.find('input[type="checkbox"]:visible').attr('checked', 'checked');
             } else {
-                this.$el.find('input[type="checkbox"]').removeAttr('checked');
+                this.$ul.find('input[type="checkbox"]').removeAttr('checked');
             }
         },
         loadMore: function() {

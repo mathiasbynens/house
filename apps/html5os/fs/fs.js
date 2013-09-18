@@ -160,7 +160,7 @@
                         file.getFullView().renderAce();
                     } else {
                         file.getFullView().$el.show();
-                        file.getFullView().editor.resize();
+                        //file.getFullView().editor.resize();
                     }
                     self.router.navigate(file.get('filename'), {trigger: false, replace: true});
                     var p = (path.lastIndexOf('/') == path.length-1) ? path.substr(0, path.length-1) : path;

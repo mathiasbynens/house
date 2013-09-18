@@ -21,12 +21,14 @@
         },
         getFullView: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.fullView) {
                 var view = this.fullView = new FullView(options);
-                view.on('goToProfile', function(model){
-                    options.list.trigger('goToProfile', model);
+                view.on('goToAuthor', function(model){
+                    options.list.trigger('goToAuthor', model);
+                });
+                view.on('goToTag', function(tagName){
+                    options.list.trigger('goToTag', tagName);
                 });
                 this.views.fullView = view;
             }
@@ -34,20 +36,30 @@
         },
         getAvatar: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.avatar) {
                 var view = this.avatar = new AvatarView(options);
+                view.on('goToAuthor', function(model){
+                    options.list.trigger('goToAuthor', model);
+                });
+                view.on('goToTag', function(tagName){
+                    options.list.trigger('goToTag', tagName);
+                });
                 this.views.avatar = view;
             }
             return this.avatar;
         },
         getRow: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.row) {
                 var row = this.row = new RowView(options);
+                row.on('goToAuthor', function(model){
+                    options.list.trigger('goToAuthor', model);
+                });
+                row.on('goToTag', function(tagName){
+                    options.list.trigger('goToTag', tagName);
+                });
                 this.views.row = row;
             }
             return this.row;
@@ -238,6 +250,28 @@
                 });
             }
         },
+        getOrFetchSeq: function(seq, callback) {
+            var self = this;
+            var doc;
+            doc = _.first(this.where({seq:seq}));
+            if(doc) {
+                callback(doc);
+            } else {
+                var options = { "seq": seq };
+                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
+                        if(response) {
+                            doc = _.first(self.where({seq:seq}));
+                            callback(doc);
+                        } else {
+                            callback(false);
+                        }
+                    },
+                    error: function(collection, response){
+                        callback(false);
+                    }
+                });
+            }
+        },
         getView: function(options) {
             var self = this;
             if (!options) options = {};
@@ -269,8 +303,8 @@
         initialize: function() {
             var self = this;
             self.loading = false;
-            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> posts</div>');
-            var $ul = this.$ul = $('<ul class="images"></ul>');
+            this.$pager = $('<div class="list-pager container text-center">showing <span class="list-length"></span> of <span class="list-count"></span> posts</div>');
+            var $ul = this.$ul = $('<div class="postList container"></div>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -744,7 +778,7 @@
 
 
     var RowView = Backbone.View.extend({
-        tagName: "li",
+        tagName: "div",
         className: "row",
         initialize: function(options) {
             if(options.list) {
@@ -755,37 +789,82 @@
             //this.actions = new ActionsView({id: this.id, model: this.model});
         },
         render: function() {
+            var self = this;
             this.$el.html('');
-            var $byline = $('<span class="byline"></span>');
+            var $byline = $('<div class="entry-meta col-md-8 col-md-offset-2"></div>');
+            var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
+            var $at = $('<span class="date glyphicon glyphicon-time"></span>');
+            $at.append($permalink);
+            $byline.append($at);
             if(this.model.has('title')) {
-                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
+                this.$el.append('<div class="entry-header col-md-8 col-md-offset-2"><h1 class="entry-title"><a href="'+this.model.getNavigatePath()+'">'+this.model.get('title')+'</a></h1></div>');
+                $permalink.attr('title', 'Permalink to '+this.model.get('title'));
             }
             if(this.model.has('at')) {
-                var $at = $('<span class="at"></span>');
                 if(window.clock) {
-                    $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
-                    $at.html(clock.moment(this.model.get('at')).calendar());
+                    var m = clock.moment(this.model.get('at'));
+                    $permalink.find('time').attr('datetime', m.format("YYYY-MM-DDTHH:mm:ssZZ"));
+                    $at.attr('title', m.format('LLLL'));
+                    $permalink.find('time').html(m.calendar());
                 } else {
-                    $at.html(this.model.get('at'));
+                    $permalink.find('time').html(this.model.get('at'));
                 }
-                $byline.append($at);
             }
+            if(this.model.has('tags')) {
+                var $tags = $('<span class="tags-links glyphicon glyphicon-tag"></span>');
+                var tags = this.model.get('tags');
+                for(var t in tags) {
+                    var tag = tags[t];
+                    $tags.append('<a href="tag/'+tag+'" data-tag="'+tag+'" rel="tag">'+tag+'</a>');
+                    if(tags.length > 1 && t < tags.length-1) {
+                        $tags.append(', ');
+                    }
+                }
+                $byline.append($tags);
+            }
+            this.$el.append($byline);
             if(this.model.has('owner')) {
-                $byline.append(' by '+this.model.get('owner').name);
+                $byline.append('<span class="author vcard glyphicon glyphicon-user"><a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
+                this.model.getOwner(function(owner){
+                    self.author = owner;
+                    if(owner) {
+                    }
+                });
             }
             if(this.model.has('msg')) {
-                var $msg = $('<span class="msg"></span>');
+                var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
                 $msg.html(this.model.get('msg'));
                 this.$el.append($msg);
             }
-            this.$el.append($byline);
-            this.$el.attr('data-id', this.model.get("_id"));
+            this.$el.attr('data-id', this.model.id);
             //this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
         },
         events: {
-          "click": "select"
+          "click": "select",
+          "click .entry-title a": "clickTitle",
+          "click .author a": "clickAuthor",
+          "click .tags-links a": "clickTag"
+        },
+        clickAuthor: function(e) {
+            if(this.author) {
+                if(this.hasOwnProperty('list')) {
+                    this.list.trigger('goToAuthor', this.author);
+                }
+                this.trigger('goToAuthor', this.author);
+            }
+            return false;
+        },
+        clickTitle: function(e) {
+            e.preventDefault();
+        },
+        clickTag: function(e) {
+            var $et = $(e.target);
+            if($et.attr('data-tag')) {
+                this.trigger('goToTag', $et.attr('data-tag'));
+            }
+            return false;
         },
         select: function(e) {
             var deselectSiblings = function(el) {
@@ -796,19 +875,20 @@
             this.$el.addClass("selected");
             this.$el.attr("selected", true);
             if(this.hasOwnProperty('list')) {
+                this.list.selectedPost = this;
                 this.list.trigger('select', this);
             }
             this.trigger('select');
             this.trigger('resize');
         },
         remove: function() {
-          $(this.el).remove();
+            this.$el.remove();
         }
     });
     
     var FullView = Backbone.View.extend({
         tagName: "div",
-        className: "fullView",
+        className: "fullView container",
         initialize: function(options) {
             var self = this;
             if(options.list) {
@@ -821,38 +901,48 @@
         render: function() {
             var self = this;
             this.$el.html('');
-            var $byline = $('<span></span>');
+            
+            var $byline = $('<div class="entry-meta col-md-8 col-md-offset-2"></div>');
+            var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
+            var $at = $('<span class="date glyphicon glyphicon-time"></span>');
+            $at.append($permalink);
+            $byline.append($at);
             if(this.model.has('title')) {
-                this.$el.append('<h1 class="title">'+this.model.get('title')+'</h1>');
+                this.$el.append('<div class="entry-header col-md-8 col-md-offset-2"><h1 class="entry-title"><a href="'+this.model.getNavigatePath()+'">'+this.model.get('title')+'</a></h1></div>');
+                $permalink.attr('title', 'Permalink to '+this.model.get('title'));
             }
-            if(this.model.has('seq')) {
-                this.$el.append('<span class="seq">#'+this.model.get('seq')+'</span>');
+            if(this.model.has('at')) {
+                if(window.clock) {
+                    var m = clock.moment(this.model.get('at'));
+                    $permalink.find('time').attr('datetime', m.format("YYYY-MM-DDTHH:mm:ssZZ"));
+                    $at.attr('title', m.format('LLLL'));
+                    $permalink.find('time').html(m.calendar());
+                } else {
+                    $permalink.find('time').html(this.model.get('at'));
+                }
             }
+            if(this.model.has('tags')) {
+                var $tags = $('<span class="tags-links glyphicon glyphicon-tag"></span>');
+                var tags = this.model.get('tags');
+                for(var t in tags) {
+                    var tag = tags[t];
+                    $tags.append('<a href="tag/'+tag+'" data-tag="'+tag+'" rel="tag">'+tag+'</a>');
+                    if(tags.length > 1 && t < tags.length-1) {
+                        $tags.append(', ');
+                    }
+                }
+                $byline.append($tags);
+            }
+            this.$el.append($byline);
             if(this.model.has('owner')) {
-                $byline.append(' <i>by</i> <span class="owner">'+this.model.get('owner').name+'</span>');
-                $byline.attr('data-owner-id', this.model.get('owner').id);
-                var owner = this.model.getOwner(function(owner){
+                $byline.append('<span class="author vcard glyphicon glyphicon-user"><a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
+                this.model.getOwner(function(owner){
+                    self.author = owner;
                     if(owner) {
-                        $byline.find('.owner').html('');
-                        var ownerAvatarName = owner.getNewAvatarNameView();
-                        ownerAvatarName.on('goToProfile', function(user){
-                            self.trigger('goToProfile', user);
-                        });
-                        $byline.find('.owner').append(ownerAvatarName.render().$el);
                     }
                 });
             }
-            if(this.model.has('at')) {
-                var $at = $('<span class="at"></span>');
-                if(window.clock) {
-                    $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
-                    $at.html(clock.moment(this.model.get('at')).calendar());
-                } else {
-                    $at.html(this.model.get('at'));
-                }
-                $byline.append(' ');
-                $byline.append($at);
-            }
+            
             if(this.model.has('youtube')) {
                 var yt = this.model.get('youtube');
                 if(yt.id) {
@@ -861,17 +951,16 @@
                 }
             }
             if(this.model.has('msg')) {
-                var $msg = $('<span class="msg"></span>');
+                var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
                 $msg.html(this.model.get('msg'));
                 this.$el.append($msg);
             }
-            this.$el.append($byline);
             
             if(window.account && (account.isAdmin() || account.isOwner(this.model.get('owner').id))) {
                 this.$el.append(this.actions.render().$el);
             }
             this.trigger('resize');
-            this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
+            this.setElement(this.$el);
             return this;
         },
         renderActions: function() {
@@ -881,9 +970,27 @@
             this.$el.show();
         },
         events: {
+            "click .author a": "clickAuthor",
+            "click .tags-links a": "clickTag"
+        },
+        clickAuthor: function(e) {
+            if(this.author) {
+                if(this.hasOwnProperty('list')) {
+                    this.list.trigger('goToAuthor', this.author);
+                }
+                this.trigger('goToAuthor', this.author);
+            }
+            return false;
+        },
+        clickTag: function(e) {
+            var $et = $(e.target);
+            if($et.attr('data-tag')) {
+                this.trigger('goToTag', $et.attr('data-tag'));
+            }
+            return false;
         },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
         }
     });
     
@@ -911,7 +1018,7 @@
                 $byline.append($at);
             }
             if(this.model.has('owner')) {
-                $byline.append(' by '+this.model.get('owner').name);
+                $byline.append(this.model.get('owner').name);
             }
             if(this.model.has('msg')) {
                 var $msg = $('<span class="msg"></span>');
@@ -956,48 +1063,264 @@
           $(this.el).remove();
         }
     });
+    
     var SelectGroupsView = Backbone.View.extend({
-        tagName: "select",
-        className: "groups",
+        tagName: "div",
+        className: "groups col-lg-4",
         initialize: function() {
-            this.$options = $('<option value="public">public</option><option value="private">private</option>');
+            //this.$options = $('<option value="public">public</option><option value="private">private</option>');
+            this.$options =  $('<div class="btn-group">\n\
+              <button type="button" class="privacy btn btn-default"><span class="glyphicon glyphicon-lock">Privacy</span></button>\n\
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">\n\
+                <span class="caret"></span>\n\
+              </button>\n\
+              <ul class="dropdown-menu" role="menu">\n\
+                <li><a href="#" class="private glyphicon glyphicon-lock">Private</a></li>\n\
+                <li><a href="#" class="public glyphicon glyphicon-globe">Public</a></li>\n\
+                <li class="divider"></li>\n\
+                <li><a href="#" class="addGroup">Other Group</a></li>\n\
+              </ul>\n\
+            </div>');
+            if(this.model && this.model.has('groups')) {
+                this.value = this.model.get('groups');
+            }
+        },
+        renderPrivate: function() {
+            var $span = this.$el.find('.privacy.btn span');
+            $span.html('Private');
+            $span.removeClass('glyphicon-globe');
+            $span.addClass('glyphicon-lock');
+        },
+        renderPublic: function() {
+            var $span = this.$el.find('.privacy.btn span');
+            $span.html('Public');
+            $span.removeClass('glyphicon-lock');
+            $span.addClass('glyphicon-globe');
         },
         render: function() {
             var self = this;
-            this.$el.attr('name', 'groups');
             this.$el.append(this.$options);
             if(this.model && this.model.has('groups') && this.model.get('groups').indexOf('public') !== -1) {
-                this.$el.val('public');
-                this.$options.find('option[value="public"]').attr('selected','selected');
+                this.renderPublic();
+            } else if(!this.model.has('groups') || this.model.get('groups').length == 0) {
+                this.renderPrivate();
             } else {
-                this.$el.val('private');
-                this.$options.find('option[value="private"]').attr('selected','selected');
+                var $span = this.$el.find('.privacy.btn span');
+                $span.removeClass('glyphicon-lock');
+                $span.removeClass('glyphicon-globe');
+                $span.html(this.model.get('groups'));
             }
             this.setElement(this.$el);
             return this;
         },
         val: function() {
-            var groups = [];
-            if(this.$el.val() == 'public') {
-                groups = ['public'];
-            }
-            return groups;
+            return this.value;
         },
         events: {
+            "click a.public": "clickPublic",
+            "click a.private": "clickPrivate",
+            "click a.addGroup": "addGroup"
         },
+        addGroup: function(e) {
+            var g = prompt("Enter group name.");
+            if(g) {
+                this.value = [];
+                this.value.push(g);
+                var $span = this.$el.find('.privacy.btn span');
+                $span.html(g);
+                $span.removeClass('glyphicon-lock');
+                $span.removeClass('glyphicon-globe');
+            }
+            e.preventDefault();
+        },
+        clickPublic: function(e) {
+            this.value = ['public'];
+            this.renderPublic();
+            e.preventDefault();
+        },
+        clickPrivate: function(e) {
+            this.value = [];
+            this.renderPrivate();
+            e.preventDefault();
+        }
     });
     
-    var YoutubeView = Backbone.View.extend({
-        tagName: "span",
-        className: "youtube",
+    var TagsInputView = Backbone.View.extend({
+        tagName: "div",
+        className: "tags form-group",
         initialize: function() {
-            this.$input = $('<input name="youtube_id" placeholder="youtube id" />');
+        },
+        render: function() {
+            this.$el.html('');
+            var tags = this.model.get("tags");
+            this.$el.append('<button class="newTag btn glyphicon glyphicon-tags">Tag</button>');
+            if(tags) {
+                for(var i in tags) {
+                    var tagName = tags[i];
+                    if(!_.isString(tagName)) {
+                        var $btn = $('<button class="tag">'+tagName+'</button>');
+                        $btn.attr('data-tag', JSON.stringify(tagName));
+                        this.$el.append($btn);
+                    } else {
+                        this.$el.append('<button class="tag btn btn-info glyphicon glyphicon-tag">'+tagName+'</button>');
+                    }
+                }
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function() {
+            var tags = [];
+            if(this.model.has('tags')) {
+                tags = this.model.get("tags");
+            }
+            return tags;
+        },
+        events: {
+          "click .newTag": "newTag",
+          "click .tag": "removeTag"
+        },
+        removeTag: function(e) {
+            var self = this;
+            if(confirm("Are you sure that you want to remove this tag?")) {
+                var tags = this.model.get("tags");
+                var $tag = $(e.target);
+                var tagName = '';
+                if($tag.attr('data-tag')) {
+                    tagName = JSON.parse($tag.attr('data-tag'));
+                } else {
+                    tagName = e.target.innerHTML;
+                }
+                this.model.pull({"tags": tagName}, {silent: true});
+                
+                if(!this.model.isNew()) {
+                    var saveModel = this.model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    saveModel.done(function() {
+                        self.render();
+                    });
+                }
+            }
+            return false;
+        },
+        newTag: function() {
+            var self = this;
+            var tagName = prompt("Enter tags, separated, by commas.");
+            if(tagName) {
+                tagName = tagName.split(',');
+                for(var i in tagName) {
+                    var tag = tagName[i];
+                    tagName[i] = tag.trim(); // trim extra white space
+                }
+                if(tagName) {
+                    if(!this.model.has("tags")) {
+                        this.model.set({'tags': tagName}, {silent: true});
+                        if(!this.model.isNew()) {
+                            var saveModel = this.model.save(null, {
+                                silent: false,
+                                wait: true
+                            });
+                            saveModel.done(function() {
+                                self.render();
+                                //console.log('tags saved');
+                            });
+                        } else {
+                            self.render();
+                        }
+                    } else {
+                        this.model.pushAll({"tags": tagName}, {silent: true});
+                        if(!this.model.isNew()) {
+                            var saveModel = this.model.save(null, {
+                                silent: false,
+                                wait: true
+                            });
+                            saveModel.done(function() {
+                                self.render();
+                            });
+                        } else {
+                            self.render();
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+    });
+    
+    var TweetInputView = Backbone.View.extend({
+        tagName: "div",
+        className: "tweet form-group",
+        initialize: function() {
+            this.$label = $('<label class="col-lg-4 control-label">Tweet ID:</label><div class="col-lg-8"></div>');
+            this.$input = $('<input name="tweet_id" placeholder="tweet id" class="form-control"/>');
         },
         render: function() {
             var self = this;
-            this.$el.append(this.$input);
+            this.$el.append(this.$label);
+            this.$el.find('div').append(this.$input);
             this.setElement(this.$el);
             return this;
+        },
+        val: function(v) {
+            if(v) {
+                this.$input.val(v);
+            } else {
+                var oid = this.$input.val();
+                var o = {};
+                if(this.model.has('tweet')) {
+                    o = _.clone(this.model.get('tweet'));
+                }
+                o.id = oid;
+                return o;
+            }
+        },
+        parseForId: function(str) {
+            //var matches = str.match(/(\d+)$/);
+            var dec = str.match(/^(\d+)$/);
+            if(dec && dec.length > 1) {
+                return str;
+            } else {
+                var matches = str.match(/^http(s):\/\/twitter\.com\/(?:#!\/)?(\w+)\/status(es)?\/(\d+)$/);
+                //console.log(matches)
+                if(matches && matches.length > 1) {
+                    return matches[matches.length-1];
+                } else {
+                    return str;
+                }
+            }
+        },
+        events: {
+            "blur input": "blurInput"
+        },
+        blurInput: function(e) {
+            this.$input.val(this.parseForId(this.$input.val()));
+        }
+    });
+    
+    var YoutubeView = Backbone.View.extend({
+        tagName: "div",
+        className: "youtube form-group",
+        initialize: function() {
+            this.$label = $('<label class="col-lg-4 control-label">YouTube ID:</label><div class="col-lg-8"></div>');
+            this.$input = $('<input name="youtube_id" placeholder="youtube id" class="form-control"/>');
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$label);
+            this.$el.find('div').append(this.$input);
+            this.setElement(this.$el);
+            return this;
+        },
+        parseForId: function(str) {
+                var matches = str.match(/(youtu\.be\/|youtube\.com\/(watch\?(.*&)?v=|(embed|v)\/))([^\?&"'>]+)/);
+                console.log(matches)
+                if(matches && matches.length > 1) {
+                    return matches[5];
+                } else {
+                    return str;
+                }
         },
         val: function(v) {
             if(v) {
@@ -1013,13 +1336,16 @@
             }
         },
         events: {
-            
+            "blur input": "blurInput"
         },
+        blurInput: function(e) {
+            this.$input.val(this.parseForId(this.$input.val()));
+        }
     });
     
     var FormView = Backbone.View.extend({
         tagName: "div",
-        className: "form",
+        className: "form form-horizontal",
         initialize: function() {
             var self = this;
             this.$owner = $('');
@@ -1027,6 +1353,7 @@
                 this.$el.attr('data-id', this.model.id);
                 this.$owner = $(''+this.model.get('owner').name);
             } else {
+                this.$owner = $('<span></span>');
                 if(!this.model) {
                     this.model = new Model({}, {
                         collection: this.collection
@@ -1110,7 +1437,7 @@
             });
             
             this.wsyi_id = 'wysihtml5-'+this.cid;
-            this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your post" autocomplete="off" />');
+            this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your post" autocomplete="off" class="form-control" />');
             this.$msgToolbar = $('<div class="wysihtml5-toolbar" id="'+this.wsyi_id+'-toolbar"><header><ul class="commands">\
                   <li data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command"></li>\
                   <li data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command"></li>\
@@ -1127,48 +1454,60 @@
                 <label>Image:<input data-wysihtml5-dialog-field="src" value="http://"></label>\
                 <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a></div></div>');
             this.$inputMsg = $('<textarea id="'+this.wsyi_id+'-textarea" name="msg" placeholder="Your message..."></textarea>');
-            this.$inputSlug = $('<input type="text" name="slug" placeholder="post-title" />');
-            this.$slugShare = $('<span class="slugShare"></span>');
-            this.$slugShare.html('/posts/'); //window.location.origin+
-            this.$slugShare.append(this.$inputSlug);
+            this.$inputSlug = $('<input type="text" name="slug" placeholder="post-title" class="form-control" />');
+            this.$slugShare = $('<div class="slugShare form-group"></div>');
+            this.$slugShare.html('<label class="glyphicon glyphicon-link col-lg-4 control-label">/posts/</label><div class="col-lg-8"></div>'); //window.location.origin+
+            this.$slugShare.find('div').append(this.$inputSlug);
             
-            this.$inputAtDate = $('<input name="at-date" type="date" />');
-            this.$inputAtTime = $('<input name="at-time" type="time" />');
+            this.$inputSeq = $('<input type="text" name="seq" placeholder="sequence #" class="form-control" />');
+            this.$seqShare = $('<div class="slugShare form-group"></div>');
+            this.$seqShare.html('<label class="seqShare glyphicon glyphicon-link col-lg-4 control-label">/posts/seq/</label><div class="col-lg-8"></div>');
+            this.$seqShare.find('div').append(this.$inputSeq);
             
-            this.$inputSeq = $('<input type="text" name="seq" placeholder="sequence #" />');
+            this.$inputAtDate = $('<input name="at-date" type="date" class="form-control" />');
+            this.$inputAtTime = $('<input name="at-time" type="time" class="form-control" />');
             
-            this.atPublished = $('<span class="published"><span class="by">by <span class="owner"></span></span><br /><span class="at">at </span></span>');
+            this.atPublished = $('<span class="published"><div class="by glyphicon glyphicon-user">by <span class="owner"></span></div>\n\
+            <div class="at form-group"><div class="glyphicon glyphicon-time col-md-1">at</div> <div class="atDate col-md-7"></div><div class="atTime col-md-4"></div></div></span>');
             this.atPublished.find('.owner').append(this.$owner);
-            this.atPublished.find('.at').append(this.$inputAtDate);
-            this.atPublished.find('.at').append(this.$inputAtTime);
+            this.atPublished.find('.atDate').append(this.$inputAtDate);
+            this.atPublished.find('.atTime').append(this.$inputAtTime);
             
+            this.inputTagsView = new TagsInputView({model: this.model});
             this.youtubeView = new YoutubeView({model: this.model});
+            this.tweetInputView = new TweetInputView({model: this.model});
             this.inputGroupsView = new SelectGroupsView({model: this.model});
             this.feedView = new ActionFeedView({model: this.model});
             this.deleteView = new ActionDeleteView({model: this.model});
             
-            this.$form = $('<form class="post"><fieldset></fieldset><controls></controls></form>');
+            this.$form = $('<form class="post"><fieldset class="col-md-8"></fieldset><controls class="col-md-4"></controls></form>');
             this.$form.find('fieldset').append(this.$inputTitle);
-            this.$form.append(this.$msgToolbar);
+            this.$form.find('fieldset').append(this.$msgToolbar);
             this.$form.find('fieldset').append(this.$inputMsg);
-            this.$form.find('fieldset').append('<hr />');
-            this.$form.find('fieldset').append(this.$slugShare);
-            this.$form.find('fieldset').append(this.$inputSeq);
-            this.$form.find('fieldset').append(this.atPublished);
-            this.$form.find('fieldset').append(this.youtubeView.render().$el);
             
-            this.$form.find('fieldset').append('<span class="avatar"><span class="embed"></span><button class="attachImage">Attach Image</button></span>');
-            this.$form.find('fieldset').append('<span class="audio"><span class="embed"></span><button class="attachAudio">Attach Audio</button></span>');
-            this.$form.find('fieldset').append('<span class="video"><span class="embed"></span><button class="attachVideo">Attach Video</button></span>');
+            this.$form.find('controls').append('<div class="form-group action"><div class="col-md-8"><input type="submit" value="Publish" class="form-control" /></div></div>');
+            this.$form.find('controls .action').prepend(this.inputGroupsView.render().$el);
+            this.$form.find('controls').append('<hr />');
+            this.$form.find('controls').append(this.$slugShare);
+            this.$form.find('controls').append(this.$seqShare);
+            this.$form.find('controls').append(this.inputTagsView.render().$el);
+            this.$form.find('controls').append(this.atPublished);
+            this.$form.find('controls').append(this.youtubeView.render().$el);
+            this.$form.find('controls').append(this.tweetInputView.render().$el);
+            this.$form.find('controls').append('<hr />');
+            this.$form.find('controls').append('<span class="avatar"><span class="embed"></span><button class="attachImage" class="form-control">Attach Image</button></span>');
+            this.$form.find('controls').append('<span class="audio"><span class="embed"></span><button class="attachAudio" class="form-control">Attach Audio</button></span>');
+            this.$form.find('controls').append('<span class="video"><span class="embed"></span><button class="attachVideo" class="form-control">Attach Video</button></span>');
             
-            this.$form.find('fieldset').append(this.uploadAvatarFrame.render().$el.hide());
-            this.$form.find('fieldset').append(this.uploadMediaAudioFrame.render().$el.hide());
-            this.$form.find('fieldset').append(this.uploadMediaVideoFrame.render().$el.hide());
+            this.$form.find('controls').append(this.uploadAvatarFrame.render().$el.hide());
+            this.$form.find('controls').append(this.uploadMediaAudioFrame.render().$el.hide());
+            this.$form.find('controls').append(this.uploadMediaVideoFrame.render().$el.hide());
             
-            this.$form.find('fieldset').append(this.feedView.render().$el);
-            this.$form.find('fieldset').append(this.deleteView.render().$el);
-            this.$form.find('controls').append(this.inputGroupsView.render().$el);
-            this.$form.find('controls').append('<input type="submit" value="POST" />');
+            this.$form.find('controls').append('<hr />');
+            this.$form.find('controls').append(this.feedView.render().$el);
+            if(!this.model.isNew()) {
+                this.$form.find('controls').append(this.deleteView.render().$el);
+            }
         },
         render: function() {
             var self = this;
@@ -1195,6 +1534,10 @@
                 if(this.model.has('youtube')) {
                     var youtube = this.model.get('youtube');
                     this.youtubeView.val(youtube.id);
+                }
+                if(this.model.has('tweet')) {
+                    var tweet = this.model.get('tweet');
+                    this.tweetInputView.val(tweet.id);
                 }
                 
                 if(this.model.has('avatar')) {
@@ -1232,6 +1575,7 @@
                     });
                 } else {
                     // logged in user
+                    self.$owner.html(account.view.userModel.getNewAvatarNameView().render().$el);
                 }
             }
             this.setElement(this.$el);
@@ -1297,8 +1641,10 @@
             var seq = this.$inputSeq.val();
             var msg = this.$inputMsg.val();
             var slug = this.$inputSlug.val();
+            var tags = this.inputTagsView.val();
             var groups = this.inputGroupsView.val();
             var youtube = this.youtubeView.val();
+            var tweet = this.tweetInputView.val();
             
             var atDate = this.$inputAtDate.val();
             var atTime = this.$inputAtTime.val();
@@ -1322,14 +1668,20 @@
             if(slug !== '' && slug !== this.model.get('slug')) {
                 setDoc.slug = slug;
             }
+            if(tags.length > 0 && tags !== this.model.get('tags')) {
+                setDoc.tags = tags;
+            }
             if(groups.length > 0 && groups !== this.model.get('groups')) {
                 setDoc.groups = groups;
             }
             if(youtube && !_.isEqual(youtube, this.model.get('youtube'))) {
                 setDoc.youtube = youtube;
             }
-            console.log('setDoc')
-            console.log(setDoc)
+            if(tweet && !_.isEqual(tweet, this.model.get('tweet'))) {
+                setDoc.tweet = tweet;
+            }
+            // console.log('setDoc')
+            // console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,
@@ -1337,8 +1689,8 @@
             });
             if(saveModel) {
                 saveModel.done(function() {
-                    self.trigger("saved", self.model);
                     self.collection.add(self.model);
+                    self.trigger("saved", self.model);
                 });
             } else {
                 self.trigger("saved", self.model);
@@ -1349,7 +1701,58 @@
             this.$inputTitle.focus();
         },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
+        }
+    });
+    
+    var TweetView = Backbone.View.extend({
+        tagName: "div",
+        className: "tweet",
+        initialize: function(options) {
+            var self = this;
+            if(options) {
+                if(options.list) {
+                    this.list = options.list;
+                }
+                if(options.tweetId) {
+                    this.tweetId = options.tweetId || '133640144317198338';
+                }
+            }
+            require(['//platform.twitter.com/widgets.js'], function() {
+                $.getJSON('//api.twitter.com/1/statuses/oembed.json?id='+self.tweetId+'&align=center&omit_script=true&callback=?', function(data) {
+                    //console.log(data);
+                    data.html = data.html.replace('blockquote ', 'blockquote data-cards="hidden"');
+                    self.data = data;
+                    self.initialized = true;
+                    self.trigger('initialized');
+                });
+            });
+            //this.actions = new ActionsView({id: this.id, model: this.model});
+        },
+        render: function() {
+            var self = this;
+            this.$el.html('');
+            if(this.initialized) {
+                self.$el.append(self.data.html);
+            } else {
+                this.on('initialized', function(){
+                    self.render();
+                });
+                return this;
+            }
+            if(navigator.userAgent.indexOf('HouseJs HTML Cacher') === -1) {
+                twttr.widgets.load();
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+          "click": "select"
+        },
+        select: function(e) {
+        },
+        remove: function() {
+          this.$el.remove();
         }
     });
     

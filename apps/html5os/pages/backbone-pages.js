@@ -657,7 +657,7 @@
                 desc = '<span class="muted">'+this.model.get('title')+'</span>';
             }
             if(this.$el.find('h2').length == 0) {
-                this.$el.prepend('<h2 class="featurette-heading">'+this.model.get('name')+desc+'</h2>');
+                this.$el.prepend('<h2 class="featurette-heading container">'+this.model.get('name')+desc+'</h2>');
             } else {
                 this.$el.find('h2').html(this.model.get('name')+desc);
             }
@@ -665,7 +665,7 @@
             if(this.model.has('html')) {
                 var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
-                    this.$el.append('<span class="sectionHtml">'+this.model.get('html')+'</span>');
+                    this.$el.append('<div class="sectionHtml container">'+this.model.get('html')+'</div>');
                 } else {
                     this.$el.find('.sectionHtml').html(html);
                 }
@@ -719,8 +719,8 @@
                 self.options.list.trigger('addToNavSubs', self.model, subs);
             }
             
-            if(window.account && (account.isAdmin()) && this.$el.find('.action').length == 0) {
-                this.$actions = $('<ul class="actions"></ul>');
+            if(window.account && (account.isAdmin()) && this.$el.find('.actions').length == 0) {
+                this.$actions = $('<ul class="actions container"></ul>');
                 this.$actions.append('<li><button class="edit">Edit</button></li><li><button class="moveUp" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove">Remove</button></li><li><button class="new">New</button></li>');
                 this.$el.append(this.$actions);
             }
@@ -807,7 +807,9 @@
             return false;
         },
         removeit: function(e) {
-            this.model.destroy();
+            if(confirm("Are you sure that you want to delete this section?")) {
+                this.model.destroy();
+            }
             e.stopPropagation();
             e.preventDefault();
             return false;
@@ -871,7 +873,7 @@
             if($e.length > 0) {
                 
             } else {
-                $e = $('<div class="container"><div class="carousel-caption"><h1></h1><p class="lead"></p><a class="btn btn-large btn-link" href="#">See more</a></div></div>');
+                $e = $('<div class="container"><div class="carousel-caption"><h1></h1><p class="lead"></p><p><a class="btn btn-large btn-default" href="#">See more</a></p></div></div>');
                 this.$el.append($e);
             }
             if(this.$el.find('img[src="/api/files/'+src+'"]').length == 0) {
@@ -1115,6 +1117,8 @@
             if(this.model.has('logo')) {
                 var logoImage = this.model.get('logo');
                 this.$el.css('background-image', 'url("/api/files/'+logoImage.filename+'")');
+                this.$el.css('background-size', '100%');
+                this.$el.css('color', 'transparent');
             }
             
             if(window.account && (account.isAdmin()) && this.$el.find('.edit').length == 0) {
@@ -1405,6 +1409,7 @@
             this.$el.append('<button class="attach">Upload logo</button>');
             this.$el.append('<button class="publish">Publish site</button>');
             this.$form.find('.controls').append('<input type="submit" value="Save" />');
+            this.$form.find('.controls').append('<button class="cancel">cancel</button>');
         },
         render: function() {
             var self = this;
@@ -1434,11 +1439,23 @@
             "click .attach": "attachImage",
             "click .publish": "publish",
             'click input[type="submit"]': "submit",
+            'click button.cancel': "cancel",
             'keyup input[name="title"]': "throttleTitle",
             'blur input[name="title"]': "blurTitle"
         },
         attachImage: function() {
             this.uploadFrame.pickFiles();
+            return false;
+        },
+        reset: function() {
+            this.$form.reset();
+        },
+        cancel: function() {
+            var self = this;
+            if(confirm("Are you sure that you want to cancel your chagnes?")) {
+                self.reset();
+                self.trigger("cancelled", this.model);
+            }
             return false;
         },
         publish: function() {

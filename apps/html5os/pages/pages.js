@@ -119,7 +119,7 @@
                     } else {
                         sectionListView = page.getSectionsView();
                         listenToSection();
-                        self.$el.find('.container.marketing').prepend(sectionListView.render().$el);
+                        self.$el.find('.marketing').prepend(sectionListView.render().$el);
                     }
                     
                     var routerStartPath = $('base[href]').attr('href') || "/pages/";
@@ -128,6 +128,12 @@
                     $('.navbar').scrollspy();
                     $('[data-spy="scroll"]').each(function () {
                         var $spy = $(this).scrollspy('refresh');
+                    });
+                    $('.navbar').on('activate.bs.scrollspy', function (e) {
+                        if(e.target) {
+                            var etid = e.target.dataset.id;
+                            self.router.navigate(etid, {replace: true, trigger: false});
+                        }
                     });
                     
                     if(callback) {
@@ -168,7 +174,7 @@
             }
             this.nav.list.on('selectedSub', function(nav, sub){
                 var options = {};
-                if($(window).width()>700) options.offset = -100;
+                options.offset = -100; //if($(window).width()>700) 
                 var elStr = 'h3#'+sub.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
                 $.scrollTo($(elStr),1300,options);
                 if(nav.model.has("navigate")) {
@@ -214,7 +220,7 @@
                 }
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
-                if($(document).scrollTop()>500) {
+                if($(document).scrollTop()>200) {
                     $.scrollTo($('#home'),1300);
                 }
             });
@@ -242,8 +248,10 @@
                     router.trigger('loadingComplete');
                 });
                 self.nav.selectByNavigate(sectionId);
+                var options = {};
+                options.offset = -100;
                 setTimeout(function(){
-                    $.scrollTo($('#'+sectionId),1300)
+                    $.scrollTo($('#'+sectionId),1300, options);
                 },100);
             });
             router.route('new', 'new', function(){

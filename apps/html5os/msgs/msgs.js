@@ -1170,22 +1170,32 @@
                 msgPlaceholder: "Your message",
                 subjectPlaceholder: "Subject of your message",
                 msgLabel: "",
-                subjectLabel: ""
+                subjectLabel: "",
+                msgRows: "4"
             }
             if(this.options.ui) {
                 for(var i in this.options.ui) {
                     msgs[i] = this.options.ui[i];
                 }
             }
-            this.$inputTxt = $('<textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"></textarea>');
-            this.$inputSub = $('<input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off" />');
+            var classFormControl = ' class="form-control"';
+            if(msgs.controlClass) {
+                classFormControl = ' class="'+msgs.controlClass+'"';
+            }
+            
+            var classFormSubmit = ' class="btn btn-lg btn-primary btn-block"';
+            if(msgs.submitClass) {
+                classFormControl = ' class="'+msgs.submitClass+'"';
+            }
+            this.$inputSub = $('<input type="text" name="sub" placeholder="'+msgs.subjectPlaceholder+'" autocomplete="off"'+classFormControl+' />');
+            this.$inputTxt = $('<textarea name="txt" placeholder="'+msgs.msgPlaceholder+'" autocomplete="off"'+classFormControl+' rows="'+msgs.msgRows+'"></textarea>');
             this.$form = $('<form class="msg"><span class="to"></span><span class="from"></span><fieldset></fieldset><div class="controls"></div></form>');
             
-            this.$form.find('fieldset').append('<label>'+msgs.subjectLabel+'</label>');
-            this.$form.find('fieldset').append(this.$inputSub);
-            this.$form.find('fieldset').append('<label>'+msgs.msgLabel+'</label>');
-            this.$form.find('fieldset').append(this.$inputTxt);
-            this.$form.find('.controls').append('<input type="submit" value="'+msgs.sendPlaceholder+'" />');
+            this.$form.find('fieldset').append('<div class="subjectInputs form-group"><label>'+msgs.subjectLabel+'</label></div>');
+            this.$form.find('fieldset .subjectInputs').append(this.$inputSub);
+            this.$form.find('fieldset').append('<div class="txtInputs form-group"><label>'+msgs.msgLabel+'</label></div>');
+            this.$form.find('fieldset .txtInputs').append(this.$inputTxt);
+            this.$form.find('.controls').append('<input type="submit" value="'+msgs.sendPlaceholder+'"'+classFormSubmit+'/>');
         },
         render: function() {
             var self = this;

@@ -59,8 +59,12 @@
                     silent: true
                 }).done(function(s, typeStr, respStr) {
                     self.renderAll();
-                    account.loadUser();
-                    account.render();
+                    profileView.loadUser();
+                    profileView.render();
+                    
+                    // render nav
+                    account.view.nav.list.render();
+                    
                     self.trigger("login", model);
                 }).fail(function(s, typeStr, respStr) {
                     if (s.status === 403) {
@@ -125,7 +129,8 @@
             }
             if(this.isUser()) {
                 this.getView().getUserModel(function(user){
-                    var $e = user.getWelcomeView().render().$el;
+                    console.log(options)
+                    var $e = user.getWelcomeView(options).render().$el;
                     $e.show();
                     $el.html($e);
                 });
@@ -163,33 +168,34 @@
     auth.collection = new auth.Collection;
     auth.ConnectForm = Backbone.View.extend({
         tagName: "div",
-        className: "connections",
+        className: "connections container text-center",
         initialize: function() {
             var self = this;
             this.ui = {
-                connectLabel: "or connect with: "
+                connectLabel: "or connect with: ",
+                emailLabel: "Email"
             }
             for(var i in this.options.ui) {
                 this.ui[i] = this.options.ui[i];
             }
         },
         render: function() {
-            var loginWelcomMsg = '';
-            
-            if(this.options.welcomeMsg) {
-                loginWelcomMsg = this.options.welcomeMsg;
-            }
-            
-            this.$el.html(loginWelcomMsg);
-            this.$el.append(this.$form);
-            this.$el.append('<span class="connectLabel">'+this.ui.connectLabel+'</span><span class="connect"><button class="connectTwitter zocial twitter">Twitter</button><button class="connectFacebook zocial facebook">Facebook</button><button class="connectGoogle zocial googleplus">Google</button></span>');
+            this.$el.append('<button class="connectEmail zocial email">'+this.ui.emailLabel+'</button>\n\
+    <button class="connectTwitter zocial twitter">Twitter</button>\n\
+    <button class="connectFacebook zocial facebook">Facebook</button>\n\
+    <button class="connectGoogle zocial googleplus">Google</button>');
             this.setElement(this.$el);
             return this;
         },
         events: {
+            "click .connectEmail": "email",
             "click .connectTwitter": "twitter",
             "click .connectFacebook": "facebook",
             "click .connectGoogle": "google"
+        },
+        email:  function() {
+            this.trigger("email");
+            return false;
         },
         twitter: function() {
             window.location = this.model.url() + '/twitter';
@@ -206,53 +212,122 @@
     });
     auth.LoginForm = Backbone.View.extend({
         tagName: "div",
-        className: "authentication",
-        render: function() {
-            var loginWelcomMsg = '';
-            
-            if(this.options.welcomeMsg) {
-                loginWelcomMsg = this.options.welcomeMsg;
-            }
-            
-            this.$el.html(loginWelcomMsg);
-            this.$el.append(this.$form);
-            //this.$el.append('or Connect <span class="connect"><button class="connectTwitter">Twitter</button><button class="connectFacebook">Facebook</button></span>');
-            this.$el.append(this.connectionView.render().$el);
-            this.setElement(this.$el);
-            return this;
-        },
         initialize: function() {
             var self = this;
+            //self.state = 'reset';
             this.ui = {
                 emailLabel: "Email",
-                connectLabel: "or connect ",
-                footerLabel: "",
-                welcomeLabel: ""
+                connectLabel: "",
+                footerLabel: "* we'll never spam you or your friends",
+                joinTitle: "Welcome",
+                joinMsg: "Become a member:"
+            }
+            this.klasses = {
+                "dialog": "dialog",
+                "title": "title",
+                "header": "header",
+                "content": "content",
+                "body": "body",
+                "footer": "footer"
+            }
+            if(this.options.modal) {
+                this.klasses = {
+                    "dialog": "modal-dialog",
+                    "title": "modal-title",
+                    "header": "modal-header",
+                    "content": "modal-content",
+                    "body": "modal-body",
+                    "footer": "modal-footer"
+                }
             }
             for(var i in this.options.ui) {
                 this.ui[i] = this.options.ui[i];
             }
-            this.$form = $('<form id="houseAuth"><span class="welcomeLabel">'+this.ui.welcomeLabel+'</span><button class="connectEmail zocial email">'+this.ui.emailLabel+'</button><input style="display:none;" name="email" type="email" placeholder="my@email.com" value="" required autocomplete="off" /><input style="display:none;" type="password" name="pass" placeholder="Secret password" /><input style="display:none;" type="submit" name="Join" value="Join" /><span class="msg"></span><span class="footerLabel">'+this.ui.footerLabel+'</span></form>');
+            for(var i in this.options.klasses) {
+                this.klasses[i] = this.options.klasses[i];
+            }
+            this.$joinMsg = $('<span class="welcomeLabel"></span>');
+            this.$form = $('<form id="houseAuth" class="form-signin">\n\
+    <div class="msg alert alert-danger" style="display:none;"></div>\n\
+    <input class="form-control" style="display:none;" name="email" type="email" placeholder="my@email.com" value="" required autocomplete="off" tabindex=1 />\n\
+    <input class="form-control" style="display:none;" type="password" name="pass" placeholder="Secret password" tabindex=2 />\n\
+    <input class="btn btn-lg btn-primary btn-block" style="display:none;" type="submit" name="Sign in" value="Sign in" tabindex=3 />\n\
+</form>');
             this.$submit = this.$form.find('input[type="submit"]');
             this.$pass = this.$form.find('input[name="pass"]');
-            this.model.on("badPass", function(msg) {
+            this.onbadpass = this.model.on("badPass", function(msg) {
+                self.hideLoading();
                 if(self.model.has('pass') && self.model.get('pass')) {
                     self.model.set({
                         pass: ""
                     }, {
                         silent: true
                     });
-                    self.render();
-                    self.$el.find('input[name="pass"]').focus();
-                    self.$el.find(".msg").html('Bad login. <a class="resetPass" href="/">reset</a>');
-                } else {
-                    self.$pass.show();
+                    //self.state = 'badPass';
+                    //self.render();
+                    self.$pass.val('');
                     self.$pass.focus();
+                    self.$form.find(".msg").html('Bad login. <a class="resetPass" href="/">reset</a>');
+                    self.$form.find(".msg").show();
+                } else {
+                    console.log('no pass')
+                    self.$form.find(".msg").hide();
                     self.$submit.show();
+                    self.$pass.show().focus();
                 }
             });
             
             this.connectionView = new auth.ConnectForm({model: this.model, ui: {connectLabel: this.ui.connectLabel}});
+            this.connectionView.on('email', function(){
+                self.connectEmail();
+            });
+            this.model.on('change', function(){
+                self.showLoading();
+            })
+        },
+        render: function() {
+            this.$el.addClass(this.klasses.dialog);
+            var closeBtn = '';
+            if(this.options.modal) {
+                closeBtn = '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>';
+            }
+            this.$el.html('<div class="'+this.klasses.content+'">\n\
+  <div class="'+this.klasses.header+'">'+closeBtn+'\n\
+    <h4 class="'+this.klasses.title+'">'+this.ui.joinTitle+'</h4>\n\
+  </div>\n\
+  <div class="'+this.klasses.body+'">\n\
+  </div>\n\
+  <div class="'+this.klasses.footer+' text-muted">\n\
+    <div class="progress progress-striped active" style="display:none;">\n\
+      <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">\n\
+        <span class="sr-only">Loading</span>\n\
+      </div>\n\
+    </div>\n\
+  </div>\n\
+</div>');
+            this.$el.find('.'+this.klasses.footer).append(this.ui.footerLabel);
+            this.$joinMsg.html(this.ui.joinMsg);
+            this.$el.find('.'+this.klasses.body).append(this.$joinMsg);
+            this.$el.find('.'+this.klasses.body).append(this.$form);
+            //this.$el.append('or Connect <span class="connect"><button class="connectTwitter">Twitter</button><button class="connectFacebook">Facebook</button></span>');
+            this.$el.find('.'+this.klasses.body).append(this.connectionView.render().$el);
+            console.log(3333)
+            this.setElement(this.$el);
+            return this;
+        },
+        hideLoading: function() {
+            this.$el.find('.progress').hide();
+            this.$submit.removeAttr('disabled');
+            if(this.prevSubmitVal) {
+                this.$submit.val(this.prevSubmitVal);
+            }
+        },
+        showLoading: function() {
+            this.$el.find(".msg").hide();
+            this.$el.find('.progress').show();
+            this.$submit.attr('disabled', 'disabled');
+            this.prevSubmitVal = this.$submit.val();
+            this.$submit.val('Loading...');
         },
         events: {
             "submit form": "submit",
@@ -262,14 +337,20 @@
             "click .connectEmail": "connectEmail"
         },
         connectEmail: function() {
-            this.$el.find('.connectEmail').hide();
+            //this.$el.find('.connectEmail').hide();
+            this.$form.show().siblings().hide();
             this.$el.find('input[name="email"]').show();
             this.$el.find('input[name="email"]').focus();
             return false;
         },
+        resetForm: function() {
+            this.$form.hide().siblings().show();
+        },
         keyupsubmit: function(e) {
             if(e.keyCode == 13) {
                 this.submit(e);
+            } else if(e.keyCode == 27) {
+                this.resetForm();
             }
             return false;
         },
@@ -291,12 +372,12 @@
                 return false;
             }
             if(email.indexOf('@') === -1) {
-                alert('valid email required');
+                this.$el.find(".msg").html('valid email required').show();;
                 return false;
             }
             var pass = this.$el.find('input[name="pass"]').val();
             if (false && pass.length < 6) {
-                alert("longer password required");
+                this.$el.find(".msg").html("longer password required").show();;
             } else if (email.length < 4) {
                 //alert("please enter an email address");
             } else {
@@ -314,7 +395,7 @@
                 this.model.set({
                     resetPass: true
                 });
-                alert("Please check your email for a message from us with steps to reset your password.");
+                this.$el.find(".msg").html("Please check your email for a message from us with steps to reset your password.");
             }
             return false;
         },
@@ -322,12 +403,13 @@
             this.$el.find("input").first().focus();
         },
         remove: function() {
+            this.model.off("badPass");
             this.$el.remove();
         }
     });
     auth.View = Backbone.View.extend({
-        tagName: "span",
-        className: "authView",
+        //tagName: "span",
+        //className: "authView",
         initialize: function() {
             var self = this;
             this.ui = {
@@ -353,13 +435,15 @@
             
             require(['/account/nav.js'], function(nav){
                 self.nav = nav;
-                nav.init();
-                nav.list.showMenu();
+                nav.init({el: $('header.navbar')});
+                //nav.list.showMenu();
                 nav.list.on('selected', function(navRow){
-                    self.hideMenu();
+                    //self.hideMenu();
                 });
                 self.trigger('navInit', self.nav);
             });
+            this.$guestMenu = $('<li class="login"><a href="/join">Sign in</a></li><li class="feedback"><a href="/feedback">Feedback</a></li>');
+            this.$userMenu = $('<li class="current-user"><a href="/me" class="profile"></a></li><li class="feedback"><a href="/feedback">Feedback</a></li><li class="logout"><a href="/leave">Sign out</a></li>');
         },
         onNavInit: function(callback) {
             var self = this;
@@ -372,29 +456,23 @@
             }
         },
         render: function(recursive) {
+            console.log(this.$el)
             var self = this;
             var name = this.model.get('name');
-            var loginbtn;
-            if (this.model.get('user')) {
-                loginbtn = '<li><span class="avatar" title="'+name+'"></span></li><li class="appNav"></li><li class="feedback">Feedback</li><li class="logout">Sign out</li>';
-            } else {
-                loginbtn = '<li class="login">Sign in</li><li class="appNav"></li><li class="feedback">Feedback</li>';
-            }
             
+            //this.$el.html('<button>'+accountMenuStr+'</button><menu class="mainMenu">'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
             var accountMenuStr = this.ui.accountMenuLabel;
             
-            this.$el.html('<button>'+accountMenuStr+'</button><menu class="mainMenu">'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
-            
-            if(!self.nav) {
-                self.on('navInit', function(){
-                    self.$el.find('.appNav').append(self.nav.list.render().$el);
-                });
+            if (this.model.get('user')) {
+                this.$el.prepend(this.$userMenu);
+                this.$guestMenu.remove();
             } else {
-                this.$el.find('.appNav').append(self.nav.list.render().$el);
+                this.$el.prepend(this.$guestMenu);
+                this.$userMenu.remove();
             }
             
             if (this.userModel) {
-                this.$el.find(".avatar").append(this.userModel.getAvatarView().render().el);
+                this.$el.find(".profile").append(this.userModel.getAvatarView().render().el);
             } else if (this.model.has("user")) {
                 if(!recursive) {
                     this.getUserModel(function(){
@@ -436,7 +514,7 @@
         events: {
             "click .logout": "logout",
             "click .login": "login",
-            "click .avatar": "goToProfile",
+            "click .profile": "goToProfile",
             "click .feedback": "feedback",
             "click menu.mainMenu": "clickMenu",
             "click button": "toggleMenu"
@@ -462,40 +540,44 @@
         hideMenu: function() {
             this.$el.find('menu').css('visibility', 'hidden');
         },
-        goToProfile: function() {
+        goToProfile: function(e) {
             this.trigger("goToProfile", this.model.get("name"));
+            e.preventDefault();
         },
-        feedback: function() {
+        feedback: function(e) {
             var self = this;
             require(['/msgs/msgs.js'], function(MsgsBackbone){
                 if(MsgsBackbone) {
                     var msgOpts = {
-                        sendPlaceholder: "SEND",
-                        msgPlaceholder: "Your feedback details and contact info",
+                        formTitle: "Contact Us",
+                        sendPlaceholder: "Send Message",
+                        msgPlaceholder: "Your message and info.",
                         subjectPlaceholder: "Subject of your feedback",
-                        msgLabel: "Leave any details that will help us understand your feedback, and a way to reach you if you'd like us to follow up.",
-                        subjectLabel: "Please tell us how we can get better: "
+                        msgLabel: "Leave your contant info, and we'll get back to you as soon as possible.",
+                        subjectLabel: "How can we help you?"
                     };
                     self.feedbackForm = new window.MsgsBackbone.Form({
                         collection: window.msgsCollection,
                         ui: msgOpts
                     });
-                    var lightbox = utils.appendLightBox(self.feedbackForm.render().$el);
+                    var lightbox = utils.appendLightBox(self.feedbackForm.render().$el, msgOpts.formTitle);
                     self.feedbackForm.focus();
                     self.feedbackForm.on("saved", function(doc) {
                         self.feedbackForm.clear();
-                        lightbox.remove();
                         alert('Thank you for your feedback!');
+                        lightbox.remove();
                     });
                 } else {
                 }
             });
+            e.preventDefault();
         },
-        login: function() {
+        login: function(e) {
             var self = this;
-            account.router.navigate('join', true);
+            profileView.router.navigate('join', {trigger: true});
+            e.preventDefault();
         },
-        logout: function() {
+        logout: function(e) {
             if (confirm("Are you sure that you want to log off?")) {
                 this.model.destroy();
                 function deleteAllCookies() {
@@ -512,6 +594,7 @@
                     window.location.reload();
                 }, 500);
             }
+            e.preventDefault();
         },
         remove: function() {
             this.$el.remove();
@@ -1024,18 +1107,13 @@
     var ProfileView = Backbone.View.extend({
         tag: "span",
         className: "profile",
-        render: function() {
-            var self = this;
-            this.$el.append(this.$profile);
-            return this;
-        },
         initialize: function() {
             var self = this;
-            this.$profile = $('<profile></profile>');
             self.authFormOptions = {
                 ui: {
                     welcomeLabel: "Join now!"
-                }
+                },
+                modal: true
             }
             var loadUsers = function() {
                 require(['/users/backbone-users.js'], function(UsersBackbone){
@@ -1043,7 +1121,8 @@
                     window.usersCollection = new UsersBackbone.Collection();
                     if(navigator.userAgent.indexOf('HouseJs HTML Cacher') !== -1) {
                         window.account = self.loginStatus = new auth.Model();
-                        self.$profile.append(self.loginStatus.getView().render().$el);
+                        //self.$profile.append(self.loginStatus.getView().render().$el);
+                        self.loginStatus.getView({el: $('#accountMenu')}).render();
                         self.trigger('init');
                     } else {
                         auth.get(function(err, loginStatus) {
@@ -1051,14 +1130,16 @@
                                 alert(err);
                             } else if (loginStatus) {
                                 window.account = self.loginStatus = loginStatus;
-                                loginStatus.getView().on("goToProfile", function(username) {
-                                    self.router.navigate('user/'+username, true);
-                                });
-                                loginStatus.on("login", function() {
+                                loginStatus.getView({el: $('#accountMenu')})
+                                .on("goToProfile", function(username) {
+                                    self.router.navigate('user/'+username, {trigger: true});
+                                })
+                                .on("login", function() {
                                     loginStatus.getView().render();
                                     self.trigger('loggedIn', loginStatus);
-                                });
-                                self.$profile.append(loginStatus.getView().render().$el);
+                                })
+                                .render();
+                                
                                 if (loginStatus && loginStatus.has("user")) {} else {}
                                 self.trigger('init');
                             }
@@ -1076,6 +1157,11 @@
                 };
                 loadUsers();
             });
+        },
+        render: function() {
+            var self = this;
+            //this.$el.append(this.$profile);
+            return this;
         },
         updateUi: function(ui) {
             var self = this;
@@ -1107,53 +1193,57 @@
         },
         navToUser: function(user) {
             var self = this;
-            var $e = user.getUserView({profile: this});
+            var userView = user.getUserView({profile: this});
             
-            $e = $e.render().$el;
-            $e.show();
-            this.userLightbox = utils.appendLightBox($e);
+            var $el = userView.render().$el;
+            $el.show();
+            this.userModal = utils.appendLightBox($el);
             
-            this.userLightbox.on('close', function(){
-                window.history.back();
-            });
+            this.userModal.$el.on('hide.bs.modal', function () {
+                userView.remove();
+                self.userModal.remove();
+                self.router.back();
+            })
         },
         navToMe: function() {
             var user = this.loginStatus.getView().userModel;
             this.navToUser(user);
         },
         join: function() {
-            self.router.navigate('join', true);
+            self.router.navigate('join', {trigger: true});
+        },
+        navigateToJoin: function(path) {
+            var self = this;
+            if(!path) {
+                path = '';
+            }
+            if(self.loginStatus.has('user')) {
+                self.router.navigate(path, {trigger: true});
+                return;
+            }
+            if($('#joinModal').length === 0) {
+                self.$join = $('<div id="joinModal" class="modal"></div>');
+                $('body').append(self.$join);
+                auth.prompt(self.$join, self.authFormOptions).authorized(function() {
+                    self.$join.modal('hide');
+                });
+                self.$join.on('hide.bs.modal', function () {
+                    auth.authView.remove();
+                    self.$join.remove();
+                    self.router.back();
+                })
+                self.$join.modal();
+            }
         },
         bindRouter: function(router) {
             var self = this;
             self.router = router;
             router.route("join", "join", function() {
-                if(self.loginStatus.has('user')) {
-                    self.router.navigate('', true);
-                    return;
-                }
-                self.router.navigate('join');
-                self.loginLightbox = new utils.LightboxView().render();
-                self.loginLightbox.on('close', function(){
-                    window.history.back();
-                });
-                auth.prompt(self.loginLightbox.$container, self.authFormOptions).authorized(function() {
-                    self.loginLightbox.trigger('close');
-                });
+                self.navigateToJoin();
+                //self.router.navigate('join/', {trigger: true});
             });
             router.route("join/*path", "joinPath", function(path) {
-                if(self.loginStatus.has('user')) {
-                    self.router.navigate(path, true);
-                    return;
-                }
-                //self.router.navigate('join');
-                self.loginLightbox = new utils.LightboxView().render();
-                self.loginLightbox.on('close', function(){
-                    window.history.back();
-                });
-                auth.prompt(self.loginLightbox.$container, self.authFormOptions).authorized(function() {
-                    self.loginLightbox.trigger('close');
-                });
+                self.navigateToJoin(path);
             });
             router.route("me", "profile", function() {
                 self.router.navigate('me/', {trigger: true, replace: true});
@@ -1171,23 +1261,28 @@
                 });
             });
             router.on('reset', function() {
-                if(self.userLightbox) {
-                    self.userLightbox.remove();
+                if(self.$join) {
+                    auth.authView.remove();
+                    self.$join.remove();
+                    $('body>.modal-backdrop').remove();
+                    delete self.$join;
                 }
+                $('body').removeClass('modal-open');
+                /*
                 if(account && account.loginStatus) {
                     var accountLoginStatusView = account.loginStatus.getView();
                     if(accountLoginStatusView) {
                         accountLoginStatusView.hideMenu();
                     }
-                }
+                }*/
             });
         }
     });
     
-    var account = new ProfileView;
+    var profileView = new ProfileView;
     if (define) {
         define(function() {
-            return account;
+            return profileView;
         });
     }
 })();

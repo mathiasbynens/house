@@ -2,43 +2,71 @@
     
     var utils = {};
     
-    utils.appendLightBox = function(el) {
-        var lightBox = new this.LightboxView({container: el});
+    utils.appendLightBox = function(el, title, footer) {
+        var opts = {
+            container: el
+        }
+        if(title) {
+            opts.title = title;
+        }
+        if(footer) {
+            opts.footer = footer;
+        }
+        var lightBox = new this.LightboxView(opts);
         lightBox.render();
         return lightBox;
     }
     
     utils.LightboxView = Backbone.View.extend({
         tagName: "div",
-        className: "lightbox",
+        className: "modal",
+        initialize: function(options) {
+            var self = this;
+            this.$modalDialog = $('<div class="modal-dialog">\n\
+                                        <div class="modal-content">\n\
+                                          <div class="modal-header">\n\
+                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>\n\
+                                            <h4 class="modal-title" id="loginModalLabel"></h4>\n\
+                                          </div>\n\
+                                          <div class="modal-body">\n\
+                                          </div>\n\
+                                          <div class="modal-footer text-muted">\n\
+                                          </div>\n\
+                                        </div>\n\
+                                    </div>');
+            this.$el.append(this.$modalDialog);
+            $('body').append(this.$el);
+            this.$el.on('hide.bs.modal', function () {
+                //window.history.back();
+                //auth.authView.remove();
+                //self.remove();
+                self.$el.remove();
+            });
+            
+            if(options && options.title) {
+                this.$modalDialog.find('.modal-title').html(options.title);
+            }
+            if(options && options.container) {
+                this.$modalDialog.find('.modal-body').append(options.container);
+            }
+            if(options && options.footer) {
+                this.$modalDialog.find('.modal-footer').append(options.footer);
+            }
+            var modalOpts = {};
+            modalOpts.backdrop = 'static';
+            this.$el.modal(modalOpts);
+        },
         render: function() {
-            this.$el.append(this.$container).append(this.$close)
+            //this.$el.append(this.$modal);
             $('body').append(this.$el);
             this.setElement(this.$el);
             return this;
         },
-        initialize: function(options) {
-            var self = this;
-            this.$container = $('<div></div>');
-            if(options && options.container) {
-                this.$container.append(options.container);
-            }
-            this.$close = $('<p class="close"><a href="#" title="close"></a></p>');
-            this.on('close', function(){
-                self.remove();
-            });
-        },
         events: {
-          "click .close": "close",
-          "touchstart input": "touchstartstopprop"
         },
-        touchstartstopprop: function(e) {
-            e.stopPropagation();
-        },
-        close: function() {
-            var self = this;
-            this.trigger('close');
-            return false;
+        remove: function(){
+            this.$el.modal('hide');
+            //this.$el.remove();
         }
     });
 

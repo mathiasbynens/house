@@ -32,6 +32,7 @@
             return this.fullView;
         },
         getWelcomeView: function(options) {
+            console.log(options)
             options = options || {};
             options.model = this;
             if (!this.welcomeView) {
@@ -857,10 +858,23 @@
                 account.isAdmin(function(isAdmin){
                     var isa = (isAdmin || account.isOwner(self.model.id));
                     if(isa) {
-                        self.$el.find('h1').append(' <a class="editDisplayName" title="Edit display name" href="#">edit real name</a>');
-                        self.$el.find('h2').append(' <a class="editName" title="Edit user name" href="#">edit user name</a>');
-                        self.$el.find('h2').append(' <a class="editPass" title="Edit user password" href="#">change password</a>');
-                        self.$el.find('.avatar').append(' <a class="editAvatar" title="Upload avatar" href="#">upload avatar</a>');
+                        self.$el.find('h1').html('<a class="editDisplayName" title="Edit display name" href="#">'+self.$el.find('h1').html()+'</a>');
+                        self.$el.find('h2').html('<a class="editName" title="Edit user name" href="#">'+self.$el.find('h2').html()+'</a>');
+                        
+                        var $setPass = $('<div class="inputPass">\n\
+                            <a href="/" class="showPassForm zocial guest">Set Password</a>\n\
+                            <form style="display: none">\n\
+                                <span class="passwordOnce form-group">\n\
+                                    <label>Password: </label>\n\
+                                    <input class="form-control" type="password" name="pass" tabindex=1 />\n\
+                                </span>\n\
+                                <span class="passwordAgain form-group" style="display: none">\n\
+                                    <label>Your password again: </label>\n\
+                                    <input type="password" name="pass_again" class="form-control" tabindex=2 />\n\
+                                </span>\n\
+                            </form></div>');
+                        
+                        self.$el.find('.avatar').append('<br /><a class="editAvatar" title="Upload avatar" href="#">upload avatar</a><br />');
                         
                         self.$el.append('<span class="groups"></span>');
                         if(self.model.has('groups')) {
@@ -884,7 +898,7 @@
                         var src = self.model.get("url") || 'http://yourwebsite.com/';
                         self.$el.append(' <span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
                         if(isa) {
-                            self.$el.find('.url').append(' <a class="editUrl" title="Edit web address" href="#">edit URL</a>');
+                            self.$el.find('.url').append(' <a class="editUrl" title="Edit web address" href="#">edit</a>');
                         }
                     }
                     
@@ -911,6 +925,10 @@
                     if(isa) {
                         $msg.append(' <a class="editEmail" title="Edit email address" href="#">edit email</a>');
                     }
+                    
+                    self.$el.append('<a class="editPass" title="Edit user password" href="#">change password</a><br />');
+                    
+                    
                     self.$el.append($byline);
                     
                     var $loc = $('<div class="location"></div>');
@@ -1169,42 +1187,94 @@
     var WelcomeView = Backbone.View.extend({
         tagName: "div",
         className: "welcomeUser",
-        initialize: function(options) {
+        initialize: function() {
             var self = this;
-            if(options.list) {
-                this.list = options.list;
+            console.log(this.options)
+            if(this.options.list) {
+                this.list = this.options.list;
             }
             this.ui = {
-                regInfoLabel: 'Complete your profile: ',
+                regInfoLabel: 'Complete your profile',
                 passwordLabel: 'Set a password',
                 emailLabel: 'Email Address',
-                defaultAvatar: '☺'
+                defaultAvatar: 'Upload a photo'
             }
-            for(var i in options.ui) {
-                this.ui[i] = options.ui[i];
+            this.klasses = {
+                "dialog": "dialog",
+                "title": "title",
+                "header": "header",
+                "content": "content",
+                "body": "body",
+                "footer": "footer"
+            }
+            if(this.options.modal) {
+                this.klasses = {
+                    "dialog": "modal-dialog",
+                    "title": "modal-title",
+                    "header": "modal-header",
+                    "content": "modal-content",
+                    "body": "modal-body",
+                    "footer": "modal-footer"
+                }
+            }
+            for(var i in this.options.ui) {
+                this.ui[i] = this.options.ui[i];
+            }
+            for(var i in this.options.klasses) {
+                this.klasses[i] = this.options.klasses[i];
             }
             this.model.bind('change', this.render, this);
         },
         render: function() {
             var self = this;
-            this.$el.html('');
+            //this.$el.addClass(this.klasses.dialog);
+            var closeBtn = '';
+                console.log(this.options)
+            if(this.options.modal) {
+                closeBtn = '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>';
+            }
+            this.$el.html('<div class="'+this.klasses.dialog+'">\n\
+    <div class="'+this.klasses.content+'">\n\
+      <div class="'+this.klasses.header+'">'+closeBtn+'\n\
+        <h4 class="'+this.klasses.title+'" id="loginModalLabel"></h4>\n\
+      </div>\n\
+      <div class="'+this.klasses.body+'">\n\
+      </div>\n\
+      <div class="'+this.klasses.footer+' text-muted">\n\
+      </div>\n\
+    </div>\n\
+</div>');
+            this.$body = this.$el.find('.'+this.klasses.body);
             var $byline = $('<span></span>');
             var displayName = this.model.get('displayName') || '';
             this.$el.append('<span class="avatar"></span>');
             if(window.account) {
                 account.isAdmin(function(isAdmin){
                     if(isAdmin || account.isOwner(self.model.id)) {
-                        self.$el.append('<input title="Edit your display name" class="editDisplayName" type="text" name="displayName" placeholder="Your name" value="'+displayName+'"/>');
+                        self.$body.append('<input class="form-control" title="Edit your display name" class="editDisplayName" type="text" name="displayName" placeholder="Your name" value="'+displayName+'"/>');
                         
-                        self.$el.append(self.ui.regInfoLabel);
+                        self.$body.append('<span class="regInfoLabel">'+self.ui.regInfoLabel+'</span>');
                         
                         if(!self.model.has('email')) {
-                            var $inputEmail = $('<span class="inputEmail"><button class="connectEmail zocial email">'+self.ui.emailLabel+'</button><input style="display:none;" class="editEmail" type="email" name="email" placeholder="your@email.com" /></span>');
-                            self.$el.append($inputEmail);
+                            var $inputEmail = $('<span class="inputEmail"><button class="connectEmail zocial email">'+self.ui.emailLabel+'</button>\n\
+    <input style="display:none;" class="editEmail form-control" type="email" name="email" placeholder="your@email.com" required />\n\
+</span>');
+                            self.$body.append($inputEmail);
                         }
                         if(self.model.has('pass')) {
-                            var $setPass = $('<span class="inputPass"><a href="/" class="showPassForm zocial guest">'+self.ui.passwordLabel+'</a><form style="display: none"><span class="passwordOnce" style=""><label>Password: </label><input type="password" name="pass" /></span> <span class="passwordAgain" style="display: none"><label>Again: </label><input type="password" name="pass_again" /></span></form></span>');
-                            self.$el.append($setPass);
+                            var $setPass = $('<div class="inputPass">\n\
+                                <a href="/" class="showPassForm zocial guest">'+self.ui.passwordLabel+'</a>\n\
+                                <form style="display: none">\n\
+                                    <span class="passwordOnce form-group">\n\
+                                        <label>Password: </label>\n\
+                                        <input class="form-control" type="password" name="pass" tabindex=1 />\n\
+                                    </span>\n\
+                                    <span class="passwordAgain form-group" style="display: none">\n\
+                                        <label>Your password again: </label>\n\
+                                        <input type="password" name="pass_again" class="form-control" tabindex=2 />\n\
+                                    </span>\n\
+                                </form></div>');
+                            self.$body.append($setPass);
                         }
                     }
                     
@@ -1219,9 +1289,9 @@
                         } else {
                             src = "/api/files/" + src;
                         }
-                        self.$el.find('.avatar').append('<img class="editAvatar" src="' + src + '" />');
+                        self.$body.find('.avatar').append('<img class="editAvatar" src="' + src + '" />');
                     } else if(isAdmin || account.isOwner(self.model.id)) {
-                        self.$el.find('.avatar').append('<button class="editAvatar" title="Upload your avatar">'+self.ui.defaultAvatar+'</button>');
+                        self.$body.find('.avatar').append('<button class="editAvatar" title="Upload your avatar">'+self.ui.defaultAvatar+'</button>');
                     }
                 });
             }
@@ -1238,10 +1308,12 @@
         events: {
             "keyup .editDisplayName": "submit",
             "click .showPassForm": "showPassForm",
-            'blur input[name="pass"]': "showPassAgain",
+            'blur input[name="pass"]': "showPassAgainBlur",
             'keyup input[name="pass"]': "showPassAgainKeyup",
             'keyup input[name="pass_again"]': "changePassword",
+            'blur input[name="pass_again"]': "changePassword",
             "blur .editDisplayName": "editDisplayName",
+            "keyup .editEmail": "editEmailKeyup",
             "blur .editEmail": "editEmail",
             "click .editAvatar": "editAvatar",
             "click .connectEmail": "connectEmail"
@@ -1257,18 +1329,36 @@
             }
             return false;
         },
-        showPassAgainKeyup: function(e) {
-            if(e.keyCode == 13) {
+        showPassAgainBlur: function(e) {
+            if(this.$el.find('input[name="pass"]').val() == '') {
+                this.resetPassForm();
+            } else {
                 this.showPassAgain(e);
             }
+        },
+        showPassAgainKeyup: function(e) {
+            if(e.keyCode == 13) {
+                if(this.$el.find('input[name="pass"]').val() == '') {
+                    this.resetPassForm();
+                }
+                this.showPassAgain(e);
+            } else if(e.keyCode == 27) {
+                this.resetPassForm();
+            }
             return false;
+        },
+        resetPassForm: function() {
+            this.$el.find('.inputPass input').val('');
+            this.$el.find('.inputPass .showPassForm').show();
+            this.$el.find('.inputPass form').hide();
         },
         showPassForm: function(e) {
             var $e = $(e.target);
             $e.siblings().show();
             $e.hide();
-            this.$el.find('input[name="pass"]').focus();
+            this.$el.find('.passwordOnce').show();
             this.$el.find('.passwordAgain').hide();
+            this.$el.find('input[name="pass"]').focus();
             return false;
         },
         showPassAgain: function() {
@@ -1277,7 +1367,11 @@
             this.$el.find('.passwordAgain input').focus();
         },
         changePassword: function(e) {
-            if(e.keyCode == 13) {
+            if((this.$el.find('input[name="pass_again"]').val() == '' && e.keyCode == 13) || e.keyCode == 27) {
+                this.resetPassForm();
+                return false;
+            }
+            if(!e.keyCode || e.keyCode == 13) {
                 var self = this;
                 var newPass = this.$el.find('input[name="pass"]').val();
                 var newPassCheck = this.$el.find('input[name="pass_again"]').val();
@@ -1309,10 +1403,21 @@
                 }
             }
         },
+        resetEmailForm: function() {
+            
+        },
+        editEmailKeyup: function(e) {
+            if(e.keyCode == 27) {
+                this.resetEmailForm();
+                return false;
+            } else if(e.keyCode == 13) {
+                this.editEmail(e);
+            }
+        },
         editEmail: function(e) {
             var self = this;
             var txt = $(e.target).val();
-            if(txt && txt !== this.model.get('email')) {
+            if(txt && txt !== this.model.get('email') && txt !== '' && txt.length > 4 && txt.indexOf('@') !== -1) {
                 this.model.set({'email': txt}, {silent: true});
                 var saveModel = this.model.save(null, {
                     silent: false ,
@@ -1326,6 +1431,8 @@
                         alert('That email address is already in use.');
                     });
                 }
+            } else if(txt !== '') {
+                alert('Please use a valid email address.');
             }
             return false;
         },

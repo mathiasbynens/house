@@ -140,11 +140,13 @@
             var $e = this.$el.find('> a');
             if($e.length > 0) {
             } else {
-                $e = $('<a href="#'+href+'"></a>'); // hash for scrollspy
+                $e = $('<a href="#'+href+'" class="'+href+'"><span></span></a>'); // hash for scrollspy
+                var $elSpan = $('');
                 this.$el.html($e);
             }
             if (this.model.has("title")) {
-                $e.html(this.model.get("title"));
+                $e.find('span').html(this.model.get("title"))
+                    .attr('data-hover', this.model.get("title"));
             }
             if (this.model.has("el")) {
                 $e.html(this.model.get("el"));
@@ -155,7 +157,9 @@
             if (this.model.has("sub")) {
                 var sub = this.model.get("sub");
                 this.$el.addClass('dropdown');
-                $e.append(' <b class="caret"></b>');
+                if($e.find('.caret').length === 0) {
+                    $e.find('span').append(' <b class="caret"></b>');
+                }
                 $e.attr('data-toggle', 'dropdown');
                 $e.addClass('dropdown-toggle');
                 var $ul = this.$el.find('ul.dropdown-menu');

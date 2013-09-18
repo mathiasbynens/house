@@ -312,15 +312,15 @@
         },
         filterByTodoList: function(todoList, callback) {
             var self = this;
-            console.log(todoList)
-            console.log(self.todoList)
+            var filterO = this.getFilterDefault();
             if(!todoList) {
                 delete self.todoList;
-                this.filter(this.getFilterDefault());
+                this.filter(filterO);
                 return;
             }
+            filterO["list.id"] = todoList.id;
             self.todoList = todoList.clone();
-            this.filter({"list.id": todoList.id}, function(){
+            this.filter(filterO, function(){
                 if(callback) {
                     callback();
                 }
