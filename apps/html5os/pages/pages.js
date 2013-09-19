@@ -132,7 +132,7 @@
                     $('.navbar').on('activate.bs.scrollspy', function (e) {
                         if(e.target) {
                             var etid = e.target.dataset.id;
-                            self.router.navigate(etid, {replace: true, trigger: false});
+                            self.router.navigate(etid, {replace: false, trigger: false});
                         }
                     });
                     

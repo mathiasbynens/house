@@ -111,16 +111,19 @@
         events: {
             //"click .opener": "toggleMenu"
         },
+        collapseMenu: function() {
+            this.$el.collapse('hide');
+        },
         toggleMenu: function() {
             var v = this.$ul.css("visibility");
             if (v == "visible") {
-                this.hideMenu();
+                //this.hideMenu();
             } else {
-                this.$ul.css("visibility", "visible");
+                //this.$ul.css("visibility", "visible");
             }
         },
         hideMenu: function() {
-            this.$ul.css("visibility", "hidden");
+            //this.$ul.css("visibility", "hidden");
         },
         appendRow: function(row) {
             this.$ul.append(row.render().$el);
@@ -188,7 +191,7 @@
             e.stopPropagation();
         },
         userSelect: function() {
-            //this.options.list.hideMenu();
+            this.options.list.collapseMenu();
             this.select();
             if (this.model.has("navigate")) {
                 nav.router.navigate(this.model.get("navigate"), true);

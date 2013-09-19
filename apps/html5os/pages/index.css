@@ -9,12 +9,14 @@ footer {
     margin: 44px 0px 44px;
     clear: both;
 }
-.navbar-collapse {
-    float: right;
-}
-.dropdown-menu {
-    left: auto !important;
-    right: 0;
+@media (min-width: 768px) {
+    .navbar-collapse {
+        float: right;
+    }
+    .dropdown-menu {
+        left: auto !important;
+        right: 0;
+    }
 }
 
 .headroom {
@@ -294,112 +296,13 @@ ul.commands {
 .navbar-fixed-top {
     margin-top: 20px;
 }
+body {
+    padding-top: 0px;
+}
 /* RESPONSIVE CSS
 -------------------------------------------------- */
 
-@media (max-width: 979px) {
 
-  .container.navbar-wrapper {
-    margin-bottom: 0;
-    width: auto;
-  }
-  .navbar-collapse {
-    border-radius: 0;
-    margin: -20px 0;
-  }
-
-  .carousel .item {
-    height: 500px;
-  }
-  .carousel img {
-    width: auto;
-  }
-
-  .featurette {
-    height: auto;
-    padding: 0;
-  }
-  .pull-left,
-  .pull-right {
-    display: block;
-    float: none;
-    max-width: 40%;
-    margin: 0 auto 20px;
-  }
-  .navbar .brand {
-    margin: 0 0 0 0px;
-    font-size: 14px;
-    padding: 14px 0px 14px 50px;
-  }
-  .navbar .container {
-    margin-top: 16px;
-  }
-}
-
-@media (max-width: 767px) {
-
-  .navbar-collapse {
-    margin: -20px;
-  }
-
-  .carousel {
-    margin-left: -20px;
-    margin-right: -20px;
-  }
-  .carousel .container {
-
-  }
-  .carousel .item {
-    height: 300px;
-  }
-  .carousel img {
-    height: 300px;
-    max-width: 200%;
-  }
-  .carousel-caption {
-    width: 65%;
-    padding: 10px 70px 5px;
-    margin-bottom: 40px;
-  }
-  .carousel-caption h1 {
-    font-size: 24px;
-  }
-  .carousel-caption .lead,
-  .carousel-caption .btn {
-    font-size: 14px;
-  }
-
-  .marketing .span4 + .span4 {
-    margin-top: 40px;
-  }
-
-  .featurette-heading {
-    font-size: 30px;
-  }
-  .featurette .lead {
-    font-size: 18px;
-    line-height: 1.5;
-  }
-  
-  .navbar-fixed-top, .navbar-fixed-bottom, .navbar-static-top {
-  margin-right: 0px;
-  margin-left: 0px;
-  }
-
-}
-a, .btn-link {
-}
-a:hover, .btn-link:hover {
-}
-.carousel-caption a {
-}
-ol.lead {
-    margin: 0 40px;
-    
-}
-ol.lead li {
-    padding: 4px 0px;
-}
 .dropzone {
     position: absolute;
     top: 0;
@@ -722,13 +625,30 @@ form.page {
 .carousel-indicators li {
     transition: background 0.35s ease-out;
 }
-
+.carousel-inner > .item > img {
+    height: auto !important;
+}
+@media (max-width: 768px) {
+    .carousel .item {
+      height: 400px;
+    }
+    .carousel-inner > .item > img {
+      height: 100% !important;
+      width: auto !important;
+      max-width: none !important;
+    }
+    .carousel-caption h1 {
+        font-size: 26px;
+    }
+}
+@media (max-width: 768px) {
+}
 
 /* MARKETING CONTENT
 -------------------------------------------------- */
 
 /* Pad the edges of the mobile views a bit */
-.marketing {
+.marketing .featurette {
   padding-left: 15px;
   padding-right: 15px;
 }
@@ -744,6 +664,13 @@ form.page {
 .marketing .col-lg-4 p {
   margin-left: 10px;
   margin-right: 10px;
+}
+
+.sections img.pull-right {
+    margin-left: 6px;
+}
+.sections img.pull-left {
+    margin-right: 6px;
 }
 
 

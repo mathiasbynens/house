@@ -456,10 +456,9 @@
             }
         },
         render: function(recursive) {
-            console.log(this.$el)
             var self = this;
             var name = this.model.get('name');
-            
+            this.$el.html('');
             //this.$el.html('<button>'+accountMenuStr+'</button><menu class="mainMenu">'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
             var accountMenuStr = this.ui.accountMenuLabel;
             
