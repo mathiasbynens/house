@@ -2,6 +2,116 @@
     
     var utils = {};
     
+    utils.getNewModal = function(opts) {
+        return new this.ModalView(opts);
+    }
+    utils.getNewModalContent = function(opts) {
+        return new this.ModalContentView(opts);
+    }
+    
+    utils.ModalView = Backbone.View.extend({
+        agName: "div",
+        className: "modal",
+        initialize: function(options) {
+            var self = this;
+            this.$modalDialog = $('<div class="modal-dialog"></div>');
+            this.modalContent = this.getNewModalContent(options);
+            //this.$el.append(this.$modalDialog);
+            this.$el.on('hide.bs.modal', function () {
+                //window.history.back();
+                //auth.authView.remove();
+                //self.remove();
+                self.$el.remove();
+            });
+            if(options) {
+                if(options.closeBtn) {
+                    $modalHead.prepend(this.$closeBtn);
+                }
+                if(options.title) {
+                    this.$modalHead.find('.modal-title').html(options.title);
+                }
+                if(options.body) {
+                    this.$modalBody.append(options.body);
+                }
+                if(options.footer) {
+                    this.$modalFoot.append(options.footer);
+                }
+                if(options.backdrop) {
+                    modalOpts.backdrop = options.backdrop;
+                }
+                if(options.popup) {
+                    this.$el.modal(modalOpts);
+                }
+            }
+        },
+        render: function() {
+            this.$el.append(this.modalContent.render().$el);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+        },
+        remove: function(){
+            //this.$el.modal('hide');
+            //this.$el.remove();
+        }
+    });
+    
+    utils.ModalContentView = Backbone.View.extend({
+        tagName: "div",
+        className: "modal-content",
+        initialize: function(options) {
+            var self = this;
+            //var modalOpts = {};
+            //modalOpts.backdrop = 'static';
+            console.log(options)
+            this.$closeBtn = $('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>');
+            this.$modalHead = $('<div class="modal-header"><h4 class="modal-title" id="loginModalLabel"></h4>');
+            this.$modalBody = $('<div class="modal-body"></div>');
+            this.$modalFoot = $('<div class="modal-footer text-muted"></div>');
+            //this.$el.append(this.$modalDialog);
+            this.$el.on('hide.bs.modal', function () {
+                //window.history.back();
+                //auth.authView.remove();
+                //self.remove();
+                self.$el.remove();
+            });
+            if(options) {
+                if(options.closeBtn) {
+                    $modalHead.prepend(this.$closeBtn);
+                }
+                if(options.title) {
+                    this.$modalHead.find('.modal-title').html(options.title);
+                }
+                if(options.body) {
+                    this.$modalBody.append(options.body);
+                }
+                if(options.footer) {
+                    this.$modalFoot.append(options.footer);
+                }
+                if(options.backdrop) {
+                    //modalOpts.backdrop = options.backdrop;
+                }
+                if(options.popup) {
+                    //this.$el.modal(modalOpts);
+                }
+            }
+        },
+        render: function() {
+            this.$el.append(this.$modalHead);
+            this.$el.append(this.$modalBody);
+            this.$el.append(this.$modalFoot);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+        },
+        remove: function(){
+            //this.$el.modal('hide');
+            //this.$el.remove();
+        }
+    });
+    
     utils.appendLightBox = function(el, title, footer) {
         var opts = {
             container: el

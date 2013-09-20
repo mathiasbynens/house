@@ -242,7 +242,7 @@
             this.$el.append(this.$e);
             
             if(this.model.has('title')) {
-                this.$e.append(this.model.get('title'));
+                this.$e.append(this.model.get('title')+' ');
                 if(this.model.has('navigate')) {
                     this.$e.attr('href', this.model.get('navigate'));
                 } else if(this.model.has('href')) {
@@ -253,13 +253,15 @@
                 this.$el.addClass('dropdown');
                 this.$e.addClass('dropdown-toggle');
                 this.$e.attr('data-toggle', 'dropdown');
-                this.$e.append('<b class="caret"></b>');
-                if(!this.model.has('title') && !this.model.has('class')) {
-                    this.$e.addClass('glyphicon glyphicon-th');
+                if(this.model.has('glyphicon')) {
+                    this.$e.append('<span class="glyphicon glyphicon-'+this.model.get('glyphicon')+'"></span>');
+                } else if(!this.model.has('title')) {
+                    this.$e.append('<span class="glyphicon glyphicon-th"></span>');
                 }
+                this.$e.append('<b class="caret"></b>');
                 
                 if(!this.model.subNav) {
-                    console.log(this.options.list.collection)
+                    //console.log(this.options.list.collection)
                     this.model.subNavCol = new NavCollection();
                     this.model.subNavCol.list = new NavDropdownList({collection: this.model.subNavCol});
                     this.$el.append(this.model.subNavCol.list.render().$el);

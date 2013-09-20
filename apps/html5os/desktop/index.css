@@ -1,8 +1,7 @@
 .nav>li>a {
-    padding: 10px 6px 10px 0px;
 }
 #accountNav {
-    margin-left: 32px;
+    margin-left: 16px;
 }
 .navbar-header .glyphicon-home {
     color: grey;

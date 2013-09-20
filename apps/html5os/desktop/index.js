@@ -63,7 +63,7 @@
                                         
                                         require(['/applications/applications.js'], function(apps){
                                             apps.init();
-                                            var appsNav = new nav.col.model({title: 'Apps', subNav: true});
+                                            var appsNav = new nav.col.model({id: 'Apps', glyphicon: 'th-large', subNav: true});
                                             nav.col.add(appsNav);
                                             apps.col.bind("add", function(doc) {
                                                 //subNav.col.add({title: doc.get("name"), url: doc.get("url"), imgSrc: doc.get("icon")});

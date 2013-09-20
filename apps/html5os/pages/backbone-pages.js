@@ -669,9 +669,10 @@
                 } else {
                     this.$el.find('.sectionHtml').html(html);
                 }
+                var sectionHtml = this.$el.find('.sectionHtml');
                 var fstropen = '[[feedback';
                 var iof = html.indexOf(fstropen);
-                var iofend = html.indexOf(']]');
+                var iofend = html.indexOf(']]', iof);
                 if(iof !== -1) {
                     //console.log('feedback form in section')
                     var opts = {};
@@ -682,8 +683,7 @@
                         opts[option[0]] = option[1];
                     }
                     html = html.substr(0, iof+fstropen.length) + html.substr(iofend);
-                    console.log(opts)
-                    html = html.replace('[[feedback]]', '<span class="feedback"></span>');
+                    html = html.replace('[[feedback]]', '<span class="feedback container"></span>');
                     this.$el.find('.sectionHtml').html(html);
                     
                     var saveMsg = opts.saveMsg || 'Thank you for your feedback!';
@@ -698,7 +698,70 @@
                         });
                         $form = this.msgForm.render().$el;
                         $form.show();
-                        this.$el.find('.sectionHtml .feedback').html($form);
+                        
+                        if(opts.modal && opts.modal !== 'false') {
+                            if(!this.feedbackModal) {
+                                var modalOpts = {body: $form};
+                                if(opts.title) {
+                                    modalOpts.title = opts.title;
+                                }
+                                this.feedbackModal = utils.getNewModalContent(modalOpts);
+                            }
+                            //this.$el.find('.sectionHtml .feedback').html('asdasdas');
+                            this.$el.find('.sectionHtml .feedback').append(this.feedbackModal.render().$el);
+                        } else {
+                            this.$el.find('.sectionHtml .feedback').html($form);
+                        }
+                    }
+                }
+                
+                // MAP
+                
+                var mapStrOpen = '[[map';
+                
+                //<span class="pull-right"><iframe width="425" alt="" src="https://www.google.com/maps?
+                //sll=33.8590794564068,-117.90525272906511
+                //&amp;sspn=0.006833748256374074,0.014924553893220007
+                //&amp;t=p
+                //&amp;q=1232+E+Orangethorpe+Ave,+Fullerton,+CA+92831
+                //&amp;ie=UTF8
+                //&amp;hq=
+                //&amp;hnear=1232+E+Orangethorpe+Ave,+Fullerton,+California+92831
+                //&amp;ll=34.082237,-117.90802
+                //&amp;spn=0.796181,1.167297
+                //&amp;z=9
+                //&amp;iwloc=A
+                //&amp;output=embed" height="350"></iframe></span>
+                html = sectionHtml.html();
+                var iof = html.indexOf(mapStrOpen);
+                var iofend = html.indexOf(']]', iof);
+                if(iof !== -1) {
+                    //console.log('map form in section')
+                    var opts = {
+                        width: 600,
+                        height: 350,
+                        markerLabelColor: 'blue',
+                        zoom: 11
+                    };
+                    var mapOpts = html.substring(iof+mapStrOpen.length+1, iofend);
+                    mapOpts = mapOpts.split('|');
+                    for(var i in mapOpts){
+                        var option = mapOpts[i].split('=');
+                        opts[option[0]] = option[1];
+                    }
+                    html = html.substr(0, iof+mapStrOpen.length) + html.substr(iofend);
+                    console.log(opts)
+                    var locStr = opts.loc.replace(/ /g, '+');
+                    html = html.replace('[[map]]', '<span class="map"></span>');
+                    this.$el.find('.sectionHtml').html(html);
+                    if(opts.align) {
+                        var pullStr = 'pull-'+opts.align;
+                        this.$el.find('.sectionHtml .map').addClass(pullStr);
+                    }
+                    if(opts.embed && opts.embed !== 'false') {
+                        this.$el.find('.sectionHtml .map').html('<iframe width="100%" height="'+opts.height+'" alt="Location: '+opts.loc+'" src="https://www.google.com/maps?q='+locStr+'&amp;t=p&amp;iwloc=A&amp;iwloc=A&amp;output=embed"></iframe>');
+                    } else {
+                        this.$el.find('.sectionHtml .map').html('<img width="100%" height="'+opts.height+'" alt="Location: '+opts.loc+'" src="http://maps.googleapis.com/maps/api/staticmap?center='+locStr+'&zoom='+opts.zoom+'&size='+opts.width+'x'+opts.height+'&sensor=false&visual_refresh=true&markers=size:normal%7Ccolor:'+opts.markerLabelColor+'%7C'+locStr+'">');
                     }
                 }
             }
