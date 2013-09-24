@@ -68,7 +68,7 @@
                     sections = _.sortBy(sections, 'rank');
                     for(var i in sections) {
                         var section = sections[i];
-                        self.nav.col.add({title:section.name, navigate:section.id});
+                        self.nav.col.add({title:section.name, navigate:section.id, id:section.id});
                     }
                     var $fEl = self.$el.find('#home');
                     var featureListView;
@@ -94,21 +94,15 @@
                             }
                         });
                         sectionListView.on('addToNavSub', function(section, subItem){
-                            console.log(section)
-                            console.log(subItem)
                             var n = self.nav.col.get(section.id);
-                            console.log(n)
                             if(n) {
                                 var sub = n.get('sub');
-                                console.log(sub)
                                 if(sub) {
                                     sub.push(subItem);
-                                    console.log(sub)
                                     n.set({sub: sub});
                                 } else {
                                     n.set({sub: [subItem]});
                                 }
-                                console.log(n.get('sub'))
                             }
                         });
                     }

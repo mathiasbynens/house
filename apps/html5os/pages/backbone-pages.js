@@ -428,7 +428,6 @@
             //this.$el.append(this.$actions);
             if(!this.hasOwnProperty('featureCarosel')) {
                 var $c = $('#home');
-                console.log('car');
                 window.car = self.featureCarosel = $c;
                 if($c.find('.active').length === 0) {
                     $c.find('.carousel-inner').children().first().addClass('active');
@@ -750,18 +749,41 @@
                         opts[option[0]] = option[1];
                     }
                     html = html.substr(0, iof+mapStrOpen.length) + html.substr(iofend);
-                    console.log(opts)
                     var locStr = opts.loc.replace(/ /g, '+');
+                    var centerLocStr = locStr;
+                    if(opts.center) {
+                        centerLocStr = opts.center.replace(/ /g, '+');
+                    }
                     html = html.replace('[[map]]', '<span class="map"></span>');
                     this.$el.find('.sectionHtml').html(html);
                     if(opts.align) {
                         var pullStr = 'pull-'+opts.align;
                         this.$el.find('.sectionHtml .map').addClass(pullStr);
                     }
+                    
+/*https://maps.google.com/maps?f=q
+source=s_q
+<iframe width="999" height="222" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="
+hl=en
+geocode=
+q=1232+E+Orangethorpe+Ave%E2%80%8E+Fullerton,+CA+92831
+sll=33.859077,-117.905243
+sspn=0.012723,0.022724
+ie=UTF8
+hq=
+hnear=1232+E+Orangethorpe+Ave,+Fullerton,+California+92831
+t=m
+ll=33.859084,-117.905273
+spn=0.015823,0.085745
+z=14
+iwloc=A
+output=embed"></iframe>*/
+
+                    
                     if(opts.embed && opts.embed !== 'false') {
-                        this.$el.find('.sectionHtml .map').html('<iframe width="100%" height="'+opts.height+'" alt="Location: '+opts.loc+'" src="https://www.google.com/maps?q='+locStr+'&amp;t=p&amp;iwloc=A&amp;iwloc=A&amp;output=embed"></iframe>');
+                        this.$el.find('.sectionHtml .map').html('<iframe width="'+opts.width+'" height="'+opts.height+'" alt="Location: '+opts.loc+'" src="https://www.google.com/maps?q='+locStr+'&amp;t=p&amp;iwloc=A&amp;iwloc=A&amp;output=embed&amp;z='+opts.zoom+'&amp;hnear='+centerLocStr+'"></iframe>');
                     } else {
-                        this.$el.find('.sectionHtml .map').html('<img width="100%" height="'+opts.height+'" alt="Location: '+opts.loc+'" src="http://maps.googleapis.com/maps/api/staticmap?center='+locStr+'&zoom='+opts.zoom+'&size='+opts.width+'x'+opts.height+'&sensor=false&visual_refresh=true&markers=size:normal%7Ccolor:'+opts.markerLabelColor+'%7C'+locStr+'">');
+                        this.$el.find('.sectionHtml .map').html('<img width="100%" height="'+opts.height+'" alt="Location: '+opts.loc+'" src="http://maps.googleapis.com/maps/api/staticmap?center='+centerLocStr+'&zoom='+opts.zoom+'&size='+opts.width+'x'+opts.height+'&sensor=false&visual_refresh=true&markers=size:normal%7Ccolor:'+opts.markerLabelColor+'%7C'+locStr+'">');
                     }
                 }
             }
@@ -777,6 +799,7 @@
                     //self.options.list.trigger('addToNavSub', self.model, txt);
                     subs.push(txt);
                 }
+                console.log(subs)
             });
             if(subs.length > 0) {
                 self.options.list.trigger('addToNavSubs', self.model, subs);
@@ -936,7 +959,7 @@
             if($e.length > 0) {
                 
             } else {
-                $e = $('<div class="container"><div class="carousel-caption"><h1></h1><p class="lead"></p><p><a class="btn btn-large btn-default" href="#">See more</a></p></div></div>');
+                $e = $('<div class="container"><div class="carousel-caption"><h1></h1><p class="caption"></p><p><a class="btn btn-large btn-default" href="#">See more</a></p></div></div>');
                 this.$el.append($e);
             }
             if(this.$el.find('img[src="/api/files/'+src+'"]').length == 0) {
@@ -948,7 +971,7 @@
                 $e.find('h1').html(this.model.get('title'));
             }
             if(this.model.has('desc')) {
-                $e.find('.lead').html(nl2br(this.model.get('desc')));
+                $e.find('.caption').html(nl2br(this.model.get('desc')));
             }
             if(this.model.has('href')) {
                 var  a = this.model.get('a') || 'See more';
@@ -1203,6 +1226,10 @@
             this.form = new FormView({model: this.model, collection: this.model.collection});
             this.form.on('saved', function(){
                 self.model.trigger('change');
+                self.$el.removeClass('editing');
+                self.form.$el.remove();
+            });
+            this.form.on('cancelled', function(){
                 self.$el.removeClass('editing');
                 self.form.$el.remove();
             });
@@ -1511,14 +1538,12 @@
             return false;
         },
         reset: function() {
-            this.$form.reset();
         },
         cancel: function() {
             var self = this;
-            if(confirm("Are you sure that you want to cancel your chagnes?")) {
-                self.reset();
+            //if(confirm("Are you sure that you want to cancel your changes?")) {
                 self.trigger("cancelled", this.model);
-            }
+            //}
             return false;
         },
         publish: function() {

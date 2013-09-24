@@ -688,6 +688,9 @@ form.page {
   letter-spacing: -1px;
 }
 
+.row .map iframe {
+    width: 100%;
+}
 
 
 /* RESPONSIVE CSS

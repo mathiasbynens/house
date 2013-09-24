@@ -41,6 +41,7 @@ var wysihtml5ParserRules = {
         "pull-right": 1,
         "pull-left": 1,
         "img-circle": 1,
+        "img-thumbnail": 1,
         "col-xs-1": 1, "col-xs-2": 1, "col-xs-3": 1, "col-xs-4": 1, "col-xs-5": 1, "col-xs-6": 1, "col-xs-7": 1, "col-xs-8": 1, "col-xs-9": 1, "col-xs-10": 1, "col-xs-11": 1, "col-xs-12": 1,
         "col-sm-1": 1, "col-sm-2": 1, "col-sm-3": 1, "col-sm-4": 1, "col-sm-5": 1, "col-sm-6": 1, "col-sm-7": 1, "col-sm-8": 1, "col-sm-9": 1, "col-sm-10": 1, "col-sm-11": 1, "col-sm-12": 1,
         "col-md-1": 1, "col-md-2": 1, "col-md-3": 1, "col-md-4": 1, "col-md-5": 1, "col-md-6": 1, "col-md-7": 1, "col-md-8": 1, "col-md-9": 1, "col-md-10": 1, "col-md-11": 1, "col-md-12": 1,

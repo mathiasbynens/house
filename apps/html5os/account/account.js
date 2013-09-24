@@ -267,11 +267,12 @@
                     //self.render();
                     self.$pass.val('');
                     self.$pass.focus();
-                    self.$form.find(".msg").html('Bad login. <a class="resetPass" href="/">reset</a>');
+                    self.$form.find(".msg").html('Invalid login. If needed you can <a class="resetPass" href="/">reset</a> your password.');
                     self.$form.find(".msg").show();
                 } else {
                     console.log('no pass')
                     self.$form.find(".msg").hide();
+                    self.$el.find('input[name="email"]').hide();
                     self.$submit.show();
                     self.$pass.show().focus();
                 }
@@ -311,7 +312,6 @@
             this.$el.find('.'+this.klasses.body).append(this.$form);
             //this.$el.append('or Connect <span class="connect"><button class="connectTwitter">Twitter</button><button class="connectFacebook">Facebook</button></span>');
             this.$el.find('.'+this.klasses.body).append(this.connectionView.render().$el);
-            console.log(3333)
             this.setElement(this.$el);
             return this;
         },
@@ -333,6 +333,7 @@
             "submit form": "submit",
             'blur form input[name="email"]': "submit",
             'keyup input[name="email"]': "keyupsubmit",
+            'keyup input[name="pass"]': "keyupsubmit",
             "click .resetPass": "resetPass",
             "click .connectEmail": "connectEmail"
         },
@@ -344,7 +345,16 @@
             return false;
         },
         resetForm: function() {
+            
+            this.model.set({
+                email: '',
+                pass: null,
+                name: null
+            }, {silent: true});
+            
             this.$form.hide().siblings().show();
+            this.$el.find('input[name="email"]').val('');
+            this.$el.find('input[name="email"]').show().siblings().hide();
         },
         keyupsubmit: function(e) {
             if(e.keyCode == 13) {

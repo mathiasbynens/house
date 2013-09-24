@@ -159,6 +159,7 @@
             }
             if (this.model.has("sub")) {
                 var sub = this.model.get("sub");
+                console.log(sub)
                 this.$el.addClass('dropdown');
                 if($e.find('.caret').length === 0) {
                     $e.find('span').append(' <b class="caret"></b>');
@@ -168,12 +169,14 @@
                 var $ul = this.$el.find('ul.dropdown-menu');
                 if($ul.length === 0) {
                     $ul = $('<ul class="dropdown-menu"></ul>');
-                    for(var s in sub) {
-                        var subName = sub[s];
-                        $ul.append('<li><a href="#">'+subName+'</a></li>');
-                    }
-                    this.$el.append($ul);
+                } else {
+                    $ul.html('');
                 }
+                for(var s in sub) {
+                    var subName = sub[s];
+                    $ul.append('<li><a href="#">'+subName+'</a></li>');
+                }
+                this.$el.append($ul);
             }
             this.setElement(this.$el);
             return this;

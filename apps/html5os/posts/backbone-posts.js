@@ -1512,7 +1512,7 @@
         render: function() {
             var self = this;
             if(this.$el.find('form').length === 0) {
-                console.log('append form');
+                //console.log('append form');
                 this.$el.append(this.$form);
             }
             if(this.model) {
