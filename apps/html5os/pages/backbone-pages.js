@@ -12,6 +12,10 @@
             this.featuresCollection = new FeaturesCollection(attr.features, colOpts);
             this.views = {};
         },
+        getTitleTxt: function() {
+            var title = this.get('title');
+            return $('<span>'+title+'</span>').text();
+        },
         findSectionById: function(id, callback) {
             if(callback) {
                 callback(this.sectionsCollection.get(id));
@@ -687,16 +691,18 @@
                     
                     var saveMsg = opts.saveMsg || 'Thank you for your feedback!';
                     if(MsgsBackbone) {
-                        this.msgForm = new window.MsgsBackbone.Form({
-                            collection: window.msgsCollection,
-                            ui: opts
-                        });
-                        this.msgForm.on("saved", function(doc) {
-                            alert(saveMsg);
-                            self.msgForm.clear();
-                        });
-                        $form = this.msgForm.render().$el;
-                        $form.show();
+                        if(!this.msgForm) {
+                            this.msgForm = new window.MsgsBackbone.Form({
+                                collection: window.msgsCollection,
+                                ui: opts
+                            });
+                            this.msgForm.on("saved", function(doc) {
+                                alert(saveMsg);
+                                self.msgForm.clear();
+                            });
+                        }
+                        //var $form = this.msgForm.render().$el;
+                        //$form.show();
                         
                         if(opts.modal && opts.modal !== 'false') {
                             if(!this.feedbackModal) {
@@ -708,8 +714,9 @@
                             }
                             //this.$el.find('.sectionHtml .feedback').html('asdasdas');
                             this.$el.find('.sectionHtml .feedback').append(this.feedbackModal.render().$el);
+                            console.log('modal')
                         } else {
-                            this.$el.find('.sectionHtml .feedback').html($form);
+                            this.$el.find('.sectionHtml .feedback').append(this.msgForm.render().$el);
                         }
                     }
                 }

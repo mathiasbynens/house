@@ -777,6 +777,21 @@ textarea[name="msg"] {
     width: 100%;
 }
 
+.fullView .wistia_video {
+    width: 320px;
+    height: 180px;
+    display: block;
+    margin: 0 auto;
+    clear: both;
+}
+
+@media only screen and (min-width: 767px) {
+.fullView .wistia_video {
+    width: 640px;
+    height: 360px;
+}
+}
+
 @media only screen and (max-width: 767px) {
 }
 @media only screen and (min-width: 767px) {

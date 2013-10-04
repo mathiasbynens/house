@@ -131,11 +131,11 @@ Backbone.sync = function(method, model, options) {
       var changedAttr = model.changedAttributes();
       //console.log(changedAttr);
       for(var i in changedAttr) {
-          if(_.isUndefined(changedAttr[i])) {
+          if(_.isUndefined(changedAttr[i]) || _.isNull(changedAttr[i])) {
               if(!restObj.hasOwnProperty("$unset")) {
                   restObj["$unset"] = {};
               }
-              restObj["$unset"][i] = "";
+              restObj["$unset"][i] = true;
               delete changedAttr[i];
               fullPut = false;
           }
@@ -163,6 +163,9 @@ Backbone.sync = function(method, model, options) {
       if(fullPut) {
           console.log('full put prevented');
           return false;
+      }
+      if(restObj.hasOwnProperty('$set') && _.size(restObj["$set"]) < 1) {
+          delete restObj["$set"];
       }
       params.data = JSON.stringify(restObj);
   }

@@ -74,7 +74,7 @@
                 //window.history.back();
                 //auth.authView.remove();
                 //self.remove();
-                self.$el.remove();
+               // self.$el.remove();
             });
             if(options) {
                 if(options.closeBtn) {
@@ -108,7 +108,7 @@
         },
         remove: function(){
             //this.$el.modal('hide');
-            //this.$el.remove();
+            this.$el.remove();
         }
     });
     

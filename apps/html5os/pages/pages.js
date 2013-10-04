@@ -210,12 +210,12 @@
             });
             router.on('root', function(){
                 if(self.pageSelected) {
-                    router.setTitle(self.pageSelected.get('title'));
+                    router.setTitle(self.pageSelected.getTitleTxt());
                 }
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
                 if($(document).scrollTop()>200) {
-                    $.scrollTo($('#home'),1300);
+                    $.scrollTo($('#home'),1000);
                 }
             });
             router.route(':section/edit', 'editSection', function(sectionId){
@@ -231,13 +231,12 @@
             });
             router.route(':section', 'pageSection', function(sectionId){
                 routerReset();
-                console.log(sectionId)
                 self.pageSelected.findSectionById(sectionId, function(doc){
                     if(doc) {
                         router.setTitle(doc.get('name'));
                         //var docEl = doc.getFullView({list: self.listView}).render().$el;
                     } else {
-                        router.navigate('new', {replace: true, trigger: true});
+                        //router.navigate('new', {replace: true, trigger: true});
                     }
                     router.trigger('loadingComplete');
                 });

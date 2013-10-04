@@ -943,12 +943,34 @@
                 });
             }
             
-            if(this.model.has('youtube')) {
+            var isJsCacher = function() {
+                return (!navigator || (navigator.userAgent && navigator.userAgent.indexOf('HouseJs HTML Cacher') !== -1));
+            }
+            var wistia = self.model.get('wistia');
+            console.log(wistia)
+            if(wistia && wistia.id) {
+                self.$el.append('<div class="wistia_video" id="wistia_video_'+wistia.id+'"></div>');
+                if(!isJsCacher()) {
+                    require(['//fast.wistia.net/static/E-v1.js'], function() {
+                        var wistiaOpts = {
+                          playerColor: "000000",
+                          fullscreenButton: true,
+                          container: 'wistia_video_'+wistia.id
+                        };
+                        
+                        if(window.account && account.has('name')) {
+                            wistiaOpts.trackEmail = account.get('name');
+                        }
+                        self.wistiaEmbed = Wistia.embed(wistia.id, wistiaOpts);
+                    });
+                }
+            } else if(this.model.has('youtube')) {
                 var yt = this.model.get('youtube');
                 if(yt.id) {
                     var ytid = yt.id;
-                    this.$el.append('<span class="youtube"><div id="ytapiplayer-'+ytid+'"><iframe width="640" height="480" src="https://www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
+                    this.$el.append('<span class="youtube"><div id="ytapiplayer-'+ytid+'"><iframe width="760" height="430" src="//www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
                 }
+                //this.$el.find('.youtube').fitVids();
             }
             if(this.model.has('msg')) {
                 var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
@@ -1299,6 +1321,34 @@
         }
     });
     
+    var WistiaMediaView = Backbone.View.extend({
+        tagName: "div",
+        className: "wistia form-group",
+        initialize: function() {
+            var labelTxt = this.options.label || 'Wistia ID';
+            this.$label = $('<label class="col-lg-4 control-label">'+labelTxt+':</label><div class="col-lg-8"></div>');
+            this.$input = $('<input name="wistia_id" placeholder="wistia id" class="form-control" />');
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$label);
+            this.$el.find('div').append(this.$input);
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v) {
+                this.$input.val(v);
+            } else {
+                var y = {id: this.$input.val()};
+                return y;
+            }
+        },
+        events: {
+            
+        },
+    });
+    
     var YoutubeView = Backbone.View.extend({
         tagName: "div",
         className: "youtube form-group",
@@ -1475,6 +1525,8 @@
             
             this.inputTagsView = new TagsInputView({model: this.model});
             this.youtubeView = new YoutubeView({model: this.model});
+            this.wistiaView = new WistiaMediaView({model: this.model, label: 'Wistia Video ID'});
+            this.wistiaAudioView = new WistiaMediaView({model: this.model, label: 'Wistia Audio ID'});
             this.tweetInputView = new TweetInputView({model: this.model});
             this.inputGroupsView = new SelectGroupsView({model: this.model});
             this.feedView = new ActionFeedView({model: this.model});
@@ -1493,6 +1545,8 @@
             this.$form.find('controls').append(this.inputTagsView.render().$el);
             this.$form.find('controls').append(this.atPublished);
             this.$form.find('controls').append(this.youtubeView.render().$el);
+            this.$form.find('controls').append(this.wistiaView.render().$el);
+            this.$form.find('controls').append(this.wistiaAudioView.render().$el);
             this.$form.find('controls').append(this.tweetInputView.render().$el);
             this.$form.find('controls').append('<hr />');
             this.$form.find('controls').append('<span class="avatar"><span class="embed"></span><button class="attachImage" class="form-control">Attach Image</button></span>');
@@ -1535,28 +1589,45 @@
                     var youtube = this.model.get('youtube');
                     this.youtubeView.val(youtube.id);
                 }
+                if(this.model.has('wistia')) {
+                    var wistia = this.model.get('wistia');
+                    this.wistiaView.val(wistia.id);
+                }
+                if(this.model.has('wistiaAudio')) {
+                    var wistiaAudio = this.model.get('wistiaAudio');
+                    this.wistiaAudioView.val(wistiaAudio.id);
+                }
                 if(this.model.has('tweet')) {
                     var tweet = this.model.get('tweet');
                     this.tweetInputView.val(tweet.id);
                 }
                 
-                if(this.model.has('avatar')) {
+                if(this.model.get('avatar')) {
                     var avatarImage = this.model.get('avatar');
                     var $avatarImg = $('<img src="/api/files/'+avatarImage.filename+'" />');
-                    // TODO detatch media
+                    this.$form.find('.avatar').append('<button class="detachImage" class="form-control">Detach Image</button>');
                     this.$form.find('.avatar .embed').html($avatarImg);
+                } else {
+                    this.$form.find('.avatar .detachImage').remove();
+                    this.$form.find('.avatar .embed').html('');
                 }
-                if(this.model.has('audio')) {
+                if(this.model.get('audio')) {
                     var media = this.model.get('audio');
                     var $mediaEmbed = $('<audio controls preload="none" src="/api/files/'+media.filename+'" />');
-                    // TODO detatch media
+                    this.$form.find('.audio').append('<button class="detachAudio" class="form-control">Detach Audio</button>');
                     this.$form.find('.audio .embed').html($mediaEmbed);
+                } else {
+                    this.$form.find('.audio .detachAudio').remove();
+                    this.$form.find('.audio .embed').html('');
                 }
-                if(this.model.has('video')) {
+                if(this.model.get('video')) {
                     var media = this.model.get('video');
                     var $mediaEmbed = $('<video controls preload="none" src="/api/files/'+media.filename+'" />');
-                    // TODO detatch media
+                    this.$form.find('.video').append('<button class="detachVideo" class="form-control">Detach Video</button>');
                     this.$form.find('.video .embed').html($mediaEmbed);
+                } else {
+                    this.$form.find('.video .detachVideo').remove();
+                    this.$form.find('.video .embed').html('');
                 }
                 
                 if(this.model.has('groups')) {
@@ -1596,7 +1667,10 @@
             'blur input[name="title"]': "blurTitle",
             "click .attachImage": "attachImage",
             "click .attachAudio": "attachAudio",
-            "click .attachVideo": "attachVideo"
+            "click .attachVideo": "attachVideo",
+            "click .detachImage": "detachImage",
+            "click .detachAudio": "detachAudio",
+            "click .detachVideo": "detachVideo"
         },
         attachImage: function() {
             this.uploadAvatarFrame.pickFiles();
@@ -1611,6 +1685,57 @@
         attachVideo: function() {
             this.uploadMediaVideoFrame.pickFiles();
             this.uploadMediaVideoFrame.$el.show();
+            return false;
+        },
+        detachImage: function() {
+            var self = this;
+            var setDoc = {
+                avatar: null
+            }
+            self.model.set(setDoc, {silent: true});
+            var saveModel = self.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            if(saveModel) {
+                saveModel.done(function() {
+                    self.render();
+                });
+            }
+            return false;
+        },
+        detachAudio: function() {
+            var self = this;
+            var setDoc = {
+                audio: null
+            }
+            self.model.set(setDoc, {silent: true});
+            var saveModel = self.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            if(saveModel) {
+                saveModel.done(function() {
+                    self.render();
+                });
+            }
+            return false;
+        },
+        detachVideo: function() {
+            var self = this;
+            var setDoc = {
+                video: null
+            }
+            self.model.set(setDoc, {silent: true});
+            var saveModel = self.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            if(saveModel) {
+                saveModel.done(function() {
+                    self.render();
+                });
+            }
             return false;
         },
         blurTitle: function() {
@@ -1644,6 +1769,8 @@
             var tags = this.inputTagsView.val();
             var groups = this.inputGroupsView.val();
             var youtube = this.youtubeView.val();
+            var wistia = this.wistiaView.val();
+            var wistiaAudio = this.wistiaAudioView.val();
             var tweet = this.tweetInputView.val();
             
             var atDate = this.$inputAtDate.val();
@@ -1671,8 +1798,14 @@
             if(tags.length > 0 && tags !== this.model.get('tags')) {
                 setDoc.tags = tags;
             }
-            if(groups.length > 0 && groups !== this.model.get('groups')) {
+            if(groups && groups.length > 0 && groups !== this.model.get('groups')) {
                 setDoc.groups = groups;
+            }
+            if(wistia && !_.isEqual(wistia.id, this.model.get('wistia').id)) {
+                setDoc.wistia = wistia;
+            }
+            if(wistiaAudio && !_.isEqual(wistiaAudio.id, this.model.get('wistiaAudio').id)) {
+                setDoc.wistiaAudio = wistiaAudio;
             }
             if(youtube && !_.isEqual(youtube, this.model.get('youtube'))) {
                 setDoc.youtube = youtube;

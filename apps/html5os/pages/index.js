@@ -32,17 +32,17 @@
                                                                 });
                                                                 //$("ul.nav").append(nav.list.render().$el);
                                                                 require([ "/pages/pages.js" ], function(Pages) {
-                                                                    var pages = new Pages({el:$("body")[0]});
+                                                                    var pages = new Pages({el:$("body")});
                                                                     pages.bindUser(account.loginStatus.getView().userModel);
                                                                     pages.on("initialized", function() {
-                                                                        pages.render();
                                                                         pages.bindNav(nav);
-                                                                        account.bindRouter(nav.router);
+                                                                        pages.render();
+                                                                        //account.bindRouter(nav.router);
                                                                         
                                                                         require(['/desktop/jquery.hotkeys.js'], function(){
                                                                           $(document).bind('keydown', 'esc', function(){
                                                                             if(!account.loginStatus.isUser()) {
-                                                                                nav.router.navigate('join', true);
+                                                                                nav.router.navigate('join', {trigger: true});
                                                                             }
                                                                             return false;
                                                                           });
