@@ -677,7 +677,7 @@
                 var iof = html.indexOf(fstropen);
                 var iofend = html.indexOf(']]', iof);
                 if(iof !== -1) {
-                    //console.log('feedback form in section')
+                    console.log('feedback form in section')
                     var opts = {};
                     var feedbackOpts = html.substring(iof+fstropen.length+1, iofend);
                     feedbackOpts = feedbackOpts.split('|');
@@ -701,7 +701,7 @@
                                 self.msgForm.clear();
                             });
                         }
-                        //var $form = this.msgForm.render().$el;
+                        var $form = this.msgForm.render().$el;
                         //$form.show();
                         
                         if(opts.modal && opts.modal !== 'false') {
