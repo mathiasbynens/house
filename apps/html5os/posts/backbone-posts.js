@@ -1798,7 +1798,7 @@
             if(tags.length > 0 && tags !== this.model.get('tags')) {
                 setDoc.tags = tags;
             }
-            if(groups && groups.length > 0 && groups !== this.model.get('groups')) {
+            if(groups && groups !== this.model.get('groups')) {
                 setDoc.groups = groups;
             }
             if(wistia && !_.isEqual(wistia.id, this.model.get('wistia').id)) {

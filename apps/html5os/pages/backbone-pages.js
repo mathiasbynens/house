@@ -666,6 +666,8 @@
             }
             
             if(this.model.has('html')) {
+                var doFeedbackView = false;
+                var doMapView = false;
                 var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
                     this.$el.append('<div class="sectionHtml container">'+this.model.get('html')+'</div>');
@@ -677,7 +679,7 @@
                 var iof = html.indexOf(fstropen);
                 var iofend = html.indexOf(']]', iof);
                 if(iof !== -1) {
-                    console.log('feedback form in section')
+                    //console.log('feedback form in section')
                     var opts = {};
                     var feedbackOpts = html.substring(iof+fstropen.length+1, iofend);
                     feedbackOpts = feedbackOpts.split('|');
@@ -687,8 +689,55 @@
                     }
                     html = html.substr(0, iof+fstropen.length) + html.substr(iofend);
                     html = html.replace('[[feedback]]', '<span class="feedback container"></span>');
-                    this.$el.find('.sectionHtml').html(html);
                     
+                    this.$el.find('.sectionHtml').html(html);
+                    doFeedbackView = true;
+                }
+                
+                // MAP
+                var mapStrOpen = '[[map';
+                //<span class="pull-right"><iframe width="425" alt="" src="https://www.google.com/maps?
+                //sll=33.8590794564068,-117.90525272906511
+                //&amp;sspn=0.006833748256374074,0.014924553893220007
+                //&amp;t=p
+                //&amp;q=1232+E+Orangethorpe+Ave,+Fullerton,+CA+92831
+                //&amp;ie=UTF8
+                //&amp;hq=
+                //&amp;hnear=1232+E+Orangethorpe+Ave,+Fullerton,+California+92831
+                //&amp;ll=34.082237,-117.90802
+                //&amp;spn=0.796181,1.167297
+                //&amp;z=9
+                //&amp;iwloc=A
+                //&amp;output=embed" height="350"></iframe></span>
+                html = sectionHtml.html();
+                var iof = html.indexOf(mapStrOpen);
+                var iofend = html.indexOf(']]', iof);
+                if(iof !== -1) {
+                    //console.log('map form in section')
+                    var mapOpts = {
+                        width: 600,
+                        height: 350,
+                        markerLabelColor: 'blue',
+                        zoom: 11
+                    };
+                    var mapOptsStr = html.substring(iof+mapStrOpen.length+1, iofend);
+                    var mapOptsIn = mapOptsStr.split('|');
+                    for(var i in mapOptsIn){
+                        var option = mapOptsIn[i].split('=');
+                        mapOpts[option[0]] = option[1];
+                    }
+                    html = html.substr(0, iof+mapStrOpen.length) + html.substr(iofend);
+                    var locStr = mapOpts.loc.replace(/ /g, '+');
+                    var centerLocStr = locStr;
+                    if(mapOpts.center) {
+                        centerLocStr = mapOpts.center.replace(/ /g, '+');
+                    }
+                    html = html.replace('[[map]]', '<span class="map"></span>');
+                    this.$el.find('.sectionHtml').html(html);
+                    doMapView = true;
+                }
+                
+                if(doFeedbackView) {
                     var saveMsg = opts.saveMsg || 'Thank you for your feedback!';
                     if(MsgsBackbone) {
                         if(!this.msgForm) {
@@ -714,57 +763,14 @@
                             }
                             //this.$el.find('.sectionHtml .feedback').html('asdasdas');
                             this.$el.find('.sectionHtml .feedback').append(this.feedbackModal.render().$el);
-                            console.log('modal')
                         } else {
                             this.$el.find('.sectionHtml .feedback').append(this.msgForm.render().$el);
                         }
                     }
                 }
-                
-                // MAP
-                
-                var mapStrOpen = '[[map';
-                
-                //<span class="pull-right"><iframe width="425" alt="" src="https://www.google.com/maps?
-                //sll=33.8590794564068,-117.90525272906511
-                //&amp;sspn=0.006833748256374074,0.014924553893220007
-                //&amp;t=p
-                //&amp;q=1232+E+Orangethorpe+Ave,+Fullerton,+CA+92831
-                //&amp;ie=UTF8
-                //&amp;hq=
-                //&amp;hnear=1232+E+Orangethorpe+Ave,+Fullerton,+California+92831
-                //&amp;ll=34.082237,-117.90802
-                //&amp;spn=0.796181,1.167297
-                //&amp;z=9
-                //&amp;iwloc=A
-                //&amp;output=embed" height="350"></iframe></span>
-                html = sectionHtml.html();
-                var iof = html.indexOf(mapStrOpen);
-                var iofend = html.indexOf(']]', iof);
-                if(iof !== -1) {
-                    //console.log('map form in section')
-                    var opts = {
-                        width: 600,
-                        height: 350,
-                        markerLabelColor: 'blue',
-                        zoom: 11
-                    };
-                    var mapOpts = html.substring(iof+mapStrOpen.length+1, iofend);
-                    mapOpts = mapOpts.split('|');
-                    for(var i in mapOpts){
-                        var option = mapOpts[i].split('=');
-                        opts[option[0]] = option[1];
-                    }
-                    html = html.substr(0, iof+mapStrOpen.length) + html.substr(iofend);
-                    var locStr = opts.loc.replace(/ /g, '+');
-                    var centerLocStr = locStr;
-                    if(opts.center) {
-                        centerLocStr = opts.center.replace(/ /g, '+');
-                    }
-                    html = html.replace('[[map]]', '<span class="map"></span>');
-                    this.$el.find('.sectionHtml').html(html);
-                    if(opts.align) {
-                        var pullStr = 'pull-'+opts.align;
+                if(doMapView) {
+                    if(mapOpts.align) {
+                        var pullStr = 'pull-'+mapOpts.align;
                         this.$el.find('.sectionHtml .map').addClass(pullStr);
                     }
                     
@@ -787,10 +793,10 @@ iwloc=A
 output=embed"></iframe>*/
 
                     
-                    if(opts.embed && opts.embed !== 'false') {
-                        this.$el.find('.sectionHtml .map').html('<iframe width="'+opts.width+'" height="'+opts.height+'" alt="Location: '+opts.loc+'" src="https://www.google.com/maps?q='+locStr+'&amp;t=p&amp;iwloc=A&amp;iwloc=A&amp;output=embed&amp;z='+opts.zoom+'&amp;hnear='+centerLocStr+'"></iframe>');
+                    if(mapOpts.embed && mapOpts.embed !== 'false') {
+                        this.$el.find('.sectionHtml .map').html('<iframe width="'+mapOpts.width+'" height="'+mapOpts.height+'" alt="Location: '+mapOpts.loc+'" src="https://www.google.com/maps?q='+locStr+'&amp;t=p&amp;iwloc=A&amp;iwloc=A&amp;output=embed&amp;z='+mapOpts.zoom+'&amp;hnear='+centerLocStr+'"></iframe>');
                     } else {
-                        this.$el.find('.sectionHtml .map').html('<img width="100%" height="'+opts.height+'" alt="Location: '+opts.loc+'" src="http://maps.googleapis.com/maps/api/staticmap?center='+centerLocStr+'&zoom='+opts.zoom+'&size='+opts.width+'x'+opts.height+'&sensor=false&visual_refresh=true&markers=size:normal%7Ccolor:'+opts.markerLabelColor+'%7C'+locStr+'">');
+                        this.$el.find('.sectionHtml .map').html('<img width="100%" height="'+mapOpts.height+'" alt="Location: '+mapOpts.loc+'" src="http://maps.googleapis.com/maps/api/staticmap?center='+centerLocStr+'&zoom='+mapOpts.zoom+'&size='+mapOpts.width+'x'+mapOpts.height+'&sensor=false&visual_refresh=true&markers=size:normal%7Ccolor:'+mapOpts.markerLabelColor+'%7C'+locStr+'">');
                     }
                 }
             }
@@ -806,7 +812,6 @@ output=embed"></iframe>*/
                     //self.options.list.trigger('addToNavSub', self.model, txt);
                     subs.push(txt);
                 }
-                console.log(subs)
             });
             if(subs.length > 0) {
                 self.options.list.trigger('addToNavSubs', self.model, subs);
@@ -1150,11 +1155,11 @@ output=embed"></iframe>*/
         },
         select: function() {
             var self = this;
-            if(confirm("Are you sure that you want to delete this post?")) {
+            if(confirm("Are you sure that you want to delete this page?")) {
                 this.model.destroy({success: function(model, response) {
                   window.history.back(-1);
                 }, 
-                errorr: function(model, response) {
+                error: function(model, response) {
                     console.log(arguments);
                 },
                 wait: true});
