@@ -17,9 +17,6 @@
                                                 clock.on("init", function() {
                                                     require([ "/account/account.js" ], function(account) {
                                                         account.auth(function() {
-                                                            //var $account = $('<div id="account"></div>');
-                                                            //$("#header").append($account);
-                                                            //$account.append(account.render().$el);
                                                             require([ "/pages/nav.js" ], function(nav) {
                                                                 index.nav = nav;
                                                                 nav.init('.navbar-collapse.collapse');
@@ -30,14 +27,12 @@
                                                                 nav.router.on("loadingComplete", function() {
                                                                     $("body").removeClass("loading");
                                                                 });
-                                                                //$("ul.nav").append(nav.list.render().$el);
                                                                 require([ "/pages/pages.js" ], function(Pages) {
                                                                     var pages = new Pages({el:$("body")});
                                                                     pages.bindUser(account.loginStatus.getView().userModel);
                                                                     pages.on("initialized", function() {
                                                                         pages.bindNav(nav);
                                                                         pages.render();
-                                                                        //account.bindRouter(nav.router);
                                                                         
                                                                         require(['/desktop/jquery.hotkeys.js'], function(){
                                                                           $(document).bind('keydown', 'esc', function(){

@@ -38,10 +38,11 @@ var wysihtml5ParserRules = {
      * Following CSS classes won't be removed when parsed by the wysihtml5 HTML parser
      */
     "classes": {
-        "pull-right": 1,
-        "pull-left": 1,
-        "img-circle": 1,
-        "img-thumbnail": 1,
+        "pull-right": 1, "pull-left": 1,
+        "lead": 1, "text-left": 1, "text-center": 1, "text-right": 1,
+        "text-muted": 1, "text-primary": 1, "text-success": 1, "text-info": 1, "text-warning": 1, "text-danger": 1,
+        "img-circle": 1, "img-thumbnail": 1, "img-rounded": 1, "img-responsive": 1,
+        "btn": 1, "btn-default": 1, "btn-primary": 1, "btn-success": 1, "btn-info": 1, "btn-warning": 1, "btn-danger": 1, "btn-link": 1, "btn-lg": 1, "btn-sm": 1, "btn-xs": 1, "btn-block": 1,
         "col-xs-1": 1, "col-xs-2": 1, "col-xs-3": 1, "col-xs-4": 1, "col-xs-5": 1, "col-xs-6": 1, "col-xs-7": 1, "col-xs-8": 1, "col-xs-9": 1, "col-xs-10": 1, "col-xs-11": 1, "col-xs-12": 1,
         "col-sm-1": 1, "col-sm-2": 1, "col-sm-3": 1, "col-sm-4": 1, "col-sm-5": 1, "col-sm-6": 1, "col-sm-7": 1, "col-sm-8": 1, "col-sm-9": 1, "col-sm-10": 1, "col-sm-11": 1, "col-sm-12": 1,
         "col-md-1": 1, "col-md-2": 1, "col-md-3": 1, "col-md-4": 1, "col-md-5": 1, "col-md-6": 1, "col-md-7": 1, "col-md-8": 1, "col-md-9": 1, "col-md-10": 1, "col-md-11": 1, "col-md-12": 1,
@@ -49,6 +50,7 @@ var wysihtml5ParserRules = {
         "col-md-offset-0": 1, "col-md-offset-1": 1, "col-md-offset-2": 1, "col-md-offset-3": 1, "col-md-offset-4": 1, "col-md-offset-5": 1, "col-md-offset-6": 1, "col-md-offset-7": 1, "col-md-offset-8": 1, "col-md-offset-9": 1, "col-md-offset-10": 1, "col-md-offset-11": 1, "col-md-offset-12": 1,
         "row": 1,
         "container": 1,
+        "clearfix": 1,
         "wysiwyg-clear-both": 1,
         "wysiwyg-clear-left": 1,
         "wysiwyg-clear-right": 1,
