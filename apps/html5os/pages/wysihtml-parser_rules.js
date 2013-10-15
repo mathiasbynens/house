@@ -200,11 +200,11 @@ var wysihtml5ParserRules = {
         "a": {
             "check_attributes": {
                 "href": "href"
-            },
-            "set_attributes": {
+            }
+            /*,"set_attributes": {
                 "rel": "nofollow",
                 "target": "_blank"
-            }
+            }*/
         },
         "img": {
             "check_attributes": {
