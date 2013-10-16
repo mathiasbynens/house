@@ -1,10 +1,24 @@
 (function() {
-    
+    function createCookie(name,value,days) {
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime()+(days*24*60*60*1000));
+            var expires = "; expires="+date.toGMTString();
+        } else {
+            var expires = "";
+        }
+        //var domain = window.location.hostname;
+        document.cookie = name+"="+value+expires+"; path=/; domain=";
+    }
     var auth = {};
     auth.get = function(callback) {
         var self = this;
         this.collection.bind("add", function(doc) {
             self.model = doc;
+            var sid = doc.get('sid');
+            if(document.cookie.indexOf(sid) === -1) {
+                createCookie('SID',doc.get('sid'));
+            }
             callback(null, doc);
         });
         this.collection.load();
@@ -156,13 +170,14 @@
         load: function(callback) {
             var self = this;
             this.reset();
-            return this.fetch({
+            var xhr = this.fetch({
                 update: true, remove: false,
                 success: function() {
                     self.trigger("loaded", self.url);
                     if (callback) callback();
                 }
             });
+            return xhr;
         }
     });
     auth.collection = new auth.Collection;
