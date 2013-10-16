@@ -1254,7 +1254,9 @@
                 self.$join.on('hide.bs.modal', function () {
                     auth.authView.remove();
                     self.$join.remove();
-                    self.router.back();
+                    if(self.router) {
+                        self.router.back();
+                    }
                 })
                 self.$join.modal();
             }

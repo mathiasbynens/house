@@ -15,8 +15,8 @@
                                             require([ "/clock/clock.js" ], function(Clock) {
                                                 window.clock = new Clock;
                                                 clock.on("init", function() {
-                                                    require([ "/account/account.js" ], function(account) {
-                                                        account.auth(function() {
+                                                    require([ "/account/account.js" ], function(accountProfile) {
+                                                        accountProfile.auth(function() {
                                                             require([ "/pages/nav.js" ], function(nav) {
                                                                 index.nav = nav;
                                                                 nav.init('.navbar-collapse.collapse');
@@ -29,14 +29,15 @@
                                                                 });
                                                                 require([ "/pages/pages.js" ], function(Pages) {
                                                                     var pages = new Pages({el:$("body")});
-                                                                    pages.bindUser(account.loginStatus.getView().userModel);
+                                                                    pages.bindUser(accountProfile.loginStatus.getView().userModel);
                                                                     pages.on("initialized", function() {
                                                                         pages.bindNav(nav);
+                                                                        accountProfile.bindRouter(nav.router);
                                                                         pages.render();
                                                                         
                                                                         require(['/desktop/jquery.hotkeys.js'], function(){
                                                                           $(document).bind('keydown', 'esc', function(){
-                                                                            if(!account.loginStatus.isUser()) {
+                                                                            if(!accountProfile.loginStatus.isUser()) {
                                                                                 nav.router.navigate('join', {trigger: true});
                                                                             }
                                                                             return false;

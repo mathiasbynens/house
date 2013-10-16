@@ -25,6 +25,13 @@
         setTitle: function(title) {
             document.title = title;
             this.trigger("title", title);
+        },
+        back: function() {
+            if(this.routesHit > 1) {
+              window.history.back();
+            } else {
+              this.navigate('', {trigger: true});
+            }
         }
     });
     nav.router = new nav.Router;
@@ -159,7 +166,6 @@
             }
             if (this.model.has("sub")) {
                 var sub = this.model.get("sub");
-                console.log(sub)
                 this.$el.addClass('dropdown');
                 if($e.find('.caret').length === 0) {
                     $e.find('span').append(' <b class="caret"></b>');

@@ -31,7 +31,6 @@
             this.trigger('title', title);
         },
         back: function() {
-            console.log(this.routesHit)
             if(this.routesHit > 1) {
               window.history.back();
             } else {
