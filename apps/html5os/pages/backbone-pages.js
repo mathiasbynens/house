@@ -431,7 +431,7 @@
             });
             //this.$el.append(this.$actions);
             if(!this.hasOwnProperty('featureCarosel')) {
-                var $c = $('#home');
+                var $c = $('.carousel');
                 window.car = self.featureCarosel = $c;
                 if($c.find('.active').length === 0) {
                     $c.find('.carousel-inner').children().first().addClass('active');

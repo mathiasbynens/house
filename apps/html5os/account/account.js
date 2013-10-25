@@ -184,14 +184,14 @@
     auth.ConnectForm = Backbone.View.extend({
         tagName: "div",
         className: "connections container text-center",
-        initialize: function() {
+        initialize: function(options) {
             var self = this;
             this.ui = {
                 connectLabel: "or connect with: ",
                 emailLabel: "Email"
             }
-            for(var i in this.options.ui) {
-                this.ui[i] = this.options.ui[i];
+            for(var i in options.ui) {
+                this.ui[i] = options.ui[i];
             }
         },
         render: function() {
@@ -227,7 +227,7 @@
     });
     auth.LoginForm = Backbone.View.extend({
         tagName: "div",
-        initialize: function() {
+        initialize: function(options) {
             var self = this;
             //self.state = 'reset';
             this.ui = {
@@ -245,7 +245,7 @@
                 "body": "body",
                 "footer": "footer"
             }
-            if(this.options.modal) {
+            if(options.modal) {
                 this.klasses = {
                     "dialog": "modal-dialog",
                     "title": "modal-title",
@@ -255,11 +255,11 @@
                     "footer": "modal-footer"
                 }
             }
-            for(var i in this.options.ui) {
-                this.ui[i] = this.options.ui[i];
+            for(var i in options.ui) {
+                this.ui[i] = options.ui[i];
             }
-            for(var i in this.options.klasses) {
-                this.klasses[i] = this.options.klasses[i];
+            for(var i in options.klasses) {
+                this.klasses[i] = options.klasses[i];
             }
             this.$joinMsg = $('<span class="welcomeLabel"></span>');
             this.$form = $('<form id="houseAuth" class="form-signin">\n\
@@ -304,7 +304,7 @@
         render: function() {
             this.$el.addClass(this.klasses.dialog);
             var closeBtn = '';
-            if(this.options.modal) {
+            if(options.modal) {
                 closeBtn = '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>';
             }
             this.$el.html('<div class="'+this.klasses.content+'">\n\
@@ -435,13 +435,13 @@
     auth.View = Backbone.View.extend({
         //tagName: "span",
         //className: "authView",
-        initialize: function() {
+        initialize: function(options) {
             var self = this;
             this.ui = {
                 accountMenuLabel: "⚙"
             }
-            for(var i in this.options.ui) {
-                this.ui[i] = this.options.ui[i];
+            for(var i in options.ui) {
+                this.ui[i] = options.ui[i];
             }
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
