@@ -408,8 +408,6 @@
         className: "carousel slide",
         initialize: function() {
             var self = this;
-            this.$indicators = $('<ol class="carousel-indicators"></ol>');
-            this.$inner = $('<div class="carousel-inner"></div>');
             this.collection.on("add", function(m) {
                 self.appendModel(m);
             });
@@ -417,8 +415,10 @@
             });
             this.interval = 12400;
             this.isPlaying = false;
-            this.$el.prepend(this.$inner);
-            this.$el.prepend(this.$indicators);
+            if(!this.options.onePageSlide) {
+                this.$indicators = $('<ol class="carousel-indicators"></ol>');
+                this.$inner = $('<div class="carousel-inner"></div>');
+            }
         },
         render: function() {
             var self = this;
@@ -433,15 +433,29 @@
             if(!this.hasOwnProperty('featureCarosel')) {
                 var $c = $('.carousel');
                 window.car = self.featureCarosel = $c;
-                if($c.find('.active').length === 0) {
-                    $c.find('.carousel-inner').children().first().addClass('active');
-                    $c.find('ol').children().first().addClass('active');
+                
+                if(!this.options.onePageSlide) {
+                    $c.prepend(this.$inner);
+                    $c.prepend(this.$indicators);
+                    if($c.find('.active').length === 0) {
+                        $c.find('.carousel-inner').children().first().addClass('active');
+                        $c.find('ol').children().first().addClass('active');
+                    }
+                    self.featureCarosel = $c.carousel({
+                        interval: false,
+                        hover: "pause"
+                    });
+                    self.play();
+                } else {
+                    require([ "https://raw.github.com/peachananr/onepage-scroll/master/jquery.onepage-scroll.js" ], function() {
+                        $("#home").onepage_scroll({sectionContainer: ".item", easing: "ease", animationTime: 1000, pagination: true, updateURL: false});
+                    });
                 }
-                self.featureCarosel = $c.carousel({
-                    interval: false,
-                    hover: "pause"
-                });
-                self.play();
+            } else {
+                if(!this.options.onePageSlide) {
+                } else {
+                    $("#home").onepage_scroll({sectionContainer: ".item", easing: "ease", animationTime: 1000, pagination: true, updateURL: false});
+                }
             }
             this.setElement(this.$el);
             return this;
@@ -483,7 +497,11 @@
             if(!this.modelSeq.hasOwnProperty(m.id)) {
                 this.modelSeq[m.id] = _.size(this.modelSeq);
             }
-            var el = this.$inner.find('[data-id="'+m.id+'"]')[0];
+            if(!this.options.onePageSlide) {
+                var el = this.$inner.find('[data-id="'+m.id+'"]')[0];
+            } else {
+                var el = this.$el.find('[data-id="'+m.id+'"]')[0];
+            }
             var row = m.getView({
                 list: this,
                 el: el
@@ -1214,7 +1232,9 @@ output=embed"></iframe>*/
             }
             if(this.model.has('logo')) {
                 var logoImage = this.model.get('logo');
-                this.$el.css('background-image', 'url("/api/files/'+logoImage.filename+'")');
+                if(this.$el.css('background-image').indexOf('/api/files/'+logoImage.filename) === -1) {
+                    this.$el.css('background-image', 'url("/api/files/'+logoImage.filename+'")');
+                }
                 this.$el.css('background-size', '100%');
                 this.$el.css('color', 'transparent');
             }
