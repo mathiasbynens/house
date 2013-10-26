@@ -415,9 +415,13 @@
             });
             this.interval = 12400;
             this.isPlaying = false;
-            if(!this.options.onePageSlide) {
-                this.$indicators = $('<ol class="carousel-indicators"></ol>');
+            this.$inner = this.$el.find('.carousel-inner');
+            if(this.$inner.length === 0) {
                 this.$inner = $('<div class="carousel-inner"></div>');
+            }
+            this.$indicators = this.$el.find('.carousel-indicators');
+            if(this.$indicators.length === 0) {
+                this.$indicators = $('<ol class="carousel-indicators"></ol>');
             }
         },
         render: function() {

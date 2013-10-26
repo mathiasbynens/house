@@ -304,7 +304,7 @@
         render: function() {
             this.$el.addClass(this.klasses.dialog);
             var closeBtn = '';
-            if(options.modal) {
+            if(this.options.modal) {
                 closeBtn = '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>';
             }
             this.$el.html('<div class="'+this.klasses.content+'">\n\
