@@ -690,6 +690,7 @@
             if(this.model.has('html')) {
                 var doFeedbackView = false;
                 var doMapView = false;
+                var doGalleryView = false;
                 var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
                     this.$el.append('<div class="sectionHtml container">'+this.model.get('html')+'</div>');
@@ -715,6 +716,84 @@
                     this.$el.find('.sectionHtml').html(html);
                     doFeedbackView = true;
                 }
+                
+                // GALLERY
+                var procGallery = function(i) {
+                    var gallerystropen = '[[gallery';
+                    var iofgallery = html.indexOf(gallerystropen);
+                    var iofgalleryend = html.indexOf(']]', iofgallery);
+                    if(iofgallery !== -1) {
+                        //console.log('feedback form in section')
+                        var gallery_options = {};
+                        var galleryOpts = html.substring(iofgallery+gallerystropen.length+1, iofgalleryend);
+                        galleryOpts = galleryOpts.split('|');
+                        for(var i in galleryOpts){
+                            var galleryeqi = galleryOpts[i].indexOf('=');
+                            var galleryOptName = galleryOpts[i].substr(0, galleryeqi);
+                            var galleryOptVal = galleryOpts[i].substr(galleryeqi+1);
+                            //var galleryoption = galleryOpts[i].split('=');
+                            //opts[option[0]] = galleryoption[1];
+                            gallery_options[galleryOptName] = galleryOptVal;
+                        }
+                        html = html.substr(0, iofgallery+gallerystropen.length) + html.substr(iofgalleryend);
+                        console.log(gallery_options)
+                        gallery_options.className = 'gallery'+i;
+                        html = html.replace('[[gallery]]', $(gallery_options.a).addClass(gallery_options.className)[0].outerHTML);
+                        
+                        if($('#blueimp-gallery').length === 0) {
+                            var galleryBox = '<div id="blueimp-gallery" class="blueimp-gallery">\n\
+        <div class="slides"></div>\n\
+        <h3 class="title"></h3>\n\
+        <a class="prev">‹</a>\n\
+        <a class="next">›</a>\n\
+        <a class="close">×</a>\n\
+        <a class="play-pause"></a>\n\
+        <ol class="indicator"></ol>\n\
+        <div class="modal fade">\n\
+            <div class="modal-dialog">\n\
+                <div class="modal-content">\n\
+                    <div class="modal-header">\n\
+                        <button type="button" class="close" aria-hidden="true">&times;</button>\n\
+                        <h4 class="modal-title"></h4>\n\
+                    </div>\n\
+                    <div class="modal-body next"></div>\n\
+                    <div class="modal-footer">\n\
+                        <button type="button" class="btn btn-default pull-left prev">\n\
+                            <i class="glyphicon glyphicon-chevron-left"></i>\n\
+                            Previous\n\
+                        </button>\n\
+                        <button type="button" class="btn btn-primary next">\n\
+                            Next\n\
+                            <i class="glyphicon glyphicon-chevron-right"></i>\n\
+                        </button>\n\
+                    </div>\n\
+                </div>\n\
+            </div>\n\
+        </div>\n\
+    </div>';
+                            $('body').append($(galleryBox));
+                        }
+                        
+                        self.$el.find('.sectionHtml').html(html);
+                        doGalleryView = true;
+                        
+                        return gallery_options;
+                    }
+                    return false;
+                }
+                var galleries = [];
+                var g = 1;
+                while(g > 0) {
+                    var gallery = procGallery(g);
+                    if(!gallery) {
+                        g = 0;
+                    } else {
+                        galleries.push(gallery);
+                        g = g+1;
+                    }
+                }
+                
+                
                 
                 // MAP
                 var mapStrOpen = '[[map';
@@ -757,6 +836,27 @@
                     html = html.replace('[[map]]', '<span class="map"></span>');
                     this.$el.find('.sectionHtml').html(html);
                     doMapView = true;
+                }
+                
+                if(galleries.length > 0) {
+                    
+                    for(var i in galleries) {
+                        var e = galleries[i];
+                        console.log(e);
+                        this.$el.find('.sectionHtml .'+e.className).on('click', function (event) {
+                            event.preventDefault();
+                            console.log(e.items)
+                            var $j = $('<span>'+e.items+'</span>');
+                            var items = [];
+                            $j.find('img').each(function(i,e){
+                                console.log(arguments)
+                                var $e = $(e);
+                                items.push({href: $e.attr('src'), title: $e.attr('alt')});
+                            })
+                            blueimp.Gallery(items, {useBootstrapModal: true});
+                        });
+                    };
+                    
                 }
                 
                 if(doFeedbackView) {
