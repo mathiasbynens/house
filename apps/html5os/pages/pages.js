@@ -36,7 +36,21 @@
             return this;
         },
         events: {
-            "click .toTop a": "gotoTop"
+            "click .toTop a": "gotoTop",
+            "click a": "clickA"
+        },
+        clickA: function(e) {
+            var href = $(e.currentTarget).attr('href');
+            if(href) {
+                if(href.substr(0,4) == 'http') {
+                    return true;
+                }
+                if(href.substr(0,1) == '/') {
+                    href = href.substr(1);
+                }
+                this.router.navigate(href, {trigger: true});
+            }
+            return false;
         },
         gotoTop: function() {
             $.scrollTo($('#home'),900);

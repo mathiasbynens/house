@@ -1877,6 +1877,9 @@ output=embed"></iframe>*/
                 }
                 if(data.image) {
                     var url = '/api/files/'+data.image.filename; //window.location.origin+
+                    if(data.image.sizes && data.image.sizes.full) {
+                        url = '/api/files/'+data.image.sizes.full.filename;
+                    }
                     self.$inputUrl.val(url);
                 }
             });
