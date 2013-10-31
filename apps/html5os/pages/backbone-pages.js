@@ -718,12 +718,11 @@
                 }
                 
                 // GALLERY
-                var procGallery = function(i) {
+                var procGallery = function(g) {
                     var gallerystropen = '[[gallery';
                     var iofgallery = html.indexOf(gallerystropen);
                     var iofgalleryend = html.indexOf(']]', iofgallery);
                     if(iofgallery !== -1) {
-                        //console.log('feedback form in section')
                         var gallery_options = {};
                         var galleryOpts = html.substring(iofgallery+gallerystropen.length+1, iofgalleryend);
                         galleryOpts = galleryOpts.split('|');
@@ -736,9 +735,12 @@
                             gallery_options[galleryOptName] = galleryOptVal;
                         }
                         html = html.substr(0, iofgallery+gallerystropen.length) + html.substr(iofgalleryend);
-                        console.log(gallery_options)
-                        gallery_options.className = 'gallery'+i;
-                        html = html.replace('[[gallery]]', $(gallery_options.a).addClass(gallery_options.className)[0].outerHTML);
+                        gallery_options.className = 'gallery'+g;
+                        var $g = $(gallery_options.a);
+                        if($g.length == 0) {
+                            $g = $('<span>'+gallery_options.a+'</span>');
+                        }
+                        html = html.replace('[[gallery]]', $g.addClass(gallery_options.className)[0].outerHTML);
                         
                         if($('#blueimp-gallery').length === 0) {
                             var galleryBox = '<div id="blueimp-gallery" class="blueimp-gallery">\n\
@@ -839,24 +841,18 @@
                 }
                 
                 if(galleries.length > 0) {
-                    
-                    for(var i in galleries) {
-                        var e = galleries[i];
-                        console.log(e);
-                        this.$el.find('.sectionHtml .'+e.className).on('click', function (event) {
+                    galleries.forEach(function(e, x){
+                        self.$el.find('.sectionHtml .'+e.className).on('click', function (event) {
                             event.preventDefault();
-                            console.log(e.items)
                             var $j = $('<span>'+e.items+'</span>');
                             var items = [];
                             $j.find('img').each(function(i,e){
-                                console.log(arguments)
                                 var $e = $(e);
                                 items.push({href: $e.attr('src'), title: $e.attr('alt')});
                             })
                             blueimp.Gallery(items, {useBootstrapModal: true});
                         });
-                    };
-                    
+                    });
                 }
                 
                 if(doFeedbackView) {
@@ -1977,6 +1973,7 @@ output=embed"></iframe>*/
             $('#'+this.wsyi_id+'-textarea').css('width', $('#'+this.wsyi_id+'-textarea').outerWidth());
             this.editor = new wysihtml5.Editor(this.wsyi_id+"-textarea", { // id of textarea element
               toolbar:      this.wsyi_id+"-toolbar", // id of toolbar element
+              //stylesheets: ['/pages/bootstrap.css', '/pages/index.css'],
               parserRules:  wysihtml5ParserRules // defined in parser rules set 
             });
             this.wysiImagePicker = new WysiImagePicker({el: this.$htmlToolbar.find('[data-wysihtml5-dialog="insertImage"]')[0], editor: this.editor});
