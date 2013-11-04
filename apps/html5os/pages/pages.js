@@ -74,7 +74,7 @@
                     }
                     var brandView = page.getBrandView({el: $brand[0]});
                     brandView.on('gohome', function(){
-                        self.router.navigate('/', true);
+                        self.router.navigate('', {trigger: true});
                     });
                     brandView.render();
                     
@@ -138,9 +138,11 @@
                         var $spy = $(this).scrollspy('refresh');
                     });
                     $('.navbar').on('activate.bs.scrollspy', function (e) {
-                        if(e.target) {
+                        if(e.target && e.target.dataset && e.target.dataset.id) {
                             var etid = e.target.dataset.id;
                             self.router.navigate(etid, {replace: false, trigger: false});
+                        } else {
+                            self.router.navigate('', {replace: false, trigger: false});
                         }
                     });
                     
