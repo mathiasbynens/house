@@ -1801,10 +1801,10 @@
             if(groups && groups !== this.model.get('groups')) {
                 setDoc.groups = groups;
             }
-            if(wistia && !_.isEqual(wistia.id, this.model.get('wistia').id)) {
+            if(wistia && (!this.model.get('wistia') || !_.isEqual(wistia.id, this.model.get('wistia').id))) {
                 setDoc.wistia = wistia;
             }
-            if(wistiaAudio && !_.isEqual(wistiaAudio.id, this.model.get('wistiaAudio').id)) {
+            if(wistiaAudio && (!this.model.get('wistiaAudio') || !_.isEqual(wistiaAudio.id, this.model.get('wistiaAudio').id))) {
                 setDoc.wistiaAudio = wistiaAudio;
             }
             if(youtube && !_.isEqual(youtube, this.model.get('youtube'))) {
