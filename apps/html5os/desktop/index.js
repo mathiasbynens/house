@@ -58,7 +58,7 @@
                                         
                                         require(['/clock/clock.js'], function(Clock){
                                             var clock = new Clock();
-                                            $('body').append(clock.render().$el);
+                                            $('.clock').append(clock.render().$el);
                                         });
                                         
                                         require(['/applications/applications.js'], function(apps){
