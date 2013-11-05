@@ -70,7 +70,6 @@
             var self = this;
             //var modalOpts = {};
             //modalOpts.backdrop = 'static';
-            console.log(options)
             this.$closeBtn = $('<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>');
             this.$modalHead = $('<div class="modal-header"><h4 class="modal-title" id="loginModalLabel"></h4>');
             this.$modalBody = $('<div class="modal-body"></div>');

@@ -34,7 +34,7 @@
             }
         }
     });
-    nav.router = new nav.Router;
+    nav.router = new nav.Router();
     nav.startRouter = function(root) {
         var historyOptions = {
             pushState: true,
@@ -54,9 +54,7 @@
             } else {
                 nav.router.navigate("", true);
             }
-        } else {
-            nav.router.navigate("", true);
-        }
+        } else {}
     };
     var NavItem = Backbone.Model.extend({
         initialize: function() {
