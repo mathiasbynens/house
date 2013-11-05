@@ -54,7 +54,9 @@
             } else {
                 nav.router.navigate("", true);
             }
-        } else {}
+        } else {
+            nav.router.navigate("", true);
+        }
     };
     var NavItem = Backbone.Model.extend({
         initialize: function() {

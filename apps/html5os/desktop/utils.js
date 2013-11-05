@@ -1,5 +1,11 @@
 (function(){
     
+    if (typeof console == "undefined") {
+        window.console = {
+            log: function () {}
+        };
+    }
+    
     var utils = {};
     
     utils.getNewModal = function(opts) {
@@ -262,6 +268,137 @@
             };
             process();
             return false;
+        }
+    });
+
+    utils.SelectGroupsInputView = Backbone.View.extend({
+        tagName: "div",
+        className: "groups",
+        initialize: function() {
+            this.fieldStr = this.options.fieldName || 'groups';
+            this.fieldName = this.options.fieldName || 'groups';
+            this.fieldSubName = false;
+            if(this.fieldName.indexOf('.') !== -1) {
+                this.fieldName = this.fieldName.substr(0, this.fieldName.indexOf('.'));
+                this.fieldSubName = this.fieldName.substr(this.fieldName.indexOf('.')+1);
+            }
+            //this.$options = $('<option value="public">public</option><option value="private">private</option>');
+            this.$options =  $('<div class="btn-group">\n\
+  <button type="button" class="privacy btn btn-default"><span class="glyphicon glyphicon-lock">Privacy</span></button>\n\
+  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">\n\
+    <span class="caret"></span>\n\
+  </button>\n\
+  <ul class="dropdown-menu" role="menu">\n\
+    <li><a href="#" class="private glyphicon glyphicon-lock">Private</a></li>\n\
+    <li><a href="#" class="public glyphicon glyphicon-globe">Public</a></li>\n\
+    <li class="divider"></li>\n\
+    <li><a href="#" class="addGroup">Other Group</a></li>\n\
+  </ul>\n\
+</div>');
+            if(this.model && this.model.has('groups')) {
+                this.value = this.model.get('groups');
+            }
+        },
+        getModelFieldVal: function() {
+            if(this.model && this.model.has(this.fieldName)) {
+                this.value = this.model.get(this.fieldName);
+                if(this.fieldSubName) {
+                    if(this.value.hasOwnProperty(this.fieldSubName)) {
+                        this.value = this.value[this.fieldSubName];
+                    } else {
+                    }
+                }
+            }
+        },
+        renderPrivate: function() {
+            var $span = this.$el.find('.privacy.btn span');
+            $span.html('Private');
+            $span.removeClass('glyphicon-globe');
+            $span.addClass('glyphicon-lock');
+        },
+        renderPublic: function() {
+            var $span = this.$el.find('.privacy.btn span');
+            $span.html('Public');
+            $span.removeClass('glyphicon-lock');
+            $span.addClass('glyphicon-globe');
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$options);
+            if(this.model && this.model.has(this.fieldName)) {
+                var fieldVal = this.model.get(this.fieldName);
+                if(this.fieldSubName) {
+                    fieldVal = fieldVal[this.fieldSubName];
+                }
+                if(fieldVal.indexOf('public') !== -1) {
+                    this.renderPublic();
+                }
+            } else if(!this.model.has(this.fieldName)) {
+                var fieldVal = this.model.get(this.fieldName);
+                if(fieldVal && (fieldVal.length == 0 || fieldVal.hasOwnProperty(this.fieldSubName) && fieldVal[this.fieldSubName].length == 0)) {
+                    this.renderPrivate();
+                } else {
+                    
+                }
+            } else {
+                var $span = this.$el.find('.privacy.btn span');
+                $span.removeClass('glyphicon-lock');
+                $span.removeClass('glyphicon-globe');
+                $span.html(this.model.get(this.fieldName));
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function() {
+            return this.value;
+        },
+        events: {
+            "click a.public": "clickPublic",
+            "click a.private": "clickPrivate",
+            "click a.addGroup": "addGroup"
+        },
+        addGroup: function(e) {
+            var g = prompt("Enter group name.");
+            if(g) {
+                this.value = [];
+                this.value.push(g);
+                var $span = this.$el.find('.privacy.btn span');
+                $span.html(g);
+                $span.removeClass('glyphicon-lock');
+                $span.removeClass('glyphicon-globe');
+                //this.trigger('changed', this.value);
+                this.saveVal();
+            }
+            e.preventDefault();
+        },
+        clickPublic: function(e) {
+            this.value = ['public'];
+            this.saveVal();
+            //this.renderPublic();
+            //this.trigger('changed', this.value);
+            e.preventDefault();
+        },
+        clickPrivate: function(e) {
+            this.value = [];
+            this.saveVal();
+            //this.renderPrivate();
+            //this.trigger('changed', this.value);
+            e.preventDefault();
+        },
+        saveVal: function() {
+            var setDoc = {
+            };
+            setDoc[this.fieldStr] = this.val();
+            self.model.set(setDoc, {silent: true});
+            var saveModel = self.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            if(saveModel) {
+                saveModel.done(function() {
+                    self.render();
+                });
+            }
         }
     });
 

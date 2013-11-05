@@ -693,7 +693,7 @@
                 var doGalleryView = false;
                 var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
-                    this.$el.append('<div class="sectionHtml container">'+this.model.get('html')+'</div>');
+                    this.$el.append('<div class="sectionHtml">'+this.model.get('html')+'</div>');
                 } else {
                     this.$el.find('.sectionHtml').html(html);
                 }
@@ -735,12 +735,12 @@
                             gallery_options[galleryOptName] = galleryOptVal;
                         }
                         html = html.substr(0, iofgallery+gallerystropen.length) + html.substr(iofgalleryend);
-                        gallery_options.className = 'gallery'+g;
+                        gallery_options.className = 'gallery_'+g;
                         var $g = $(gallery_options.a);
                         if($g.length == 0) {
                             $g = $('<span>'+gallery_options.a+'</span>');
                         }
-                        html = html.replace('[[gallery]]', $g.addClass(gallery_options.className)[0].outerHTML);
+                        html = html.replace('[[gallery]]', $g.addClass('gallery').addClass(gallery_options.className)[0].outerHTML);
                         
                         if($('#blueimp-gallery').length === 0) {
                             var galleryBox = '<div id="blueimp-gallery" class="blueimp-gallery">\n\
@@ -841,7 +841,7 @@
                 }
                 
                 if(galleries.length > 0) {
-                    galleries.forEach(function(e, x){
+                    _.each(galleries, function(e, x){
                         self.$el.find('.sectionHtml .'+e.className).on('click', function (event) {
                             event.preventDefault();
                             var $j = $('<span>'+e.items+'</span>');
@@ -912,9 +912,9 @@ output=embed"></iframe>*/
 
                     
                     if(mapOpts.embed && mapOpts.embed !== 'false') {
-                        this.$el.find('.sectionHtml .map').html('<iframe width="'+mapOpts.width+'" height="'+mapOpts.height+'" alt="Location: '+mapOpts.loc+'" src="https://www.google.com/maps?q='+locStr+'&amp;t=p&amp;iwloc=A&amp;iwloc=A&amp;output=embed&amp;z='+mapOpts.zoom+'&amp;hnear='+centerLocStr+'"></iframe>');
+                        this.$el.find('.sectionHtml .map').html('<iframe width="'+mapOpts.width+'" height="'+mapOpts.height+'" alt="Location: '+mapOpts.loc+'" src="//www.google.com/maps?q='+locStr+'&amp;t=p&amp;iwloc=A&amp;iwloc=A&amp;output=embed&amp;z='+mapOpts.zoom+'&amp;hnear='+centerLocStr+'"></iframe>');
                     } else {
-                        this.$el.find('.sectionHtml .map').html('<img width="100%" height="'+mapOpts.height+'" alt="Location: '+mapOpts.loc+'" src="http://maps.googleapis.com/maps/api/staticmap?center='+centerLocStr+'&zoom='+mapOpts.zoom+'&size='+mapOpts.width+'x'+mapOpts.height+'&sensor=false&visual_refresh=true&markers=size:normal%7Ccolor:'+mapOpts.markerLabelColor+'%7C'+locStr+'">');
+                        this.$el.find('.sectionHtml .map').html('<img width="100%" height="'+mapOpts.height+'" alt="Location: '+mapOpts.loc+'" src="//maps.googleapis.com/maps/api/staticmap?center='+centerLocStr+'&zoom='+mapOpts.zoom+'&size='+mapOpts.width+'x'+mapOpts.height+'&sensor=false&visual_refresh=true&markers=size:normal%7Ccolor:'+mapOpts.markerLabelColor+'%7C'+locStr+'">');
                     }
                 }
             }
