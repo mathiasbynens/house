@@ -21,7 +21,15 @@
             }
             callback(null, doc);
         });
-        this.collection.load();
+        var loc = window.location;
+        var myurl = loc.protocol + '//' + loc.hostname;
+        var crossDomain = (this.collection.url().indexOf(myurl) === 0) ? false : true;
+        if (crossDomain && !$.support.cors && window.XDomainRequest) { // IE8
+            self.model = new this.collection.model();
+            callback(null, self.model);
+        } else {
+            this.collection.load();
+        }
     };
     auth.prompt = function($el, options, callback) {
         var thisPrompt = this;
