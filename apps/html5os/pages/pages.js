@@ -42,6 +42,9 @@
         clickA: function(e) {
             var href = $(e.currentTarget).attr('href');
             if(href) {
+                if(href.substr(0,1) == '#') {
+                    return true;
+                }
                 if(href.substr(0,4) == 'http') {
                     return true;
                 }
@@ -129,10 +132,20 @@
                         listenToSection();
                         self.$el.find('.marketing').prepend(sectionListView.render().$el);
                     }
-                    
                     var routerStartPath = $('base[href]').attr('href') || "/pages/";
                     self.nav.startRouter(routerStartPath);
                     
+                    $('.navbar ul.nav > li > a').each(function(i,e){
+                        var h = $(e).attr('href');
+                        var pathI = h.indexOf(routerStartPath);
+                        if(pathI !== -1) {
+                            h = h.substr(pathI + routerStartPath.length);
+                        }
+                        if(!h) {
+                            h = 'home';
+                        }
+                        $(e).attr('href', '#'+h);
+                    });
                     $('.navbar').scrollspy();
                     $('[data-spy="scroll"]').each(function () {
                         var $spy = $(this).scrollspy('refresh');

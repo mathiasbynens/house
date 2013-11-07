@@ -146,11 +146,12 @@
         className: "navRow",
         render: function() {
             this.$el.attr('data-id', this.model.id);
-            var href = this.model.get('navigate') || 'home';
+            var href = this.model.get('navigate') || '';
             var $e = this.$el.find('> a');
+            var routerStartPath = $('base[href]').attr('href') || "/pages/";
             if($e.length > 0) {
             } else {
-                $e = $('<a href="#'+href+'" class="'+href+'"><span></span></a>'); // hash for scrollspy
+                $e = $('<a href="'+routerStartPath+href+'" class="'+href+'"><span></span></a>'); // hash for scrollspy
                 var $elSpan = $('');
                 this.$el.html($e);
             }
