@@ -531,8 +531,10 @@
             if(!d) {
                 this.$inner.append(rowEl);
             }
-            var $r = this['$r'+m.id] = $('<li data-target="#home" data-slide-to="'+this.modelSeq[m.id]+'"></li>');
-            this.$indicators.append($r);
+            if(this.$indicators.find('[data-slide-to="'+this.modelSeq[m.id]+'"]').length === 0) {
+                var $r = this['$r'+m.id] = $('<li data-target="#home" data-slide-to="'+this.modelSeq[m.id]+'"></li>');
+                this.$indicators.append($r);
+            }
         }
     });
     
@@ -1089,7 +1091,7 @@ output=embed"></iframe>*/
             if($e.length > 0) {
                 
             } else {
-                $e = $('<div class="container"><div class="carousel-caption"><h1></h1><p class="caption"></p><p><a class="btn btn-large btn-default" href="#">See more</a></p></div></div>');
+                $e = $('<div class="container"><div class="carousel-caption"><h1></h1><span class="caption"></span><p><a class="btn btn-large btn-default" href="#">See more</a></p></div></div>');
                 this.$el.append($e);
             }
             if(this.$el.find('img[src="/api/files/'+src+'"]').length == 0) {

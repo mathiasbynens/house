@@ -144,7 +144,10 @@
                         if(!h) {
                             h = 'home';
                         }
-                        $(e).attr('href', '#'+h);
+                        if(h.substr(0,1) !== '#') {
+                            h = '#'+h;
+                        }
+                        $(e).attr('href', h);
                     });
                     $('.navbar').scrollspy();
                     $('[data-spy="scroll"]').each(function () {
