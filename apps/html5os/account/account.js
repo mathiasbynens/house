@@ -191,7 +191,7 @@
     auth.collection = new auth.Collection;
     auth.ConnectForm = Backbone.View.extend({
         tagName: "div",
-        className: "connections container text-center",
+        className: "connections text-center",
         initialize: function(options) {
             var self = this;
             this.ui = {
