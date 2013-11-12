@@ -24,7 +24,7 @@
         var loc = window.location;
         var myurl = loc.protocol + '//' + loc.hostname;
         var crossDomain = (this.collection.url().indexOf(myurl) === 0) ? false : true;
-        if (crossDomain && !$.support.cors && window.XDomainRequest) { // IE8
+        if (crossDomain && !$.support.cors) { // IE8 & anyone who can't support CORS => http://caniuse.com/cors
             self.model = new this.collection.model();
             callback(null, self.model);
         } else {
