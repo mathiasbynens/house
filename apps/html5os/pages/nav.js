@@ -181,7 +181,8 @@
                 }
                 for(var s in sub) {
                     var subName = sub[s];
-                    $ul.append('<li><a href="#">'+subName+'</a></li>');
+                    var subPath = subName.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
+                    $ul.append('<li><a href="'+routerStartPath+href+'/'+subPath+'">'+subName+'</a></li>');
                 }
                 this.$el.append($ul);
             }
