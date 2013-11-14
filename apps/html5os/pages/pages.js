@@ -199,6 +199,12 @@
                 //nav.col.add({title:"New", navigate:"new"});
             }
             this.nav.list.on('selectedSub', function(nav, sub){
+                var title = sub;
+                if(nav.model.has("title")) {
+                    title = title + ' - ' + nav.model.get("title");
+                }
+                title = title + ' - ' + self.pageSelected.getTitleTxt();
+                self.router.setTitle(title);
                 var options = {};
                 options.offset = -100; //if($(window).width()>700) 
                 var elStr = 'h3#'+sub.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
@@ -265,7 +271,7 @@
                 routerReset();
                 self.pageSelected.findSectionById(sectionId, function(doc){
                     if(doc) {
-                        router.setTitle(doc.get('name'));
+                        router.setTitle(doc.get('name') + ' - ' + self.pageSelected.getTitleTxt());
                         //var docEl = doc.getFullView({list: self.listView}).render().$el;
                     } else {
                         //router.navigate('new', {replace: true, trigger: true});
