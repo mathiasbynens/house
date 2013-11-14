@@ -1920,6 +1920,9 @@ output=embed"></iframe>*/
                         url = '/api/files/'+data.image.sizes.full.filename;
                     }
                     self.$inputUrl.val(url);
+                    
+                    self.options.editor.composer.commands.exec("insertHTML", '<img src="'+url+'" alt="" />');
+                    self.$el.hide();
                 }
             });
         },
@@ -2012,16 +2015,23 @@ output=embed"></iframe>*/
         },
         wysiEditor: function() {
             // set h/w of textarea
+            
+            var stylesheets = [];
+            $('link[rel="stylesheet"]').each(function(i,e){
+                console.log(e);
+                stylesheets.push($(e).attr('href'));
+            });
+            
             $('#'+this.wsyi_id+'-textarea').css('height', $('#'+this.wsyi_id+'-textarea').outerHeight());
             $('#'+this.wsyi_id+'-textarea').css('width', $('#'+this.wsyi_id+'-textarea').outerWidth());
             this.editor = new wysihtml5.Editor(this.wsyi_id+"-textarea", { // id of textarea element
               toolbar:      this.wsyi_id+"-toolbar", // id of toolbar element
-              //stylesheets: ['/pages/bootstrap.css', '/pages/index.css'],
+              stylesheets: stylesheets, // ['/pages/css/bootstrap.min.css', '/pages/index.css'],
               parserRules:  wysihtml5ParserRules // defined in parser rules set 
             });
             this.wysiImagePicker = new WysiImagePicker({el: this.$htmlToolbar.find('[data-wysihtml5-dialog="insertImage"]')[0], editor: this.editor});
             this.wysiImagePicker.render();
-            $(this.editor.composer.iframe.contentDocument).find('head').append($('head style').clone());
+            //$(this.editor.composer.iframe.contentDocument).find('head').append($('head style').clone());
         },
         events: {
             "submit form": "submit",

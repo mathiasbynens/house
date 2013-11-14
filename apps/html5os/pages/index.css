@@ -467,7 +467,7 @@ form#houseAuth input[type="submit"] {
     width: 660px;
     height: 100px;
 }
-.uploadFrame .copy, .uploadFrame .fileForm, .uploadFrame .uploadFileList {
+.uploadFrame .copy, .uploadFrame .fileForm {
     display: none;
 }
 .navbar .attach, .navbar .publish {
