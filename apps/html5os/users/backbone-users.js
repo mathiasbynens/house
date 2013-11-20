@@ -715,17 +715,16 @@
     var AvatarNameView = Backbone.View.extend({
         tagName: "span",
         className: "avatarName",
+        initialize: function() {
+            this.$span = $('<span class="userAvatarName"><img class="avatar" /><span class="name"></span></span>');
+            this.$img = this.$span.find('img');
+            this.$span.append(this.$img);
+        },
         render: function() {
             var self = this;
             this.$el.append(this.$span);
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            this.$span = $('<span></span>');
-            this.$img = $('<img class="avatar" />');
-            this.$span.append(this.$img);
-            this.$span.append(this.model.get('name'));
+            this.$span.find('.name').html(this.model.get('name'));
+            this.$img.attr('title', this.model.get('name'));
             if (this.model.has("avatar")) {
                 var src = this.model.get("avatar");
                 if (src.indexOf("http") === 0) {} else {
@@ -733,6 +732,8 @@
                 }
                 this.$img.attr('src', src);
             }
+            this.setElement(this.$el);
+            return this;
         },
         events: {
             click: "goToProfile"
@@ -926,7 +927,9 @@
                         $msg.append(' <a class="editEmail" title="Edit email address" href="#">edit email</a>');
                     }
                     
-                    self.$el.append('<a class="editPass" title="Edit user password" href="#">change password</a><br />');
+                    if(account.isOwner(self.model.id)) {
+                        self.$el.append('<a class="editPass" title="Edit user password" href="#">change password</a><br />');
+                    }
                     
                     
                     self.$el.append($byline);
