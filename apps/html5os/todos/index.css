@@ -63,7 +63,7 @@ input:checked {
     outline: none;
 }
 .todos .row .title {
-    top: 13px;
+    top: 10px;
     right: 0px;
     overflow: hidden;
 }
@@ -173,6 +173,9 @@ ul.todos[data-filter-list-id] .listRef {
 }
 .list-filters, .list-pager {
     padding: 8px;
+}
+#header h1 {
+    margin: 0 0;
 }
 .app button.focusForm {
     position: fixed;

@@ -1077,6 +1077,27 @@
             });
             this.views = {};
         },
+        isJs: function() {
+            if(this.get('filename').substr(-3) == '.js') {
+                return true;
+            }
+            return false;
+        },
+        isCss: function() {
+            if(this.get('filename').substr(-4) == '.css') {
+                return true;
+            }
+            return false;
+        },
+        isHtm: function() {
+            return this.isHtml();
+        },
+        isHtml: function() {
+            if(this.get('filename').substr(-4) == '.htm' || this.get('filename').substr(-5) == '.html' ) {
+                return true;
+            }
+            return false;
+        },
         getFileName: function(options) {
             options = options || {};
             options.model = this;
@@ -1304,7 +1325,7 @@
             var self = this;
             this.$el.html('');
             console.log(this.model);
-            this.$el.append('<controls><button class="save">save</button></controls>');
+            this.$el.append('<controls><button class="save">save</button> <button class="cleanup">cleanup</button></controls>');
             if(this.model.has('filename')) {
             if(this.model.has('data')) {
                 this.$el.append('<div id="'+this.model.get('filename')+'" class="data" title="'+this.model.get('filename')+'"></div>');
@@ -1336,6 +1357,12 @@
             var self = this;
             if(this.notText) return;
             console.log('renderAce')
+            require(['js-beautify/beautify.js'], function(js_beautify){
+            window.js_beautify = js_beautify;
+            require(['js-beautify/beautify-css.js'], function(css_beautify){
+            window.css_beautify = css_beautify.css_beautify;
+            require(['js-beautify/beautify-html.js'], function(html_beautify){
+            window.html_beautify = html_beautify.html_beautify;
             require(['ace/ace'], function(){
                 self.editor = ace.edit(self.model.get('filename'));
                 self.editor.getSession().setTabSize(4);
@@ -1358,9 +1385,9 @@
                 
                 console.log("self.model");
                 console.log(self.model);
-                if(self.model.get('filename').substr(-4) == '.css') {
+                if(self.model.isCss()) {
                     self.editor.getSession().setMode("ace/mode/css");
-                } else if(self.model.get('filename').substr(-5) == '.html') {
+                } else if(self.model.isHtml()) {
                     self.editor.getSession().setMode("ace/mode/html");
                 } else {
                     self.editor.getSession().setMode("ace/mode/javascript");
@@ -1409,10 +1436,14 @@
                     // TODO autosaving
                 });
             });
+            });
+            });
+            });
         },
         events: {
           "click": "select"
           , "click button.save": "saveDoc"
+          , "click button.cleanup": "cleanupDoc"
         },
         saveDoc: function() {
             var self = this;
@@ -1426,6 +1457,28 @@
                 self.$el.find('.save').attr('disabled', 'disabled');
                 self.editor.dirty = false;
             });
+        },
+        cleanupDoc: function() {
+            var self = this;
+            var v = this.editor.getValue();
+            var cleanVal = '';
+            var p = this.editor.getCursorPositionScreen();
+            var firstRow = this.editor.getFirstVisibleRow();
+            if(self.model.isJs()) {
+                cleanVal = js_beautify(v);
+            } else if(self.model.isCss()) {
+                cleanVal = css_beautify(v);
+            } else if(self.model.isHtml()) {
+                cleanVal = html_beautify(v);
+            } else {
+                cleanVal = v;
+            }
+            
+            this.editor.setValue(cleanVal, -1);
+            this.editor.gotoLine(firstRow);
+            this.editor.moveCursorToPosition(p);
+            
+            return false;
         },
         select: function(e) {
             var deselectSiblings = function(el) {
