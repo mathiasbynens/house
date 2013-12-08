@@ -19,7 +19,7 @@
                     'pages',
                     //'posts',
                     'todos',
-                    'urls',
+                    //'urls',
                     'users',
                     'vault',
                     'wallpaper'];
@@ -33,6 +33,7 @@
             "static": {
                 "send": {
                     "publicFolder": __dirname + "/"+a
+                    //, "cachedHtml": process.cwd() + "/cache"
                     , "otherwise": 'index.html'
                 }
             }
@@ -42,6 +43,13 @@
     routes.push({"posts": {"static": {
         "send": {
             "publicFolder": __dirname + "/posts"
+            , "cachedHtml": process.cwd() + "/cache"
+            , "otherwise": 'index.html'
+        }
+    }}});
+    routes.push({"urls": {"static": {
+        "send": {
+            "publicFolder": __dirname + "/urls"
             , "cachedHtml": process.cwd() + "/cache"
             , "otherwise": 'index.html'
         }

@@ -1,3 +1,139 @@
+html,
+body {
+  height: 100%;
+  /* The html and body elements cannot have any padding or margin. */
+}
+/* Wrapper for page content to push down footer */
+body > .app {
+  min-height: 100%;
+  height: auto;
+  /* Negative indent footer by its height */
+  margin: 0 auto -216px;
+  /* Pad bottom by footer height */
+  padding: 0 0 60px;
+}
+@media (min-width: 768px) {
+    .navbar-form .form-group {
+        width: 500px;
+    }
+}
+/* Set the fixed height of the footer here */
+div.urlsWidget {
+    overflow: hidden;
+    background: rgba(41, 41, 41, 0.85);
+}
+.clock {
+    text-align: right;
+    line-height: 50px;
+    font-size: 16px;
+    color: #AAAAAA;
+}
+.homeBtn {
+    display: none;
+}
+.wallpaper {
+    z-index: -1;
+}
+#siteNav.navbar-right {
+    float: left !important;
+}
+.pages {
+    display: none;
+}
+
+div.urlsList {
+    overflow: auto;
+}
+.urlsList > span.avatar {
+    cursor: pointer;
+    height: 32px;
+    padding: 0px 0px 0px 22px;
+    border: 1px outset rgba(129, 129, 129, 0);
+    font-size: 11px;
+    overflow: hidden;
+    box-shadow: 0px 0px 2px rgb(102, 102, 102);
+}
+.urlsList > span.avatar a {
+    color: rgb(160, 160, 160);
+}
+.urlsList > span.avatar a:hover {
+    color: white;
+}
+.urlsList > span.avatar:hover {
+    border: 1px solid grey;
+}
+.urlsList > span.avatar span.avatar {
+    display: none;
+}
+.urlsList > span.avatar span.avatar img {
+    max-width: 100%;
+}
+.urlsList > span.avatar .title {
+    z-index: 9;
+    padding-right: 4px;
+}
+.faviconfile {
+    max-height: 32px;
+}
+.urlsList > span.avatar a .url, .urlsList > span.avatar .title {
+    height: 30px;
+    line-height: 30px;
+}
+.urlsList > span.avatar .faviconfile {
+    position: absolute;
+    top: 6px;
+    bottom: 0;
+    left: 2px;
+    right: 0;
+    text-align: center;
+    max-width: 16px;
+}
+/*
+div.urlsList {
+    width: 777px;
+    overflow: auto;
+    margin: 0 auto;
+}
+.urlsList > span.avatar {
+    display: block;
+    float: left;
+    width: 178px;
+    height: 200px;
+    padding: 8px;
+    border: 1px outset rgb(255,255,255);
+    font-size: 11px;
+    overflow: hidden;
+    position: relative;
+    margin: 8px;
+    border-radius: 2px;
+    box-shadow: 0px 0px 2px rgb(102, 102, 102);
+    background: rgb(255,255,255);
+}
+.urlsList > span.avatar span.avatar img {
+    max-width: 100%;
+}
+.urlsList > span.avatar .title {
+    height: 22px;
+    z-index: 9;
+    line-height: 22px;
+    background: white;
+}
+.faviconfile {
+    max-height: 32px;
+}
+.urlsList > span.avatar span.url a {
+    height: 22px;
+    line-height: 22px;
+    display: block;
+}
+.urlsList > span.avatar span.url, .urlsList > span.avatar .title {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+*/
 .nav>li>a {
 }
 #accountNav {

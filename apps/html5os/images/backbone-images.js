@@ -1102,12 +1102,25 @@
     var ImageAvatar = Backbone.View.extend({
         tagName: "span",
         className: "avatar",
+        size: 'thumb',
+        initialize: function(options) {
+            if(options.list) {
+                this.list = options.list;
+            }
+            if(options.size) {
+                this.size = options.size;
+            }
+            if(this.model) {
+                this.model.bind('change', this.render, this);
+                this.model.bind('destroy', this.remove, this);
+            }
+        },
         render: function() {
             var imageThumbSrc = this.model.get('filename');
-            if(this.model.has('sizes')) {
+            if(this.size && this.model.has('sizes')) {
                 var sizes = this.model.get('sizes');
                 for(var sizeName in sizes) {
-                    if(sizeName == 'thumb') {
+                    if(sizeName == this.size) {
                         var size = sizes[sizeName];
                         imageThumbSrc = size.filename;
                     }
@@ -1119,16 +1132,6 @@
             this.$el.attr('data-id', this.model.get("id"));
             this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
             return this;
-        },
-        initialize: function(options) {
-            if(options.list) {
-                this.list = options.list;
-            }
-            
-            if(this.model) {
-                this.model.bind('change', this.render, this);
-                this.model.bind('destroy', this.remove, this);
-            }
         },
         events: {
           "click": "select"

@@ -1,6 +1,6 @@
 {
   "name": "house",
-  "version": "0.0.46258",
+  "version": "0.0.46259",
   "dependencies": {
     "optimist": "latest",
     "formidable-plus": "latest",
@@ -22,7 +22,8 @@
     "feedparser": "latest",
     "mkdirp": "latest",
     "string": "latest",
-    "node-ga-plus": "latest"
+    "node-ga-plus": "latest",
+    "hashids": "latest"
   },
   "devDependencies": {
     "mocha": "*"

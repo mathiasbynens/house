@@ -715,8 +715,12 @@
     var AvatarNameView = Backbone.View.extend({
         tagName: "span",
         className: "avatarName",
-        initialize: function() {
-            this.$span = $('<span class="userAvatarName"><img class="avatar" /><span class="name"></span></span>');
+        initialize: function(options) {
+            var defaultImg = '';
+            if(options.defaultImg) {
+                defaultImg = options.defaultImg;
+            }
+            this.$span = $('<span class="userAvatarName"><img class="avatar" src="'+defaultImg+'" /><span class="name"></span></span>');
             this.$img = this.$span.find('img');
             this.$span.append(this.$img);
         },

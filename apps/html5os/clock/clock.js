@@ -5,9 +5,13 @@
     var ClockView = Backbone.View.extend({
         tag: 'span',
         className: 'app',
-        initialize: function() {
+        formatStr: 'MMMM Do YYYY, h:mm:ss a',
+        initialize: function(options) {
             var self = this;
             self.init = false;
+            if(options && options.format) {
+                this.formatStr = options.format;
+            }
             require(['/clock/moment.js'], function() {
                 self.init = true;
                 self.trigger('init');
@@ -26,7 +30,7 @@
                 });
                 return this;
             }
-            this.$clock.html(moment().format('MMMM Do YYYY, h:mm:ss a'));
+            this.$clock.html(moment().format(this.formatStr));
             return this;
         },
         events: {

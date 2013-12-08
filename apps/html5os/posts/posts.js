@@ -77,8 +77,74 @@
         },
         carouselDoc: function(doc) {
             var self = this;
+            $('head [property="fb:page_id"]').remove();
+            var baseHref = $('head [rel="canonical"]').attr('data-href');
+            if(!baseHref) {
+                baseHref = window.location.host || window.location.hostname;
+                baseHref = window.location.protocol+'//'+baseHref+'/';
+            }
+            $('head [name="twitter:domain"]').attr('content', baseHref);
+            var apiFilePath = baseHref+'api/files/';
+            $('head [rel="canonical"]').attr('href', baseHref+'posts/'+doc.getNavigatePath());
+            $('head [name="twitter:url"]').attr('content', baseHref+'posts/'+doc.getNavigatePath());
+            
+            $('head [property="og:type"]').attr('content', 'article');
+            $('head [name="twitter:card"]').attr('content', 'photo');
             if(doc.has('title')) {
                 self.router.setTitle(doc.get('title'));
+                $('head [property="og:title"]').attr('content', doc.get('title'));
+                $('head [name="twitter:title"]').attr('content', doc.get('title'));
+            }
+            if(doc.has('msg')) {
+                var msgText = doc.get('msg');
+                msgText = $('<span>'+msgText+'</span>').text();
+                if(msgText.length > 300) {
+                    msgText = msgText.substr(0,295);
+                    var si = msgText.lastIndexOf(' ');
+                    msgText = msgText.substr(0,si)+'...';
+                }
+                $('head [property="og:description"]').attr('content', msgText);
+            }
+            if(doc.has('audio')) {
+                var media = doc.get('audio');
+                $('head [property="og:audio"]').remove();
+                var $ogVideo = $('<meta property="og:audio" content="'+apiFilePath+media.filename+'">');
+                //$('head').append($ogVideo); // tmp commented out
+                //$('head [property="og:type"]').attr('content', 'audio');
+            }
+            if(doc.has('youtube')) {
+                var youtube = doc.get('youtube');
+                if(youtube.id) {
+                    var ythumb = 'http://i.ytimg.com/vi/'+youtube.id+'/hqdefault.jpg';
+                    // console.log('update og tag');
+                    $('head [property="og:image"]').attr('content', ythumb);
+                    $('head [name="twitter:image"]').attr('content', ythumb);
+                    
+                    $('head [property="og:video"]').remove();
+                    var $ogVideo = $('<meta property="og:video" content="http://www.youtube.com/v/'+youtube.id+'">');
+                    //$('head').append($ogVideo);
+                }
+                //$('head [property="og:type"]').attr('content', 'video');
+            }
+            if(doc.has('avatar')) {
+                var image = doc.get('avatar');
+                var ogImage = apiFilePath+image.filename;
+                // console.log('update og:image with post avatar');
+                $('head [property="og:image"]').attr('content', ogImage);
+                $('head [name="twitter:image"]').attr('content', ogImage);
+            }
+            
+            if(doc.get('wistia')) {
+                var w = doc.get('wistia');
+                if(w.thumbnail && w.thumbnail.url) {
+                    var ogImage = w.thumbnail.url;
+                    var queryPos = ogImage.indexOf('?');
+                    if(queryPos !== -1) {
+                        ogImage = ogImage.substr(0, queryPos); // strip query
+                    }
+                    $('head [property="og:image"]').attr('content', ogImage);
+                    $('head [name="twitter:image"]').attr('content', ogImage);
+                }
             }
             var $el = doc.getFullView({list: self.listView}).render().$el;
             self.$postViewer.append($el);
