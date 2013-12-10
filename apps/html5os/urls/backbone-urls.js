@@ -783,7 +783,8 @@
                 self.renderPagination();
                 return;
             }
-
+            var re = q;
+            q = re.replace(/\?/gi, '\\?');
             var regex = new RegExp(q, 'i');
             this.collection.search(q, function() {
                 self.searchResults = self.collection.filter(function(e) {
@@ -1132,6 +1133,8 @@
                     wait: true
                 });
             }
+            $(e.currentTarget).dropdown('toggle');
+            e.stopPropagation();
             e.preventDefault();
         },
     });
@@ -1703,7 +1706,7 @@
             var iframe = '';
             if (this.model.has('image')) {
                 if (!this.hasOwnProperty('imageView')) {
-                    self.imageView = new ImagesBackbone.Model(self.model.get('image')).getAvatar();
+                    self.imageView = new ImagesBackbone.Model(self.model.get('image')).getAvatar({size: 'full'});
                 }
                 /*var popOpts = {
                     "trigger": "hover",
@@ -1732,7 +1735,12 @@
                     iframe = '<img src="/api/files/' + this.model.get('image').filename + '">';
                 }
             } else {
-                iframe = '<iframe id="frame" class="frame" style="width:100%; height:100%; margin:0; padding:0; border: 0px;" src="' + this.model.get('url') + '">' + placeHolder + '</iframe>';
+                // check if this url is known to have a header X-Frame-Options: SAMEORIGIN
+                if(this.model.has('file') && this.model.get('file') && this.model.get('file').metadata && this.model.get('file').metadata.responseHeaders && this.model.get('file').metadata.responseHeaders.hasOwnProperty('X-Frame-Options') && this.model.get('file').metadata.responseHeaders['X-Frame-Options'] === 'SAMEORIGIN') {
+                    iframe = placeHolder[0].innerHTML;
+                } else {
+                    iframe = '<iframe id="frame" class="frame" style="width:100%; height:100%; margin:0; padding:0; border: 0px;" src="' + this.model.get('url') + '"> </iframe>';
+                }
             }
             ///desktop/jquery.fitvids.js
             if (this.options.iframe) {

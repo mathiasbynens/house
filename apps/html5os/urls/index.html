@@ -60,7 +60,7 @@
                 
                 <div class="nav navbar-nav bookmark">
                     <p class="msg">Drag the link to your bookmarks bar.</p>
-                    <a onmouseover="$(this).attr('href', $('#bookmarklet_js').html().replace(/\n/gi, '').trim());" style="cursor pointer" title="Bookmark to House" href='#'>✚ House</a>
+                    <a onmouseover="$(this).attr('href', $('#bookmarklet_js').html().replace(/\n/gi, '').replace(/HOSTNAME/g, window.location.hostname).trim());" style="cursor pointer" title="Bookmark to House" href='#'>✚ House</a>
                 </div>
                 
                 <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
@@ -106,7 +106,7 @@
                         if (r) {
                             return
                         }
-                        var i = "https://jeffshouse.com/urls/save/",
+                        var i = "https://HOSTNAME/urls/save/",
                             s = n.createElement("iframe");
                         s.id = t;
                         s.src = i + "" + encodeURIComponent(e.location.href);
