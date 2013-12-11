@@ -221,31 +221,78 @@
             if(!baseHref) {
                 baseHref = window.location.host || window.location.hostname;
                 //baseHref = window.location.protocol+'//'+baseHref+'/';
-                baseHref = 'https://'+baseHref+'/';
+                baseHref = 'http://'+baseHref+'/';
             }
             $('head [name="twitter:domain"]').attr('content', baseHref);
             var apiFilePath = baseHref+'api/files/';
-            $('head [rel="canonical"]').attr('href', doc.getShareUrl());
-            $('head [name="twitter:url"]').attr('content', doc.getShareUrl());
+            var fullShareUrl = doc.getShareUrl();
+            $('head [rel="canonical"]').attr('href', fullShareUrl);
+            $('head [name="twitter:url"]').attr('content', fullShareUrl);
+            $('head meta[property="og:url"]').attr('content', fullShareUrl);
             
             $('head [property="og:type"]').attr('content', 'article');
             $('head [name="twitter:card"]').attr('content', 'photo');
+            var title = '';
             if(doc.has('title')) {
-                self.router.setTitle(doc.get('title'));
-                $('head [property="og:title"]').attr('content', doc.get('title'));
-                $('head [name="twitter:title"]').attr('content', doc.get('title'));
+                title = doc.get('title');
+            } else {
+                title = 'URL: '+doc.get('url');
+            }
+            self.router.setTitle(title);
+            $('head [property="og:title"]').attr('content', title);
+            $('head [name="twitter:title"]').attr('content', title);
+            
+            var desc = '';
+            if(doc.has('desc')) {
+                //self.router.setTitle(doc.get('title'));
+                desc = doc.get('desc');
+                $('head meta[property="og:description"]').attr('content', desc);
+                $('head meta[name="twitter:description"]').attr('content', desc);
+                $('head meta[name="description"]').attr('content', desc);
             }
             
-            if(doc.has('image')) {
-                var imageDoc = doc.get('image');
+            if(doc.has('ogImage')) {
+                var imageDoc = doc.get('ogImage');
                 console.log(imageDoc);
                 var ogImage = apiFilePath+imageDoc.filename;
-                if(imageDoc.sizes && imageDoc.sizes.thumb) {
-                    ogImage = apiFilePath+imageDoc.sizes.thumb.filename;
+                if(imageDoc.sizes && imageDoc.sizes.full) {
+                    ogImage = apiFilePath+imageDoc.sizes.full.filename;
                 }
                 // console.log('update og:image with post avatar');
                 $('head [property="og:image"]').attr('content', ogImage);
                 $('head [name="twitter:image"]').attr('content', ogImage);
+            } else if(doc.has('image')) {
+                var imageDoc = doc.get('image');
+                console.log(imageDoc);
+                var ogImage = apiFilePath+imageDoc.filename;
+                if(imageDoc.sizes && imageDoc.sizes.full) {
+                    ogImage = apiFilePath+imageDoc.sizes.full.filename;
+                }
+                // console.log('update og:image with post avatar');
+                $('head [property="og:image"]').attr('content', ogImage);
+                $('head [name="twitter:image"]').attr('content', ogImage);
+            }
+            
+            if(window.config && config.fb) {
+                if(config.fb.page_id) {
+                    $('head meta[property="fb:page_id"]').remove();
+                    $('head').append('<meta property="fb:page_id" content="'+config.fb.page_id+'" />');
+                }
+                if(config.fb.app_id) {
+                    $('head meta[property="fb:app_id"]').remove();
+                    $('head').append('<meta property="fb:app_id" content="'+config.fb.app_id+'" />');
+                }
+                if(config.fb.admins) {
+                    $('head meta[property="fb:admins"]').remove();
+                    var adminsArr = config.fb.admins.split(',');
+                    for(var i in adminsArr) {
+                        var admin_id = adminsArr[i].trim();
+                        $('head').append('<meta property="fb:admins" content="'+admin_id+'" />');
+                    }
+                }
+            }
+            if(!$('head meta[property="fb:app_id"]').attr('content')) {
+                $('head meta[property="fb:app_id"]').remove();
             }
             
             var matches = doc.get('url').match(/(youtu\.be\/|youtube\.com\/(watch\?(.*&)?v=|(embed|v)\/))([^\?&"'>]+)/);
