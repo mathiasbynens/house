@@ -1,6 +1,6 @@
 {
   "name": "house",
-  "version": "0.0.46261",
+  "version": "0.0.46262",
   "dependencies": {
     "optimist": "latest",
     "formidable-plus": "latest",
