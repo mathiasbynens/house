@@ -155,11 +155,16 @@
                                     self.searchView.trigger('searchComplete');
                                 });
                             });
-                            self.listView.on('share', function(url){
-                                self.nav.router.navigate(url.getSharePath(), {trigger: true});
+                            self.listView.on('share', function(urlModel){
+                                var gotoUrl = urlModel.getShareUrl();
+                                if(gotoUrl.indexOf(window.location.protocol) === -1) {
+                                    window.location = gotoUrl;
+                                } else {
+                                    self.nav.router.navigate(urlModel.getSharePath(), {trigger: true});
+                                }
                             });
-                            self.listView.on('detail', function(url){
-                                self.nav.router.navigate(url.getSharePath(), {trigger: true});
+                            self.listView.on('detail', function(urlModel){
+                                self.nav.router.navigate(urlModel.getNavigatePath(), {trigger: true});
                             });
                             if(window.account) {
                                 window.account.on('loggedIn', function(loginView){
@@ -211,15 +216,17 @@
         renderMetaTagsForDoc: function(doc) {
             var self = this;
             $('head [property="fb:page_id"]').remove();
-            var baseHref = $('head [rel="canonical"]').attr('data-href');
+            //var baseHref = $('head [rel="canonical"]').attr('data-href');
+            var baseHref = '';
             if(!baseHref) {
                 baseHref = window.location.host || window.location.hostname;
-                baseHref = window.location.protocol+'//'+baseHref+'/';
+                //baseHref = window.location.protocol+'//'+baseHref+'/';
+                baseHref = 'https://'+baseHref+'/';
             }
             $('head [name="twitter:domain"]').attr('content', baseHref);
             var apiFilePath = baseHref+'api/files/';
-            $('head [rel="canonical"]').attr('href', baseHref+'urls/'+doc.getSharePath());
-            $('head [name="twitter:url"]').attr('content', baseHref+'urls/'+doc.getSharePath());
+            $('head [rel="canonical"]').attr('href', doc.getShareUrl());
+            $('head [name="twitter:url"]').attr('content', doc.getShareUrl());
             
             $('head [property="og:type"]').attr('content', 'article');
             $('head [name="twitter:card"]').attr('content', 'photo');

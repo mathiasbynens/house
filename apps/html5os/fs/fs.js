@@ -155,11 +155,13 @@
                     if(!file) {
                         file = new window.FsBackbone.FileModel(model);
                         window.fsFilesOpenCollection.add(file);
+                        file.getFileName().selected();
                         list.remove();
                         self.$fileViewer.append(file.getFullView().render().$el);
                         file.getFullView().renderAce();
                     } else {
                         file.getFullView().$el.show();
+                        file.getFileName().selected();
                         //file.getFullView().editor.resize();
                     }
                     self.router.navigate(file.get('filename'), {trigger: false, replace: true});

@@ -60,7 +60,7 @@
                 
                 <div class="nav navbar-nav bookmark">
                     <p class="msg">Drag the link to your bookmarks bar.</p>
-                    <a onmouseover="$(this).attr('href', $('#bookmarklet_js').html().replace(/\n/gi, '').replace(/HOSTNAME/g, window.location.hostname).trim());" style="cursor pointer" title="Bookmark to House" href='#'>✚ House</a>
+                    <a onmouseover="$(this).attr('href', $('#bookmarklet_js').html().replace(/\n/gi, '').replace(/HOSTNAME/g, window.location.hostname).trim());" style="cursor pointer" title="Bookmarklet" href='#'>✚ Bookmark</a>
                 </div>
                 
                 <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
@@ -137,8 +137,8 @@
             </div>
         </div>
         <div id="welcome"></div>
-        <!--<script type="text/javascript" src="/desktop/require.js"></script>-->
-        <script type="text/javascript" src="/require.js?/urls/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/files/backbone-files.js/analytics/backbone-actions.js/js/config.js/desktop/jquery.scrollTo.min.js/pages/bootstrap.js/clock/clock.js/clock/moment.js/urls/urls.js/images/backbone-images.js/urls/backbone-urls.js"></script>
+        <script type="text/javascript" src="/desktop/require.js"></script>
+        <!--<script type="text/javascript" src="/require.js?/urls/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/files/backbone-files.js/analytics/backbone-actions.js/js/config.js/desktop/jquery.scrollTo.min.js/pages/bootstrap.js/clock/clock.js/clock/moment.js/urls/urls.js/images/backbone-images.js/urls/backbone-urls.js"></script>-->
         <script type="text/javascript">
         //require.config({baseUrl: '/'});
         require(['/urls/index.js'], function(desktop){

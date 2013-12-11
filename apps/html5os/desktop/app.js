@@ -96,10 +96,10 @@
                 this.topUrlsCollection.getView({rowOptions: {className: "avatar col-xs-1"}}).setLayout('avatar', false);
                 this.topUrlsCollection.view.on('selected', function(urlAvatarView){
                     console.log(urlAvatarView)
-                    
-                    
                 });
-                this.topUrlsCollection.load(null, function() {});
+                this.topUrlsCollection.load(null, function() {
+                    //self.topUrlsCollection.sort();
+                });
             }
             this.$el.prepend(this.topUrlsCollection.getView().render().$el.addClass('urlsWidget'));
             

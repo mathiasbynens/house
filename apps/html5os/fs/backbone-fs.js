@@ -1292,9 +1292,16 @@
             return this;
         },
         events: {
-          "click": "select"
+          "click": "clickSelect"
         },
-        select: function(e) {
+        clickSelect: function(e) {
+            this.selected();
+            if(this.hasOwnProperty('list')) {
+                this.list.trigger('selected', this);
+            }
+            this.trigger('selected');
+        },
+        selected: function() {
             var deselectSiblings = function(el) {
                 el.siblings().removeClass('selected');
                 el.siblings().removeAttr('selected');
@@ -1302,13 +1309,9 @@
             deselectSiblings(this.$el);
             this.$el.addClass("selected");
             this.$el.attr("selected", true);
-            if(this.hasOwnProperty('list')) {
-                this.list.trigger('selected', this);
-            }
-            this.trigger('selected');
         },
         remove: function() {
-          $(this.el).remove();
+            this.$el.remove();
         }
     });
     var FileFullView = Backbone.View.extend({
@@ -1465,7 +1468,23 @@
             var p = this.editor.getCursorPositionScreen();
             var firstRow = this.editor.getFirstVisibleRow();
             if(self.model.isJs()) {
-                cleanVal = js_beautify(v);
+                cleanVal = js_beautify(v, {
+                    "indent_size": 4,
+                    "indent_char": " ",
+                    "indent_level": 0,
+                    "indent_with_tabs": false,
+                    "preserve_newlines": true,
+                    "max_preserve_newlines": 10,
+                    "jslint_happy": false,
+                    "brace_style": "collapse",
+                    "keep_array_indentation": false,
+                    "keep_function_indentation": false,
+                    "space_before_conditional": false,
+                    "break_chained_methods": false,
+                    "eval_code": false,
+                    "unescape_strings": false,
+                    "wrap_line_length": 0
+                });
             } else if(self.model.isCss()) {
                 cleanVal = css_beautify(v);
             } else if(self.model.isHtml()) {

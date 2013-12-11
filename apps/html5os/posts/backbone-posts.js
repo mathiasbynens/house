@@ -947,7 +947,6 @@
                 return (!navigator || (navigator.userAgent && navigator.userAgent.indexOf('HouseJs HTML Cacher') !== -1));
             }
             var wistia = self.model.get('wistia');
-            console.log(wistia)
             if(wistia && wistia.id) {
                 self.$el.append('<div class="wistia_video" id="wistia_video_'+wistia.id+'"></div>');
                 if(!isJsCacher()) {
@@ -977,7 +976,14 @@
                 $msg.html(this.model.get('msg'));
                 this.$el.append($msg);
             }
-            
+            if(this.model.has('tweet')) {
+                var tweet = this.model.get('tweet');
+                
+                if(tweet.id) {
+                    this.tweet = new TweetView({tweetId: tweet.id});
+                    this.$el.append(this.tweet.render().$el);
+                }
+            }
             if(window.account && (account.isAdmin() || account.isOwner(this.model.get('owner').id))) {
                 this.$el.append(this.actions.render().$el);
             }
@@ -1364,13 +1370,13 @@
             return this;
         },
         parseForId: function(str) {
-                var matches = str.match(/(youtu\.be\/|youtube\.com\/(watch\?(.*&)?v=|(embed|v)\/))([^\?&"'>]+)/);
-                console.log(matches)
-                if(matches && matches.length > 1) {
-                    return matches[5];
-                } else {
-                    return str;
-                }
+            var matches = str.match(/(youtu\.be\/|youtube\.com\/(watch\?(.*&)?v=|(embed|v)\/))([^\?&"'>]+)/);
+            console.log(matches)
+            if(matches && matches.length > 1) {
+                return matches[5];
+            } else {
+                return str;
+            }
         },
         val: function(v) {
             if(v) {

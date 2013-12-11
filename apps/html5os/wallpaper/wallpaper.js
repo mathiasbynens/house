@@ -4,6 +4,7 @@
         className: 'wallpaper',
         initialize: function() {
             var self = this;
+            this.cssFade = this.options.cssFade || '1';
             this.collection.on('selected', function(paper){
                 self.selectedPaper = paper;
                 self.render();
@@ -12,28 +13,51 @@
         },
         render: function() {
             var self = this;
-            this.$el.html('');
-            this.$el.css('background', '');
+            //this.$el.css('background', '');
             this.$el.css('position', 'fixed');
             this.$el.css('top', '0px');
             this.$el.css('bottom', '0px');
             this.$el.css('left', '0px');
             this.$el.css('right', '0px');
             
+            if(this.cssFade) {
+                this.$el.append('<style>.wallpaper .wallpaperBg {transition: opacity '+this.cssFade+'s ease;opacity: 1;}.wallpaper .wallpaperBg.loading {opacity: 0;}</style>');
+            }
             if(this.selectedPaper) {
+                var $wallpaperBackground = $('<div class="loading wallpaperBg"></div>');
+                $wallpaperBackground.css('position', 'fixed');
+                $wallpaperBackground.css('top', '0px');
+                $wallpaperBackground.css('bottom', '0px');
+                $wallpaperBackground.css('left', '0px');
+                $wallpaperBackground.css('right', '0px');
                 if(this.selectedPaper.has('image')) {
-                    var filename = this.selectedPaper.get('image').filename;
-                    this.$el.css('background-size', '100%');
-                    this.$el.css('background', 'url("/api/files/'+filename+'") center center');
+                    var filepath ='/api/files/'+this.selectedPaper.get('image').filename;
+                    var bgImg = new Image();
+                    bgImg.onload = function(){
+                        
+                        $wallpaperBackground.css('background-size', '100%');
+                        $wallpaperBackground.css('background', 'url("'+filepath+'") center center');
+                        $wallpaperBackground.removeClass('loading');
+                        setTimeout(function(){
+                            $wallpaperBackground.siblings().remove();
+                        }, 2000);
+                    };
+                    bgImg.src = filepath;
+                    
                 }
                 if(this.selectedPaper.has('css')) {
-                    this.$el.append('<style>.wallpaper{ '+this.selectedPaper.get('css')+' }</style>');
+                    $wallpaperBackground.append('<style>.wallpaper{ '+this.selectedPaper.get('css')+' }</style>');
                 }
                 if(this.selectedPaper.has('script')) {
                     setTimeout(function(){
                         eval(self.selectedPaper.get('script'));
                     }, 200);
                 }
+                this.$el.append($wallpaperBackground);
+                
+                // $wallpaperBackground.on('load', function(){
+                //     $wallpaperBackground
+                // });
             }
             this.setElement(this.$el);
             return this;

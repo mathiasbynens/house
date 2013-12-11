@@ -105,6 +105,10 @@
             //return 'share/' + encodeURIComponent(this.get('url'));
             return 'share/' + this.id;
         },
+        getShareUrl: function() {
+            var path = $('base[href]').attr('href')+this.getSharePath();
+            return 'http://'+window.location.hostname+path;
+        },
         getAtFormatted: function(format) {
             if(!format) {
                 format = "YYYY-MM-DDTHH:mm:ssZZ"
@@ -564,10 +568,10 @@
                 this.$input.val('');
             }
             //console.log(e.keyCode)
-            if (this.$input.val()) {
+            //if (this.$input.val()) {
                 this.$form.find('button.go.btn').button('loading');
                 this.trigger('search', this.$input.val().trim());
-            }
+            //}
         },
         clickGo: function() {
             this.$form.find('button.go.btn').button('loading');
@@ -687,17 +691,12 @@
     });
 
     var ListView = Backbone.View.extend({
-        layout: 'table',
-        initialize: function() {
+        initialize: function(options) {
             var self = this;
             //this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> urls</div>');
-
-            if (this.layout == 'table') {
-                this.$ul = $('<table class="urlsList table table-striped table-hover"></table>');
-            } else if (this.layout == 'avatar') {
-                this.$ul = $('<div class="urlsList"></div>');
-            }
-
+            var layout = options.layout || 'table';
+            this.initLayout(layout);
+            
             this.pagesLength = 1;
             this.currentPage = 1;
             this.$pager = $('<div class="pages"><ul class="pagination"><li class="previous"><a href="#">«</a></li><li><a href="#">1</a></li><li class="next"><a href="#">»</a></li></ul></div>');
@@ -733,23 +732,33 @@
                 }
             });*/
         },
+        initLayout: function(layout) {
+            this.setLayout(layout, false);
+        },
         setLayout: function(layout, render) {
             if (render !== false) {
                 render = true;
             }
             var oldLayout = this.layout;
             this.layout = layout;
-            if (this.layout !== oldLayout) {
-                this.$ul.remove();
+            //if (this.layout !== oldLayout) {
+                if(this.$wrap) {
+                    this.$wrap.remove();
+                }
+                console.log(this.layout)
                 if (this.layout == 'table') {
-                    this.$ul = $('<table class="urlsList table table-striped table-hover"></table>');
+                    this.$wrap = $('<table class="urlsList table table-striped table-hover"></table>');
+                    this.$ul = $('<tbody></tbody>');
+                    this.$wrap.append(this.$ul);
                 } else if (this.layout == 'avatar') {
-                    this.$ul = $('<div class="urlsList"></div>');
+                    this.$wrap = this.$ul = $('<div class="urlsList"></div>');
+                } else if (this.layout == 'row') {
+                    this.$wrap = this.$ul = $('<ul class="urlsList"></ul>');
                 }
-                this.$el.prepend(this.$ul);
-                if (render) {
-                    this.renderPage(this.currentPage);
-                }
+            //}
+            this.$el.prepend(this.$wrap);
+            if (render) {
+                this.renderPage(this.currentPage);
             }
         },
         filter: function(f) {
@@ -781,6 +790,9 @@
                 delete self.searchResults;
                 self.renderPage(1);
                 self.renderPagination();
+                if (callback) {
+                    callback();
+                }
                 return;
             }
             var re = q;
@@ -876,7 +888,6 @@
             if (col.count) {
                 l = col.count;
             }
-            console.log(l);
             var returnSlice = function() {
                 var e = (l < s + self.pageSize) ? l : s + self.pageSize;
                 col.slice(s, e).forEach(function(doc, i, c) {
@@ -890,8 +901,6 @@
                     });
                 });
             }
-
-            console.log(col.count);
             if (col.length < col.count) {
                 col.load({
                     skip: col.length
@@ -902,9 +911,10 @@
         },
         render: function() {
             var self = this;
-            this.$el.html('');
-            this.$el.append(this.$ul);
-            this.$ul.html('');
+            // this.$el.html('');
+            // this.$el.append(this.$ul);
+            // this.$ul.html('');
+            this.setLayout(this.layout, true);
             //this.collection.sort({silent:true});
             this.collection.each(function(doc) {
                 var view = self.getDocLayoutView(doc);
@@ -922,10 +932,25 @@
             this.$pager.find('.list-count').html(c);
         },
         refreshPager: function() {},
+        getModelSortRank: function(model) {
+            var endStr = this.collection.sortField.substr(this.collection.sortField.length - 1);
+            var sortField = this.collection.sortField;
+            if (endStr === '-') {
+                sortField = this.collection.sortField.substr(0, this.collection.sortField.length - 1);
+            }
+            if(sortField === 'at') {
+                var rank = new Date(model.get('at'));
+                return rank = rank.getTime();
+            } else  if(sortField === 'views') {
+                if (endStr === '-') {
+                    return model.get('views');
+                }
+                return model.get('views') * -1;
+            }
+        },
         appendRow: function(row) {
             //console.log(row.model)
-            var rank = new Date(row.model.get('at'));
-            rank = rank.getTime();
+            var rank = this.getModelSortRank(row.model);
             var rowEl = row.render().$el;
             if (this.currentFilter && !this.currentFilter(row.model)) {
                 rowEl.hide();
@@ -935,7 +960,7 @@
             var $lis = this.$ul.children();
             var last = $lis.last();
             var lastRank = parseInt(last.attr('data-sort-rank'), 10);
-            if (rank > lastRank) {
+            if (true) { // rank > lastRank
                 $lis.each(function(i, e) {
                     if (d) return;
                     var r = parseInt($(e).attr('data-sort-rank'), 10);
@@ -1109,6 +1134,7 @@
             console.log(this.model.get('url'))
             console.log(this.options)
             this.options.list.trigger('detail', this.model);
+            stopAndToggleDropdown(e);
             return false;
         },
         clickShare: function(e) {
@@ -1133,11 +1159,15 @@
                     wait: true
                 });
             }
-            $(e.currentTarget).dropdown('toggle');
-            e.stopPropagation();
-            e.preventDefault();
+            stopAndToggleDropdown(e);
         },
     });
+    
+    var stopAndToggleDropdown = function(e) {
+        $(e.currentTarget).dropdown('toggle');
+        e.stopPropagation();
+        e.preventDefault();
+    }
 
     var ActionEdit = Backbone.View.extend({
         tagName: "span",
@@ -1571,6 +1601,14 @@
                     "placement": "bottom"
                 }
                 this.$tdUrl.find('a').popover(popOpts);
+            } else if (this.model.has('faviconfile')) {
+                var popOpts = {
+                    "trigger": "hover",
+                    "content": '<img src="/api/files/'+this.model.get('faviconfile').filename+'">',
+                    "html": true,
+                    "placement": "bottom"
+                }
+                this.$tdUrl.find('a').popover(popOpts);
             }
 
             this.setElement(this.$el);
@@ -1742,8 +1780,11 @@
                     iframe = '<iframe id="frame" class="frame" style="width:100%; height:100%; margin:0; padding:0; border: 0px;" src="' + this.model.get('url') + '"> </iframe>';
                 }
             }
+            var isJsCacher = function() {
+                return (!navigator || (navigator.userAgent && navigator.userAgent.indexOf('HouseJs HTML Cacher') !== -1));
+            }
             ///desktop/jquery.fitvids.js
-            if (this.options.iframe) {
+            if (this.options.iframe && !isJsCacher()) {
                 this.$el.html(head + iframe);
             } else {
                 this.$el.html(head);
@@ -1792,7 +1833,8 @@
         },
         getShareUrl: function() { // makes sure its NOT https for the iframe to work
             var path = $('base[href]').attr('href')+this.model.getSharePath();
-            return 'http://'+window.location.hostname+path;
+            var host = window.location.host || window.location.hostname;
+            return 'http://'+host+path;
             // '/urls/share/'
             //return 'http://' + window.location.href.substr(window.location.href.indexOf('://') + 3);
         },

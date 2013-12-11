@@ -2984,11 +2984,16 @@ header h1.f7, header h1.f8, header h1.f9 {
 .files-open li {
     float: left;
     padding: 10px;
+    width: 200px;
+}
+.files-open li .filename {
+    float: right;
+    font-weight: normal;
 }
 .file-viewer controls {
     position: fixed;
     left: 333px;
-    top: 91px;
+    bottom: 0px;
     height: 32px;
     right: 0px;
 }
