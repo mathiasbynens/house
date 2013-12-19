@@ -226,18 +226,38 @@
         },
         getOrFetch: function(id, callback) {
             var self = this;
+            if(!this.fetchingId) {
+                this.fetchingId = {};
+            }
+            if(this.fetchingId.hasOwnProperty(id) && this.fetchingId[id]) {
+                this.once('fetchedId:'+id, function(doc){
+                    if(doc) {
+                        callback(doc);
+                    } else {
+                        //self.getOrFetchUrl(url, callback);
+                        callback(false);
+                    }
+                });
+                return;
+            }
+            this.fetchingId[id] = true;
             var doc;
             doc = this.get(id);
             if(doc) {
+                delete self.fetchingId[id];
                 callback(doc);
+                self.trigger('fetchedId:'+id, doc);
             } else {
                 var options = { "id": id };
                 this.fetch({data: options, update: true, remove: false, success: function(collection, response){
+                        delete self.fetchingId[id];
                         if(response) {
                             doc = self.get(id);
                             callback(doc);
+                            self.trigger('fetchedId:'+id, doc);
                         } else {
                             callback(false);
+                            self.trigger('fetchedId:'+id);
                         }
                     },
                     error: function(collection, response){
