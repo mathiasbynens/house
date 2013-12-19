@@ -15,7 +15,7 @@
         <link rel="apple-touch-icon-precomposed" href="iosicon.png"/>
         <link href="/api/posts?_format=rss" rel="alternate" title="Posts" type="application/rss+xml"/>
         
-        <link href="" rel="canonical" data-href=""/>
+        <link href="/posts/" rel="canonical" data-href="/posts/" />
         <meta name="application-name" content="Posts"/>
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Posts" />
@@ -61,7 +61,7 @@
                     <span class="icon-bar"></span>
                   </button>
                   <form class="navbar-form navbar-left">
-                    <button type="button" class="homeBtn glyphicon glyphicon-home btn navbar-left"></button>
+                    <button type="button" class="homeBtn glyphicon glyphicon-home btn navbar-left"> </button>
                   </form>
                   <a href="/posts/" class="pageTitle navbar-brand">Posts</a>
                 </div>
@@ -90,8 +90,8 @@
             </div>
         </div>
         <div id="welcome"></div>
-        <script type="text/javascript" src="/desktop/require.js"></script>
-        <!--<script type="text/javascript" src="/desktop/require.js?/posts/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/clock/clock.js/desktop/nav.js/files/backbone-files.js/desktop/swipeview.js/posts/backbone-posts.js/posts/wysihtml-parser_rules.js/posts/wysihtml5-0.4.0pre.min.js/posts/posts.js"></script>-->
+        <!--<script type="text/javascript" src="/desktop/require.js"></script>-->
+        <script type="text/javascript" src="/desktop/require.js?/posts/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/clock/clock.js/desktop/nav.js/files/backbone-files.js/desktop/swipeview.js/posts/backbone-posts.js/posts/wysihtml-parser_rules.js/posts/wysihtml5-0.4.0pre.min.js/posts/posts.js/desktop/jquery.scrollTo.min.js/pages/bootstrap.js"></script>
         <script type="text/javascript">
         require(['/posts/index.js'], function(index){
             index.init(function(app){
