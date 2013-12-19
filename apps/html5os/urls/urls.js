@@ -342,26 +342,27 @@
                 self.renderList();
                 router.trigger('loadingComplete');
             });
+            var windowLocationHost = window.location.host || window.location.hostname;
             var bindShareViewRoutes = function(shareView) {
                 shareView.on('details', function(){
                     if(window == top) {
                         self.nav.router.navigate(shareView.model.getNavigatePath(), {trigger: true});
                     } else {
-                        window.parent.postMessage("go_to_"+window.location.protocol + '//' + window.location.hostname + '/urls/' + shareView.model.getNavigatePath(),"*");
+                        window.parent.postMessage("go_to_"+window.location.protocol + '//' + windowLocationHost + '/urls/' + shareView.model.getNavigatePath(),"*");
                     }
                 });
                 shareView.on('home', function(){
                     if(window == top) {
                         self.nav.router.navigate('', {trigger: true});
                     } else {
-                        window.parent.postMessage("go_to_"+window.location.protocol + '//' + window.location.hostname + '/',"*");
+                        window.parent.postMessage("go_to_"+window.location.protocol + '//' + windowLocationHost + '/',"*");
                     }
                 });
                 shareView.on('back', function(){
                     if(window == top) {
                         self.nav.router.navigate('', {trigger: true});
                     } else {
-                        window.parent.postMessage("go_to_"+window.location.protocol + '//' + window.location.hostname + '/urls/',"*");
+                        window.parent.postMessage("go_to_"+window.location.protocol + '//' + windowLocationHost + '/urls/',"*");
                     }
                 });
                 shareView.on('close', function(){

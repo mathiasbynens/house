@@ -32,6 +32,8 @@
                                                                         app.on('initialized', function(){
                                                                             app.render();
                                                                             var view = app.getWidgetView();
+                                                                            $('#bookmarklet').attr('href', $('#bookmarklet_js').html().replace(/\n/gi, '').replace(/HOSTNAME/g, window.location.hostname).trim());
+                                                                            $('#bookmarklet').html('✚ '+window.location.host || window.location.hostname);
                                                                             //$('body').append(view.render().$el);
                                                                             //$('body').append(app.collection.getView().render().$el);
                                                                         

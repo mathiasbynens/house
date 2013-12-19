@@ -163,7 +163,6 @@
         },
         getAt: function() {
             if(!this.atMoment) {
-                var at = this.get('at');
                 if(window.clock) {
                     this.atMoment = clock.moment(this.get('at'));
                 }
@@ -1093,6 +1092,7 @@
             this.$btn = $('<button type="button" class="btn btn-default btn-xs details">Details</button>');
             this.$btnCaret = $('<button type="button" class="btn btn-default dropdown-toggle btn-xs" data-toggle="dropdown"><span class="caret"></span></button>');
             this.$btnDropdown = $('<ul class="dropdown-menu" role="menu">\
+                <li role="presentation" class="dropdown-header">URL Details</li>\
                 <li><a href="#" class="share">Share</a></li>\
                 <li><a href="#" class="crawl">Crawl</a></li>\
                 <li class="divider"></li>\
@@ -1104,6 +1104,11 @@
         },
         render: function() {
             var self = this;
+            var title = this.model.getAt().format('lll')+'<br>';
+            if(this.model.get('file') && this.model.get('file').contentType) {
+                title += this.model.get('file').contentType;
+            }
+            this.$btnDropdown.find('.dropdown-header').html(title);
 
             this.$el.append(this.$btnGroup);
             this.$el.append(this.privacyView.render().$el);
@@ -1570,7 +1575,7 @@
                 this.$tdUrl.find('.title').html(this.model.get('title'));
             } else {}
 
-            if (this.model.has('faviconfile')) {
+            if (this.model.has('faviconfile') && this.model.get('faviconfile').contentType.indexOf('image') === 0) {
                 this.$tdFav.find('img').attr('src', '/api/files/' + this.model.get('faviconfile').filename);
                 //self.$el.append($fav);
             } else if (this.model.has('file')) {
@@ -1946,7 +1951,14 @@
 
             this.$el.append(this.$title);
 
-            if (this.model.has('ogImage')) {
+            if (this.model.has('image')) {
+                if (!this.hasOwnProperty('imageView')) {
+                    self.imageView = new ImagesBackbone.Model(self.model.get('image')).getAvatar({
+                        size: 'square'
+                    });
+                }
+                self.$el.append(self.imageView.render().$el);
+            } else if (this.model.has('ogImage')) {
                 //console.log(self.model.get('ogImage'))
                 //self.$el.append('<img src="/api/files/'+self.model.get('ogImage').filename+'">');
                 if (!this.hasOwnProperty('ogImageView')) {
@@ -1955,14 +1967,6 @@
                     });
                 }
                 self.$el.append(self.ogImageView.render().$el);
-
-            } else if (this.model.has('image')) {
-                if (!this.hasOwnProperty('imageView')) {
-                    self.imageView = new ImagesBackbone.Model(self.model.get('image')).getAvatar({
-                        size: 'square'
-                    });
-                }
-                self.$el.append(self.imageView.render().$el);
             }
             
             this.$el.append(this.$commentContainer);
