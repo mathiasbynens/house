@@ -10,6 +10,7 @@
             //this.imageSizeCollection = new ImageSizeCollection(attr.sizes, colOpts);
             this.on("change", function(model, options){
                 console.log(arguments);
+                //model.renderViews();
             });
             this.views = {};
         },
@@ -96,23 +97,23 @@
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                        console.log(doc);
+                        // console.log(doc);
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
-                        return;s
+                        return;
                     }
                     var model = self.get(doc.id);
                     if(!model) {
                         var model = new self.model(doc);
                         self.add(model);
                     } else {
-                        console.log(model);
+                        //console.log(model);
                         model.set(doc, {silent:true});
                         model.renderViews();
                     }
                 }
                 socket.on('insertedNews', function(doc) {
-                    console.log('inserted news');
+                    // console.log('inserted news');
                     insertOrUpdateDoc(doc);
                     self.count++;
                     self.trigger('count', self.count);
@@ -274,9 +275,13 @@
             self.loading = false;
             this.filterRead = true;
             this.$filters = $('<div class="list-filters"></div>');
-            this.$controls = $('<div class="list-controls"><a href="/" class="allNew"><b>new</b> / all</a> <a href="/" class="expandCollapse"><b>expanded</b> / list</a></div>');
+            //this.$controls = $('<div class="list-controls"><a href="/" class="allNew"><b>new</b> / all</a> <a href="/" class="expandCollapse"><b>expanded</b> / list</a></div>');
+            var allNew = '<div class="btn-group allNew" data-toggle="buttons"><label class="btn btn-default new active disabled" title="Show New"><input type="radio" name="options" id="new"><span class="glyphicon glyphicon-unchecked"></span></label><label class="btn btn-default all" title="Show All"><input type="radio" name="options" id="all"><span class="glyphicon glyphicon-check"></span></label></div>';
+            var expandCollapse = '<div class="btn-group expandCollapse" data-toggle="buttons"><label class="btn btn-default expanded active disabled" title="Expanded View"><input type="radio" name="options" id="expanded"><span class="glyphicon glyphicon-list"></span></label><label class="btn btn-default list" title="List View"><input type="radio" name="options" id="list"><span class="glyphicon glyphicon-th-list"></span></label></div>';
+            this.$controls = $('<div class="list-controls">'+allNew+' '+expandCollapse+'</div>');
+            
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> news articles</div>');
-            var $ul = this.$ul = $('<ul class="news expanded"></ul>');
+            var $ul = this.$ul = $('<ul class="news expanded list-unstyled"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -300,13 +305,17 @@
             this.collection.on('reset', function(){
                 self.render();
             });
-            self.$el.scroll(function(){
+            self.$el.scroll(_.throttle(function(){
                 if(self.$el.is(":visible")) {
                     if(self.$ul.hasClass('expanded')) {
                         self.collection.each(function(doc){
-                            if(!doc.has('read')) {
-                                if(doc.getRow().$el.offset().top < 0) {
-                                    doc.getRow().markAsRead();
+                            if(!doc.getRow().$el.is(":visible")) {
+                                console.log('row is not visible!!!');
+                            } else {
+                                if(!doc.has('read')) {
+                                    if(doc.getRow().$el.offset().top < 0) {
+                                        doc.getRow().markAsRead();
+                                    }
                                 }
                             }
                         });
@@ -316,14 +325,18 @@
                     self.loadMore();
                   }
                 }
-            });
-             $(window).scroll(function(){
+            }, 300));
+             $(window).scroll(_.throttle(function(){
                 if(self.$el.is(":visible")) {
                     if(self.$ul.hasClass('expanded')) {
                         self.collection.each(function(doc){
-                            if(!doc.has('read')) {
-                                if(doc.getRow().$el.offset().top < 0) {
-                                    doc.getRow().markAsRead();
+                            if(!doc.getRow().$el.is(":visible")) {
+                                console.log('row is not visible!!!');
+                            } else {
+                                if(!doc.has('read')) {
+                                    if(doc.getRow().$el.offset().top < $(window).scrollTop() + doc.getRow().list.$el.offset().top) {
+                                        doc.getRow().markAsRead();
+                                    }
                                 }
                             }
                         });
@@ -333,10 +346,9 @@
                         self.loadMore();
                     }
                 }
-            });
+            },300));
         },
         filter: function(f) {
-            console.log(f)
             var self = this;
             if(f && typeof f == 'function') {
                 this.currentFilter = f;
@@ -384,7 +396,11 @@
                 }
                 loadO.skip = 0; //flen;
                 this.collection.load(loadO, function(){
-                    self.filterLength = self.collection.filter(self.currentFilter).length
+                    if(self.currentFilter) {
+                        self.filterLength = self.collection.filter(self.currentFilter).length;
+                    } else {
+                        self.filterLength = self.collection.length;
+                    }
                 });
             } else {
                 // show all
@@ -399,30 +415,39 @@
         },
         events: {
           "click .list-pager": "loadMore",
-          "click .expandCollapse": "expandCollapse",
-          "click .allNew": "allNew"
+          "click label.expanded": "expandCollapse",
+          "click label.list": "expandCollapse",
+          "click label.new": "allNew",
+          "click label.all": "allNew",
         },
         expandCollapse: function(e) {
             this.$ul.toggleClass('expanded');
+            
             if(this.$ul.hasClass('expanded')) {
-                this.$el.find('.expandCollapse').html('<b>expanded</b> / list')
+                this.$el.find('.expandCollapse label.list').removeClass('disabled').removeClass('active');
+                this.$el.find('.expandCollapse label.expanded').addClass('disabled').addClass('active');
             } else {
-                this.$el.find('.expandCollapse').html('expanded / <b>list</b>')
+                this.$el.find('.expandCollapse label.expanded').removeClass('disabled').removeClass('active');
+                this.$el.find('.expandCollapse label.list').addClass('disabled').addClass('active');
             }
             return false;
         },
         allNew: function(e) {
             if(this.filterRead) {
+                this.$el.find('label.new').removeClass('disabled').removeClass('active');
+                this.$el.find('label.all').addClass('disabled').addClass('active');
                 this.filterRead = false;
-                this.$el.find('.allNew').html('new / <b>all</b>')
+                //this.$el.find('.allNew').html('new / <b>all</b>')
                 if(this.filterLoadOptions) {
                     this.filter(this.filterLoadOptions);
                 } else {
                     this.filter(false);
                 }
             } else {
+                this.$el.find('label.all').removeClass('disabled').removeClass('active');
+                this.$el.find('label.new').addClass('disabled').addClass('active');
                 this.filterRead = true;
-                this.$el.find('.allNew').html('<b>new</b> / all')
+                //this.$el.find('.allNew').html('<b>new</b> / all')
                 this.filter(function(doc){
                     if(!doc.has('read')) {
                         return true;
@@ -646,19 +671,26 @@
     var ActionReadView = Backbone.View.extend({
         tagName: "span",
         className: "edit",
+        initialize: function() {
+            this.$span = $('<div class="checkbox"><label for="read-'+this.model.id+'"><input type="checkbox" name="newsRead" value="isRead" id="read-'+this.model.id+'"> read</label></div>');
+        },
         render: function() {
             if(this.model.has('read')) {
-                this.$span.find('input').attr('checked', 'checked');
+                this.$span.find('input').prop('checked', true);
+            } else {
+                this.$span.find('input').removeAttr('checked');
             }
-            this.$el.html(this.$span);
+            this.$el.append(this.$span);
             this.setElement(this.$el);
             return this;
         },
-        initialize: function() {
-            this.$span = $('<span><input type="checkbox" name="group" value="public" id="read-'+this.model.id+'"> <label for="read-'+this.model.id+'">read</label></span>');
-        },
         events: {
-            "change input": "select",
+            //"change input": "select",
+            "click .checkbox": "clickCheckbox"
+        },
+        clickCheckbox: function() {
+            this.select();
+            return false;
         },
         markRead: function() {
             var self = this;
@@ -676,6 +708,7 @@
             if(!this.model.has('read') || !this.model.get('read')) {
                 this.markRead();
             } else {
+                this.markedUnread = true; // flag so we don't override the user intention via scroll
                 this.model.set({"read": null}, {silent: true});
                 var saveModel = this.model.save(null, {
                     silent: false,
@@ -895,7 +928,7 @@
 
     var RowView = Backbone.View.extend({
         tagName: "li",
-        className: "row",
+        className: "story",
         initialize: function(options) {
             if(options.list) {
                 this.list = options.list;
@@ -950,19 +983,30 @@
             if(this.model.has('fromUrl')) {
                 this.model.getFromUrlSub(function(sub){
                     if(sub) {
-                        self.$el.find('.fromUrl').html('from ');
-                        self.$el.find('.fromUrl').append(sub.getNewAvatar().render().$el);
-                        sub.bind('destroy', self.remove, self);
+                        self.renderSub(sub);
                     }
                 });
             }
             if(this.model.has('fav')) {
-                this.$star.find('.star').html(this.starFull);
+                //this.$star.find('.star').html(this.starFull);
+                this.$star.addClass('selected');
+            } else {
+                this.$star.removeClass('selected');
             }
             this.$el.attr('data-id', this.model.id);
             this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
+        },
+        renderSub: function(sub) {
+            var self = this;
+            sub.once("change", function(model){
+                console.log('sub changed!!!');
+                self.renderSub(model);
+            });
+            self.$el.find('.fromUrl').html('from ');
+            self.$el.find('.fromUrl').append(sub.getNewAvatar().render().$el);
+            sub.bind('destroy', self.remove, self);
         },
         events: {
             "click .star": "fav",
@@ -995,7 +1039,9 @@
             }
         },
         markAsRead: function(e) {
-            this.actions.readView.markRead();
+            if(!this.actions.readView.hasOwnProperty('markedUnread')) { // check the user didnt already mark this unread manually
+                this.actions.readView.markRead();
+            }
         },
         selectTitle: function(e) {
             if(this.$el.hasClass("selected")) {

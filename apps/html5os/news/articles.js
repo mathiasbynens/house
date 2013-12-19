@@ -263,7 +263,7 @@
             var self = this;
             self.loading = false;
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> articles</div>');
-            var $ul = this.$ul = $('<ul class="articles"></ul>');
+            var $ul = this.$ul = $('<ul class="articles list-unstyled"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -736,7 +736,7 @@
 
     var RowView = Backbone.View.extend({
         tagName: "li",
-        className: "row",
+        className: "article",
         initialize: function(options) {
             if(options.list) {
                 this.list = options.list;

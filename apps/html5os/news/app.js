@@ -2,10 +2,11 @@
     var pageSize = 24;
 
     var AppView = Backbone.View.extend({
-        tag: 'span',
-        className: 'app',
+        tagName: 'body',
+        className: 'news',
         initialize: function() {
             var self = this;
+            this.$app = $('<div class="app"></div>');
             self.editForms = {};
             require(['/desktop/jquery.scrollTo.min.js'], function(){
                 //require(['articles.js'], function(ModelBackbone){
@@ -21,10 +22,10 @@
                                 window.FilesBackbone = FilesBackbone;
                                 window.filesCollection = new FilesBackbone.Collection(); // collection
                                 
-                                self.$subsList = $('<div class="subs-list"></div>');
-                                self.$subsViewer = $('<div class="subs-viewer"></div>');
-                                self.$newsList = $('<div class="news-list"></div>');
-                                self.$newsViewer = $('<div class="news-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
+                                self.$subsList = $('<div class="subs-list container"></div>');
+                                self.$subsViewer = $('<div class="subs-viewer container"></div>');
+                                self.$newsList = $('<div class="news-list container"></div>');
+                                self.$newsViewer = $('<div class="news-viewer container"></div>');
                                 window.newsCollection.pageSize = pageSize;
                                 window.subsCollection.pageSize = 1000;
                                 
@@ -39,21 +40,24 @@
                                     } else {
                                         row.markAsRead();
                                     }
-                                    self.router.navigate(row.model.getNavigatePath(), true);
+                                    self.router.navigate(row.model.getNavigatePath(), {trigger: true});
+                                });
+                                self.listView.on('deselect', function() {
+                                    self.router.navigate('', {trigger: true});
                                 });
                                 self.listView.on('goToProfile', function(user){
-                                    self.router.navigate('from/'+user.get('name'), true);
+                                    self.router.navigate('from/'+user.get('name'), {trigger: true});
                                 });
                                 
-                                self.subListView = new window.SubsBackbone.List({el: self.$subsList, collection: window.subsCollection});
+                                self.subListView = new window.SubsBackbone.List({el: self.$subsList, collection: window.subsCollection, rowOptions: {actions: true}});
                                 self.subListView.on('select', function(row) {
-                                    self.router.navigate(row.model.getNavigatePath(), true);
+                                    self.router.navigate(row.model.getNavigatePath(), {trigger: true});
                                 });
                                 self.subListView.on('deselect', function(row) {
-                                    self.router.navigate('/', true);
+                                    self.router.navigate('/', {trigger: true});
                                 });
                                 self.subListView.on('goToProfile', function(user){
-                                    self.router.navigate('from/'+user.get('name'), true);
+                                    self.router.navigate('from/'+user.get('name'), {trigger: true});
                                 });
                                 
                                 var loadCollections = function() {
@@ -88,37 +92,23 @@
         },
         render: function() {
             var self = this;
-            this.$el.html('');
-            this.setElement(this.$el);
+            //this.$el.html('');
             if(!this.initialized) {
                 this.on('initialized', function(){
                     self.render();
                 });
                 return this;
             }
-            this.$el.append('<button class="subscriptions">Subscriptions</button><button class="addSubscription">+</button>');
-            this.$el.append(self.subListView.render().$el);
-            this.$el.append(self.listView.render().$el);
-            this.$el.append(this.$postViewer);
+            
+            this.$app.append(self.subListView.render().$el);
+            this.$app.append(self.listView.render().$el);
+            this.$app.append(this.$postViewer);
+            this.$el.append(this.$app);
+            this.setElement(this.$el);
             return this;
         },
         events: {
-            "click .subscriptions": "subscriptions",
-            "click .addSubscription": "addSubscription"
-        },
-        addSubscription: function() {
-            this.router.navigate('subscribe', true);
-            return false;
-        },
-        subscriptions: function() {
-            if(this.$el.attr('data-nav') == 'feeds') {
-                this.router.navigate('', true);
-            } else if(this.$el.attr('data-nav') == 'feed') {
-                this.router.navigate('', true);
-            } else {
-                this.router.navigate('feeds', true);
-            }
-            return false;
+            'click a[target="_new"]:not([rel="external"])': "clickExternalLink"
         },
         findSubById: function(id, callback) {
             window.subsCollection.getOrFetch(id, callback);
@@ -150,11 +140,30 @@
                 nav.router.navigate('', true);
             });
             this.bindRouter(nav.router);
-            nav.col.add({title:"News", navigate:""});
+            //nav.col.add({title:"News", navigate:""});
             if(window.account && (account.isUser() || account.isAdmin())) {
-                nav.col.add({title:"Subscribe", navigate:"subscribe"});
-                nav.col.add({title:"Feeds", navigate:"feeds"});
+                //nav.col.add({title:"Subscribe", navigate:"subscribe"});
+                //nav.col.add({title:"Feeds", navigate:"feeds"});
             }
+            
+            var appsNav = new nav.col.model({
+                id: 'AppNav',
+                glyphicon: 'list-alt',
+                subNav: true
+            });
+            nav.col.add(appsNav);
+            appsNav.subNavCol.add({
+                glyphicon: 'list',
+                title: "Feed Subscriptions",
+                navigate: "feeds"
+            });
+            appsNav.subNavCol.add({
+                glyphicon: 'plus',
+                title: "Subscribe to Feed",
+                navigate: "subscribe"
+            });
+            appsNav.subNavCol.list.on('selected', function(navRow) {
+            });
         },
         bindRouter: function(router) {
             var self = this;
@@ -164,36 +173,18 @@
             }
             self.router = router;
             router.on('title', function(title){
-                var $e = $('#header h1');
-                $e.html(title);
-                $e.attr('class', '');
-                var eh = $e.height();
-                var eph = $e.offsetParent().height();
-                if(eh > eph) {
-                    var lines = Math.floor(eh/eph);
-                    if(lines > 3) {
-                        $e.addClass('f'+lines);
-                        eh = $e.height();
-                        eph = $e.offsetParent().height();
-                        if(eh > eph) {
-                            lines = Math.floor(eh/eph);
-                            $e.addClass('l'+lines);
-                        }
-                    } else {
-                        $e.addClass('l'+lines);
-                    }
-                }
+                $('header .pageTitle.navbar-brand').html(title);
             });
             router.on('reset', function(){
-                $('#header').removeAttr('class');
                 self.$el.removeAttr('data-nav');
                 self.nav.unselect();
             });
             router.on('root', function(){
                 self.listView.filter();
-                self.listView.$el.show();
-                self.subListView.$el.show();
+                self.listView.$el.show().siblings().hide();
+                // self.subListView.$el.show();
                 router.setTitle('News');
+                $('body')[0].scrollTop = 0;
                 self.$newsList.find('.list-filters').html('');
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
@@ -216,15 +207,15 @@
                 });
             });
             router.route('subs/url/*path', 'subsByUrl', function(path){
-                console.log('subs')
+                console.log('subs url')
                 console.log(path)
                 path = decodeURIComponent(path);
                 routerReset();
                 self.listView.filter({fromUrl: path});
-                self.listView.$el.show();
-                self.subListView.$el.show();
+                self.listView.$el.show().siblings().hide();
+                //self.subListView.$el.show();
                 router.setTitle('News from '+path);
-                
+                $('body')[0].scrollTop = 0;
                 self.findSubByUrl(path, function(doc){
                     if(doc) {
                         if(doc.has('urlDoc')) {
@@ -232,8 +223,9 @@
                                 self.router.setTitle(doc.get('urlDoc').channel.title);
                             }
                         }
-                        self.$newsList.find('.list-filters').html(doc.getNewAvatar().render().$el);
+                        //self.$newsList.find('.list-filters').html(doc.getNewAvatar({actions: true}).render().$el);
                     } else {
+                        console.log('subscribe to the path instead: '+path);
                         self.subscribeForm = new window.SubsBackbone.Form({
                             collection: window.subsCollection
                         });
@@ -252,10 +244,11 @@
             router.route('feeds', 'feeds', function(){
                 routerReset();
                 //self.listView.filter({fromUrl: path});
-                //self.listView.$el.show();
+                self.subListView.$el.show().siblings().hide();
                 self.$el.attr('data-nav', 'feeds')
                 self.subListView.$el.show();
-                router.setTitle('Feeds');
+                router.setTitle('News Feeds');
+                $('body')[0].scrollTop = 0;
                 self.nav.selectByNavigate('feeds');
             });
             router.route('anews/:id', 'newsStory', function(id){
@@ -281,15 +274,57 @@
                 });
                 self.subscribeForm.on("saved", function(doc) {
                     self.subscribeForm.remove();
+                    self.subModal.remove();
                     self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
+                    
                 });
                 var $form = self.subscribeForm.render().$el;
                 $form.show();
-                self.$el.append($form);
+                //self.$el.append($form);
+                
+                self.subModal = utils.appendLightBox($form, 'Subscribe to a feed:');
+                
+                self.subModal.$el.on('hide.bs.modal', function () {
+                    self.subscribeForm.remove();
+                    self.subModal.remove();
+                    self.router.back();
+                });
+                router.setTitle('Subscribe to a News Feed');
                 self.subscribeForm.focus();
                 router.trigger('loadingComplete');
                 self.nav.selectByNavigate('subscribe');
             });
+        },
+        clickExternalLink: function(e) {
+            //var origEl = e.srcElement || e.originalTarget;
+            //var destUrl = $(origEl).attr('href');
+            var destUrl = $(e.currentTarget).attr('href');
+            var msg = 'EXIT ' + window.location.href + ' TO ' + destUrl;
+            //'EXIT '+window.location.toString()+' TO '+url
+            if (window.ActionsBackbone) {
+                var action = new ActionsBackbone.Model({});
+                action.set({
+                    a: msg
+                }, {
+                    silent: true
+                });
+                action.save();
+            } else {
+                require(['/analytics/backbone-actions.js'], function(ActionsBackbone) {
+                    window.ActionsBackbone = ActionsBackbone;
+                    var action = new ActionsBackbone.Model({});
+                    action.set({
+                        a: msg
+                    }, {
+                        silent: true
+                    });
+                    action.save();
+                    setTimeout(function() {
+                        window.location = destUrl;
+                    }, 100);
+                });
+                return false;
+            }
         }
     });
     

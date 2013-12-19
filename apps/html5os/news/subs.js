@@ -61,10 +61,49 @@
         },
         getNavigatePath: function() {
             if(this.has('url')) {
-                return 'subs/url/'+(this.get('url')); //encodeURIComponent
+                return 'subs/url/'+encodeURIComponent(this.get('url')); //encodeURIComponent
             }
             return 'subs/'+this.id;
-        }
+        },
+        getAtFormatted: function(format) {
+            if(!format) {
+                format = "YYYY-MM-DDTHH:mm:ssZZ"
+            }
+            return this.getAt().format(format);
+        },
+        getAt: function() {
+            if(!this.atMoment) {
+                if(window.clock) {
+                    this.atMoment = clock.moment(this.get('at'));
+                }
+            }
+            // $permalink.find('time').attr('datetime', m.format("YYYY-MM-DDTHH:mm:ssZZ"));
+            // $at.attr('title', m.format('LLLL'));
+            // $permalink.find('time').html(m.calendar());
+            return this.atMoment;
+        },
+        getUrlDocLastUpdate: function() {
+            if(!this.urlDocLastUpdate) {
+                var urlDoc = this.get('urlDoc');
+                if(urlDoc && urlDoc.lastUpdate) {
+                    if(window.clock) {
+                        this.urlDocLastUpdate = clock.moment(urlDoc.lastUpdate);
+                    }
+                }
+            }
+            return this.urlDocLastUpdate;
+        },
+        getChannelLast: function() {
+            if(!this.channelLast) {
+                var urlDoc = this.get('urlDoc');
+                if(urlDoc && urlDoc.channel && urlDoc.channel.last) {
+                    if(window.clock) {
+                        this.channelLast = clock.moment(urlDoc.channel.last);
+                    }
+                }
+            }
+            return this.channelLast;
+        },
     });
     
     var Collection = Backbone.Collection.extend({
@@ -77,7 +116,9 @@
             this.resetFilters();
             
             require(['/desktop/socket.io.min.js'], function() {
-                var socketOpts = {};
+                var socketOpts = {
+                    'max reconnection attempts': Infinity // defaults to 10
+                };
                 if(window.location.protocol.indexOf('https') !== -1) {
                     socketOpts.secure = true;
                 } else {
@@ -92,8 +133,30 @@
                     console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 });
+                socket.on('connecting', function(data) {
+                    console.log('connecting...');
+                });
+                socket.on('connect_failed', function(data) {
+                    console.log('connect_failed.');
+                });
+                socket.on('disconnect', function(data) {
+                    console.log('disconnected.');
+                });
+                socket.on('error', function(data) {
+                    console.log('error');
+                });
+                socket.on('reconnect_failed', function(data) {
+                    console.log('reconnect_failed!');
+                });
+                socket.on('reconnect', function(data) {
+                    console.log('reconnected & rejoining..');
+                });
+                socket.on('reconnecting', function(data) {
+                    console.log('reconnecting...');
+                });
+                
                 var insertOrUpdateDoc = function(doc) {
-                    console.log(doc);
+                    // console.log(doc);
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;s
@@ -103,13 +166,13 @@
                         var model = new self.model(doc);
                         self.add(model);
                     } else {
-                        console.log(model);
+                        // console.log(model);
                         model.set(doc, {silent:true});
                         model.renderViews();
                     }
                 }
                 socket.on('insertedSubs', function(doc) {
-                    console.log('inserted subs');
+                    // console.log('inserted subs');
                     insertOrUpdateDoc(doc);
                     self.count++;
                     self.trigger('count', self.count);
@@ -213,18 +276,38 @@
         },
         getOrFetchUrl: function(url, callback) {
             var self = this;
+            if(!this.fetchingUrl) {
+                this.fetchingUrl = {};
+            }
+            if(this.fetchingUrl.hasOwnProperty(url) && this.fetchingUrl[url]) {
+                this.once('fetchedUrl'+encodeURIComponent(url), function(doc){
+                    if(doc) {
+                        callback(doc);
+                    } else {
+                        //self.getOrFetchUrl(url, callback);
+                        callback(false);
+                    }
+                });
+                return;
+            }
+            this.fetchingUrl[url] = true;
             var doc;
             doc = _.first(this.where({url:url}));
             if(doc) {
+                delete self.fetchingUrl[url];
                 callback(doc);
+                self.trigger('fetchedUrl'+encodeURIComponent(url), doc);
             } else {
                 var options = { "url": url };
                 this.fetch({data: options, update: true, remove: false, success: function(collection, response){
+                        delete self.fetchingUrl[url];
                         if(response) {
                             doc = _.first(self.where({url:url}));
                             callback(doc);
+                            self.trigger('fetchedUrl'+encodeURIComponent(url), doc);
                         } else {
                             callback(false);
+                            self.trigger('fetchedUrl'+encodeURIComponent(url));
                         }
                     },
                     error: function(collection, response){
@@ -260,22 +343,40 @@
     });
     
     var ListView = Backbone.View.extend({
-        layout: 'row',
-        initialize: function() {
+        initialize: function(options) {
             var self = this;
+            var layout = options.layout || 'row';
+            this.initLayout(layout);
+            
+            this.pagesLength = 1;
+            this.currentPage = 1;
+            
             self.loading = false;
+            this.$deselect = $('<div class="showAllFeeds"><a href="#">All News Feeds</a> <span class="unreadCount total"></span></div>');
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> subs</div>');
-            var $ul = this.$ul = $('<ul class="subs"></ul>');
-            this.collection.on('add', function(doc) {
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatar({list: self});
-                }
+            
+            if(newsCollection) {
+                newsCollection.on('add', function(doc) {
+                    self.renderTotalUnreadVal();
+                });
+                newsCollection.on('remove', function(doc, col, options) {
+                    self.renderTotalUnreadVal();
+                });
+                newsCollection.on('count', function() {
+                    self.renderTotalUnreadVal();
+                });
+                newsCollection.on('reset', function(){
+                    self.renderTotalUnreadVal();
+                });
+            }
+            
+            var $ul = this.$ul = $('<ul class="subs list-unstyled"></ul>');
+            this.pageSize = this.collection.pageSize;
+            this.collection.bind("add", function(doc) {
+                var view = self.getDocLayoutView(doc);
                 self.appendRow(view);
-                self.renderPager();
-                doc.on('remove', function(){
+                //self.renderPagination();
+                doc.on('remove', function() {
                     view.$el.remove();
                     return false;
                 });
@@ -299,6 +400,35 @@
                 }
             });
         },
+        initLayout: function(layout) {
+            this.setLayout(layout, false);
+        },
+        setLayout: function(layout, render) {
+            if (render !== false) {
+                render = true;
+            }
+            var oldLayout = this.layout;
+            this.layout = layout;
+            //if (this.layout !== oldLayout) {
+                if(this.$wrap) {
+                    this.$wrap.remove();
+                }
+                console.log(this.layout)
+                if (this.layout == 'table') {
+                    this.$wrap = $('<table class="urlsList table table-striped table-hover"></table>');
+                    this.$ul = $('<tbody></tbody>');
+                    this.$wrap.append(this.$ul);
+                } else if (this.layout == 'avatar') {
+                    this.$wrap = this.$ul = $('<div class="urlsList"></div>');
+                } else if (this.layout == 'row') {
+                    this.$wrap = this.$ul = $('<ul class="urlsList"></ul>');
+                }
+            //}
+            this.$el.prepend(this.$wrap);
+            if (render) {
+                this.renderPage(this.currentPage);
+            }
+        },
         filter: function(f) {
             var self = this;
             if(f && typeof f == 'function') {
@@ -319,6 +449,11 @@
         },
         events: {
           "click .list-pager": "loadMore",
+          "click .showAllFeeds": "clickShowAll"
+        },
+        clickShowAll: function() {
+            this.trigger('deselect');
+            return false;
         },
         loadMore: function() {
             var self = this;
@@ -328,16 +463,30 @@
         },
         getDocLayoutView: function(doc) {
             var view;
-            if(this.layout === 'row') {
-                view = doc.getRow({list: self});
-            } else if(this.layout === 'avatar') {
-                view = doc.getAvatar({list: self});
+            var viewOpts = {
+                list: this
+            };
+            if (this.options.rowOptions) {
+                viewOpts = this.options.rowOptions;
+                viewOpts.list = this;
+            }
+            if (this.layout === 'row') {
+                view = doc.getRow(viewOpts);
+            } else if (this.layout === 'table') {
+                view = doc.getTableRowView(viewOpts);
+            } else if (this.layout === 'avatar') {
+                view = doc.getAvatarView(viewOpts);
             }
             return view;
+        },
+        renderTotalUnreadVal: function() {
+            this.$deselect.find('.unreadCount').html(newsCollection.count);
         },
         render: function() {
             var self = this;
             this.$el.html('');
+            self.renderTotalUnreadVal();
+            this.$el.append(this.$deselect);
             this.$el.append(this.$ul);
             this.$ul.html('');
             //this.collection.sort({silent:true});
@@ -435,22 +584,84 @@
     var ActionsView = Backbone.View.extend({
         tagName: "span",
         className: "actions",
+        initialize: function() {
+        },
         render: function() {
             var self = this;
-            this.$el.html('');
+            this.$el.html('<div class="btn-group">\
+  <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>\
+  <ul class="dropdown-menu pull-right" role="menu">\
+    <li role="presentation" class="dropdown-header">Details</li>\
+    <li class="refresh"><a href="#" class="glyphicon glyphicon-refresh"> Refresh</a></li>\
+    <li class="delete"><a href="#" class="glyphicon glyphicon-remove"> Delete</a></li>\
+  </ul>\
+</div>');
+            var atMoment = this.model.getAt();
+            var updatedMoment = this.model.getChannelLast();
+            //var updatedMoment = this.model.getUrlDocLastUpdate();
+            var actionsHeader = '';
+            if(updatedMoment) {
+                actionsHeader += 'Updated: '+updatedMoment.format('lll')+'<br>';
+            }
+            if(atMoment) {
+                actionsHeader += 'Created: '+atMoment.format('lll')+'<br>';
+            }
+            this.$el.find('.dropdown-header').html(actionsHeader);
             //self.$el.append(this.tagsView.render().$el);
             //self.$el.append(this.groupsView.render().$el);
             //self.$el.append(this.editView.render().$el);
-            self.$el.append(this.deleteView.render().$el);
+            //self.$el.append(this.deleteView.render().$el);
             this.setElement(this.$el);
             return this;
         },
-        initialize: function() {
-            this.actions = [];
-            //this.groupsView = new GroupsView({id: this.id, model: this.model});
-            //this.tagsView = new TagsView({id: this.id, model: this.model});
-            this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
-            //this.editView = new ActionEditView({id: this.id, model: this.model});
+        events: {
+            "click .refresh": "clickRefresh",
+            "click .delete": "clickDelete",
+            "click .btn": "clickBtn"
+        },
+        clickBtn: function(e) {
+            $(e.currentTarget).dropdown('toggle');
+            e.stopPropagation();
+            e.preventDefault();
+        },
+        clickRefresh: function(e) {
+            var self = this;
+            
+            var newSub = new Model({}, {
+                collection: this.model.collection
+            });
+            newSub.set({url: this.model.get('url')}, {silent: true});
+            var saveModel = newSub.save(null, {
+                silent: false ,
+                wait: true
+            });
+            if(saveModel) {
+                saveModel.done(function() {
+                    // self.trigger("saved", self.model);
+                    // self.collection.add(self.model);
+                    self.render();
+                });
+            } else {
+            }
+            
+            $(e.currentTarget).dropdown('toggle');
+            e.stopPropagation();
+            e.preventDefault();
+        },
+        clickDelete: function(e) {
+            var self = this;
+            if(confirm("Are you sure that you want to unsubscribe?")) {
+                this.model.destroy({success: function(model, response) {
+                    self.trigger('deleted');
+                }, 
+                errorr: function(model, response) {
+                    console.log(arguments);
+                },
+                wait: true});
+            }
+            $(e.currentTarget).dropdown('toggle');
+            e.stopPropagation();
+            e.preventDefault();
         }
     });
 
@@ -505,7 +716,7 @@
         tagName: "span",
         className: "delete",
         render: function() {
-            this.$el.html('<button title="unsubscribe">x</button>');
+            this.$el.html('<button class="btn btn-link" title="unsubscribe"><span class="glyphicon glyphicon-trash"></span></button>');
             this.setElement(this.$el);
             return this;
         },
@@ -737,7 +948,7 @@
 
     var RowView = Backbone.View.extend({
         tagName: "li",
-        className: "row",
+        className: "sub",
         initialize: function(options) {
             if(options.list) {
                 this.list = options.list;
@@ -754,8 +965,12 @@
                 var urlDoc = this.model.get('urlDoc');
                 if(urlDoc.channel) {
                     var $channel = $('<span class="channel"></span>');
-                    if(urlDoc.channel.url && urlDoc.channel.url.faviconfile) {
+                    if(urlDoc.channel.url && urlDoc.channel.url.faviconfile && urlDoc.channel.url.faviconfile.contentType.indexOf('image') === 0) {
                         $channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span>');
+                    } else if(this.model.has('channelUrlDoc') && this.model.get('channelUrlDoc').faviconfile && this.model.get('channelUrlDoc').faviconfile.contentType.indexOf('image') === 0) {
+                        $channel.append('<span class="favicon"><img src="/api/files/'+this.model.get('channelUrlDoc').faviconfile.filename+'" /></span>');
+                    } else {
+                        $channel.append('<span class="favicon"><img src="favicon.ico" /></span>');
                     }
                     if(urlDoc.channel.title) {
                         if(urlDoc.channel.link) {
@@ -767,11 +982,33 @@
                         this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
                     }
                     this.$el.append($channel);
+                } else if(this.model.has('channelUrlDoc')) {
+                    var channelUrlDoc = this.model.get('channelUrlDoc');
+                    var $channel = $('<span class="channel"></span>');
+                    if(channelUrlDoc.faviconfile && channelUrlDoc.faviconfile.contentType.indexOf('image') === 0) {
+                        $channel.append('<span class="favicon"><img src="/api/files/'+channelUrlDoc.faviconfile.filename+'" /></span>');
+                    } else {
+                        $channel.append('<span class="favicon"><img src="favicon.ico" /></span>');
+                    }
+                    if(channelUrlDoc.title) {
+                        if(channelUrlDoc.url) {
+                            $channel.append('<span class="title"><a href="'+channelUrlDoc.url+'" target="_new">'+channelUrlDoc.title+'</a></span>');
+                        } else {
+                            $channel.append('<span class="title">'+channelUrlDoc.title+'</span>');
+                        }
+                    } else {
+                        $channel.append('<strong class="title url">'+channelUrlDoc.url+'</strong>');
+                    }
+                    this.$el.append($channel);
                 } else {
                     this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
                 }
             } else {
                 this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
+            }
+            
+            if(this.model.has('unreadCount')) {
+                this.$el.append(' <span class="unreadCount" title="Unread news stories">'+this.model.get('unreadCount')+'</span>');
             }
             
             if(this.model.has('at')) {
@@ -788,7 +1025,7 @@
                 $byline.append(' by '+this.model.get('owner').name);
             }
             this.$el.append($byline);
-            this.$el.attr('data-id', this.model.get("_id"));
+            this.$el.attr('data-id', this.model.id);
             this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
@@ -919,14 +1156,16 @@
             }
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
+            if(this.options.actions) {
+                this.actions = new ActionsView({model: this.model});
+            }
         },
         render: function() {
             this.$el.html('');
-            if(this.model.has('title')) {
-                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
-            }
-            
             if(this.model.has('urlDoc')) {
+                if(this.model.has('title')) {
+                    this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
+                }
                 var urlDoc = this.model.get('urlDoc');
                 if(urlDoc.channel) {
                     var $channel = $('<span class="channel"></span>');
@@ -939,6 +1178,21 @@
                     }
                     this.$el.append($channel);
                 }
+            } else if(this.model.has('channelUrlDoc')) {
+                    var channelUrlDoc = this.model.get('channelUrlDoc');
+                    var $channel = $('<span class="channel"></span>');
+                    if(channelUrlDoc.title) {
+                        if(channelUrlDoc.url) {
+                            $channel.append('<span class="title"><a href="'+channelUrlDoc.url+'" target="_new">'+channelUrlDoc.title+'</a></span>');
+                        } else {
+                            $channel.append('<span class="title">'+channelUrlDoc.title+'</span>');
+                        }
+                    }
+                    this.$el.append($channel);
+            }
+            
+            if(this.actions) {
+                this.$el.append(this.actions.render().$el);
             }
             
             this.$el.attr('data-id', this.model.id);
@@ -1047,18 +1301,19 @@
                 } else {
                 }
             }
-            this.$inputUrl = $('<input type="url" name="url" placeholder="URL to subscribe to" autocomplete="off" />');
+            this.$inputUrl = $('<input class="form-control" type="url" name="url" placeholder="ie. http://www.cnn.com/" autocomplete="off" id="subToUrl" />');
             
             //this.inputGroupsView = new SelectGroupsView({model: this.model});
             //this.feedView = new ActionFeedView({model: this.model});
             //this.deleteView = new ActionDeleteView({model: this.model});
             
-            this.$form = $('<form class="subscribe"><span class="owner"></span><fieldset></fieldset><controls></controls></form>');
-            this.$form.find('fieldset').append(this.$inputUrl);
+            this.$form = $('<form class="subscribe form-horizontal" role="form"><span class="owner"></span><div class="form-group inputs"></div><div class="form-group controls"></div></form>');
+            this.$form.find('.inputs').append('<label for="subToUrl" class="control-label col-sm-2">URL</label>');
+            this.$form.find('.inputs').append($('<div class="col-sm-10"></div>').append(this.$inputUrl));
             //this.$form.find('fieldset').append('<hr />');
             //this.$form.find('fieldset').append(this.deleteView.render().$el);
             //this.$form.find('controls').append(this.inputGroupsView.render().$el);
-            this.$form.find('controls').append('<input style="display:none;" type="submit" value="Subscribe" />');
+            this.$form.find('.controls').append('<div class="col-sm-offset-2 col-sm-10"><button type="submit" class="btn btn-default btn-block">Subscribe</button></div>');
         },
         render: function() {
             var self = this;
@@ -1090,7 +1345,7 @@
         submit: function() {
             var self = this;
             var setDoc = {};
-            var url = this.$inputUrl.val();
+            var url = decodeURIComponent(this.$inputUrl.val().trim());
             
             if(url !== '' && url !== this.model.get('url')) {
                 setDoc.url = url;
