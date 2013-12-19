@@ -141,7 +141,7 @@
                                         <div class="modal-content">\n\
                                           <div class="modal-header">\n\
                                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>\n\
-                                            <h4 class="modal-title" id="loginModalLabel"></h4>\n\
+                                            <h4 class="modal-title"></h4>\n\
                                           </div>\n\
                                           <div class="modal-body">\n\
                                           </div>\n\
@@ -160,12 +160,16 @@
             
             if(options && options.title) {
                 this.$modalDialog.find('.modal-title').html(options.title);
+            } else {
+                this.$modalDialog.find('.modal-title').remove();
             }
             if(options && options.container) {
                 this.$modalDialog.find('.modal-body').append(options.container);
             }
             if(options && options.footer) {
                 this.$modalDialog.find('.modal-footer').append(options.footer);
+            } else {
+                this.$modalDialog.find('.modal-footer').remove();
             }
             var modalOpts = {};
             modalOpts.backdrop = 'static';

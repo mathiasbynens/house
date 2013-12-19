@@ -253,11 +253,13 @@
                 this.$e.addClass('dropdown-toggle');
                 this.$e.attr('data-toggle', 'dropdown');
                 if(this.model.has('glyphicon')) {
-                    this.$e.append('<span class="glyphicon glyphicon-'+this.model.get('glyphicon')+'"></span>');
+                    this.$e.append('<span class="glyphicon glyphicon-'+this.model.get('glyphicon')+'"></span> ');
                 } else if(!this.model.has('title')) {
-                    this.$e.append('<span class="glyphicon glyphicon-th"></span>');
+                    this.$e.append('<span class="glyphicon glyphicon-th"></span> ');
                 }
-                this.$e.append('<b class="caret"></b>');
+                if(!this.model.has('caret') || this.model.get('caret')) {
+                    this.$e.append('<b class="caret"></b>');
+                }
                 
                 if(!this.model.subNav) {
                     //console.log(this.options.list.collection)
@@ -267,6 +269,9 @@
                 }
                 
             } else {
+                if(this.model.has('glyphicon')) {
+                    this.$e.prepend('<span class="glyphicon glyphicon-'+this.model.get('glyphicon')+'"></span> ');
+                }
             }
             if(this.model.has('el')) {
                 this.$e.append(this.model.get('el'));

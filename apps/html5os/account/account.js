@@ -1235,7 +1235,7 @@
                 userView.remove();
                 self.userModal.remove();
                 self.router.back();
-            })
+            });
         },
         navToMe: function() {
             var user = this.loginStatus.getView().userModel;
