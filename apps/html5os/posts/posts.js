@@ -249,8 +249,7 @@
             });
             router.on('root', function(){
                 self.listView.filter();
-                self.listView.$el.siblings().hide();
-                self.listView.$el.show();
+                self.listView.$el.show().siblings().hide();
                 
                 if(self.listView.selectedPost) {
                     // console.log(self.listView.selectedPost.$el);
