@@ -1,0 +1,13 @@
+CACHE MANIFEST
+# ver 0.111
+
+CACHE:
+index.html
+index.css
+/pages/css/bootstrap.min.css
+/pages/fonts/glyphicons-halflings-regular.woff
+/require.js?/desktop/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/files/backbone-files.js/analytics/backbone-actions.js/js/config.js/desktop/jquery.scrollTo.min.js/pages/bootstrap.js/clock/clock.js/clock/moment.js/urls/urls.js/images/backbone-images.js/urls/backbone-urls.js/applications/applications.js/wallpaper/backbone-wallpaper.js/wallpaper/wallpaper.js/desktop/app.js
+
+NETWORK:
+/
+*
