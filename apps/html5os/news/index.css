@@ -1,3 +1,67 @@
+@font-face {
+    font-family: 'FreeUniversal';
+    src: url('/pages/fonts/FreeUniversal-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+/*@font-face {*/
+
+/*font-family: 'FreeUniversal';*/
+
+/*    src: url('/pages/fonts/FreeUniversal-Italic.ttf') format('truetype');*/
+
+/*font-weight: normal;*/
+
+/*font-style: italic;*/
+
+/*  }*/
+
+/*@font-face {*/
+
+/*font-family: 'FreeUniversal';*/
+
+/*    src: url('/pages/fonts/FreeUniversal-BoldItalic.ttf') format('truetype');*/
+
+/*font-weight: bold;*/
+
+/*font-style: italic;*/
+
+/*  }*/
+
+@font-face {
+    font-family: 'FreeUniversal';
+    src: url('/pages/fonts/FreeUniversal-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Bold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Italic.otf') format('opentype');
+    font-weight: normal;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Roman.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+.story > a.title {
+    font-family: 'FreeUniversal';
+    font-size: 22px;
+    font-weight: bold;
+}
+.story .summary {
+    font-family: 'Crimson';
+    font-size: 22px;
+    line-height: 1.5;
+}
 .pageTitle {
     text-align: center;
     position: absolute;
@@ -9,10 +73,8 @@ li.sub {
 }
 li.sub .actions {
     float: right;
-} 
-li.sub:hover .actions {
 }
-.list-controls {
+li.sub:hover .actions {} .list-controls {
     position: fixed;
     top: 8px;
     right: 100px;
@@ -30,40 +92,30 @@ li.sub:hover .actions {
     text-align: right;
 }
 @media only screen and (min-width: 767px) {
-    .subs-list {
-    }
-    .subs-list .showAllFeeds {
+    .subs-list {} .subs-list .showAllFeeds {
         font-weight: bold;
         padding: 8px;
     }
-    .subs-list .subs, .subs-list .showAllFeeds {
+    .subs-list .subs,
+    .subs-list .showAllFeeds {
         direction: ltr;
     }
     .subs .title {
         font-size: 14px;
         line-height: 42px;
     }
-    .subs .title a {
-    }
-    .news-list {
-    }
+    .subs .title a {} .news-list {}
 }
 .favicon img {
     max-height: 16px;
 }
-
-.subs .title {
-}
-.subs .title a {
-}
-.news-list {
-}
-.subscribe input {
+.subs .title {} .subs .title a {} .news-list {} .subscribe input {
     text-indent: 4px;
     width: 100%;
     box-sizing: border-box;
 }
-.subs .byline, .subs-list .list-pager {
+.subs .byline,
+.subs-list .list-pager {
     display: none;
 }
 .app > .form {
@@ -83,19 +135,28 @@ li.sub:hover .actions {
     color: rgb(25, 89, 201);
     margin-right: 12px;
     cursor: pointer;
-    font-size: 17px;
 }
 .news .story .byline {
     float: right;
     padding: 12px;
     color: #999;
     font-size: 12px;
+    position: absolute;
+    bottom: 0;
+    right: 55px;
+}
+.news .story .actions {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 10px;
+    color: #999;
 }
 .news .story .actions .checkbox {
     margin: 0 0;
 }
 .news .story .summary {
-    display: inline;
+    display: none;
 }
 .news .story .summary iframe {
     display: none;
@@ -103,11 +164,17 @@ li.sub:hover .actions {
 ul.news li.story .fromUrl {
     margin-right: 8px;
 }
-ul.news li.story[selected] .summary, ul.news.expanded li.story .summary, ul.news li.story[selected] .summary iframe, ul.news.expanded .story .summary iframe {
-    padding: 12px;
+ul.news li.story[selected] .summary,
+ul.news.expanded li.story .summary,
+ul.news li.story[selected] .summary iframe,
+ul.news.expanded .story .summary iframe {
+    padding: 12px 28px;
     display: block;
 }
-.news .story .summary p, .news .story .summary h1, .news .story .summary h2, .news .story .summary h3 {
+.news .story .summary p,
+.news .story .summary h1,
+.news .story .summary h2,
+.news .story .summary h3 {
     display: inline;
     font-weight: normal;
     font-size: 1em;
@@ -117,38 +184,45 @@ ul.news {
 }
 ul.news li.story {
     border-bottom: 1px solid #D6D6D6;
+    position: relative;
 }
-ul.news li.story[selected], ul.news.expanded li.story {
+ul.news li.story[selected],
+ul.news.expanded li.story {
     height: auto !important;
     padding: 16px 4px;
 }
-ul.news li.story[selected] a.title, ul.news.expanded a.title {
+ul.news li.story[selected] a.title,
+ul.news.expanded a.title {
     display: inline;
     line-height: 28px;
     padding-left: 12px;
 }
-ul.news li.story[selected] .summary img, ul.news.expanded .summary img {
+ul.news li.story[selected] .summary img,
+ul.news.expanded .summary img {
     display: inline;
 }
-ul.news li.story[selected] .summary p, ul.news.expanded .summary p,
-ul.news li.story[selected] .summary h1, ul.news.expanded .summary h1,  
-ul.news li.story[selected] .summary h2, ul.news.expanded .summary h2, 
-ul.news li.story[selected] .summary h3, ul.news.expanded .summary h3, 
-ul.news li.story[selected] .summary h4, ul.news.expanded .summary h4 {
+ul.news li.story[selected] .summary p,
+ul.news.expanded .summary p,
+ul.news li.story[selected] .summary h1,
+ul.news.expanded .summary h1,
+ul.news li.story[selected] .summary h2,
+ul.news.expanded .summary h2,
+ul.news li.story[selected] .summary h3,
+ul.news.expanded .summary h3,
+ul.news li.story[selected] .summary h4,
+ul.news.expanded .summary h4 {
     display: block;
     font-weight: initial !important;
     font-size: initial !important;
 }
-
 .subs .favicon {
     padding: 6px;
 }
-
 li.story .rating {
     cursor: pointer;
 }
 .rating {
-  unicode-bidi: bidi-override;
+    unicode-bidi: bidi-override;
 }
 .rating .star {
     font-size: 133%;
@@ -158,37 +232,31 @@ li.story .rating {
 .rating.selected .star {
     color: #000;
 }
-.rating:hover .star {
-    
-}
-.rating > span {
-  display: inline-block;
-  position: relative;
+.rating:hover .star {} .rating > span {
+    display: inline-block;
+    position: relative;
 }
 .rating > span:hover:before,
 .rating > span:hover ~ span:before {
-   content: "\2605";
-   position: absolute;
-   color: rgb(25, 89, 201);
+    content: "\2605";
+    position: absolute;
+    color: rgb(25, 89, 201);
 }
 .rating > span.selected:before,
 .rating > span.selected ~ span:before {
-   content: "\2605";
-   position: absolute;
-   color: rgb(25, 89, 201);
+    content: "\2605";
+    position: absolute;
+    color: rgb(25, 89, 201);
 }
 .rating.selected > span:before,
 .rating.selected > span ~ span:before {
-   content: "\2605";
-   position: absolute;
-   color: rgb(25, 89, 201);
+    content: "\2605";
+    position: absolute;
+    color: rgb(25, 89, 201);
 }
 .rating.selected > span:hover:before,
 .rating.selected > span:hover ~ span:before {
-   content: "\2605";
-   position: absolute;
-   color: rgba(25, 89, 201, 0.5);
+    content: "\2605";
+    position: absolute;
+    color: rgba(25, 89, 201, 0.5);
 }
-
-
-

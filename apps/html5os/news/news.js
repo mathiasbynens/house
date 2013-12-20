@@ -9,7 +9,7 @@
             //attr.sizes = attr.sizes || [];
             //this.imageSizeCollection = new ImageSizeCollection(attr.sizes, colOpts);
             this.on("change", function(model, options){
-                console.log(arguments);
+                // console.log(arguments);
                 //model.renderViews();
             });
             this.views = {};
@@ -310,7 +310,7 @@
                     if(self.$ul.hasClass('expanded')) {
                         self.collection.each(function(doc){
                             if(!doc.getRow().$el.is(":visible")) {
-                                console.log('row is not visible!!!');
+                                // console.log('row is not visible!!!');
                             } else {
                                 if(!doc.has('read')) {
                                     if(doc.getRow().$el.offset().top < 0) {
@@ -331,7 +331,7 @@
                     if(self.$ul.hasClass('expanded')) {
                         self.collection.each(function(doc){
                             if(!doc.getRow().$el.is(":visible")) {
-                                console.log('row is not visible!!!');
+                                // console.log('row is not visible!!!');
                             } else {
                                 if(!doc.has('read')) {
                                     if(doc.getRow().$el.offset().top < $(window).scrollTop() + doc.getRow().list.$el.offset().top) {
@@ -952,14 +952,26 @@
             this.$el.html(this.$span);
             if(this.model.has('title')) {
                 this.$el.find('.title').html(this.model.get('title'));
+                if(this.model.has('summary')) {
+                    if(!this.$summary) {
+                        this.$summary = $('<span>'+this.model.get('summary')+'</span>');
+                    }
+                    this.$el.find('.summary').append(this.$summary);
+                } else if(this.model.has('description')) {
+                    this.$el.find('.summary').html(this.model.get('description'));
+                }
+            } else {
+                if(this.model.has('summary')) {
+                    if(!this.$summary) {
+                        this.$summary = $('<span>'+this.model.get('summary')+'</span>');
+                    }
+                    this.$el.find('.title').append(this.$summary);
+                } else if(this.model.has('description')) {
+                    this.$el.find('.title').html(this.model.get('description'));
+                }
             }
             if(this.model.has('link')) {
                 this.$el.find('.title').attr('href', this.model.get('link'));
-            }
-            if(this.model.has('summary')) {
-                this.$el.find('.summary').html(this.model.get('summary'));
-            } else if(this.model.has('description')) {
-                this.$el.find('.summary').html(this.model.get('description'));
             }
             if(this.model.has('author')) {
                 this.$el.find('.author').html(''+this.model.get('author')+'');

@@ -1922,7 +1922,8 @@
             }
             this.model.bind('destroy', this.remove, this);
 
-            this.$title = $('<h1 class="title"><a href="#" target="_new"></a></h1>');
+            this.$title = $('<h1 class="title"><img src="/favicon.ico" ><a href="#" target="_new"></a></h1>');
+            this.$favImg = this.$title.find('img');
             //this.$actions = $('<div class="actions"></div>');
             //this.actions = new Actions({model: this.model, list: this.list});
             this.commentCollection = this.model.getCommentCollection();
@@ -1941,18 +1942,19 @@
             if (this.model.get('title')) {
                 this.$title.find('a').html(this.model.get('title'));
             }
-            if (this.model.has('faviconfile')) {
-                //this.$el.find('img').attr('src', );
-                //self.$el.append($fav);
-                if(this.$title.find('img').length > 0) {
-                    this.$title.find('img').attr('src', '/api/files/' + this.model.get('faviconfile').filename);
-                } else {
-                    this.$title.prepend('<img src="/api/files/' + this.model.get('faviconfile').filename + '">');
+            
+            
+            if (this.model.has('faviconfile') && this.model.get('faviconfile').contentType.indexOf('image') === 0) {
+                var imgSrc = '/api/files/' + this.model.get('faviconfile').filename;
+                if(imgSrc !== this.$favImg.attr('src')) {
+                    this.$favImg.attr('src', imgSrc);
                 }
             } else if (this.model.has('file')) {
                 var contentTypeKlass = this.model.get('file').contentType.replace(/\//gi, '-');
-                //this.$el.find('.url').after('<span title="'+this.model.get('file').contentType+'" class="contentType '+contentTypeKlass+'">'+this.model.get('file').contentType+'</span>');
-                this.$title.prepend('<img src="/files/icon/' + contentTypeKlass + '.png" title="' + this.model.get('file').contentType + '" >');
+                var imgSrc = '/files/icon/' + contentTypeKlass + '.png';
+                if(imgSrc !== this.$favImg.attr('src')) {
+                    this.$favImg.attr('src', imgSrc).attr('title', this.model.get('file').contentType);
+                }
             }
 
             this.$el.append(this.$title);

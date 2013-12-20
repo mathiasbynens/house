@@ -1,4 +1,83 @@
-.entry-meta {
+@font-face {
+    font-family: 'FreeUniversal';
+    src: url('/pages/fonts/FreeUniversal-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+/*@font-face {*/
+
+/*font-family: 'FreeUniversal';*/
+
+/*    src: url('/pages/fonts/FreeUniversal-Italic.ttf') format('truetype');*/
+
+/*font-weight: normal;*/
+
+/*font-style: italic;*/
+
+/*  }*/
+
+/*@font-face {*/
+
+/*font-family: 'FreeUniversal';*/
+
+/*    src: url('/pages/fonts/FreeUniversal-BoldItalic.ttf') format('truetype');*/
+
+/*font-weight: bold;*/
+
+/*font-style: italic;*/
+
+/*  }*/
+
+@font-face {
+    font-family: 'FreeUniversal';
+    src: url('/pages/fonts/FreeUniversal-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Bold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Italic.otf') format('opentype');
+    font-weight: normal;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Roman.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+h1.entry-title a, .entry-meta, .entry-meta a {
+    font-family: 'FreeUniversal';
+}
+h1.entry-title a {
+    font-size: 22px;
+    font-weight: bold;
+}
+.post-viewer h1.entry-title a {
+    font-size: 32px;
+    font-weight: bold;
+}
+.msg {
+    font-family: 'Crimson';
+    font-size: 22px;
+    line-height: 1.5;
+}
+.msg h1, .msg h2, .msg h3, .msg h4 {
+    font-family: 'FreeUniversal';
+}
+
+.entry-meta, .entry-meta a {
+    color: #6A8DAC;
+}
+.post-viewer .entry-meta {
+    margin-top: 12px;
+    margin-bottom: 32px;
 }
 .entry-meta .date, .entry-meta .tags-links {
     margin-right: 12px;
