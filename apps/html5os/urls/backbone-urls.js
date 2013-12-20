@@ -1576,12 +1576,18 @@
             } else {}
 
             if (this.model.has('faviconfile') && this.model.get('faviconfile').contentType.indexOf('image') === 0) {
-                this.$tdFav.find('img').attr('src', '/api/files/' + this.model.get('faviconfile').filename);
+                var imgSrc = '/api/files/' + this.model.get('faviconfile').filename;
+                if(imgSrc !== this.$tdFav.find('img').attr('src')) {
+                    this.$tdFav.find('img').attr('src', imgSrc);
+                }
                 //self.$el.append($fav);
             } else if (this.model.has('file')) {
                 var contentTypeKlass = this.model.get('file').contentType.replace(/\//gi, '-');
                 //this.$el.find('.url').after('<span title="'+this.model.get('file').contentType+'" class="contentType '+contentTypeKlass+'">'+this.model.get('file').contentType+'</span>');
-                this.$tdFav.find('img').attr('src', '/files/icon/' + contentTypeKlass + '.png').attr('title', this.model.get('file').contentType);
+                var imgSrc = '/files/icon/' + contentTypeKlass + '.png';
+                if(imgSrc !== this.$tdFav.find('img').attr('src')) {
+                    this.$tdFav.find('img').attr('src', imgSrc).attr('title', this.model.get('file').contentType);
+                }
             }
 
             if (this.model.has('ogImage')) {
