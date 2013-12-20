@@ -62,7 +62,6 @@
         render: function() {
             var self = this;
             this.$el.html('');
-            this.setElement(this.$el);
             if(!this.initialized) {
                 this.on('initialized', function(){
                     self.render();
@@ -71,6 +70,7 @@
             }
             this.$el.append(self.listView.render().$el);
             this.$el.append(this.$postViewer);
+            this.setElement(this.$el);
             return this;
         },
         events: {
@@ -224,19 +224,15 @@
         },
         bindNav: function(nav) {
             this.nav = nav;
-            nav.list.on('home', function(){
-                nav.router.navigate('', true);
-            });
+            // nav.list.on('home', function(){
+            //     nav.router.navigate('', {trigger: true});
+            // });
             this.bindRouter(nav.router);
-            //nav.col.add({title:"Posts", navigate:""});
+            // nav.col.add({title:"Posts", navigate:""});
             nav.col.add({title:"New post", navigate:"new", renderCondition: "isAdmin"});
         },
         bindRouter: function(router) {
             var self = this;
-            var routerReset = function() {
-                $('body').attr('class', '');
-                router.reset();
-            }
             self.router = router;
             router.on('title', function(title){
                 var $e = $('.pageTitle');
@@ -244,7 +240,7 @@
                 $e.html(title);
             });
             router.on('reset', function(){
-                //$('#header').removeAttr('class');
+                $('body').attr('class', '');
                 self.nav.unselect();
             });
             router.on('root', function(){
@@ -262,7 +258,7 @@
             });
             router.route(':slug/edit', 'editSlug', function(slug){
                 console.log('edit via slug')
-                routerReset();
+                router.reset();
                 $('#header').addClass('hideTitle');
                 self.findPostBySlug(slug, function(doc){
                     if(doc) {
@@ -274,7 +270,7 @@
                 });
             });
             router.route(':slug', 'postSlug', function(slug){
-                routerReset();
+                router.reset();
                 self.$postViewer.siblings().hide();
                 self.$postViewer.show();
                 self.findPostBySlug(slug, function(doc){
@@ -287,7 +283,7 @@
                 });
             });
             router.route('seq/:num', 'seqNum', function(num){
-                routerReset();
+                router.reset();
                 num = parseInt(num, 10);
                 self.findPostBySeq(num, function(doc){
                     if(doc) {
@@ -299,7 +295,7 @@
                 });
             });
             router.route('by/:userName', 'userPosts', function(name){
-                routerReset();
+                router.reset();
                 router.setTitle('Posts by '+name);
                 self.nav.selectByNavigate('');
                 
@@ -316,7 +312,7 @@
                 });
             });
             router.route('tag/:tagName', 'tagPosts', function(tagName){
-                routerReset();
+                router.reset();
                 router.setTitle('Posts tagged '+tagName);
                 self.nav.selectByNavigate('');
                 self.listView.filter(function(model) {
@@ -331,7 +327,7 @@
                 router.trigger('loadingComplete');
             });
             router.route('id/:id/edit', 'editPost', function(id){
-                routerReset();
+                router.reset();
                 $('#header').addClass('hideTitle');
                 self.findPostById(id, function(doc){
                     if(doc) {
@@ -343,7 +339,7 @@
                 });
             });
             router.route('id/:id', 'post', function(id){
-                routerReset();
+                router.reset();
                 self.$postViewer.siblings().hide();
                 self.$postViewer.show();
                 self.findPostById(id, function(doc){
@@ -360,7 +356,7 @@
                 });
             });
             router.route('new', 'new', function(){
-                routerReset();
+                router.reset();
                 $('#header').addClass('hideTitle');
                 self.editDoc();
                 router.trigger('loadingComplete');

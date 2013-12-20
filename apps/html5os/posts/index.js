@@ -33,7 +33,7 @@
                                                                             postOpts.el = $app;
                                                                         }
                                                                         window.posts = new Posts(postOpts);
-                                                                        posts.bindUser(accountProfile.loginStatus.getView().userModel);
+                                                                        // posts.bindUser(accountProfile.loginStatus.getView().userModel);
                                                                         posts.on('initialized', function(){
                                                                             $('body').append(posts.render().$el);
                                                                             posts.bindNav(nav);
