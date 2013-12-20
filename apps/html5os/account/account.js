@@ -72,6 +72,23 @@
             }
         };
     };
+    auth.subscribeEmail = function() {
+        if (!this.hasOwnProperty("model")) {
+            this.model = new this.Model({}, {
+                collection: this.collection
+            });
+        } else {
+            delete this.model.id;
+        }
+        if (!this.model.has("user")) {
+            this.model.set({
+                email: ""
+            }, {
+                silent: true
+            });
+        }
+        return new EmailSubscribeView({model: this.model});
+    }
     auth.Model = Backbone.Model.extend({
         initialize: function() {
             var self = this;
@@ -140,6 +157,11 @@
         isOwner: function(ownerId) {
             return(this.has('user') && this.get('user') == ownerId);
         },
+        getEmailSubscribeView: function() {
+            if(!this.isUser()) {
+                return auth.subscribeEmail();
+            }
+        },
         welcome: function($el, options, callback) {
             var self = this;
             if(typeof options === 'function') {
@@ -163,6 +185,107 @@
             }
         }
     });
+    
+    var EmailSubscribeView = Backbone.View.extend({
+        tagName: "div",
+        className: "subscribeEmail",
+        initialize: function(options) {
+            var self = this;
+            //self.state = 'reset';
+            this.model.on("login", function() {
+                self.trigger('saved');
+            });
+            this.ui = {
+                label: "Get Updates",
+            }
+            if(options) {
+                for(var i in options.ui) {
+                    this.ui[i] = options.ui[i];
+                }
+            }
+            this.$form = $('<form class="navbar-form navbar-right" role="joinNewsletter"> <span class="glyphicon glyphicon-bullhorn"></span>\
+                                <label>'+this.ui.label+'</label>\
+                                <div class="form-group">\
+                                    <div class="input-group">\
+                                        <input type="email" class="form-control" name="email" placeholder="your email" data-loading-text="loading">\
+                                        <span class="input-group-btn">\
+                                            <button class="go btn btn-default" type="button" data-loading-text="...">Subscribe</button>\
+                                        </span>\
+                                    </div>\
+                                </div>\
+                            </form>');
+        },
+        render: function() {
+            this.$el.append(this.$form);
+            this.setElement(this.$el);
+            return this;
+        },
+        hideLoading: function() {
+            this.$el.find('.progress').hide();
+            this.$submit.removeAttr('disabled');
+            if(this.prevSubmitVal) {
+                this.$submit.val(this.prevSubmitVal);
+            }
+        },
+        showLoading: function() {
+            this.$el.find(".msg").hide();
+            this.$el.find('.progress').show();
+            this.$submit.attr('disabled', 'disabled');
+            this.prevSubmitVal = this.$submit.val();
+            this.$submit.val('Loading...');
+        },
+        events: {
+            "submit form": "submit",
+            'blur form input[name="email"]': "submit",
+            'keyup input[name="email"]': "keyupsubmit",
+            'keyup input[name="pass"]': "keyupsubmit",
+            "click .resetPass": "resetPass",
+        },
+        resetForm: function() {
+            this.model.set({
+                email: '',
+                pass: null,
+                name: null
+            }, {silent: true});
+            
+            this.$form.hide().siblings().show();
+            this.$el.find('input[name="email"]').val('');
+            this.$el.find('input[name="email"]').show().siblings().hide();
+        },
+        keyupsubmit: function(e) {
+            if(e.keyCode == 13) {
+                this.submit(e);
+            } else if(e.keyCode == 27) {
+                this.resetForm();
+            }
+            return false;
+        },
+        submit: function() {
+            var email = this.$el.find('input[name="email"]').val();
+            if(email == '') {
+                return false;
+            }
+            if(email.indexOf('@') === -1) {
+                this.$el.find(".msg").html('valid email required').show();;
+                return false;
+            }
+            var name = email.substr(0,email.indexOf('@'));
+            this.model.set({
+                email: email,
+                pass: '',
+                name: name
+            });
+            return false;
+        },
+        focus: function() {
+            this.$el.find("input").first().focus();
+        },
+        remove: function() {
+            this.model.off("badPass");
+            this.$el.remove();
+        }
+    });
+    
     auth.Collection = Backbone.Collection.extend({
         model: auth.Model,
         url: function() {

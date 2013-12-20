@@ -304,7 +304,7 @@
             var self = this;
             self.loading = false;
             this.$pager = $('<div class="list-pager container text-center">showing <span class="list-length"></span> of <span class="list-count"></span> posts</div>');
-            var $ul = this.$ul = $('<div class="postList container"></div>');
+            var $ul = this.$ul = $('<div class="postList"></div>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -574,7 +574,7 @@
         tagName: "span",
         className: "edit",
         render: function() {
-            this.$el.html('<button>edit</button>');
+            this.$el.html('<button class="btn btn-primary">edit</button>');
             this.setElement(this.$el);
             return this;
         },
@@ -793,7 +793,7 @@
             this.$el.html('');
             var $byline = $('<div class="entry-meta col-md-8 col-md-offset-2"></div>');
             var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
-            var $at = $('<span class="date glyphicon glyphicon-time"></span>');
+            var $at = $('<span class="date"><span class="glyphicon glyphicon-time"></span> </span>');
             $at.append($permalink);
             $byline.append($at);
             if(this.model.has('title')) {
@@ -811,7 +811,7 @@
                 }
             }
             if(this.model.has('tags')) {
-                var $tags = $('<span class="tags-links glyphicon glyphicon-tag"></span>');
+                var $tags = $('<span class="tags-links"><span class="glyphicon glyphicon-tag"></span> </span>');
                 var tags = this.model.get('tags');
                 for(var t in tags) {
                     var tag = tags[t];
@@ -822,30 +822,51 @@
                 }
                 $byline.append($tags);
             }
-            this.$el.append($byline);
             if(this.model.has('owner')) {
-                $byline.append('<span class="author vcard glyphicon glyphicon-user"><a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
+                $byline.append('<span class="author vcard"><span class="glyphicon glyphicon-user"></span> <a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
                 this.model.getOwner(function(owner){
                     self.author = owner;
                     if(owner) {
                     }
                 });
             }
+            
+            if(this.model.has('youtube')) {
+                var yt = this.model.get('youtube');
+                if(yt.id) {
+                    var ytid = yt.id;
+                    this.$el.append('<span class="youtube col-md-8 col-md-offset-2"><img class="thumbnail" src="//i1.ytimg.com/vi/'+ytid+'/hqdefault.jpg"></span>');
+                }
+            }
+            
             if(this.model.has('msg')) {
                 var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
-                $msg.html(this.model.get('msg'));
+                var msgStr = this.model.get('msg');
+                var msgStrTxt = nl2br($('<span>'+br2nl(msgStr)+'</span>').text());
+                var trimLen = 555;
+                if(msgStrTxt.length > trimLen) {
+                    msgStr = msgStrTxt.substr(0, trimLen);
+                    msgStr += '... <a href="#" class="readMore">Read more</a>'; // strip html
+                }
+                $msg.html(msgStr);
                 this.$el.append($msg);
             }
+            this.$el.append($byline);
             this.$el.attr('data-id', this.model.id);
             //this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
         },
         events: {
+            "click .readMore": "clickReadMore",
           "click": "select",
           "click .entry-title a": "clickTitle",
           "click .author a": "clickAuthor",
           "click .tags-links a": "clickTag"
+        },
+        clickReadMore: function(e) {
+            this.select();
+            return false;
         },
         clickAuthor: function(e) {
             if(this.author) {
@@ -933,7 +954,6 @@
                 }
                 $byline.append($tags);
             }
-            this.$el.append($byline);
             if(this.model.has('owner')) {
                 $byline.append('<span class="author vcard glyphicon glyphicon-user"><a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
                 this.model.getOwner(function(owner){
@@ -967,15 +987,17 @@
                 var yt = this.model.get('youtube');
                 if(yt.id) {
                     var ytid = yt.id;
-                    this.$el.append('<span class="youtube"><div id="ytapiplayer-'+ytid+'"><iframe width="760" height="430" src="//www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
+                    this.$el.append('<span class="youtube col-md-8 col-md-offset-2"><div id="ytapiplayer-'+ytid+'"><iframe width="760" height="430" src="//www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
                 }
                 //this.$el.find('.youtube').fitVids();
             }
             if(this.model.has('msg')) {
                 var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
-                $msg.html(this.model.get('msg'));
+                var msgStr = this.model.get('msg');
+                $msg.html(msgStr);
                 this.$el.append($msg);
             }
+            this.$el.append($byline);
             if(this.model.has('tweet')) {
                 var tweet = this.model.get('tweet');
                 
@@ -1025,6 +1047,9 @@
     window.nl2br = function(str) {
         return (str + "").replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, "$1" + "<br />");
     };
+    window.br2nl = function(str) {
+        return str.replace(/<br\s*\/?>/mg,"\n");
+    }
     
     var AvatarView = Backbone.View.extend({
         tagName: "span",

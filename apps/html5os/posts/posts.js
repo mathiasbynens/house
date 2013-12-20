@@ -7,7 +7,6 @@
         initialize: function() {
             var self = this;
             self.editForms = {};
-            require(['/desktop/swipeview.js'], function(){
                 require(['/posts/backbone-posts.js'], function(ModelBackbone){
                     window.PostsBackbone = ModelBackbone;
                     window.postsCollection = new ModelBackbone.Collection(); // collection
@@ -46,7 +45,6 @@
                         }
                         loadCollections();
                     });
-                });
             });
             
             /*require(['../desktop/jquery.idle-timer.js'], function() {
@@ -229,7 +227,8 @@
             // });
             this.bindRouter(nav.router);
             // nav.col.add({title:"Posts", navigate:""});
-            nav.col.add({title:"New post", navigate:"new", renderCondition: "isAdmin"});
+            nav.col.add({id: 'rss', title:'Subscribe via RSS', a:'<img src="/news/favicon.ico" height="16" width="16" class="rss">', href:"/api/posts?_format=rss"});
+            nav.col.add({title:"New post", navigate:"new", glyphicon: "pencil", renderCondition: "isAdmin"});
         },
         bindRouter: function(router) {
             var self = this;
@@ -250,6 +249,8 @@
                 if(self.listView.selectedPost) {
                     // console.log(self.listView.selectedPost.$el);
                     $('body').scrollTo(self.listView.selectedPost.$el);
+                } else {
+                    $('body')[0].scrollTop = 0;
                 }
                 
                 router.setTitle('Posts');

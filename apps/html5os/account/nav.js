@@ -113,6 +113,7 @@
             "click .pageTitle": "titleClick"
         },
         goHome: function() {
+            $('body')[0].scrollTop = 0;
             nav.router.gohome();
             return false;
         },
@@ -240,7 +241,12 @@
             this.$e.html('');
             this.$el.append(this.$e);
             
-            if(this.model.has('title')) {
+            if(this.model.has('a')) {
+                this.$e.append(this.model.get('a')+' ');
+                if(this.model.has('title')) {
+                    this.$e.attr('title', this.model.get('title'));
+                }
+            } else if(this.model.has('title')) {
                 this.$e.append(this.model.get('title')+' ');
                 if(this.model.has('navigate')) {
                     this.$e.attr('href', this.model.get('navigate'));

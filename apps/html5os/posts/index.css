@@ -56,7 +56,6 @@ h1.entry-title a, .entry-meta, .entry-meta a {
     font-family: 'FreeUniversal';
 }
 h1.entry-title a {
-    font-size: 22px;
     font-weight: bold;
 }
 .post-viewer h1.entry-title a {
@@ -71,11 +70,20 @@ h1.entry-title a {
 .msg h1, .msg h2, .msg h3, .msg h4 {
     font-family: 'FreeUniversal';
 }
-
+img.rss {
+    filter: url(filters.svg#grayscale);
+    filter: gray;
+    -webkit-filter: grayscale(1);
+}
+img.rss:hover {
+    filter: none;
+    filter: none;
+    -webkit-filter: none;
+}
 .entry-meta, .entry-meta a {
     color: #6A8DAC;
 }
-.post-viewer .entry-meta {
+.entry-meta {
     margin-top: 12px;
     margin-bottom: 32px;
 }
@@ -91,13 +99,48 @@ h1.entry-title a {
 .entry-meta .author a {
     margin-left: 6px;
 }
+.post-viewer .msg {
+    margin-bottom: 100px;
+}
+
+.msg blockquote {
+    border-left: 0;
+	font-style: italic;
+	font-weight: 300;
+	padding-left: 75px;
+	position: relative;
+}
+
+.msg blockquote:before {
+	content: '\201C';
+	font-size: 140px;
+	font-weight: 400;
+	line-height: .8;
+	padding-right: 25px;
+	position: absolute;
+	left: -15px;
+	top: -3px;
+}
+
+.postList .row {
+    padding-bottom: 50px;
+    padding-top: 50px;
+    margin-left: 0;
+    margin-right: 0;
+}
+.postList .row:nth-child(even) {
+   background-color: #161616;
+   border-color: #080808;
+   color: #BDBDBD;
+}
+.postList .row:nth-child(even) .entry-title a {
+    color: white;
+}
 
 #accountNav {
     margin-left: 20px;
 }
 .navbar-header .glyphicon-home {
-    color: grey;
-    background: transparent;
 }
 .navbar-header .glyphicon-home:hover {
     color: white;

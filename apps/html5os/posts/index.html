@@ -42,16 +42,40 @@
             body #loading {
                 display: none;
             }
-            body { padding-top: 50px; overflow-y: scroll; }
+            body { overflow-y: scroll; }
             @media (max-width: 767px) {
                 .navbar-header .navbar-form {
                     display: none;
                 }
             }
+            .navbar-header .navbar-form {
+                position: fixed;
+                left: 13px;
+                top: 3px;
+            }
+            .navbar-header .navbar-form .homeBtn {
+            }
+            .navbar-header .navbar-brand {
+                margin-left: 60px;
+            }
+            .pageTitle {
+                display: none;
+            }
+            header.navbar {
+                background: #F3F3F3;
+            }
+            .navbar-form label {
+                padding-right: 4px;
+            }
+            @media (min-width: 768px) {
+                .navbar-form .form-group {
+                    width: 200px;
+                }
+            }
         </style>
     </head>
 	<body class="loading">
-        <header class="navbar navbar-inverse navbar-fixed-top" role="banner">
+        <header class="navbar" role="banner">
             <div class="">
                 <div class="navbar-header">
                   <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
@@ -61,7 +85,7 @@
                     <span class="icon-bar"></span>
                   </button>
                   <form class="navbar-form navbar-left">
-                    <button type="button" class="homeBtn glyphicon glyphicon-home btn navbar-left"> </button>
+                    <button type="button" class="homeBtn glyphicon glyphicon-home btn btn-primary navbar-left"> </button>
                   </form>
                   <a href="/posts/" class="pageTitle navbar-brand">Posts</a>
                 </div>
@@ -69,7 +93,7 @@
                     <ul class="nav navbar-nav navbar-right" id="accountNav">
                       <!--- <li><a href="#">Link</a></li> -->
                       <li class="dropdown">
-                        <a href="#" class="dropdown-toggle glyphicon glyphicon-user" data-toggle="dropdown"> <b class="caret"></b></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> <b class="caret"></b></a>
                         <ul class="dropdown-menu" id="accountMenu">
                           <!--- <li><a href="#">Action</a></li> -->
                         </ul>
@@ -90,8 +114,10 @@
             </div>
         </div>
         <div id="welcome"></div>
+        
         <!--<script type="text/javascript" src="/desktop/require.js"></script>-->
-        <script type="text/javascript" src="/desktop/require.js?/posts/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/clock/clock.js/desktop/nav.js/files/backbone-files.js/desktop/swipeview.js/posts/backbone-posts.js/posts/wysihtml-parser_rules.js/posts/wysihtml5-0.4.0pre.min.js/posts/posts.js/desktop/jquery.scrollTo.min.js/pages/bootstrap.js"></script>
+        <script type="text/javascript" src="/require.js?/posts/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/files/backbone-files.js/analytics/backbone-actions.js/js/config.js/desktop/jquery.scrollTo.min.js/pages/bootstrap.js/clock/clock.js/clock/moment.js/posts/backbone-posts.js/posts/wysihtml-parser_rules.js/posts/wysihtml5-0.4.0pre.min.js/posts/posts.js"></script>
+        
         <script type="text/javascript">
         require(['/posts/index.js'], function(index){
             index.init(function(app){
