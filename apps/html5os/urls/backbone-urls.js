@@ -1769,7 +1769,7 @@
             var iframe = '';
             if (this.model.has('image')) {
                 if (!this.hasOwnProperty('imageView')) {
-                    self.imageView = new ImagesBackbone.Model(self.model.get('image')).getAvatar({size: 'full'});
+                    self.imageView = new ImagesBackbone.Model(self.model.get('image')).getAvatar({size: 'full', className: 'image'});
                 }
                 /*var popOpts = {
                     "trigger": "hover",
@@ -1800,7 +1800,7 @@
             } else {
                 // check if this url is known to have a header X-Frame-Options: SAMEORIGIN
                 if(this.model.has('file') && this.model.get('file') && this.model.get('file').metadata && this.model.get('file').metadata.responseHeaders && this.model.get('file').metadata.responseHeaders.hasOwnProperty('X-Frame-Options') && (this.model.get('file').metadata.responseHeaders['X-Frame-Options'].toLocaleLowerCase() === 'SAMEORIGIN'.toLocaleLowerCase() || this.model.get('file').metadata.responseHeaders['X-Frame-Options'].toLocaleLowerCase() === 'deny')) {
-                    iframe = placeHolder[0].innerHTML;
+                    iframe = '<span class="image">'+placeHolder[0].innerHTML+'</span>';
                 } else {
                     iframe = '<iframe id="frame" class="frame" style="width:100%; height:100%; margin:0; padding:0; border: 0px;" src="' + this.model.get('url') + '"> </iframe>';
                 }
@@ -1829,12 +1829,16 @@
             "click input.shareUrl": "clickShareUrl",
             "change input.shareUrl": "changeShareUrl",
             "keyup input.shareUrl": "changeShareUrl",
+            "click .image img": "clickImage",
             // "click button.email": "shareEmail",
             // "click button.twitter": "shareTwitter",
             // "click button.facebook": "shareFacebook",
             // "click button.google": "shareGoogle",
             "click button.comments": "viewComments",
             "click button.views": "viewViews",
+        },
+        clickImage: function(e) {
+            window.location = this.model.get('url');
         },
         clickHome: function(e) {
             this.trigger('home');
