@@ -77,12 +77,17 @@
             var self = this;
             $('head [property="fb:page_id"]').remove();
             var baseHref = $('head [rel="canonical"]').attr('data-href');
+            var hostName = window.location.host || window.location.hostname;
             if(!baseHref) {
-                var hostName = window.location.host || window.location.hostname;
                 baseHref = window.location.protocol+'//'+hostName+'/';
             }
+            var baseUrl = baseHref;
+            if(baseHref.indexOf('http') !== 0) {
+                baseUrl = window.location.protocol+'//'+hostName+baseHref;
+            }
+            var apiFilePath = window.location.protocol+'//'+hostName+'/api/files/';
+            
             $('head [name="twitter:domain"]').attr('content', baseHref);
-            var apiFilePath = baseHref+'api/files/';
             $('head [rel="canonical"]').attr('href', baseHref+doc.getNavigatePath());
             $('head [name="twitter:url"]').attr('content', baseHref+doc.getNavigatePath());
             
