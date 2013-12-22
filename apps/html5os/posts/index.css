@@ -102,7 +102,12 @@ img.rss:hover {
 .post-viewer .msg {
     margin-bottom: 100px;
 }
-
+.post-viewer .msg img {
+    max-width: 100%;
+}
+.postList img.avatar, .fullView img.avatar {
+    width: 100%;
+}
 .msg blockquote {
     border-left: 0;
 	font-style: italic;

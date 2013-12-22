@@ -796,6 +796,14 @@
             var $at = $('<span class="date"><span class="glyphicon glyphicon-time"></span> </span>');
             $at.append($permalink);
             $byline.append($at);
+            
+            
+            if(this.model.get('avatar')) {
+                var avatarImage = this.model.get('avatar');
+                var $avatarImg = $('<img class="avatar" src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
+                this.$el.append($avatarImg);
+            }
+            
             if(this.model.has('title')) {
                 this.$el.append('<div class="entry-header col-md-8 col-md-offset-2"><h1 class="entry-title"><a href="'+this.model.getNavigatePath()+'">'+this.model.get('title')+'</a></h1></div>');
                 $permalink.attr('title', 'Permalink to '+this.model.get('title'));
@@ -922,6 +930,12 @@
         render: function() {
             var self = this;
             this.$el.html('');
+            
+            if(this.model.get('avatar')) {
+                var avatarImage = this.model.get('avatar');
+                var $avatarImg = $('<img class="avatar" src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
+                this.$el.append($avatarImg);
+            }
             
             var $byline = $('<div class="entry-meta col-md-8 col-md-offset-2"></div>');
             var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
@@ -1057,6 +1071,13 @@
         render: function() {
             this.$el.html('');
             var $byline = $('<span class="byline"></span>');
+            
+            if(this.model.get('avatar')) {
+                var avatarImage = this.model.get('avatar');
+                var $avatarImg = $('<img class="avatar" src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
+                //this.$el.append($avatarImg);
+            }
+            
             if(this.model.has('title')) {
                 this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
             }
@@ -1635,7 +1656,7 @@
                 
                 if(this.model.get('avatar')) {
                     var avatarImage = this.model.get('avatar');
-                    var $avatarImg = $('<img src="/api/files/'+avatarImage.filename+'" />');
+                    var $avatarImg = $('<img src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
                     this.$form.find('.avatar').append('<button class="detachImage" class="form-control">Detach Image</button>');
                     this.$form.find('.avatar .embed').html($avatarImg);
                 } else {
@@ -1644,7 +1665,7 @@
                 }
                 if(this.model.get('audio')) {
                     var media = this.model.get('audio');
-                    var $mediaEmbed = $('<audio controls preload="none" src="/api/files/'+media.filename+'" />');
+                    var $mediaEmbed = $('<audio controls preload="none" src="/api/files/'+encodeURIComponent(media.filename)+'" />');
                     this.$form.find('.audio').append('<button class="detachAudio" class="form-control">Detach Audio</button>');
                     this.$form.find('.audio .embed').html($mediaEmbed);
                 } else {
@@ -1653,7 +1674,7 @@
                 }
                 if(this.model.get('video')) {
                     var media = this.model.get('video');
-                    var $mediaEmbed = $('<video controls preload="none" src="/api/files/'+media.filename+'" />');
+                    var $mediaEmbed = $('<video controls preload="none" src="/api/files/'+encodeURIComponent(media.filename)+'" />');
                     this.$form.find('.video').append('<button class="detachVideo" class="form-control">Detach Video</button>');
                     this.$form.find('.video .embed').html($mediaEmbed);
                 } else {

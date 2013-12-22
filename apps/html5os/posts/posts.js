@@ -227,7 +227,7 @@
             // });
             this.bindRouter(nav.router);
             // nav.col.add({title:"Posts", navigate:""});
-            nav.col.add({id: 'rss', title:'Subscribe via RSS', a:'<img src="/news/favicon.ico" height="16" width="16" class="rss">', href:"/api/posts?_format=rss"});
+            nav.col.add({id: 'rss', title:'Subscribe via RSS', a:'<img src="/news/rss.ico" height="16" width="16" class="rss">', href:"/api/posts?_format=rss"});
             nav.col.add({title:"New post", navigate:"new", glyphicon: "pencil", renderCondition: "isAdmin"});
         },
         bindRouter: function(router) {
