@@ -149,6 +149,28 @@
                     $('head [name="twitter:image"]').attr('content', ogImage);
                 }
             }
+            
+            if(window.config && config.fb) {
+                if(config.fb.page_id) {
+                    $('head meta[property="fb:page_id"]').remove();
+                    $('head').append('<meta property="fb:page_id" content="'+config.fb.page_id+'" />');
+                }
+                if(config.fb.app_id) {
+                    $('head meta[property="fb:app_id"]').remove();
+                    $('head').append('<meta property="fb:app_id" content="'+config.fb.app_id+'" />');
+                }
+                if(config.fb.admins) {
+                    $('head meta[property="fb:admins"]').remove();
+                    var adminsArr = config.fb.admins.split(',');
+                    for(var i in adminsArr) {
+                        var admin_id = adminsArr[i].trim();
+                        $('head').append('<meta property="fb:admins" content="'+admin_id+'" />');
+                    }
+                }
+            }
+            if(!$('head meta[property="fb:app_id"]').attr('content')) {
+                $('head meta[property="fb:app_id"]').remove();
+            }
             var $el = doc.getFullView({list: self.listView}).render().$el;
             self.$postViewer.append($el);
             $el.siblings().remove();

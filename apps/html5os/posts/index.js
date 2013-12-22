@@ -28,10 +28,10 @@
                                                                     });
                                                                     
                                                                     var subscribeEmailView = account.getEmailSubscribeView();
-                                                                    if($('.subscribeEmail').length > 0) {
-                                                                        subscribeEmailView.setElement($('.subscribeEmail')[0]);
-                                                                    }
                                                                     if(subscribeEmailView) {
+                                                                        if($('.subscribeEmail').length > 0) {
+                                                                            subscribeEmailView.setElement($('.subscribeEmail')[0]);
+                                                                        }
                                                                         $('#siteNav').after(subscribeEmailView.render().$el);
                                                                         subscribeEmailView.on('saved', function(){
                                                                             alert('Thank you for subscribing!');
