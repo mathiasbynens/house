@@ -78,13 +78,13 @@
             $('head [property="fb:page_id"]').remove();
             var baseHref = $('head [rel="canonical"]').attr('data-href');
             if(!baseHref) {
-                baseHref = window.location.host || window.location.hostname;
-                baseHref = window.location.protocol+'//'+baseHref+'/';
+                var hostName = window.location.host || window.location.hostname;
+                baseHref = window.location.protocol+'//'+hostName+'/';
             }
             $('head [name="twitter:domain"]').attr('content', baseHref);
             var apiFilePath = baseHref+'api/files/';
-            $('head [rel="canonical"]').attr('href', baseHref+'posts/'+doc.getNavigatePath());
-            $('head [name="twitter:url"]').attr('content', baseHref+'posts/'+doc.getNavigatePath());
+            $('head [rel="canonical"]').attr('href', baseHref+doc.getNavigatePath());
+            $('head [name="twitter:url"]').attr('content', baseHref+doc.getNavigatePath());
             
             $('head [property="og:type"]').attr('content', 'article');
             $('head [name="twitter:card"]').attr('content', 'photo');
