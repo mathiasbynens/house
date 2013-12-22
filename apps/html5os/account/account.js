@@ -76,11 +76,11 @@
         if(!options) {
             options = {};
         }
-        options.model = this.model;
         if (!this.hasOwnProperty("model")) {
             this.model = new this.Model({}, {
                 collection: this.collection
             });
+            options.model = this.model;
         } else {
             delete this.model.id;
         }
