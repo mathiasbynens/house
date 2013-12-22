@@ -1,5 +1,5 @@
 (function() {
-    var pageSize = 24;
+    var pageSize = 100;
 
     var AnalyticsView = Backbone.View.extend({
         tag: 'span',

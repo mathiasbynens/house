@@ -1325,6 +1325,12 @@ ul li[selected].row .userAgent .string {
     text-indent: -1000px;
     margin-top: 8px;
 }
+.userAgent .browser.House {
+    background: url("bot.png") top left no-repeat;
+}
+.userAgent .browser.Bot {
+    background: url("icn_bot.png") top left no-repeat;
+}
 .userAgent .browser.Chrome {
     background: url("icn_chrome.png") top left no-repeat;
 }

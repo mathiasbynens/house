@@ -715,31 +715,53 @@
         render: function() {
             var self = this;
             if (this.model.has("userAgent")) {
+                var $os = this.$ua.find('.os');
+                var $browser = this.$ua.find('.browser');
                 var str = this.model.get('userAgent');
                 this.$ua.attr('title', str);
                 this.$span.find('.userAgent .string').html(str);
-                if (this.model.has("agent")) {
-                    var $os = this.$ua.find('.os');
-                    var $browser = this.$ua.find('.browser');
-                    var agent = this.model.get('agent');
-                    if(agent && agent.os) {
-                        var agentStr = '';
-                        if(typeof agent.os == 'string') {
-                            agentStr = agent.os;
-                            $os.addClass(agentStr.replace(/\s/g, ''));
-                        } else if(agent.os.family) {
-                            agentStr = agent.os.family;
-                            if(agent.os.major) {
-                                agentStr = agentStr + ' ' + agent.os.major;
-                            }
-                            $os.addClass(agent.os.family.replace(/\s/g, ''));
-                        }
-                        $os.html(agentStr);
-                        $os.attr('title', agentStr);
+                if(str.indexOf('HouseJs HTML Cacher') !== -1) {
+                    $browser.addClass('House');
+                    $browser.html(str);
+                    $browser.attr('title', str);
+                        $os.css('background', 'url(//facebook.com/favicon.ico) 50% no-repeat');
+                        // http://facebook.com/favicon.ico
+                } else if(str.indexOf('bot') !== -1) {
+                    $browser.addClass('Bot');
+                    $browser.html(str);
+                    $browser.attr('title', str);
+                    $os.html(str);
+                    $os.attr('title', str);
+                    if(str.indexOf('facebookexternalhit') !== -1) {
+                        $os.css('background', 'url(//facebook.com/favicon.ico) 50% no-repeat');
+                        // http://facebook.com/favicon.ico
+                    } else if(str.indexOf('google') !== -1) {
+                        $os.css('background', 'url(//plus.google.com/favicon.ico) 50% no-repeat');
+                    } else if(str.indexOf('twitter') !== -1) {
+                        $os.css('background', 'url(//twitter.com/favicon.ico) 50% no-repeat');
                     }
-                    $browser.addClass(agent.family.replace(/\s/g, ''));
-                    $browser.html(agent.family);
-                    $browser.attr('title', agent.family + ' ' + agent.major);
+                } else {
+                    if (this.model.has("agent")) {
+                        var agent = this.model.get('agent');
+                        if(agent && agent.os) {
+                            var agentStr = '';
+                            if(typeof agent.os == 'string') {
+                                agentStr = agent.os;
+                                $os.addClass(agentStr.replace(/\s/g, ''));
+                            } else if(agent.os.family) {
+                                agentStr = agent.os.family;
+                                if(agent.os.major) {
+                                    agentStr = agentStr + ' ' + agent.os.major;
+                                }
+                                $os.addClass(agent.os.family.replace(/\s/g, ''));
+                            }
+                            $os.html(agentStr);
+                            $os.attr('title', agentStr);
+                        }
+                        $browser.addClass(agent.family.replace(/\s/g, ''));
+                        $browser.html(agent.family);
+                        $browser.attr('title', agent.family + ' ' + agent.major);
+                    }
                 }
             }
             

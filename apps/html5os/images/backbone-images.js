@@ -900,7 +900,7 @@
                     }
                 }
             }
-            this.$el.css('background', 'url("/api/files/'+imageThumbSrc+'")');
+            this.$el.css('background', 'url("/api/files/'+encodeURIComponent(imageThumbSrc)+'")');
             this.$el.css('background-size', 'cover');
             //this.$el.css('background-position-y', '50%');
             this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
@@ -985,7 +985,7 @@
                 doc.createdAtFormatted = '';
                 doc.createdAtShort = '';
             }
-            doc.downloadMenu = '<a target="_new" href="/api/files/'+doc.filename+'">original</a>';
+            doc.downloadMenu = '<a target="_new" href="/api/files/'+encodeURIComponent(doc.filename)+'">original</a>';
             doc.imgSrc = doc.filename;
             if(doc.hasOwnProperty('sizes')) {
                 for(var sizeName in doc.sizes) {
@@ -995,7 +995,7 @@
                         doc.imgSrc = size.filename;
                     }
                     
-                    var downloadSize = ' <a target="_new" href="/api/files/'+size.filename+'">'+sizeName+'</a> ';
+                    var downloadSize = ' <a target="_new" href="/api/files/'+encodeURIComponent(size.filename)+'">'+sizeName+'</a> ';
                     doc.downloadMenu += downloadSize;
                 }
             }
@@ -1126,7 +1126,7 @@
                     }
                 }
             }
-            this.$el.html('<img src="/api/files/'+imageThumbSrc+'" />');
+            this.$el.html('<img src="/api/files/'+encodeURIComponent(imageThumbSrc)+'" />');
             //this.$el.css('background', 'url("/api/files/'+imageThumbSrc+'")');
             //this.$el.css('background-size', 'cover');
             this.$el.attr('data-id', this.model.get("id"));

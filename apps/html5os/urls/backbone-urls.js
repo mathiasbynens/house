@@ -1583,7 +1583,7 @@
             } else {}
 
             if (this.model.has('faviconfile') && this.model.get('faviconfile').contentType.indexOf('image') === 0) {
-                var imgSrc = '/api/files/' + this.model.get('faviconfile').filename;
+                var imgSrc = '/api/files/' + encodeURIComponent(this.model.get('faviconfile').filename);
                 if(imgSrc !== this.$tdFav.find('img').attr('src')) {
                     this.$tdFav.find('img').attr('src', imgSrc);
                 }
@@ -1629,7 +1629,7 @@
             } else if (this.model.has('faviconfile')) {
                 var popOpts = {
                     "trigger": "hover",
-                    "content": '<img src="/api/files/'+this.model.get('faviconfile').filename+'">',
+                    "content": '<img src="/api/files/'+encodeURIComponent(this.model.get('faviconfile').filename)+'">',
                     "html": true,
                     "placement": "bottom"
                 }
@@ -1684,7 +1684,7 @@
 
             if (this.model.has('faviconfile')) {
                 var $fav = $('');
-                self.$el.find('.faviconfile img').attr('src', '/api/files/' + this.model.get('faviconfile').filename);
+                self.$el.find('.faviconfile img').attr('src', '/api/files/' + encodeURIComponent(this.model.get('faviconfile').filename));
                 self.$el.append($fav);
             }
 
@@ -1793,9 +1793,9 @@
                 //this.$el.find('.youtube').fitVids();
             } else if (this.model.get('url').indexOf('twitter.com') !== -1) {
                 if (this.model.has('image')) {
-                    iframe = '<img src="/api/files/' + this.model.get('image').filename + '">';
+                    iframe = '<img src="/api/files/' + encodeURIComponent(this.model.get('image').filename) + '">';
                 } else if (this.model.has('image')) {
-                    iframe = '<img src="/api/files/' + this.model.get('image').filename + '">';
+                    iframe = '<img src="/api/files/' + encodeURIComponent(this.model.get('image').filename) + '">';
                 }
             } else {
                 // check if this url is known to have a header X-Frame-Options: SAMEORIGIN
@@ -1959,7 +1959,7 @@
             
             
             if (this.model.has('faviconfile') && this.model.get('faviconfile').contentType.indexOf('image') === 0) {
-                var imgSrc = '/api/files/' + this.model.get('faviconfile').filename;
+                var imgSrc = '/api/files/' + encodeURIComponent(this.model.get('faviconfile').filename);
                 if(imgSrc !== this.$favImg.attr('src')) {
                     this.$favImg.attr('src', imgSrc);
                 }
@@ -2055,7 +2055,7 @@
             }
 
             if (this.model.has('faviconfile')) {
-                this.$el.find('.faviconfile').attr('src', '/api/files/' + this.model.get('faviconfile').filename);
+                this.$el.find('.faviconfile').attr('src', '/api/files/' + encodeURIComponent(this.model.get('faviconfile').filename));
                 //self.$el.append($fav);
             } else if (this.model.has('file')) {
                 var contentTypeKlass = this.model.get('file').contentType.replace(/\//gi, '-');
