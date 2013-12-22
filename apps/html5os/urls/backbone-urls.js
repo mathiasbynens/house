@@ -1554,6 +1554,9 @@
             }
             this.$tdFav = $('<td class="faviconfile"><img class="favicon" /></td>');
             this.$tdUrl = $('<td class="url"><a href="#" target="_new"></a><span class="title"></span></td>');
+            //<span class="glyphicon glyphicon-fire"></span> 
+            this.$tdViewCount = $('<td class="viewCount" title="View count"></td>');
+            this.$tdCommentCount = $('<td class="commentCount" title="Comment count"></td>');
             this.$tdActions = $('<td class="actions"></td>');
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
@@ -1566,6 +1569,10 @@
             var self = this;
             this.$el.append(this.$tdFav);
             this.$el.append(this.$tdUrl);
+            
+            this.$el.append(this.$tdCommentCount);
+            this.$el.append(this.$tdViewCount);
+            
             this.$tdActions.append(this.actions.render().$el);
             this.$el.append(this.$tdActions);
             if (this.model.has('url')) {
@@ -1588,6 +1595,13 @@
                 if(imgSrc !== this.$tdFav.find('img').attr('src')) {
                     this.$tdFav.find('img').attr('src', imgSrc).attr('title', this.model.get('file').contentType);
                 }
+            }
+            
+            if(this.model.has('views')) {
+                this.$tdViewCount.html(this.model.get('views'));
+            }
+            if(this.model.has('commentCount')) {
+                this.$tdCommentCount.html(this.model.get('commentCount'));
             }
 
             if (this.model.has('ogImage')) {
