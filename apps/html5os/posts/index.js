@@ -30,6 +30,7 @@
                                                                     
                                                                     //<form class="navbar-form navbar-right" role="joinNewsletter"> <span class="glyphicon glyphicon-bullhorn"></span>      <label>Get Updates</label>      <div class="form-group">                <div class="input-group">                    <input type="text" class="form-control" placeholder="your email" data-loading-text="loading">                    <span class="input-group-btn">                        <button class="go btn btn-default" type="button" data-loading-text="...">Join</button>                    </span>                </div>            </div>          </form>
                                                                     var subscribeEmailView = account.getEmailSubscribeView();
+                                                                    subscribeEmailView.setElement($('.subscribeEmail')[0]);
                                                                     if(subscribeEmailView) {
                                                                         $('#siteNav').after(subscribeEmailView.render().$el);
                                                                         subscribeEmailView.on('saved', function(){

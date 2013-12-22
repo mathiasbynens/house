@@ -72,7 +72,11 @@
             }
         };
     };
-    auth.subscribeEmail = function() {
+    auth.subscribeEmail = function(options) {
+        if(!options) {
+            options = {};
+        }
+        options.model = this.model;
         if (!this.hasOwnProperty("model")) {
             this.model = new this.Model({}, {
                 collection: this.collection
@@ -87,7 +91,7 @@
                 silent: true
             });
         }
-        return new EmailSubscribeView({model: this.model});
+        return new EmailSubscribeView(options);
     }
     auth.Model = Backbone.Model.extend({
         initialize: function() {
@@ -157,9 +161,9 @@
         isOwner: function(ownerId) {
             return(this.has('user') && this.get('user') == ownerId);
         },
-        getEmailSubscribeView: function() {
+        getEmailSubscribeView: function(options) {
             if(!this.isUser()) {
-                return auth.subscribeEmail();
+                return auth.subscribeEmail(options);
             }
         },
         welcome: function($el, options, callback) {
@@ -216,6 +220,7 @@
                             </form>');
         },
         render: function() {
+            this.$el.html('');
             this.$el.append(this.$form);
             this.setElement(this.$el);
             return this;
