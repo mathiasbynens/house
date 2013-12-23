@@ -1367,6 +1367,12 @@ ul li[selected].row .userAgent .string {
 .userAgent .os.Windows {
     background: url("icn_windows.png");
 }
+.userAgent .os.Windows7 {
+    background: url("icn_windows.png");
+}
+.userAgent .os.WindowsXP {
+    background: url("icn_windows.png");
+}
 .userAgent .os.Linux {
     background: url("icn_linux.png");
 }

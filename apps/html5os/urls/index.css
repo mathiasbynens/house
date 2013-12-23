@@ -153,6 +153,9 @@ img {
     .shareView {
         height: 100%;
     }
+    .shareView > .image img {
+        width: 100%;
+    }
     .shareView header {
         z-index: 9999;
     }

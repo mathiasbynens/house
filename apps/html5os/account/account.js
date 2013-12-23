@@ -80,7 +80,6 @@
             this.model = new this.Model({}, {
                 collection: this.collection
             });
-            options.model = this.model;
         } else {
             delete this.model.id;
         }
@@ -91,6 +90,7 @@
                 silent: true
             });
         }
+        options.model = this.model;
         return new EmailSubscribeView(options);
     }
     auth.Model = Backbone.Model.extend({

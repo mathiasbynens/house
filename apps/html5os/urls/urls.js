@@ -217,18 +217,16 @@
             var self = this;
             $('head [property="fb:page_id"]').remove();
             //var baseHref = $('head [rel="canonical"]').attr('data-href');
-            var baseHref = '';
-            if(!baseHref) {
-                baseHref = window.location.host || window.location.hostname;
-                //baseHref = window.location.protocol+'//'+baseHref+'/';
-                baseHref = 'http://'+baseHref+'/';
-            }
-            $('head [name="twitter:domain"]').attr('content', baseHref);
-            var apiFilePath = baseHref+'api/files/';
-            var fullShareUrl = doc.getShareUrl();
-            $('head [rel="canonical"]').attr('href', fullShareUrl);
-            $('head [name="twitter:url"]').attr('content', fullShareUrl);
-            $('head meta[property="og:url"]').attr('content', fullShareUrl);
+            var baseHref = $('head base[href]').attr('href');
+            var hostName = window.location.host || window.location.hostname;
+            var hostOrigin = window.location.protocol+'//'+hostName;
+            var baseUrl = hostOrigin+baseHref;
+            var apiFilePath = hostOrigin+'/api/files/';
+            
+            $('head [rel="canonical"]').attr('href', doc.getShareUrl());
+            $('head meta[property="og:url"]').attr('content', doc.getShareUrl());
+            $('head [name="twitter:domain"]').attr('content', hostName);
+            $('head [name="twitter:url"]').attr('content', doc.getShareUrl());
             
             $('head [property="og:type"]').attr('content', 'article');
             $('head [name="twitter:card"]').attr('content', 'photo');
@@ -247,16 +245,18 @@
                 //self.router.setTitle(doc.get('title'));
                 desc = doc.get('desc');
                 $('head meta[property="og:description"]').attr('content', desc);
-                $('head meta[name="twitter:description"]').attr('content', desc);
+                $('head meta[name="twitter:description"]').attr('content', desc.substr(0,130));
                 $('head meta[name="description"]').attr('content', desc);
             }
             
             if(doc.has('ogImage')) {
                 var imageDoc = doc.get('ogImage');
                 console.log(imageDoc);
-                var ogImage = apiFilePath+imageDoc.filename;
-                if(imageDoc.sizes && imageDoc.sizes.full) {
-                    ogImage = apiFilePath+imageDoc.sizes.full.filename;
+                var ogImage = apiFilePath+encodeURIComponent(imageDoc.filename);
+                if(imageDoc.sizes && imageDoc.sizes.square) {
+                    ogImage = apiFilePath+encodeURIComponent(imageDoc.sizes.square.filename);
+                } else if(imageDoc.sizes && imageDoc.sizes.full) {
+                    ogImage = apiFilePath+encodeURIComponent(imageDoc.sizes.full.filename);
                 }
                 // console.log('update og:image with post avatar');
                 $('head [property="og:image"]').attr('content', ogImage);
@@ -264,9 +264,11 @@
             } else if(doc.has('image')) {
                 var imageDoc = doc.get('image');
                 console.log(imageDoc);
-                var ogImage = apiFilePath+imageDoc.filename;
-                if(imageDoc.sizes && imageDoc.sizes.full) {
-                    ogImage = apiFilePath+imageDoc.sizes.full.filename;
+                var ogImage = apiFilePath+encodeURIComponent(imageDoc.filename);
+                if(imageDoc.sizes && imageDoc.sizes.square) {
+                    ogImage = apiFilePath+encodeURIComponent(imageDoc.sizes.square.filename);
+                } else if(imageDoc.sizes && imageDoc.sizes.full) {
+                    ogImage = apiFilePath+encodeURIComponent(imageDoc.sizes.full.filename);
                 }
                 // console.log('update og:image with post avatar');
                 $('head [property="og:image"]').attr('content', ogImage);
@@ -313,7 +315,6 @@
             } else if(doc.get('url').indexOf('twitter.com') !== -1) {
             } else {
             }
-            
             
             if(doc.has('msg')) {
                 var msgText = doc.get('msg');

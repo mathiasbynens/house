@@ -752,9 +752,11 @@
             if (this.model.has("avatar")) {
                 var src = this.model.get("avatar");
                 if (src.indexOf("http") === 0) {} else {
-                    src = "/api/files/" + src;
+                    src = "/api/files/" + encodeURIComponent(src);
                 }
-                this.$img.attr('src', src);
+                if(this.$img.attr('src') !== src) {
+                    this.$img.attr('src', src);
+                }
             }
             this.setElement(this.$el);
             return this;

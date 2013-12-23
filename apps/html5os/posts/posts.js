@@ -76,20 +76,20 @@
         carouselDoc: function(doc) {
             var self = this;
             $('head [property="fb:page_id"]').remove();
-            var baseHref = $('head [rel="canonical"]').attr('data-href');
+            var baseHref = $('head base[href]').attr('href');
             var hostName = window.location.host || window.location.hostname;
-            if(!baseHref) {
-                baseHref = window.location.protocol+'//'+hostName+'/';
-            }
-            var baseUrl = baseHref;
-            if(baseHref.indexOf('http') !== 0) {
-                baseUrl = window.location.protocol+'//'+hostName+baseHref;
-            }
-            var apiFilePath = window.location.protocol+'//'+hostName+'/api/files/';
+            var hostOrigin = window.location.protocol+'//'+hostName;
+            var baseUrl = hostOrigin+baseHref;
+            // var baseUrl = baseHref;
+            // if(baseHref.indexOf('http') !== 0) {
+            //     baseUrl = window.location.protocol+'//'+hostName+baseHref;
+            // }
+            var apiFilePath = hostOrigin+'/api/files/';
             
-            $('head [name="twitter:domain"]').attr('content', baseHref);
-            $('head [rel="canonical"]').attr('href', baseHref+doc.getNavigatePath());
-            $('head [name="twitter:url"]').attr('content', baseHref+doc.getNavigatePath());
+            $('head meta[property="og:url"]').attr('content', fullShareUrl);
+            $('head [rel="canonical"]').attr('href', baseUrl+doc.getNavigatePath());
+            $('head [name="twitter:url"]').attr('content', baseUrl+doc.getNavigatePath());
+            $('head [name="twitter:domain"]').attr('content', hostName);
             
             $('head [property="og:type"]').attr('content', 'article');
             $('head [name="twitter:card"]').attr('content', 'photo');
@@ -107,11 +107,12 @@
                     msgText = msgText.substr(0,si)+'...';
                 }
                 $('head [property="og:description"]').attr('content', msgText);
+                $('head meta[name="twitter:description"]').attr('content', msgText.substr(0,130));
             }
             if(doc.has('audio')) {
                 var media = doc.get('audio');
                 $('head [property="og:audio"]').remove();
-                var $ogVideo = $('<meta property="og:audio" content="'+apiFilePath+media.filename+'">');
+                var $ogVideo = $('<meta property="og:audio" content="'+apiFilePath+encodeURIComponent(media.filename)+'">');
                 //$('head').append($ogVideo); // tmp commented out
                 //$('head [property="og:type"]').attr('content', 'audio');
             }
@@ -131,7 +132,7 @@
             }
             if(doc.has('avatar')) {
                 var image = doc.get('avatar');
-                var ogImage = apiFilePath+image.filename;
+                var ogImage = apiFilePath+encodeURIComponent(image.filename);
                 // console.log('update og:image with post avatar');
                 $('head [property="og:image"]').attr('content', ogImage);
                 $('head [name="twitter:image"]').attr('content', ogImage);

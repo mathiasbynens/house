@@ -1793,9 +1793,7 @@
                 //this.$el.find('.youtube').fitVids();
             } else if (this.model.get('url').indexOf('twitter.com') !== -1) {
                 if (this.model.has('image')) {
-                    iframe = '<img src="/api/files/' + encodeURIComponent(this.model.get('image').filename) + '">';
-                } else if (this.model.has('image')) {
-                    iframe = '<img src="/api/files/' + encodeURIComponent(this.model.get('image').filename) + '">';
+                    iframe = '<span class="image"><img src="/api/files/' + encodeURIComponent(this.model.get('image').filename) + '"></span>';
                 }
             } else {
                 // check if this url is known to have a header X-Frame-Options: SAMEORIGIN
