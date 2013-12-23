@@ -717,7 +717,6 @@
                     var $os = $ua.find('.os');
                     var $browser = $ua.find('.browser');
                     var agent = this.model.get('agent');
-                    console.log(agent)
                     if(agent.os) {
                         var agentStr = '';
                         if(typeof agent.os == 'string') {

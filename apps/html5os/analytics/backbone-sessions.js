@@ -724,8 +724,6 @@
                     $browser.addClass('House');
                     $browser.html(str);
                     $browser.attr('title', str);
-                        $os.css('background', 'url(//facebook.com/favicon.ico) 50% no-repeat');
-                        // http://facebook.com/favicon.ico
                 } else if(str.indexOf('bot') !== -1) {
                     $browser.addClass('Bot');
                     $browser.html(str);
@@ -734,7 +732,6 @@
                     $os.attr('title', str);
                     if(str.indexOf('facebookexternalhit') !== -1) {
                         $os.css('background', 'url(//facebook.com/favicon.ico) 50% no-repeat');
-                        // http://facebook.com/favicon.ico
                     } else if(str.indexOf('google') !== -1) {
                         $os.css('background', 'url(//plus.google.com/favicon.ico) 50% no-repeat');
                     } else if(str.indexOf('twitter') !== -1) {

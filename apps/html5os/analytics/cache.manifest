@@ -1,8 +1,24 @@
 CACHE MANIFEST
-# ver 0.1
+# ver 0.12
 
 CACHE:
 /posts/index.js
+/analytics/index.css
+/analytics/bot.png
+/analytics/icn_android.png
+/analytics/icn_apple.png
+/analytics/icn_bot.png
+/analytics/icn_chrome.png
+/analytics/icn_chromium.png
+/analytics/icn_firefox.png
+/analytics/icn_internet_explorer.png
+/analytics/icn_ios.png
+/analytics/icn_linux.png
+/analytics/icn_opera.png
+/analytics/icn_safari.png
+/analytics/icn_ubuntu.png
+/analytics/icn_windows.png
+
 
 NETWORK:
 /
