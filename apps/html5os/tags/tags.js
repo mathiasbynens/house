@@ -645,6 +645,13 @@
             this.$colorInput = $('<input type="color" id="tag-color" name="color" class="form-control" />');
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
+            
+            if(this.of && this.model.id) {
+                var origTag = window.tagsCollection.get(this.model.id);
+                if(origTag) {
+                    origTag.bind('change', this.render, this);
+                }
+            }
         },
         render: function() {
             console.log(this.model.attributes);
@@ -654,7 +661,8 @@
             if(this.model.has('color')) {
                 this.$el.css('border-left-color', this.model.get('color'));
                 this.$colorInput.val(this.model.get('color'));
-            } else if(this.of) {
+            }
+            if(this.of) {
                 var origTag = window.tagsCollection.get(this.model.id);
                 if(origTag && origTag.has('color')) {
                     // this.$style.html('.song[data-id="'+this.of.id+'"] { color: '+origTag.get('color')+'}')
@@ -727,7 +735,7 @@
         },
         clickDelete: function(e) {
             var self = this;
-            if(confirm('Are you sure that you want to delete the tag, "'+this.model.get('name')+'"?')) {
+            if(confirm('Are you sure that you want to remove the tag, "'+this.model.get('name')+'"?')) {
                 this.model.destroy({success: function(model, response) {
                   //window.history.back(-1);
                 }, 
@@ -752,7 +760,7 @@
                 var s = this.model.save(null, {silent: false, wait: true});
                 if(s) {
                     s.done(function(s, typeStr, respStr) {
-                        self.model.trigger('change', self.model);
+                        // self.model.trigger('change', self.model);
                     });
                     s.fail(function(s, typeStr, respStr) {
                         if(s.status === 403) {
@@ -768,7 +776,7 @@
                     var s = origTag.save(null, {silent: false, wait: true});
                     if(s) {
                         s.done(function(s, typeStr, respStr) {
-                            origTag.trigger('change', self.model);
+                            // origTag.trigger('change', self.model);
                         });
                         s.fail(function(s, typeStr, respStr) {
                             if(s.status === 403) {
@@ -874,6 +882,48 @@
             this.tagsOfList = this.collectionOf.getView({el: this.$dropdownMenu, layout: 'row'}); // singleton pointer
             this.tagsFullList = window.tagsCollection.getView({el: this.$tagSelectList}); // singleton pointer
             // console.log(this.model)
+            
+            this.model.on('change', function(){
+                if(self.model.has('tags') && self.model.get('tags').length > 0) {
+                    self.renderColors();
+                }
+                self.listenToTags();
+            });
+            this.listenToTags();
+        },
+        listenToTags: function() {
+            var self = this;
+            if(self.model.has('tags') && self.model.get('tags').length > 0) {
+                var modelTags = self.model.get('tags');
+                modelTags.forEach(function(e,i,a){
+                    var ofTag = self.collectionOf.get(e.id);
+                    if(ofTag) {
+                        self.stopListening(ofTag, 'destroy');
+                        self.listenTo(ofTag, 'destroy', function(){
+                            console.log(self.collectionOf.length);
+                            // self.collectionOf.remove(e.id);
+                            
+                            var newTags = self.model.get('tags') || [];
+                            for(var i in newTags) {
+                                var t = newTags[i];
+                                if(t.id == e.id) {
+                                    console.log('--------remove the tag');
+                                    delete newTags[i];
+                                }
+                            }
+                            self.model.set({"tags": newTags}, {silent: true});
+                            
+                            
+                            self.renderColors();
+                        });
+                    }
+                    var origTag = window.tagsCollection.get(e.id);
+                    if(origTag) {
+                        self.stopListening(origTag, 'change');
+                        self.listenTo(origTag, 'change', self.renderColors);
+                    }
+                });
+            }
         },
         render: function() {
             var self = this;
@@ -886,32 +936,17 @@
             if(this.model.has('tags') && this.model.get('tags').length > 0) {
                 this.$el.addClass('hasTags');
                 this.$dropdownMenu.append(this.$currentTagsDiv);
-                
-                var modelTags = this.model.get('tags');
-                modelTags.forEach(function(e,i,a){
-                    console.log(e);
-                    var origTag = window.tagsCollection.get(e.id);
-                    console.log(origTag);
-                    if(origTag) {
-                        if(origTag.has('color')) {
-                            self.$btn.css('color', origTag.get('color'));
-                        }
-                    }
-                    origTag.on('change', function(){
-                        self.render();
-                    })
-                });
             } else {
                 this.$el.removeClass('hasTags');
             }
+            this.renderColors();
             
-            if(account.isOwner(this.model.get('owner').id) || account.isAdmin()) {
+            if(account.isOwner(this.model.get('owner').id)) { //  || account.isAdmin()
                 this.$dropdownMenu.append(this.$liNewTag);
-                // render tags from collection only on click
+                this.$dropdownMenu.append(this.$tagSelectList);
             } else {
                 // this.$el.find('.divider').hide();
             }
-            this.$dropdownMenu.append(this.$tagSelectList);
             
             this.$el.append(this.$btn);
             this.$el.append(this.$dropdownMenu);
@@ -920,25 +955,24 @@
         },
         renderColors: function() {
             var self = this;
-            console.log(this.model.get('tags'))
+            // console.log(this.model.get('tags'))
             if(this.model.has('tags') && this.model.get('tags').length > 0) {
-                console.log('111')
                 var modelTags = this.model.get('tags');
+                var hasColor = false;
                 modelTags.forEach(function(e,i,a){
-                    console.log(e);
                     var origTag = window.tagsCollection.get(e.id);
-                    console.log(origTag);
                     if(origTag) {
                         if(origTag.has('color')) {
                             self.$btn.css('color', origTag.get('color'));
+                            hasColor = true;
                         }
                     }
-                    origTag.on('change', function(){
-                        // self.render();
-                    })
                 });
+                if(!hasColor) {
+                    self.$btn.css('color', '#000');
+                }
             } else {
-                self.$btn.css('color', '#000');
+                self.$btn.css('color', '');
             }
         },
         renderTopTags: function() {
@@ -1024,21 +1058,26 @@
                     wait: true
                 });
                 s.done(function() {
-                    self.collectionOf.add(m);
-                    
+                    var attr = _.clone(m.attributes);
+                    var newTagAttr = {
+                        id: attr.id,
+                        name: attr.name
+                    }
+                    console.log(newTagAttr);
                     //
                     var newTags = self.model.get('tags') || [];
-                    newTags.push(_.clone(m.attributes));
+                    newTags.push(newTagAttr);
                     self.model.set({"tags": newTags}, {silent: true});
-                    
                     self.$el.addClass('hasTags');
-                    self.renderColors();
                     self.renderClear();
                     self.trigger("saved", m);
                     // check if its already in the full list or not, if not add it
                     if(!self.tagsFullList.collection.get(m.id)) {
                         self.tagsFullList.collection.add(_.clone(m.attributes));
                     }
+                    self.collectionOf.add(m);
+                    self.listenToTags();
+                    self.renderColors();
                     
                     if(callback) {
                         callback(m);
