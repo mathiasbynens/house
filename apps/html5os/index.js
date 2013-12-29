@@ -19,6 +19,7 @@
                     'pages',
                     //'posts',
                     'todos',
+                    'tags',
                     //'urls',
                     'users',
                     'vault',
