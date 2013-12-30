@@ -6,9 +6,6 @@
         className: 'app',
         initialize: function() {
             var self = this;
-            window.onbeforeunload = function() {
-                return "Are you sure that you want to leave?";
-            }
             self.editForms = {};
                 require(['/posts/backbone-posts.js'], function(ModelBackbone){
                     window.PostsBackbone = ModelBackbone;
@@ -183,20 +180,33 @@
         editDoc: function(doc) {
             var self = this;
             var $form;
+            window.onbeforeunload = function() {
+                return "Are you sure that you want to leave?";
+            }
             if(!doc) {
-                self.newForm = new window.PostsBackbone.Form({
-                    collection: window.postsCollection
-                });
-                self.newForm.on("saved", function(doc) {
-                    self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
-                });
-                self.newForm.on("title", function(title) {
-                    self.router.setTitle(title);
-                });
-                $form = self.newForm.render().$el;
-                $form.show();
-                self.$el.append($form);
-                self.newForm.wysiEditor();
+                if(!self.newForm) {
+                    self.newForm = new window.PostsBackbone.Form({
+                        collection: window.postsCollection
+                    });
+                    self.newForm.on("saved", function(doc) {
+                        self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
+                        
+                        // clear newform
+                        self.newForm.remove();
+                        delete self.newForm;
+                    });
+                    self.newForm.on("title", function(title) {
+                        self.router.setTitle(title);
+                    });
+                    $form = self.newForm.render().$el;
+                    $form.show();
+                    self.$el.append($form);
+                    self.newForm.wysiEditor();
+                } else {
+                    $form = self.newForm.render().$el;
+                    $form.show();
+                    // self.$el.append($form);
+                }
                 $form.siblings().hide();
                 self.newForm.focus();
             } else {
@@ -270,10 +280,12 @@
                 $e.html(title);
             });
             router.on('reset', function(){
+                window.onbeforeunload = null;
                 $('body').attr('class', '');
                 self.nav.unselect();
             });
             router.on('root', function(){
+                router.reset();
                 self.listView.filter();
                 self.listView.$el.show().siblings().hide();
                 
