@@ -83,6 +83,14 @@ img.rss:hover {
 .entry-meta, .entry-meta a {
     color: #6A8DAC;
 }
+h1.entry-title {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.row .msg img.thumbnail {
+    float: left;
+    margin-right: 20px;
+}
 .entry-meta {
     margin-top: 12px;
     margin-bottom: 32px;
@@ -107,6 +115,7 @@ img.rss:hover {
 }
 .postList img.avatar, .fullView img.avatar {
     width: 100%;
+    margin-top: -50px;
 }
 .msg blockquote {
     border-left: 0;

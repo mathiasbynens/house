@@ -6,6 +6,9 @@
         className: 'app',
         initialize: function() {
             var self = this;
+            window.onbeforeunload = function() {
+                return "Are you sure that you want to leave?";
+            }
             self.editForms = {};
                 require(['/posts/backbone-posts.js'], function(ModelBackbone){
                     window.PostsBackbone = ModelBackbone;
@@ -86,7 +89,7 @@
             // }
             var apiFilePath = hostOrigin+'/api/files/';
             
-            $('head meta[property="og:url"]').attr('content', fullShareUrl);
+            $('head meta[property="og:url"]').attr('content', baseUrl+doc.getNavigatePath());
             $('head [rel="canonical"]').attr('href', baseUrl+doc.getNavigatePath());
             $('head [name="twitter:url"]').attr('content', baseUrl+doc.getNavigatePath());
             $('head [name="twitter:domain"]').attr('content', hostName);

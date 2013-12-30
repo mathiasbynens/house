@@ -839,14 +839,6 @@
                 });
             }
             
-            if(this.model.has('youtube')) {
-                var yt = this.model.get('youtube');
-                if(yt.id) {
-                    var ytid = yt.id;
-                    this.$el.append('<span class="youtube col-md-8 col-md-offset-2"><img class="thumbnail" src="//i1.ytimg.com/vi/'+ytid+'/hqdefault.jpg"></span>');
-                }
-            }
-            
             if(this.model.has('msg')) {
                 var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
                 var msgStr = this.model.get('msg');
@@ -859,6 +851,16 @@
                 $msg.html(msgStr);
                 this.$el.append($msg);
             }
+            
+            if(this.model.has('youtube')) {
+                var yt = this.model.get('youtube');
+                if(yt.id) {
+                    var ytid = yt.id;
+                    //this.$el.append('<span class="youtube col-md-8 col-md-offset-2"><img class="thumbnail" src="//i1.ytimg.com/vi/'+ytid+'/hqdefault.jpg"></span>');
+                    $msg.prepend('<img class="thumbnail" src="//i1.ytimg.com/vi/'+ytid+'/hqdefault.jpg">');
+                }
+            }
+            
             this.$el.append($byline);
             this.$el.attr('data-id', this.model.id);
             //this.$el.append(this.actions.render().$el);
@@ -1453,7 +1455,7 @@
             this.$owner = $('');
             if(this.model && this.model.id) {
                 this.$el.attr('data-id', this.model.id);
-                this.$owner = $(''+this.model.get('owner').name);
+                this.$owner = $('<span>'+this.model.get('owner').name+'</span>');
             } else {
                 this.$owner = $('<span></span>');
                 if(!this.model) {
