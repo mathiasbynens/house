@@ -1639,10 +1639,10 @@ output=embed"></iframe>*/
             this.$form.find('fieldset').append(this.$inputTitle);
             this.$form.find('fieldset').append(this.$inputDesc);
             this.$form.find('fieldset').append(this.$inputPath);
-            this.$el.append('<button class="attach">Upload logo</button>');
-            this.$el.append('<button class="publish">Publish site</button>');
-            this.$form.find('.controls').append('<input type="submit" value="Save" />');
-            this.$form.find('.controls').append('<button class="cancel">cancel</button>');
+            this.$el.append('<button class="attach btn btn-default">Upload logo</button>');
+            this.$el.append('<button class="publish btn btn-default">Publish site</button>');
+            this.$form.find('.controls').append('<input type="submit" value="Save" class="btn btn-primary" />');
+            this.$form.find('.controls').append('<button class="cancel btn btn-default">cancel</button>');
         },
         render: function() {
             var self = this;
@@ -1810,7 +1810,7 @@ output=embed"></iframe>*/
             this.$form.find('fieldset').append(this.$inputDesc);
             this.$form.find('fieldset').append(this.$inputA);
             this.$form.find('fieldset').append(this.$inputHref);
-            this.$form.find('.controls').append('<input type="submit" value="Save" /> <button class="cancel">cancel</button>');
+            this.$form.find('.controls').append('<input type="submit" value="Save" class="btn btn-primary" /> <button class="cancel btn btn-default">cancel</button>');
         },
         render: function() {
             var self = this;
@@ -1985,14 +1985,17 @@ output=embed"></iframe>*/
             this.$inputName = $('<input type="text" name="name" placeholder="Name of your section" autocomplete="off" />');
             this.$inputTitle = $('<input type="text" name="title" placeholder="Sub title of the section" autocomplete="off" />');
             this.$inputHtml = $('<textarea id="'+this.wsyi_id+'-textarea" name="html" placeholder="Your section html..."></textarea>');
+            this.$ace = $('<div id="ace-editor"></div>');
             
             this.$form = $('<form class="section"><fieldset></fieldset><div class="controls"></div></form>');
             this.$form.find('fieldset').append(this.$inputName);
             this.$form.find('fieldset').append(this.$inputTitle);
             this.$el.append(this.$htmlToolbar);
-            this.$form.find('fieldset').append(this.$inputHtml);
-            this.$form.find('.controls').append('<input type="submit" value="Save" />');
-            this.$form.find('.controls').append(' <button class="cancel">cancel</button>');
+            this.$form.find('fieldset').append(this.$inputHtml).append(this.$ace);
+            this.$form.find('.controls').append('<input type="submit" value="Save" class="btn btn-primary" />');
+            this.$form.find('.controls').append(' <button class="cancel btn btn-default">cancel</button>');
+            this.$form.find('.controls').append(' <button class="cleanup btn btn-default" style="display: none">cleanup</button>');
+            this.$cleanup = this.$form.find('.controls button.cleanup');
         },
         render: function() {
             var self = this;
@@ -2015,7 +2018,7 @@ output=embed"></iframe>*/
         },
         wysiEditor: function() {
             // set h/w of textarea
-            
+            var self = this;
             var stylesheets = [];
             $('link[rel="stylesheet"]').each(function(i,e){
                 console.log(e);
@@ -2024,23 +2027,71 @@ output=embed"></iframe>*/
             
             $('#'+this.wsyi_id+'-textarea').css('height', $('#'+this.wsyi_id+'-textarea').outerHeight());
             $('#'+this.wsyi_id+'-textarea').css('width', $('#'+this.wsyi_id+'-textarea').outerWidth());
-            this.editor = new wysihtml5.Editor(this.wsyi_id+"-textarea", { // id of textarea element
-              toolbar:      this.wsyi_id+"-toolbar", // id of toolbar element
-              stylesheets: stylesheets, // ['/pages/css/bootstrap.min.css', '/pages/index.css'],
-              parserRules:  wysihtml5ParserRules // defined in parser rules set 
+            
+            require([ "/pages/wysihtml-parser_rules.js" ], function() {
+                require([ "/pages/wysihtml5-0.4.0pre.min.js" ], function() {
+                    self.editor = new wysihtml5.Editor(self.wsyi_id+"-textarea", { // id of textarea element
+                      toolbar:      self.wsyi_id+"-toolbar", // id of toolbar element
+                      stylesheets: stylesheets, // ['/pages/css/bootstrap.min.css', '/pages/index.css'],
+                      parserRules:  wysihtml5ParserRules // defined in parser rules set 
+                    });
+                    self.editor.aceVisible = false;
+                    console.log(self.editor.ace);
+                    self.editor.on("external_change_view", function(view){
+                        if(view === "textarea") {
+                            require(['/fs/js-beautify/beautify-html.js'], function(html_beautify){
+                            window.html_beautify = html_beautify.html_beautify;
+                            require([ "/fs/ace/ace.js" ], function() {
+                                self.editor.aceVisible = true;
+                                self.$ace.show();
+                                self.$cleanup.show();
+                                if(!self.hasOwnProperty('aceEditor')) {
+                                    self.$ace.css({zIndex:11111,opacity:1,background:"white"});
+                                    self.$ace.offset(self.$inputHtml.offset()).width(self.$inputHtml.outerWidth()).height(self.$inputHtml.outerHeight());
+                                    self.$ace.html("");
+                                    self.aceEditor = ace.edit("ace-editor");
+                                    self.aceEditor.setTheme("ace/theme/chrome");
+                                    self.aceEditor.getSession().setMode("ace/mode/html");
+                                }
+                                self.aceEditor.setValue(self.editor.textarea.getValue());
+                                self.aceEditor.clearSelection();
+                            });
+                            });
+                        } else {
+                            self.editor.aceVisible = false;
+                            self.$cleanup.hide();
+                            self.editor.textarea.setValue(self.aceEditor.getValue());
+                            self.aceEditor.setValue("");
+                            self.$ace.hide();
+                        }    
+                    });
+                    self.wysiImagePicker = new WysiImagePicker({el: self.$htmlToolbar.find('[data-wysihtml5-dialog="insertImage"]')[0], editor: self.editor});
+                    self.wysiImagePicker.render();
+                });
             });
-            this.wysiImagePicker = new WysiImagePicker({el: this.$htmlToolbar.find('[data-wysihtml5-dialog="insertImage"]')[0], editor: this.editor});
-            this.wysiImagePicker.render();
             //$(this.editor.composer.iframe.contentDocument).find('head').append($('head style').clone());
         },
         events: {
             "submit form": "submit",
             'click [type="submit"]': "submit",
             'click .cancel': "cancel",
+            'click .cleanup': "cleanup",
             'click [data-wysihtml5-command="insertImage"]': "attachImage"
         },
         attachImage: function() {
             this.wysiImagePicker.uploadFrame.pickFiles();
+        },
+        cleanup: function() {
+            var self = this;
+            var v = this.aceEditor.getValue();
+            var cleanVal = '';
+            var p = this.aceEditor.getCursorPositionScreen();
+            var firstRow = this.aceEditor.getFirstVisibleRow();
+            cleanVal = html_beautify(v);
+            this.aceEditor.setValue(cleanVal, -1);
+            this.aceEditor.gotoLine(firstRow);
+            this.aceEditor.moveCursorToPosition(p);
+            return false;
         },
         cancel: function() {
             var self = this;
@@ -2052,6 +2103,11 @@ output=embed"></iframe>*/
         submit: function() {
             var self = this;
             var setDoc = {};
+            
+            if(self.editor.aceVisible) {
+                self.editor.textarea.setValue(self.aceEditor.getValue());
+            }
+            
             var name = this.$inputName.val();
             var title = this.$inputTitle.val();
             var html = this.$inputHtml.val();

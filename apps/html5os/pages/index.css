@@ -296,7 +296,7 @@ footer {
 }
 .wysihtml5-toolbar {
     position: fixed;
-    top: 74px;
+    top: 100px;
     left: 0;
     right: 0;
     z-index: 10;
@@ -590,7 +590,7 @@ form.page {
 }
 .editing form.section .controls {
     position: fixed;
-    top: 77px;
+    top: 103px;
     z-index: 2000;
 }
 .sections .editing .form form.section input[type="text"] {

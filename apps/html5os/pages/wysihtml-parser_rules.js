@@ -38,6 +38,7 @@ var wysihtml5ParserRules = {
      * Following CSS classes won't be removed when parsed by the wysihtml5 HTML parser
      */
     "classes": {
+        "*": 1,
         "pull-right": 1, "pull-left": 1,
         "lead": 1, "text-left": 1, "text-center": 1, "text-right": 1,
         "text-muted": 1, "text-primary": 1, "text-success": 1, "text-info": 1, "text-warning": 1, "text-danger": 1,
