@@ -38,6 +38,7 @@ var wysihtml5ParserRules = {
      * Following CSS classes won't be removed when parsed by the wysihtml5 HTML parser
      */
     "classes": {
+        "*": 1,
         "wysiwyg-clear-both": 1,
         "wysiwyg-clear-left": 1,
         "wysiwyg-clear-right": 1,
@@ -191,6 +192,7 @@ var wysihtml5ParserRules = {
             "check_attributes": {
                 "width": "numbers",
                 "alt": "alt",
+                "data-active-src": true,
                 "src": "href",
                 "height": "numbers"
             },

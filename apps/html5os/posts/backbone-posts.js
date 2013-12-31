@@ -482,7 +482,7 @@
             //self.$el.append(this.tagsView.render().$el);
             //self.$el.append(this.groupsView.render().$el);
             self.$el.append(this.editView.render().$el);
-            self.$el.append(this.deleteView.render().$el);
+            // self.$el.append(this.deleteView.render().$el);
             this.setElement(this.$el);
             return this;
         },
@@ -490,7 +490,7 @@
             this.actions = [];
             //this.groupsView = new GroupsView({id: this.id, model: this.model});
             //this.tagsView = new TagsView({id: this.id, model: this.model});
-            this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
+            // this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
             this.editView = new ActionEditView({id: this.id, model: this.model});
         }
     });
@@ -546,7 +546,7 @@
         tagName: "span",
         className: "delete",
         render: function() {
-            this.$el.html('<button>delete</button>');
+            this.$el.html('<button class="btn btn-danger glyphicon glyphicon-trash"> </button>');
             this.setElement(this.$el);
             return this;
         },
@@ -574,7 +574,7 @@
         tagName: "span",
         className: "edit",
         render: function() {
-            this.$el.html('<button class="btn btn-primary">edit</button>');
+            this.$el.html('<button class="btn btn-primary glyphicon glyphicon-edit"> Edit</button>');
             this.setElement(this.$el);
             return this;
         },
@@ -1037,7 +1037,22 @@
         },
         events: {
             "click .author a": "clickAuthor",
-            "click .tags-links a": "clickTag"
+            "click .tags-links a": "clickTag",
+            "click img[data-active-src]": "activateImg",
+            "mouseover img[data-active-src]": "activateImg",
+            // "mouseout img[data-active-src]": "deactivateImg",
+        },
+        activateImg: function(e) {
+            var $e = $(e.currentTarget);
+            $e.attr('data-deactive-src', $e.attr('src'));
+            $e.attr('src', $e.attr('data-active-src'));
+            $e.removeAttr('data-active-src');
+        },
+        deactivateImg: function(e) {
+            var $e = $(e.currentTarget);
+            $e.attr('data-active-src', $e.attr('src'));
+            $e.attr('src', $e.attr('data-deactive-src'));
+            $e.removeAttr('data-deactive-src');
         },
         clickAuthor: function(e) {
             if(this.author) {
@@ -1539,7 +1554,7 @@
                     
                 }
             });
-            
+            this.$ace = $('<div id="ace-editor"></div>');
             this.wsyi_id = 'wysihtml5-'+this.cid;
             this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your post" autocomplete="off" class="form-control" />');
             this.$msgToolbar = $('<div class="wysihtml5-toolbar" id="'+this.wsyi_id+'-toolbar"><header><ul class="commands">\
@@ -1552,7 +1567,9 @@
                   <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1" title="Insert headline 1" class="command"></li>\
                   <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2" title="Insert headline 2" class="command"></li>\
                   <li data-wysihtml5-command="insertSpeech" title="Insert speech" class="command"></li>\
-                  <li data-wysihtml5-action="change_view" title="Show HTML" class="action"></li></ul></header>\
+                  <li data-wysihtml5-action="change_view" title="Show HTML" class="action"></li>\
+                  <li title="Cleanup HTML" class="cleanup">Cleanup</li>\
+                  </ul></header>\
               <div data-wysihtml5-dialog="createLink" style="display: none;"><label>Link:<input data-wysihtml5-dialog-field="href" value="http://"></label><a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a></div>\
               <div data-wysihtml5-dialog="insertImage" style="display: none;">\
                 <label>Image:<input data-wysihtml5-dialog-field="src" value="http://"></label>\
@@ -1590,6 +1607,7 @@
             this.$form.find('fieldset').append(this.$inputTitle);
             this.$form.find('fieldset').append(this.$msgToolbar);
             this.$form.find('fieldset').append(this.$inputMsg);
+            this.$form.find('fieldset').append(this.$ace);
             
             this.$form.find('controls').append('<div class="form-group action"><div class="col-md-8"><input type="submit" value="Publish" class="form-control" /></div></div>');
             this.$form.find('controls .action').prepend(this.inputGroupsView.render().$el);
@@ -1707,16 +1725,63 @@
             return this;
         },
         wysiEditor: function() {
+            var self = this;
+            var stylesheets = [];
+            $('link[rel="stylesheet"]').each(function(i,e){
+                console.log(e);
+                stylesheets.push($(e).attr('href'));
+            });
+            
             // set h/w of textarea
             $('#'+this.wsyi_id+'-textarea').css('height', $('#'+this.wsyi_id+'-textarea').outerHeight());
             $('#'+this.wsyi_id+'-textarea').css('width', $('#'+this.wsyi_id+'-textarea').outerWidth());
-            this.editor = new wysihtml5.Editor(this.wsyi_id+"-textarea", { // id of textarea element
-              toolbar:      this.wsyi_id+"-toolbar", // id of toolbar element
-              parserRules:  wysihtml5ParserRules // defined in parser rules set 
+            
+            require([ "/posts/wysihtml-parser_rules.js" ], function() {
+                require([ "/posts/wysihtml5-0.4.0pre.min.js" ], function() {
+                    self.editor = new wysihtml5.Editor(self.wsyi_id+"-textarea", { // id of textarea element
+                      toolbar:      self.wsyi_id+"-toolbar", // id of toolbar element
+                      stylesheets: stylesheets, // ['/pages/css/bootstrap.min.css', '/pages/index.css'],
+                      parserRules:  wysihtml5ParserRules // defined in parser rules set 
+                    });
+                    self.editor.aceVisible = false;
+                    console.log(self.editor.ace);
+                    self.editor.on("external_change_view", function(view){
+                        if(view === "textarea") {
+                            require(['/fs/js-beautify/beautify-html.js'], function(html_beautify){
+                            window.html_beautify = html_beautify.html_beautify;
+                            require([ "/fs/ace/ace.js" ], function() {
+                                self.editor.aceVisible = true;
+                                self.$ace.show();
+                                self.$msgToolbar.find('.cleanup').show();
+                                if(!self.hasOwnProperty('aceEditor')) {
+                                    self.$ace.css({zIndex:11111,opacity:1,background:"white"});
+                                    self.$ace.offset(self.$inputMsg.offset()).width(self.$inputMsg.outerWidth()).height(self.$inputMsg.outerHeight());
+                                    self.$ace.html("");
+                                    self.aceEditor = ace.edit("ace-editor");
+                                    self.aceEditor.setTheme("ace/theme/chrome");
+                                    self.aceEditor.getSession().setMode("ace/mode/html");
+                                }
+                                self.aceEditor.setValue(self.editor.textarea.getValue());
+                                self.aceEditor.clearSelection();
+                            });
+                            });
+                        } else {
+                            self.editor.aceVisible = false;
+                            self.$msgToolbar.find('.cleanup').hide();
+                            self.editor.textarea.setValue(self.aceEditor.getValue());
+                            self.aceEditor.setValue("");
+                            self.$ace.hide();
+                        }    
+                    });
+                    self.wysiImagePicker = new WysiImagePicker({el: self.$msgToolbar.find('[data-wysihtml5-dialog="insertImage"]')[0], editor: self.editor});
+                    self.wysiImagePicker.render();
+                });
             });
+            //$(this.editor.composer.iframe.contentDocument).find('head').append($('head style').clone());
         },
         events: {
             "submit form": "submit",
+            "click .cleanup": "cleanup",
             'keyup input[name="title"]': "throttleTitle",
             'blur input[name="title"]': "blurTitle",
             "click .attachImage": "attachImage",
@@ -1724,7 +1789,23 @@
             "click .attachVideo": "attachVideo",
             "click .detachImage": "detachImage",
             "click .detachAudio": "detachAudio",
-            "click .detachVideo": "detachVideo"
+            "click .detachVideo": "detachVideo",
+            'click [data-wysihtml5-command="insertImage"]': "insertImageHtml"
+        },
+        insertImageHtml: function() {
+            this.wysiImagePicker.uploadFrame.pickFiles();
+        },
+        cleanup: function() {
+            var self = this;
+            var v = this.aceEditor.getValue();
+            var cleanVal = '';
+            var p = this.aceEditor.getCursorPositionScreen();
+            var firstRow = this.aceEditor.getFirstVisibleRow();
+            cleanVal = html_beautify(v);
+            this.aceEditor.setValue(cleanVal, -1);
+            this.aceEditor.gotoLine(firstRow);
+            this.aceEditor.moveCursorToPosition(p);
+            return false;
         },
         attachImage: function() {
             this.uploadAvatarFrame.pickFiles();
@@ -1816,6 +1897,9 @@
         submit: function() {
             var self = this;
             var setDoc = {};
+            if(self.editor.aceVisible) {
+                self.editor.textarea.setValue(self.aceEditor.getValue());
+            }
             var title = this.$inputTitle.val();
             var seq = this.$inputSeq.val();
             var msg = this.$inputMsg.val();
@@ -1891,6 +1975,63 @@
             this.$el.remove();
         }
     });
+    
+    var WysiImagePicker = Backbone.View.extend({
+        initialize: function(options) {
+            var editor = options.editor || false;
+            var self = this;
+            this.$html = $('<label>Image:<input data-wysihtml5-dialog-field="src" value="http://"></label><label>Caption:<input name="alt" placeholder="caption"></label><label class="justify"><input type="radio" name="klass" value="original"> Center </label><label class="justify"><input type="radio" name="klass" value="pull-left"> Left </label><label class="justify"><input type="radio" name="klass" value="pull-right"> Right </label><button class="save">OK</button>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>');
+            self.$inputUrl = this.$html.find('input[data-wysihtml5-dialog-field="src"]');
+            self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
+            self.uploadFrame.on('uploaded', function(data){
+                if(_.isArray(data)) {
+                    data = _.first(data);
+                }
+                if(data.image) {
+                    var url = '/api/files/'+data.image.filename; //window.location.origin+
+                    if(data.image.mimeType.indexOf('image/gif') !== -1 || data.image.filename.substr(-4) === '.gif') {
+                        if(data.image.sizes && data.image.sizes.full) {
+                            var fullUrl = '/api/files/'+data.image.sizes.full.filename;
+                        }
+                        self.$inputUrl.val(url);
+                        self.options.editor.composer.commands.exec("insertHTML", '<img data-active-src="'+url+'" src="'+fullUrl+'" alt="" />');
+                    } else {
+                        if(data.image.sizes && data.image.sizes.full) {
+                            url = '/api/files/'+data.image.sizes.full.filename;
+                        }
+                        self.$inputUrl.val(url);
+                        self.options.editor.composer.commands.exec("insertHTML", '<img src="'+url+'" alt="" />');
+                    }
+                    self.$el.hide();
+                }
+            });
+        },
+        events: {
+            'click button.save': "save"
+        },
+        save: function(){
+            var klass = this.$html.find('input[name="klass"]:checked').val();
+            var alt = this.$html.find('input[name="alt"]').val();
+            var url = this.$inputUrl.val();
+            if(url.indexOf(window.location.origin) == 0) {
+                url = url.substr(window.location.origin.length);
+            }
+            if(this.options.editor) {
+                //this.options.editor.composer.commands.exec("insertImage", { src: url, alt: alt, class: klass });
+                this.options.editor.composer.commands.exec("insertHTML", '<img src="'+url+'" alt="'+alt+'" class="'+klass+'" />');
+            }
+            this.$el.hide();
+            return false;
+        },
+        render: function() {
+            this.$el.html(this.$html)
+            this.$el.append(this.uploadFrame.render().$el);
+            this.setElement(this.$el);
+            return this;
+        }
+    });
+    
+    
     
     var TweetView = Backbone.View.extend({
         tagName: "div",

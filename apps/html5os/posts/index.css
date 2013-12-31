@@ -892,7 +892,11 @@ textarea {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
-.wysihtml5-toolbar {
+.wysihtml5-toolbar .cleanup {
+    display: inline-block;
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
 }
 
 body {
@@ -919,6 +923,28 @@ textarea[name="msg"] {
     display: block;
     margin: 0 auto;
     clear: both;
+}
+img[data-active-src] {
+    opacity: 0.8;
+    border-radius: 3px;
+    background: #CCC;
+}
+img[data-deactive-src] {
+    opacity: 1;
+    border-radius: 0px;
+    background: transparent;
+}
+img[data-active-src]::before {
+color: white;
+content: "\25B6";
+opacity: 0.5;
+position: absolute;
+text-shadow: 0 3px black;
+z-index: 100;
+    font-size:50px;
+    position:absolute;
+    left:220px;
+    top:150px;
 }
 
 @media only screen and (min-width: 767px) {
