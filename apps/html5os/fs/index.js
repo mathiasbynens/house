@@ -29,6 +29,9 @@
                                                             });
                                                             $("header").append(nav.list.render().$el);
                                                             require([ "fs.js" ], function(FS) {
+                                                                window.onbeforeunload = function() {
+                                                                    return "Are you sure that you want to leave?";
+                                                                }
                                                                 window.fs = new FS();
                                                                 fs.bindUser(account.loginStatus.getView().userModel);
                                                                 fs.on("initialized", function() {
