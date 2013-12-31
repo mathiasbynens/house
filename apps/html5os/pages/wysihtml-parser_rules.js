@@ -211,9 +211,9 @@ var wysihtml5ParserRules = {
             "check_attributes": {
                 "width": "numbers",
                 "alt": "alt",
+                "data-active-src": true,
                 "src": "href",
-                "height": "numbers",
-                "class": 1
+                "height": "numbers"
             },
             "add_class": {
                 "align": "align_img"
