@@ -654,7 +654,7 @@
             }
         },
         render: function() {
-            console.log(this.model.attributes);
+            // console.log(this.model.attributes);
             var self = this;
             this.$el.html('');
             
@@ -688,10 +688,12 @@
             this.$el.append(this.$name);
             this.$el.append(this.$colorInput);
             
-            if(this.of && window.account && ((this.user && account.isOwner(this.user.id)) || account.isOwner(this.model.get('user').id))) { // account.isAdmin() || 
+            if(this.of && window.account && ((this.user && account.isOwner(this.user.id)) || (this.model.get('user') && account.isOwner(this.model.get('user').id)))) { // account.isAdmin() || 
                 this.$el.append($('<button class="delete btn btn-link glyphicon glyphicon-trash"> </button>'));
             } else if (window.account && this.model.has('user') && account.isOwner(this.model.get('user').id)) {
                 this.$el.append($('<button class="deleteTag btn btn-link glyphicon glyphicon-trash"> </button>'));
+            } else {
+                this.$colorInput.attr('disabled', 'disabled');
             }
             
             this.setElement(this.$el);
