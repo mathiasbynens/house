@@ -352,7 +352,7 @@
             this.currentPage = 1;
             
             self.loading = false;
-            this.$deselect = $('<div class="showAllFeeds"><a href="#">All News Feeds</a> <span class="unreadCount total"></span></div>');
+            this.$deselect = $('<div class="showAllFeeds col-lg-6 col-lg-offset-3"><a href="#">All News Feeds</a> <span class="unreadCount total"></span></div>');
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> subs</div>');
             
             if(newsCollection) {
@@ -370,7 +370,7 @@
                 });
             }
             
-            var $ul = this.$ul = $('<ul class="subs list-unstyled"></ul>');
+            var $ul = this.$ul = $('<ul class="subs list-unstyled col-lg-6 col-lg-offset-3"></ul>');
             this.pageSize = this.collection.pageSize;
             this.collection.bind("add", function(doc) {
                 var view = self.getDocLayoutView(doc);
@@ -1161,7 +1161,7 @@
             }
         },
         render: function() {
-            this.$el.html('');
+            this.$el.html(''); 
             if(this.model.has('urlDoc')) {
                 if(this.model.has('title')) {
                     this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
@@ -1169,6 +1169,14 @@
                 var urlDoc = this.model.get('urlDoc');
                 if(urlDoc.channel) {
                     var $channel = $('<span class="channel"></span>');
+                    
+                    if(urlDoc.channel.url && urlDoc.channel.url.faviconfile && urlDoc.channel.url.faviconfile.contentType.indexOf('image') === 0) {
+                        $channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span> ');
+                    } else if(this.model.has('channelUrlDoc') && this.model.get('channelUrlDoc').faviconfile && this.model.get('channelUrlDoc').faviconfile.contentType.indexOf('image') === 0) {
+                        $channel.append('<span class="favicon"><img src="/api/files/'+this.model.get('channelUrlDoc').faviconfile.filename+'" /></span> ');
+                    } else {
+                        $channel.append('<span class="favicon"><img src="favicon.ico" /></span> ');
+                    }
                     if(urlDoc.channel.title) {
                         if(urlDoc.channel.link) {
                             $channel.append('<span class="title"><a href="'+urlDoc.channel.link+'" target="_new">'+urlDoc.channel.title+'</a></span>');
@@ -1176,6 +1184,7 @@
                             $channel.append('<span class="title">'+urlDoc.channel.title+'</span>');
                         }
                     }
+                    
                     this.$el.append($channel);
                 }
             } else if(this.model.has('channelUrlDoc')) {

@@ -278,10 +278,10 @@
             //this.$controls = $('<div class="list-controls"><a href="/" class="allNew"><b>new</b> / all</a> <a href="/" class="expandCollapse"><b>expanded</b> / list</a></div>');
             var allNew = '<div class="btn-group allNew" data-toggle="buttons"><label class="btn btn-default new active disabled" title="Show New"><input type="radio" name="options" id="new"><span class="glyphicon glyphicon-unchecked"></span></label><label class="btn btn-default all" title="Show All"><input type="radio" name="options" id="all"><span class="glyphicon glyphicon-check"></span></label></div>';
             var expandCollapse = '<div class="btn-group expandCollapse" data-toggle="buttons"><label class="btn btn-default expanded active disabled" title="Expanded View"><input type="radio" name="options" id="expanded"><span class="glyphicon glyphicon-list"></span></label><label class="btn btn-default list" title="List View"><input type="radio" name="options" id="list"><span class="glyphicon glyphicon-th-list"></span></label></div>';
-            this.$controls = $('<div class="list-controls">'+allNew+' '+expandCollapse+'</div>');
+            this.$controls = $('<div class="list-controls pull-right">'+allNew+' '+expandCollapse+'</div>');
             
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> news articles</div>');
-            var $ul = this.$ul = $('<ul class="news expanded list-unstyled"></ul>');
+            var $ul = this.$ul = $('<ul class="news expanded list-unstyled col-lg-6 col-lg-offset-3"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -670,9 +670,9 @@
     
     var ActionReadView = Backbone.View.extend({
         tagName: "span",
-        className: "edit",
+        className: "markReadBtn",
         initialize: function() {
-            this.$span = $('<div class="checkbox"><label for="read-'+this.model.id+'"><input type="checkbox" name="newsRead" value="isRead" id="read-'+this.model.id+'"> read</label></div>');
+            this.$span = $('<div class="checkbox" title="Mark un/read"><input type="checkbox" name="newsRead" value="isRead" id="read-'+this.model.id+'"><label for="read-'+this.model.id+'"> </label></div>');
         },
         render: function() {
             if(this.model.has('read')) {
@@ -938,35 +938,94 @@
             //this.$span = $('<span></span>');
             this.starEmpty = '☆';
             this.starFull = '★';
-            this.$star = $('<span class="rating"><span class="star">'+this.starEmpty+'</span></span>'); // ★☆
+            this.$star = $('<span title="Star this story" class="rating"><span class="star">'+this.starEmpty+'</span></span>'); // ★☆
             this.$byline = $('<span class="byline"><span class="author"></span> <span class="date"></span></span>');
+            this.$el.append('<a target="_new" class="title"></a><span class="enclosure"></span>');
+            this.$enclosure = this.$el.find('.enclosure');
+            this.$summary = $('<span class="summary"></span>');
+            this.$summaryFull = $('<span class="summary full"></span>');
+            this.$el.append(this.$summary);
+            this.$el.append(this.$summaryFull);
             this.$el.append(this.$star);
-            this.$el.append(this.$byline);
-            this.$el.append('<a target="_new" class="title"></a>');
             this.$el.append('<span class="fromUrl"></span>');
-            this.$el.append('<span class="summary"></span>');
+            this.$el.append(this.$byline);
             this.actions = new ActionsView({id: this.id, model: this.model});
         },
         render: function() {
             var self = this;
             this.$el.html(this.$span);
+            
+            var enclosureImgSrc = '';
+            var enclosureAudioSrc = '';
+            if(this.model.has('enclosures')) {
+                // console.log(this.model.get('enclosures'))
+                var enclosuresArr = this.model.get('enclosures');
+                for(var e in enclosuresArr) {
+                    var enclosure = enclosuresArr[e];
+                    // length: "123699"
+                    // type: "image/jpeg"
+                    // url: "http://i.imgur.com/e5kWlOr.jpg"
+                    console.log(enclosure)
+                    if(enclosure.type.indexOf('image') === 0) {
+                        if(enclosure.url) {
+                            enclosureImgSrc = enclosure.url;
+                        }
+                    } else if (enclosure.type.indexOf('audio') === 0) {
+                        if(enclosure.url) {
+                            enclosureAudioSrc = enclosure.url;
+                            console.log(enclosureAudioSrc)
+                            var encloseureHtml = '<audio controls preload="none" src="'+enclosureAudioSrc+'" class="enclosureAudio"></audio>';
+                            if(this.$enclosure.html() !== encloseureHtml) {
+                                this.$enclosure.html(encloseureHtml);
+                            }
+                        }
+                    }
+                }
+            }
             if(this.model.has('title')) {
                 this.$el.find('.title').html(this.model.get('title'));
+                var msgStr = '';
+                var msgStrAbbr = '';
                 if(this.model.has('summary')) {
-                    if(!this.$summary) {
-                        this.$summary = $('<span>'+this.model.get('summary')+'</span>');
-                    }
-                    this.$el.find('.summary').append(this.$summary);
+                    msgStr = this.model.get('summary');
                 } else if(this.model.has('description')) {
-                    this.$el.find('.summary').html(this.model.get('description'));
+                    msgStr = this.model.get('description');
                 }
-            } else {
-                if(this.model.has('summary')) {
-                    if(!this.$summary) {
-                        this.$summary = $('<span>'+this.model.get('summary')+'</span>');
+                var msgStrTxt = ($('<span>'+br2nl(msgStr)+'</span>').text());
+                var trimLen = 333;
+                if(msgStrTxt.length > trimLen) {
+                    msgStrAbbr = msgStrTxt.substr(0, trimLen);
+                    msgStrAbbr += ' ... ';
+                    
+                    var regex = /<img.*?src=('|")(.*?)('|")/;
+                    var matches = regex.exec(msgStr);
+                    var imgsrc = '';
+                    if(enclosureImgSrc) {
+                        msgStrAbbr = '<img src="'+enclosureImgSrc+'" class="enclosureImg">'+msgStrAbbr;
+                    } else if(matches && matches.length > 2) {
+                        imgsrc = matches[2];
+                        if(imgsrc.indexOf('http://yarpp.org') === -1 && imgsrc.indexOf('http://feeds.feedburner.com/') === -1) {
+                            msgStrAbbr = '<img src="'+imgsrc+'" class="abbrImg">'+msgStrAbbr;
+                        }
                     }
-                    this.$el.find('.title').append(this.$summary);
-                } else if(this.model.has('description')) {
+                } else {
+                    if(enclosureImgSrc) {
+                        msgStrAbbr = '<img src="'+enclosureImgSrc+'" class="enclosureImg">'+msgStrTxt;
+                    } else {
+                        msgStrAbbr = msgStrTxt;
+                    }
+                }
+                this.$summary.html('<p>'+msgStrAbbr+'</p>');
+                if(msgStr.indexOf('<p>') === -1) {
+                    msgStr = '<p>'+msgStr+'</p>';
+                }
+                this.$summaryFull.html(msgStr);
+            } else {
+                console.log(this.model.attributes)
+                if(this.model.get('summary')) {
+                    // this.$summary.html(this.model.get('summary'));
+                    this.$el.find('.title').html(this.model.get('summary'));
+                } else if(this.model.get('description')) {
                     this.$el.find('.title').html(this.model.get('description'));
                 }
             }
@@ -1013,16 +1072,16 @@
         renderSub: function(sub) {
             var self = this;
             sub.once("change", function(model){
-                console.log('sub changed!!!');
+                // console.log('sub changed!!!');
                 self.renderSub(model);
             });
-            self.$el.find('.fromUrl').html('from ');
+            self.$el.find('.fromUrl').html(' from ');
             self.$el.find('.fromUrl').append(sub.getNewAvatar().render().$el);
             sub.bind('destroy', self.remove, self);
         },
         events: {
             "click .star": "fav",
-            "click .title": "selectTitle",
+            // "click .title": "selectTitle",
             "click": "select"
         },
         fav: function() {
@@ -1056,14 +1115,15 @@
             }
         },
         selectTitle: function(e) {
-            if(this.$el.hasClass("selected")) {
-                //this.$el.removeClass("selected");
-                //this.$el.removeAttr("selected");
+            // alert('title')
+            // if(this.$el.hasClass("selected")) {
+            //     //this.$el.removeClass("selected");
+            //     //this.$el.removeAttr("selected");
                 
-            } else {
-                this.select();
-                return false;
-            }
+            // } else {
+            //     this.select();
+            //     return false;
+            // }
         },
         select: function(e) {
             var deselectSiblings = function(el) {
@@ -1166,6 +1226,9 @@
     window.nl2br = function(str) {
         return (str + "").replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, "$1" + "<br />");
     };
+    window.br2nl = function(str) {
+        return str.replace(/<br\s*\/?>/mg,"\n");
+    }
     
     var AvatarView = Backbone.View.extend({
         tagName: "span",

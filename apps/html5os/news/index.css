@@ -67,19 +67,17 @@
     position: absolute;
     left: 100px;
     right: 100px;
+    top: 6px;
 }
 li.sub {
     position: relative;
+    margin: 16px 0px;
+    height: 22px;
 }
 li.sub .actions {
     float: right;
 }
 li.sub:hover .actions {} .list-controls {
-    position: fixed;
-    top: 8px;
-    right: 100px;
-    z-index: 99999;
-    display: block;
 }
 .unreadCount {
     padding: 15px;
@@ -90,6 +88,7 @@ li.sub:hover .actions {} .list-controls {
 }
 .list-pager {
     text-align: right;
+    clear: both;
 }
 @media only screen and (min-width: 767px) {
     .subs-list {} .subs-list .showAllFeeds {
@@ -136,39 +135,50 @@ li.sub:hover .actions {} .list-controls {
     margin-right: 12px;
     cursor: pointer;
 }
-.news .story .byline {
-    float: right;
-    padding: 12px;
-    color: #999;
-    font-size: 12px;
+.story .rating {
     position: absolute;
-    bottom: 0;
-    right: 55px;
+    bottom: 0px;
+    left: 6px;
 }
 .news .story .actions {
     position: absolute;
     bottom: 0;
-    right: 0;
-    padding: 10px;
+    left: 30px;
+    padding: 4px;
     color: #999;
+}
+.news .story .actions .checkbox input {
+    display: none;
+}
+.news .story .actions:hover label {
+    display: inline;
 }
 .news .story .actions .checkbox {
     margin: 0 0;
+    opacity: 0.5;
+    padding-left: 0px;
+    padding-top: 3px;
 }
-.news .story .summary {
-    display: none;
+.news .story .actions:hover  .checkbox {
+    display: block;
+    opacity: 1;
 }
-.news .story .summary iframe {
-    display: none;
+ul.news li.story .fromUrl .avatar {
+    margin-left: 6px;
+    margin-right: 6px;
 }
-ul.news li.story .fromUrl {
+ul.news li.story .fromUrl, .news .story .byline {
+    color: #999;
+    font-size: 12px;
     margin-right: 8px;
+    float: right;
 }
-ul.news li.story[selected] .summary,
+
+ul.news li.story[selected] .summary.full,
 ul.news.expanded li.story .summary,
 ul.news li.story[selected] .summary iframe,
 ul.news.expanded .story .summary iframe {
-    padding: 12px 28px;
+    padding: 12px 6px 0px;
     display: block;
 }
 .news .story .summary p,
@@ -183,23 +193,33 @@ ul.news {
     margin-top: 12px;
 }
 ul.news li.story {
-    border-bottom: 1px solid #D6D6D6;
     position: relative;
+    border-bottom: 12px solid #FFF;
+    border-top: 1px solid rgb(223, 223, 223);
 }
 ul.news li.story[selected],
 ul.news.expanded li.story {
     height: auto !important;
-    padding: 16px 4px;
+    padding: 20px 4px;
 }
 ul.news li.story[selected] a.title,
 ul.news.expanded a.title {
-    display: inline;
+    display: block;
     line-height: 28px;
-    padding-left: 12px;
+    padding-left: 6px;
 }
 ul.news li.story[selected] .summary img,
 ul.news.expanded .summary img {
     display: inline;
+    max-width: 100%;
+}
+ul.news.expanded .summary img.abbrImg {
+    float: left;
+    padding: 6px 16px 4px 2px;
+    height: 120px;
+}
+ul.news.expanded .summary img[height="1"], ul.news li.story[selected] .summary img[height="1"] {
+    display: none;
 }
 ul.news li.story[selected] .summary p,
 ul.news.expanded .summary p,
@@ -259,4 +279,66 @@ li.story .rating {
     content: "\2605";
     position: absolute;
     color: rgba(25, 89, 201, 0.5);
+}
+.news .story .summary {
+    display: none;
+}
+ul.news.expanded li.story .summary.full {
+    display: none;
+}
+ul.news.expanded li.story.selected .summary {
+    display: none;
+}
+ul.news.expanded li.story.selected .summary.full {
+    display: block;
+}
+.news .story .summary iframe {
+    display: none;
+}
+.news .story .summary .feedflare, .news .story .summary .yarpp-related-rss {
+    display: none;
+}
+
+.enclosure {
+    margin: 12px 0px 0px 0px;
+    display: block;
+}
+.enclosure audio, .enclosure img {
+    width: 100%;
+}
+
+.news .story .actions .checkbox label:before {  
+    border-radius: 50%;
+    height: 15px;
+    width: 15px;
+    border: 1px solid rgb(199, 199, 199);
+    display: block;
+    color: rgb(10, 10, 156);
+    font-size: 24px;
+    content: " ";
+    line-height: 4px;
+    text-align: center;
+    text-indent: -1px;
+    padding-top: 4px;
+}
+.news .story .actions .checkbox input[type=checkbox]:checked + label:before {
+    content: "●";
+}
+.news:not(.expanded) .story:not(.selected) .actions, .news:not(.expanded) .story:not(.selected) .byline, .news:not(.expanded) .story:not(.selected) .fromUrl, .news:not(.expanded) .story:not(.selected) .rating {
+    display: none;
+}
+.news:not(.expanded) .story:not(.selected) {
+    padding: 16px 0px;
+}
+
+ul.subs .sub .actions {
+    display: none;
+}
+ul.subs .sub:hover .actions {
+    display: block;
+}
+
+.sub .title.url {
+    font-weight: normal;
+    padding-left: 28px;
 }

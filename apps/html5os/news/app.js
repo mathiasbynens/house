@@ -168,7 +168,8 @@
         bindRouter: function(router) {
             var self = this;
             var routerReset = function() {
-                $('body').attr('class', '');
+                // $('body').attr('class', '');
+                $('body').removeClass('loading');
                 router.reset();
             }
             self.router = router;
