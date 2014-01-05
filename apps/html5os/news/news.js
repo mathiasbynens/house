@@ -1097,6 +1097,7 @@
             "click": "select"
         },
         fav: function() {
+            var self = this;
             if(!this.model.has('fav')) {
                 this.model.set({"fav": true}, {silent: true});
                 var saveModel = this.model.save(null, {

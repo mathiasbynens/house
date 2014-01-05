@@ -353,6 +353,7 @@
             
             self.loading = false;
             this.$deselect = $('<div class="showAllFeeds col-lg-6 col-lg-offset-3"><a href="#">All News Feeds</a> <span class="unreadCount total"></span></div>');
+            this.$saved = $('<div class="saved col-lg-6 col-lg-offset-3"><a href="#"><span class="star">★</span> Saved Stories</a> <span class="savedCount"></span></div>');
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> subs</div>');
             
             if(newsCollection) {
@@ -449,10 +450,15 @@
         },
         events: {
           "click .list-pager": "loadMore",
-          "click .showAllFeeds": "clickShowAll"
+          "click .showAllFeeds": "clickShowAll",
+          "click .saved": "clickShowSaved"
         },
         clickShowAll: function() {
             this.trigger('deselect');
+            return false;
+        },
+        clickShowSaved: function() {
+            this.trigger('showSaved');
             return false;
         },
         loadMore: function() {
@@ -487,6 +493,7 @@
             this.$el.html('');
             self.renderTotalUnreadVal();
             this.$el.append(this.$deselect);
+            this.$el.append(this.$saved);
             this.$el.append(this.$ul);
             this.$ul.html('');
             //this.collection.sort({silent:true});

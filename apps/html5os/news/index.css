@@ -90,6 +90,10 @@ li.sub:hover .actions {} .list-controls {
     text-align: right;
     clear: both;
 }
+.subs-list .saved .star {
+    font-size: 22px;
+    padding: 0px 0px 0px 4px;
+}
 @media only screen and (min-width: 767px) {
     .subs-list {} .subs-list .showAllFeeds {
         font-weight: bold;

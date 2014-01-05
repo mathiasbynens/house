@@ -56,6 +56,9 @@
                                 self.subListView.on('deselect', function(row) {
                                     self.router.navigate('/', {trigger: true});
                                 });
+                                self.subListView.on('showSaved', function() {
+                                    self.router.navigate('saved', {trigger: true});
+                                });
                                 self.subListView.on('goToProfile', function(user){
                                     self.router.navigate('from/'+user.get('name'), {trigger: true});
                                 });
@@ -188,6 +191,18 @@
                 $('body')[0].scrollTop = 0;
                 self.$newsList.find('.list-filters').html('');
                 self.nav.selectByNavigate('');
+                router.trigger('loadingComplete');
+            });
+            router.route('saved', 'starredNews', function(name){
+                routerReset();
+                router.setTitle('Saved News');
+                self.nav.selectByNavigate('saved');
+                $('body')[0].scrollTop = 0;
+                self.$newsList.find('.list-filters').html('');
+                
+                self.listView.filter({fav: true});
+                self.listView.$el.show().siblings().hide();
+                
                 router.trigger('loadingComplete');
             });
             router.route('for/:userName', 'userNews', function(name){
