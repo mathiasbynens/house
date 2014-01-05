@@ -1988,16 +1988,20 @@
                     data = _.first(data);
                 }
                 if(data.image) {
-                    var url = '/api/files/'+data.image.filename; //window.location.origin+
+                    var windowOrigin = window.origin || '';
+                    if(!windowOrigin) {
+                        windowOrigin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                    }
+                    var url = windowOrigin+'/api/files/'+data.image.filename; //window.location.origin+
                     if(data.image.mimeType.indexOf('image/gif') !== -1 || data.image.filename.substr(-4) === '.gif') {
                         if(data.image.sizes && data.image.sizes.full) {
-                            var fullUrl = '/api/files/'+data.image.sizes.full.filename;
+                            var fullUrl = windowOrigin+'/api/files/'+data.image.sizes.full.filename;
                         }
                         self.$inputUrl.val(url);
                         self.options.editor.composer.commands.exec("insertHTML", '<img data-active-src="'+url+'" src="'+fullUrl+'" alt="" />');
                     } else {
                         if(data.image.sizes && data.image.sizes.full) {
-                            url = '/api/files/'+data.image.sizes.full.filename;
+                            url = windowOrigin+'/api/files/'+data.image.sizes.full.filename;
                         }
                         self.$inputUrl.val(url);
                         self.options.editor.composer.commands.exec("insertHTML", '<img src="'+url+'" alt="" />');
