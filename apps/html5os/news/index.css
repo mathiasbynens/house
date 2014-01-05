@@ -147,6 +147,14 @@ li.sub:hover .actions {} .list-controls {
     padding: 4px;
     color: #999;
 }
+.news .story .sharing {
+    position: absolute;
+    bottom: 4px;
+    left: 60px;
+    padding: 4px;
+    color: #C0C0C0;
+    background: #E6E6E6;
+}
 .news .story .actions .checkbox input {
     display: none;
 }

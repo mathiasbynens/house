@@ -944,12 +944,14 @@
             this.$enclosure = this.$el.find('.enclosure');
             this.$summary = $('<span class="summary"></span>');
             this.$summaryFull = $('<span class="summary full"></span>');
+            this.$sharing = $('<span class="sharing label label-default" title="Social shares"></span>');
             this.$el.append(this.$summary);
             this.$el.append(this.$summaryFull);
             this.$el.append(this.$star);
             this.$el.append('<span class="fromUrl"></span>');
             this.$el.append(this.$byline);
             this.actions = new ActionsView({id: this.id, model: this.model});
+            this.$el.append(this.$sharing);
         },
         render: function() {
             var self = this;
@@ -1069,6 +1071,11 @@
             } else {
                 this.$star.removeClass('selected');
             }
+            
+            if(this.model.has('socialShares')) {
+                this.$sharing.html(this.model.get('socialShares').total);
+            }
+            
             this.$el.attr('data-id', this.model.id);
             this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
