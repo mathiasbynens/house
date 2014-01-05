@@ -61,6 +61,12 @@ img {
     right: 74px;
     z-index: 9999;
 }
+#bookmarklet-public {
+    display: none;
+}
+.bookmark:hover #bookmarklet-public {
+    display: block;
+}
 .bookmark {
     position: fixed;
     top: 0;
@@ -89,10 +95,13 @@ img {
 .bookmark a {
     color: #999;
 }
-.bookmark:hover a {
+.bookmark:hover a#bookmarklet, .bookmark:hover a#bookmarklet-public {
     display: block;
     cursor: pointer;
     float: right;
+    margin-right: 20px;
+}
+.bookmark:hover a#bookmarklet {
     margin-right: 220px;
 }
 @media (max-width: 768px) {

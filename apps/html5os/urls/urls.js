@@ -375,6 +375,28 @@
                     }
                 });
             }
+            router.route('save/public/:url', 'saveUrl', function(url){
+                router.reset();
+                router.setTitle('Save URL Publicly');
+                self.searchView.trigger('searchLoading', url);
+                
+                self.collection.newUrl(url, {groups: ['public']}, function(urlModel){
+                    if(parent) {
+                        ////parent.postMessage('destroy_bookmarklet', parent.location.origin);
+                        //window.parent.postMessage("destroy_bookmarklet","*")
+                        router.navigate(urlModel.getSharePath(), {trigger: false});
+                        //self.renderMetaTagsForDoc(doc);
+                        if(urlModel.has('title')) {
+                            router.setTitle(urlModel.get('title'));
+                        }
+                        var shareView = urlModel.getNewShareView({iframe: false});
+                        bindShareViewRoutes(shareView);
+                        $('body').append(shareView.render().$el);
+                    }
+                    router.trigger('loadingComplete');
+                    self.searchView.trigger('searchComplete');
+                });
+            });
             router.route('save/:url', 'saveUrl', function(url){
                 router.reset();
                 router.setTitle('Save URL');

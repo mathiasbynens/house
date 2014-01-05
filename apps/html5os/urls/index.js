@@ -32,8 +32,16 @@
                                                                         app.on('initialized', function(){
                                                                             app.render();
                                                                             var view = app.getWidgetView();
-                                                                            $('#bookmarklet').attr('href', $('#bookmarklet_js').html().replace(/\n/gi, '').replace(/HOSTNAME/g, window.location.hostname).trim());
-                                                                            $('#bookmarklet').html('✚ '+window.location.host || window.location.hostname);
+                                                                            var hostname = window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                                                                            var windowOrigin = window.origin || '';
+                                                                            if(!windowOrigin) {
+                                                                                windowOrigin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                                                                            }
+                                                                            $('#bookmarklet').attr('href', $('#bookmarklet_js').html().replace(/\n/gi, '').replace(/\[\[HOST\]\]/g, windowOrigin).trim());
+                                                                            $('#bookmarklet').html('✚ '+hostname);
+                                                                            
+                                                                            $('#bookmarklet-public').attr('href', $('#bookmarklet_js').html().replace(/\n/gi, '').replace(/\[\[HOST\]\]/g, windowOrigin).replace(/urls\/save\//g, 'urls/save/public/').trim());
+                                                                            $('#bookmarklet-public').html('⚓ '+hostname); // ⚓
                                                                             //$('body').append(view.render().$el);
                                                                             //$('body').append(app.collection.getView().render().$el);
                                                                         

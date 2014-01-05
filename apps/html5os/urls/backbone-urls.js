@@ -464,9 +464,13 @@
                 });
             }
         },
-        newUrl: function(url, callback) {
+        newUrl: function(url, options, callback) {
             var self = this;
             var setDoc = {};
+            if(!callback && typeof options == 'function') {
+                callback = options;
+                options = null;
+            }
             var model = new Model({}, {
                 collection: self
             });
@@ -476,6 +480,11 @@
             }
             setDoc.url = url;
 
+            if(options) {
+                for(var o in options) {
+                    setDoc[o] = options[o];
+                }
+            }
             /*if(this.$public.is(':checked')) {
                 setDoc.groups = ['public'];
             }*/

@@ -64,8 +64,9 @@
                 </div>
                 
                 <div class="nav navbar-nav bookmark">
-                    <p class="msg">Drag the link to your bookmarks bar.</p>
-                    <a id="bookmarklet" style="cursor pointer" title="Bookmarklet" href='#'>✚ Bookmark</a>
+                    <p class="msg">Drag the link to your bookmarks bar above. ▲</p>
+                    <a id="bookmarklet" style="cursor pointer" title="Bookmarklet for saving a URL" href='#'>✚ Bookmark</a>
+                    <a id="bookmarklet-public" style="cursor pointer" title="Bookmarklet for saving a URL publicly" href='#'>⚓ Share</a>
                 </div>
                 
                 <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
@@ -111,7 +112,7 @@
                         if (r) {
                             return
                         }
-                        var i = "https://HOSTNAME/urls/save/",
+                        var i = "[[HOST]]/urls/save/",
                             s = n.createElement("iframe");
                         s.id = t;
                         s.src = i + "" + encodeURIComponent(e.location.href);
