@@ -1154,6 +1154,7 @@
             if(options.list) {
                 this.list = options.list;
             }
+            this.$channel = $('<span class="channel"></span>');
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             if(this.options.actions) {
@@ -1168,24 +1169,23 @@
                 }
                 var urlDoc = this.model.get('urlDoc');
                 if(urlDoc.channel) {
-                    var $channel = $('<span class="channel"></span>');
                     
                     if(urlDoc.channel.url && urlDoc.channel.url.faviconfile && urlDoc.channel.url.faviconfile.contentType.indexOf('image') === 0) {
-                        $channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span> ');
+                        this.$channel.html('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span> ');
                     } else if(this.model.has('channelUrlDoc') && this.model.get('channelUrlDoc').faviconfile && this.model.get('channelUrlDoc').faviconfile.contentType.indexOf('image') === 0) {
-                        $channel.append('<span class="favicon"><img src="/api/files/'+this.model.get('channelUrlDoc').faviconfile.filename+'" /></span> ');
+                        this.$channel.html('<span class="favicon"><img src="/api/files/'+this.model.get('channelUrlDoc').faviconfile.filename+'" /></span> ');
                     } else {
-                        $channel.append('<span class="favicon"><img src="favicon.ico" /></span> ');
+                        this.$channel.html('<span class="favicon"><img src="favicon.ico" /></span> ');
                     }
                     if(urlDoc.channel.title) {
                         if(urlDoc.channel.link) {
-                            $channel.append('<span class="title"><a href="'+urlDoc.channel.link+'" target="_new">'+urlDoc.channel.title+'</a></span>');
+                            this.$channel.html('<span class="title"><a href="'+urlDoc.channel.link+'" target="_new">'+urlDoc.channel.title+'</a></span>');
                         } else {
-                            $channel.append('<span class="title">'+urlDoc.channel.title+'</span>');
+                            this.$channel.html('<span class="title">'+urlDoc.channel.title+'</span>');
                         }
                     }
                     
-                    this.$el.append($channel);
+                    this.$el.append(this.$channel);
                 }
             } else if(this.model.has('channelUrlDoc')) {
                     var channelUrlDoc = this.model.get('channelUrlDoc');

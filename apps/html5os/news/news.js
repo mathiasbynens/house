@@ -991,26 +991,31 @@
                 } else if(this.model.has('description')) {
                     msgStr = this.model.get('description');
                 }
+                var regex = /<img.*?src=('|")(.*?)('|")/;
+                var matches = regex.exec(msgStr);
                 var msgStrTxt = ($('<span>'+br2nl(msgStr)+'</span>').text());
                 var trimLen = 333;
                 if(msgStrTxt.length > trimLen) {
                     msgStrAbbr = msgStrTxt.substr(0, trimLen);
                     msgStrAbbr += ' ... ';
                     
-                    var regex = /<img.*?src=('|")(.*?)('|")/;
-                    var matches = regex.exec(msgStr);
                     var imgsrc = '';
                     if(enclosureImgSrc) {
                         msgStrAbbr = '<img src="'+enclosureImgSrc+'" class="enclosureImg">'+msgStrAbbr;
                     } else if(matches && matches.length > 2) {
                         imgsrc = matches[2];
-                        if(imgsrc.indexOf('http://yarpp.org') === -1 && imgsrc.indexOf('http://feeds.feedburner.com/') === -1) {
+                        if(imgsrc.indexOf('http://yarpp.org') === -1 && imgsrc.indexOf('http://feeds.feedburner.com/') === -1 && imgsrc.indexOf('buysellads.com') === -1) {
                             msgStrAbbr = '<img src="'+imgsrc+'" class="abbrImg">'+msgStrAbbr;
                         }
                     }
                 } else {
                     if(enclosureImgSrc) {
                         msgStrAbbr = '<img src="'+enclosureImgSrc+'" class="enclosureImg">'+msgStrTxt;
+                    } else if(matches && matches.length > 2) {
+                        imgsrc = matches[2];
+                        if(imgsrc.indexOf('http://yarpp.org') === -1 && imgsrc.indexOf('http://feeds.feedburner.com/') === -1 && imgsrc.indexOf('buysellads.com') === -1) {
+                            msgStrAbbr = '<img src="'+imgsrc+'" class="enclosureImg">'+msgStrAbbr;
+                        }
                     } else {
                         msgStrAbbr = msgStrTxt;
                     }
@@ -1043,7 +1048,7 @@
                 var $at = this.$el.find('.date');
                 if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('date')).format('LLLL'));
-                    $at.html(clock.moment(this.model.get('date')).calendar());
+                    $at.html(' &middot; '+clock.moment(this.model.get('date')).calendar()+' &middot; ');
                 } else {
                     $at.html(this.model.get('date'));
                 }
@@ -1075,7 +1080,7 @@
                 // console.log('sub changed!!!');
                 self.renderSub(model);
             });
-            self.$el.find('.fromUrl').html(' from ');
+            self.$el.find('.fromUrl').html('');
             self.$el.find('.fromUrl').append(sub.getNewAvatar().render().$el);
             sub.bind('destroy', self.remove, self);
         },

@@ -170,7 +170,7 @@ ul.news li.story .fromUrl .avatar {
 ul.news li.story .fromUrl, .news .story .byline {
     color: #999;
     font-size: 12px;
-    margin-right: 8px;
+    margin-right: 0px;
     float: right;
 }
 
@@ -341,4 +341,8 @@ ul.subs .sub:hover .actions {
 .sub .title.url {
     font-weight: normal;
     padding-left: 28px;
+}
+
+.btn-group .dropdown-menu {
+    margin-top: 0;
 }
