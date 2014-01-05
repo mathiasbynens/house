@@ -1564,6 +1564,7 @@
             this.$tdFav = $('<td class="faviconfile"><img class="favicon" /></td>');
             this.$tdUrl = $('<td class="url"><a href="#" target="_new"></a><span class="title"></span></td>');
             //<span class="glyphicon glyphicon-fire"></span> 
+            this.$tdShareCount = $('<td class="shareCount" title="Share count"></td>');
             this.$tdViewCount = $('<td class="viewCount" title="View count"></td>');
             this.$tdCommentCount = $('<td class="commentCount" title="Comment count"></td>');
             this.$tdActions = $('<td class="actions"></td>');
@@ -1579,6 +1580,7 @@
             this.$el.append(this.$tdFav);
             this.$el.append(this.$tdUrl);
             
+            this.$el.append(this.$tdShareCount);
             this.$el.append(this.$tdCommentCount);
             this.$el.append(this.$tdViewCount);
             
@@ -1611,6 +1613,10 @@
             }
             if(this.model.has('commentCount')) {
                 this.$tdCommentCount.html(this.model.get('commentCount'));
+            }
+            var shares = this.model.has('socialShares') ? this.model.get('socialShares').total : 0;
+            if(shares) {
+                this.$tdShareCount.html(shares);
             }
 
             if (this.model.has('ogImage')) {
@@ -1736,6 +1742,7 @@
         render: function() {
             var self = this;
             var placeHolder = '';
+            var shares = this.model.has('socialShares') ? this.model.get('socialShares').total : 0;
             var views = this.model.get('views') || 1;
             var commentCount = this.model.get('commentCount') || '';
             var head = '<header class="navbar navbar-inverse navbar-fixed-top" role="banner">\
@@ -1746,6 +1753,7 @@
                     <a target="_new" href="' + this.getTwitterShareA() + '" class="connectTwitter zocial twitter icon" title="Share to Twitter">Twitter</a>\
                     <a target="_new" href="' + this.getFacebookShareA() + '" class="connectFacebook zocial facebook icon" title="Share to Facebook">Facebook</a>\
                     <a target="_new" href="' + this.getGoogleShareA() + '" class="connectGoogle zocial googleplus icon" title="Share to Google">Google</a>\
+                    <button class="btn btn-link shares" title="Shares"><span class="glyphicon glyphicon-share-alt"></span> ' + shares + '<span class="hidden-xs"> Shares</span></button>\
                     <button class="btn btn-link views" title="Views"><span class="glyphicon glyphicon-fire"></span> ' + views + '<span class="hidden-xs"> Views</span></button>\
                     <button class="btn btn-link comments" title="Comments"><span class="glyphicon glyphicon-comment"></span> ' + commentCount + '<span class="hidden-xs"> Comments</span></button>\
                     <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".share-navbar-collapse">\
@@ -1843,6 +1851,7 @@
             // "click button.google": "shareGoogle",
             "click button.comments": "viewComments",
             "click button.views": "viewViews",
+            "click button.shares": "viewViews"
         },
         clickImage: function(e) {
             window.location = this.model.get('url');
