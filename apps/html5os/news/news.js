@@ -968,10 +968,8 @@
                     // type: "image/jpeg"
                     // url: "http://i.imgur.com/e5kWlOr.jpg"
                     console.log(enclosure)
-                    if(enclosure.type.indexOf('image') === 0) {
-                        if(enclosure.url) {
-                            enclosureImgSrc = enclosure.url;
-                        }
+                    if(enclosure && enclosure.url && (enclosure.url.substr(-4) == '.jpg' || enclosure.url.substr(-5) == '.jpeg' || enclosure.url.substr(-4) == '.png' || enclosure.url.substr(-4) == '.gif' || (enclosure.type && enclosure.type.indexOf('image') === 0))) {
+                        enclosureImgSrc = enclosure.url;
                     } else if (enclosure.type.indexOf('audio') === 0) {
                         if(enclosure.url) {
                             enclosureAudioSrc = enclosure.url;
@@ -1073,7 +1071,14 @@
             }
             
             if(this.model.has('socialShares')) {
+                this.$sharing.attr('title', this.model.get('socialShares').total+' social shares');
                 this.$sharing.html(this.model.get('socialShares').total);
+                var topShareCount = 5000;
+                var v = (this.model.get('socialShares').total / topShareCount).toFixed(2);
+                var vv = 1-v;
+                var color = Math.floor(192*vv);
+                this.$sharing.css('color', 'rgb('+color+', '+color+','+color+')');
+                this.$sharing.css('background', 'rgba(0, 0, 242, '+v+')');
             }
             
             this.$el.attr('data-id', this.model.id);

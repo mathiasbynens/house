@@ -294,6 +294,7 @@ li.story .rating {
 }
 .news .story .summary {
     display: none;
+    overflow: auto;
 }
 ul.news.expanded li.story .summary.full {
     display: none;
@@ -310,7 +311,10 @@ ul.news.expanded li.story.selected .summary.full {
 .news .story .summary .feedflare, .news .story .summary .yarpp-related-rss {
     display: none;
 }
-
+.summary img.enclosureImg {
+    float: left;
+    margin: 0px 12px 16px 0px;
+}
 .enclosure {
     margin: 12px 0px 0px 0px;
     display: block;

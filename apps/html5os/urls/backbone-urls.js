@@ -1003,6 +1003,11 @@
         render: function() {
             var self = this;
             
+            // bs btn steals my dropdown click
+            this.$el.on('shown.bs.dropdown', function(){
+                self.shownDropdown();
+            });
+            
             if (this.model && this.model.has('groups') && this.model.get('groups').indexOf('public') !== -1) {
                 this.renderPublic();
             } else if (!this.model.has('groups') || this.model.get('groups').length == 0) {
@@ -1081,6 +1086,8 @@
             e.stopPropagation();
             e.preventDefault();
         },
+        shownDropdown: function() {
+        }
     });
 
     var Actions = Backbone.View.extend({
