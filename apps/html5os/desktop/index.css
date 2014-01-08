@@ -17,6 +17,14 @@ body > .app {
         width: 500px;
     }
 }
+#accountNav .dropdown-toggle img.avatar, #accountMenu img.avatar {
+    max-height: 18px;
+    max-width: 18px;
+    margin: 0px 0px 0px 0px;
+}
+#accountNav .dropdown-toggle .userAvatarName .name {
+    display: none;
+}
 /* Set the fixed height of the footer here */
 div.urlsWidget {
     overflow: hidden;

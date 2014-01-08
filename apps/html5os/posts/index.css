@@ -52,6 +52,17 @@
     font-weight: normal;
     font-style: normal;
 }
+#accountNav .dropdown-toggle img.avatar, #accountMenu img.avatar {
+    max-height: 18px;
+    max-width: 18px;
+    margin: 0px 0px 0px 0px;
+}
+#accountMenu img.avatar {
+    margin: 0px 0px 0px 12px;
+}
+#accountNav .dropdown-toggle .userAvatarName .name {
+    display: none;
+}
 h1.entry-title a, .entry-meta, .entry-meta a {
     font-family: 'FreeUniversal';
 }

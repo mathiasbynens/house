@@ -1300,6 +1300,12 @@
                                 })
                                 .render();
                                 
+                                var userAvatar = loginStatus.view.getUserModel(function(userModel){
+                                    if(userModel) {
+                                        $('#accountNav .dropdown-toggle').html(userModel.getNewAvatarNameView().render().$el);
+                                    }
+                                });
+                                
                                 if (loginStatus && loginStatus.has("user")) {} else {}
                                 self.trigger('init');
                             }

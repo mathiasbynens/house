@@ -4,6 +4,17 @@ body {
 img {
     max-width: 100%;
 }
+#accountNav .dropdown-toggle img.avatar, #accountMenu img.avatar {
+    max-height: 18px;
+    max-width: 18px;
+    margin: 0px 0px 0px 0px;
+}
+#accountMenu img.avatar {
+    margin: 0px 0px 0px 12px;
+}
+#accountNav .dropdown-toggle .userAvatarName .name {
+    display: none;
+}
 .btn-group img.avatar {
     max-height: 26px;
     max-width: 26px;
