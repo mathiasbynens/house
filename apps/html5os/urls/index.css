@@ -235,7 +235,7 @@ img {
 
 .row td.faviconfile {
     width: 16px;
-    padding: 8px 46px 0 25px;
+    padding: 8px 25px 0 25px;
 }
 .urlsList .faviconfile {
     width: 16px;
@@ -247,6 +247,12 @@ img {
     color: #8B8B8B;
     padding-left: 12px;
     font-size: 11px;
+}
+
+.row .shareCount, .row .commentCount, .row .viewCount {
+    text-align: right;
+    color: #777;
+    font-size: 12px;
 }
 
 .urlsList span.avatar a .url {

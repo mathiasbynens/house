@@ -1616,14 +1616,14 @@
             }
             
             if(this.model.has('views')) {
-                this.$tdViewCount.html(this.model.get('views'));
+                this.$tdViewCount.html(this.model.get('views').toLocaleString());
             }
             if(this.model.has('commentCount')) {
-                this.$tdCommentCount.html(this.model.get('commentCount'));
+                this.$tdCommentCount.html(this.model.get('commentCount').toLocaleString());
             }
             var shares = this.model.has('socialShares') ? this.model.get('socialShares').total : 0;
             if(shares) {
-                this.$tdShareCount.html(shares);
+                this.$tdShareCount.html(shares.toLocaleString());
             }
 
             if (this.model.has('ogImage')) {

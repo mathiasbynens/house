@@ -486,7 +486,7 @@
             return view;
         },
         renderTotalUnreadVal: function() {
-            this.$deselect.find('.unreadCount').html(newsCollection.count);
+            this.$deselect.find('.unreadCount').html(newsCollection.count.toLocaleString());
         },
         render: function() {
             var self = this;
@@ -983,10 +983,10 @@
                         if(urlDoc.channel.link) {
                             $channel.append('<span class="title"><a href="'+urlDoc.channel.link+'" target="_new">'+urlDoc.channel.title+'</a></span>');
                         } else {
-                            $channel.append('<span class="title">'+urlDoc.channel.title+'</span>');
+                            $channel.append('<span class="title"><a href="#" target="_new">'+urlDoc.channel.title+'</a></span>');
                         }
                     } else {
-                        this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
+                        this.$el.append('<strong class="title url"><a href="'+urlDoc.channel.link+'" target="_new">'+this.model.get('url')+'</a></strong>');
                     }
                     this.$el.append($channel);
                 } else if(this.model.has('channelUrlDoc')) {
@@ -1004,14 +1004,14 @@
                             $channel.append('<span class="title">'+channelUrlDoc.title+'</span>');
                         }
                     } else {
-                        $channel.append('<strong class="title url">'+channelUrlDoc.url+'</strong>');
+                        $channel.append('<strong class="title url"><a href="'+channelUrlDoc.url+'" target="_new">'+channelUrlDoc.url+'</a></strong>');
                     }
                     this.$el.append($channel);
                 } else {
-                    this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
+                    this.$el.append('<strong class="title url"><a href="'+this.model.get('url')+'" target="_new">'+this.model.get('url')+'</a></strong>');
                 }
             } else {
-                this.$el.append('<strong class="title url">'+this.model.get('url')+'</strong>');
+                this.$el.append('<strong class="title url"><a href="'+this.model.get('url')+'" target="_new">'+this.model.get('url')+'</a></strong>');
             }
             
             if(this.model.has('unreadCount')) {
