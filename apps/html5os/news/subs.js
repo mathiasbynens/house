@@ -970,23 +970,39 @@
             this.$el.attr('title', this.model.get('url'));
             if(this.model.has('urlDoc')) {
                 var urlDoc = this.model.get('urlDoc');
+                var channelLinkUrl = urlDoc.url;
                 if(urlDoc.channel) {
+                    if(urlDoc.channel.link) {
+                        channelLinkUrl = urlDoc.channel.link;
+                    }
                     var $channel = $('<span class="channel"></span>');
                     if(urlDoc.channel.url && urlDoc.channel.url.faviconfile && urlDoc.channel.url.faviconfile.contentType.indexOf('image') === 0) {
                         $channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span>');
                     } else if(this.model.has('channelUrlDoc') && this.model.get('channelUrlDoc').faviconfile && this.model.get('channelUrlDoc').faviconfile.contentType.indexOf('image') === 0) {
                         $channel.append('<span class="favicon"><img src="/api/files/'+this.model.get('channelUrlDoc').faviconfile.filename+'" /></span>');
+                    } else if(urlDoc.channel && urlDoc.channel.hasOwnProperty('image')) {
+                        $channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.image.filename+'" /></span>');
                     } else {
                         $channel.append('<span class="favicon"><img src="favicon.ico" /></span>');
                     }
                     if(urlDoc.channel.title) {
-                        if(urlDoc.channel.link) {
-                            $channel.append('<span class="title"><a href="'+urlDoc.channel.link+'" target="_new">'+urlDoc.channel.title+'</a></span>');
+                        if(channelLinkUrl) {
+                            $channel.append('<span class="title"><a href="'+channelLinkUrl+'" target="_new">'+urlDoc.channel.title+'</a></span>');
                         } else {
                             $channel.append('<span class="title"><a href="#" target="_new">'+urlDoc.channel.title+'</a></span>');
                         }
+                    } else if(urlDoc.channel.meta && urlDoc.channel.meta.name) {
+                        if(channelLinkUrl) {
+                            $channel.append('<span class="title"><a href="'+channelLinkUrl+'" target="_new">'+urlDoc.channel.meta.name+'</a></span>');
+                        } else {
+                            $channel.append('<span class="title"><a href="#" target="_new">'+urlDoc.channel.meta.name+'</a></span>');
+                        }
                     } else {
-                        this.$el.append('<strong class="title url"><a href="'+urlDoc.channel.link+'" target="_new">'+this.model.get('url')+'</a></strong>');
+                        if(channelLinkUrl) {
+                            $channel.append('<strong class="title"><a href="'+channelLinkUrl+'" target="_new">'+this.model.get('url')+'</a></strong>');
+                        } else {
+                            $channel.append('<strong class="title url"><a href="#" target="_new">'+this.model.get('url')+'</a></strong>');
+                        }
                     }
                     this.$el.append($channel);
                 } else if(this.model.has('channelUrlDoc')) {
@@ -1181,6 +1197,8 @@
                         this.$channel.html('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span> ');
                     } else if(this.model.has('channelUrlDoc') && this.model.get('channelUrlDoc').faviconfile && this.model.get('channelUrlDoc').faviconfile.contentType.indexOf('image') === 0) {
                         this.$channel.html('<span class="favicon"><img src="/api/files/'+this.model.get('channelUrlDoc').faviconfile.filename+'" /></span> ');
+                    } else if(urlDoc.channel && urlDoc.channel.hasOwnProperty('image')) {
+                        this.$channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.image.filename+'" /></span>');
                     } else {
                         this.$channel.html('<span class="favicon"><img src="favicon.ico" /></span> ');
                     }

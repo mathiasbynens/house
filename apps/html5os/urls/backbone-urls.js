@@ -1760,9 +1760,9 @@
                     <a target="_new" href="' + this.getTwitterShareA() + '" class="connectTwitter zocial twitter icon" title="Share to Twitter">Twitter</a>\
                     <a target="_new" href="' + this.getFacebookShareA() + '" class="connectFacebook zocial facebook icon" title="Share to Facebook">Facebook</a>\
                     <a target="_new" href="' + this.getGoogleShareA() + '" class="connectGoogle zocial googleplus icon" title="Share to Google">Google</a>\
-                    <button class="btn btn-link shares" title="Shares"><span class="glyphicon glyphicon-share-alt"></span> ' + shares + '<span class="hidden-xs"> Shares</span></button>\
-                    <button class="btn btn-link views" title="Views"><span class="glyphicon glyphicon-fire"></span> ' + views + '<span class="hidden-xs"> Views</span></button>\
-                    <button class="btn btn-link comments" title="Comments"><span class="glyphicon glyphicon-comment"></span> ' + commentCount + '<span class="hidden-xs"> Comments</span></button>\
+                    <button class="btn btn-link shares" title="Shares"><span class="glyphicon glyphicon-share-alt"></span> ' + shares.toLocaleString() + '<span class="hidden-xs"> Shares</span></button>\
+                    <button class="btn btn-link views" title="Views"><span class="glyphicon glyphicon-fire"></span> ' + views.toLocaleString() + '<span class="hidden-xs"> Views</span></button>\
+                    <button class="btn btn-link comments" title="Comments"><span class="glyphicon glyphicon-comment"></span> ' + commentCount.toLocaleString() + '<span class="hidden-xs"> Comments</span></button>\
                     <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".share-navbar-collapse">\
                       <span class="sr-only">Toggle navigation</span>\
                       <span class="icon-bar"></span>\

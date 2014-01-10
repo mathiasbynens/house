@@ -601,7 +601,7 @@
                 this.$el.html('<button class="publish">publish to feed</button>');
             } else {
                 var feed = this.model.get('feed');
-                this.$el.html('published at <a href="/feed/item/'+feed.id+'" target="_new">'+feed.at+'</a><button class="unpublish">remove from feed</button>');
+                this.$el.html('published at <a href="/feed/item/'+feed.id+'" target="_blank">'+feed.at+'</a><button class="unpublish">remove from feed</button>');
             }
             this.setElement(this.$el);
             return this;
@@ -940,7 +940,7 @@
             this.starFull = '★';
             this.$star = $('<span title="Star this story" class="rating"><span class="star">'+this.starEmpty+'</span></span>'); // ★☆
             this.$byline = $('<span class="byline"><span class="author"></span> <span class="date"></span></span>');
-            this.$el.append('<a target="_new" class="title"></a><span class="enclosure"></span>');
+            this.$el.append('<a target="_blank" class="title"></a><span class="enclosure"></span>');
             this.$enclosure = this.$el.find('.enclosure');
             this.$summary = $('<span class="summary"></span>');
             this.$summaryFull = $('<span class="summary full"></span>');
@@ -982,6 +982,7 @@
                     }
                 }
             }
+            
             if(this.model.has('title')) {
                 this.$el.find('.title').html(this.model.get('title'));
                 var msgStr = '';
@@ -1026,10 +1027,56 @@
                 }
                 this.$summaryFull.html(msgStr);
             } else {
-                console.log(this.model.attributes)
+                // console.log(this.model.attributes)
                 if(this.model.get('summary')) {
                     // this.$summary.html(this.model.get('summary'));
-                    this.$el.find('.title').html(this.model.get('summary'));
+                    // this.$el.find('.title').html(this.model.get('summary'));
+                    
+                    if(this.model.has('entities')) {
+                        var entities = this.model.get('entities');
+                        var summaryHtml = this.model.get('summary');
+                        console.log(entities)
+                        if(entities.hasOwnProperty('urls') && entities.urls.length > 0) {
+                            for(var u in entities.urls) {
+                                var url = entities.urls[u];
+                                // console.log(url.url);
+                                // console.log(url.expanded_url);
+                                // var rege = new RegExp(url.url, 'gi');
+                                
+                                var expandedUrl = url.expanded_url;
+                                
+                                if(expandedUrl.indexOf('http://instagr.am/p/') === 0 || expandedUrl.indexOf('http://instagram.com/p/') === 0) {
+                                    //http://api.instagram.com/oembed?url=http://instagr.am/p/BUG/
+                                    //http://instagr.am/p/BUG/media/?size=l
+                                    var expandedUrlHtml = '<br><a href="'+expandedUrl+'" target="_blank"><img src="'+expandedUrl+'media/?size=l" class="img-thumbnail" /></a>';
+                                    summaryHtml = summaryHtml.replace(url.url, expandedUrlHtml);
+                                } else {
+                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_blank">'+expandedUrl+'</a>');
+                                }
+                            }
+                        } else if(entities.hasOwnProperty('media') && entities.media.length > 0) {
+                            for(var u in entities.media) {
+                                var url = entities.media[u];
+                                // console.log(url.url);
+                                // console.log(url.expanded_url);
+                                // var rege = new RegExp(url.url, 'gi');
+                                
+                                var expandedUrl = url.expanded_url;
+                                if(url.media_url_https) {
+                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_blank"><img src="'+url.media_url_https+'" class="img-thumbnail" /></a>');
+                                } else if(url.media_url) {
+                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_blank"><img src="'+url.media_url+'" /></a>');
+                                } else {
+                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_blank">'+expandedUrl+'</a>');
+                                }
+                            }
+                        }
+                        this.$summary.html(summaryHtml);
+                        this.$summaryFull.html(summaryHtml);
+                    } else {
+                        this.$summary.html(this.model.get('summary'));
+                        this.$summaryFull.html(this.model.get('summary'));
+                    }
                 } else if(this.model.get('description')) {
                     this.$el.find('.title').html(this.model.get('description'));
                 }
@@ -1048,7 +1095,10 @@
                 var $at = this.$el.find('.date');
                 if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('date')).format('LLLL'));
-                    $at.html(' &middot; '+clock.moment(this.model.get('date')).calendar()+' &middot; ');
+                    $at.html(' &middot; <a href="#" target="_blank">'+clock.moment(this.model.get('date')).calendar()+'</a> &middot; ');
+                    if(this.model.has('link')) {
+                        $at.find('a').attr('href', this.model.get('link'));
+                    }
                 } else {
                     $at.html(this.model.get('date'));
                 }
