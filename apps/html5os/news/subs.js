@@ -486,7 +486,8 @@
             return view;
         },
         renderTotalUnreadVal: function() {
-            this.$deselect.find('.unreadCount').html(newsCollection.count.toLocaleString());
+            var c = newsCollection.count || 0;
+            this.$deselect.find('.unreadCount').html(c.toLocaleString());
         },
         render: function() {
             var self = this;

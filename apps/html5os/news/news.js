@@ -1122,12 +1122,16 @@
             
             if(this.model.has('socialShares')) {
                 this.$sharing.attr('title', this.model.get('socialShares').total+' social shares');
-                this.$sharing.html(this.model.get('socialShares').total);
-                var topShareCount = 5000;
-                var v = (this.model.get('socialShares').total / topShareCount).toFixed(2);
+                var t = this.model.get('socialShares').total || 0;
+                this.$sharing.html(t.toLocaleString());
+                var topShareCount = 1000;
+                var v = (t / topShareCount).toFixed(2);
                 var vv = 1-v;
-                var color = Math.floor(192*vv);
-                this.$sharing.css('color', 'rgb('+color+', '+color+','+color+')');
+                var color = Math.floor((255-150)*v) + 150;
+                if(color > 255) color = 255;
+                if(v > 0.1 && v < 0.25) v = 0.25;
+                //this.$sharing.css('color', 'rgb('+color+', '+color+','+color+')');
+                this.$sharing.css('color', 'rgba(255, 255, 255, '+v+')');
                 this.$sharing.css('background', 'rgba(0, 0, 242, '+v+')');
             }
             

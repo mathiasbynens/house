@@ -63,6 +63,74 @@
         setSlug: function(slug) {
             this.set('slug', this.slugStr(slug));
         },
+        getRefGlphyicon: function() {
+            if(this.has('ref')) {
+                var refCol = this.get('ref').col;
+                if(refCol === 'images') {
+                    return 'picture';
+                } else if(refCol === 'posts') {
+                    return 'edit';
+                } else if(refCol === 'checkins') {
+                    return 'check';
+                } else if(refCol === 'urls') {
+                    return 'globe';
+                }
+            }
+        },
+        getRefObj: function() {
+            if(!this.refObj) {
+                if(this.has('ref')) {
+                    var ref = this.get('ref');
+                    if(!ref.col || !ref.id) {
+                        return;
+                    }
+                    var refColSingular = ref.col.substr(0,ref.col.length-1);
+                    if(this.has(refColSingular)) {
+                        this.refObj = this.get(refColSingular);
+                    }
+                }
+            }
+            return this.refObj;
+        },
+        hasRefModel: function() {
+            return (this.has('ref'));
+        },
+        getRefCol: function() {
+            return this.get('ref').col;
+        },
+        getRefColSingular: function() {
+            return this.getRefCol().substr(0, this.getRefCol().length-1);
+        },
+        getRefModel: function() {
+            if(!this.refModel) {
+                var refObj = this.getRefObj();
+                if(refObj) {
+                    console.log(refObj);
+                    if(refObj && refObj.id) {
+                        var refCol = this.getRefCol();
+                        var bbClassName = refCol[0].toUpperCase()+refCol.substr(1)+"Backbone";
+                        console.log(bbClassName)
+                        if(bbClassName) {
+                            var bbClass = window[bbClassName];
+                            if(bbClass) {
+                                this.refModel = new bbClass.Model(refObj);
+                            }
+                        }
+                    }
+                }
+            }
+            return this.refModel;
+        },
+        getRevAvatar: function(options) {
+            var refModel = this.getRefModel();
+            if(refModel) {
+                if(refModel.getAvatar) {
+                    return refModel.getAvatar(options);
+                } else if(refModel.getAvatarView) {
+                    return refModel.getAvatarView(options);
+                }
+            }
+        },
         getNavigatePath: function() {
             return 'item/'+this.id;
         }
@@ -77,7 +145,7 @@
             self.pageSize = 10;
             this.resetFilters();
             
-            require(['//'+window.location.host+'/desktop/socket.io.min.js'], function() {
+            require(['/desktop/socket.io.min.js'], function() {
                 var socketOpts = {};
                 if(window.location.protocol.indexOf('https') !== -1) {
                     socketOpts.secure = true;
@@ -227,7 +295,7 @@
             var self = this;
             self.loading = false;
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> items</div>');
-            var $ul = this.$ul = $('<ul class="feed"></ul>');
+            var $ul = this.$ul = $('<div class="feed"></div>'); // <div class="column size-1of3"></div><div class="column size-1of3"></div><div class="column size-1of3"></div>
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -301,7 +369,16 @@
             var self = this;
             this.$el.html('');
             this.$el.append(this.$ul);
-            this.$ul.html('');
+            
+            if(!this.mason) {
+                this.mason = new Masonry( this.$ul[0], {
+                    // options
+                    columnWidth: 320,
+                    itemSelector: '.feed-item'
+                });
+                this.mason.layout();
+            }
+            
             //this.collection.sort({silent:true});
             this.collection.each(function(doc){
                 var view = self.getDocLayoutView(doc);
@@ -320,6 +397,8 @@
             this.$pager.find('.list-count').html(c);
         },
         appendRow: function(row) {
+            var self = this;
+            var mode = 'append';
             var rank = new Date(row.model.get('at'));
             rank = rank.getTime();
             var rowEl = row.render().$el;
@@ -327,23 +406,39 @@
                 rowEl.hide();
             }
             rowEl.attr('data-sort-rank', rank);
-            var d = false;
-            var $lis = this.$ul.children();
-            var last = $lis.last();
-            var lastRank = parseInt(last.attr('data-sort-rank'), 10);
-            if(rank > lastRank) {
-                $lis.each(function(i,e){
-                    if(d) return;
-                    var r = parseInt($(e).attr('data-sort-rank'), 10);
-                    if(rank > r) {
-                        $(e).before(rowEl);
-                        d = true;
-                    }
-                });
-            }
-            if(!d) {
-                this.$ul.append(rowEl);
-            }
+            this.$ul.append(rowEl);
+            this.mason.appended(rowEl);
+            rowEl.find('img').on('load', function(){
+                // console.log('row loaded');
+                self.mason.layout();
+            });
+            // this.mason.addItems(rowEl);
+            // salvattore[mode+'_elements'](this.$ul[0], [rowEl[0]]);
+            // var d = false;
+            // var $lis = this.$ul.children();
+            // var last = $lis.last();
+            // var lastRank = parseInt(last.attr('data-sort-rank'), 10);
+            // if(rank > lastRank) {
+            //     $lis.each(function(i,e){
+            //         if(d) return;
+            //         var r = parseInt($(e).attr('data-sort-rank'), 10);
+            //         if(rank > r) {
+            //             // $(e).before(rowEl);
+            //             salvattore[mode+'_elements'](this.$ul[0], [rowEl[0]]);
+            //             d = true;
+            //         }
+            //     });
+            // }
+            // if(!d) {
+            //     // this.$ul.append(rowEl);
+            //     salvattore[mode+'_elements'](this.$ul[0], [rowEl[0]]);
+            // }
+            //column size-1of3
+            // if(!this.salReg) {
+            //     this.salReg = true;
+            //     salvattore.register_grid(this.$ul[0]);
+            // }
+            // salvattore[mode+'_elements'](this.$ul[0], [rowEl[0]]);
         }
     });
     
@@ -606,21 +701,23 @@
 
 
     var RowView = Backbone.View.extend({
-        tagName: "li",
-        className: "row",
+        tagName: "div",
+        className: "feed-item",
         initialize: function(options) {
             if(options.list) {
                 this.list = options.list;
             }
+            this.$card = $('<div class="card"></div>');
+            this.$byline = $('<span class="byline"><span class="glyphicon"></span> </span>');
+            // this.$itemInfo = $('<span class="info"></span>');
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             //this.actions = new ActionsView({id: this.id, model: this.model});
         },
         render: function() {
             this.$el.html('');
-            var $byline = $('<span class="byline"></span>');
             if(this.model.has('title')) {
-                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
+                this.$card.append('<strong class="title">'+this.model.get('title')+'</strong>');
             }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
@@ -630,67 +727,109 @@
                 } else {
                     $at.html(this.model.get('at'));
                 }
-                $byline.append($at);
+                this.$byline.append($at);
             }
             if(this.model.has('owner')) {
-                $byline.append(' by '+this.model.get('owner').name);
+                this.$byline.append(' by '+this.model.get('owner').name);
             }
-            if(this.model.has('image')) {
-                if(!this.hasOwnProperty('image')) {
-                    this.image = new ImagesBackbone.Model(this.model.get('image'));
+            
+            if(this.model.hasRefModel()) {
+                var refAvatar = this.model.getRevAvatar();
+                if(refAvatar) {
+                    this.$byline.find('.glyphicon').addClass('glyphicon-'+this.model.getRefGlphyicon());
+                    var at = this.$byline.find('.at').html();
+                    this.$byline.find('.at').html('<a target="_new" href="/'+this.model.getRefCol()+'/'+refAvatar.model.getNavigatePath()+'">'+at+'</a>');
+                    this.$card.append(refAvatar.render().$el);
+                    this.$card.addClass(this.model.getRefColSingular());
                 }
-                this.$el.append(this.image.getAvatar().render().$el);
             }
-            if(this.model.has('post')) {
-                if(!this.hasOwnProperty('post')) {
-                    this.post = new PostsBackbone.Model(this.model.get('post'));
-                }
-                this.$el.append(this.post.getAvatar().render().$el);
+            
+            // if(this.model.has('image')) {
+            //     if(!this.hasOwnProperty('image')) {
+            //         this.image = new ImagesBackbone.Model(this.model.get('image'));
+            //         var at = this.$byline.find('.at').html();
+            //         this.$byline.find('.at').html('<a target="_new" href="/images/'+this.image.getNavigatePath()+'">'+at+'</a>');
+            //     }
+            //     this.$card.append(this.image.getAvatar().render().$el);
+            //     this.$card.addClass('image');
+            // }
+            // if(this.model.has('post')) {
+            //     this.$byline.find('.glyphicon').addClass('glyphicon-edit');
+            //     if(!this.hasOwnProperty('post')) {
+            //         this.post = new PostsBackbone.Model(this.model.get('post'));
+            //     }
+            //     this.$card.append(this.post.getAvatar().render().$el);
+            //     this.$card.addClass('post');
+            // }
+            // if(this.model.has('checkin')) {
+            //     this.$byline.find('.glyphicon').addClass('glyphicon-pushpin');
+            //     if(!this.hasOwnProperty('checkin')) {
+            //         this.checkin = new CheckinsBackbone.Model(this.model.get('checkin'));
+            //     }
+            //     this.$card.append(this.checkin.getAvatar().render().$el);
+            //     this.$card.addClass('checkin');
+            // }
+            // if(this.model.has('url')) {
+            //     this.$byline.find('.glyphicon').addClass('glyphicon-globe');
+            //     if(!this.hasOwnProperty('url')) {
+            //         this.url = new UrlsBackbone.Model(this.model.get('url'));
+            //         var at = this.$byline.find('.at').html();
+            //         this.$byline.find('.at').html('<a target="_new" href="/urls/'+this.url.getNavigatePath()+'">'+at+'</a>');
+            //     }
+            //     this.$card.append(this.url.getAvatarView().render().$el);
+            //     this.$card.addClass('url');
+            // }
+            // if(this.model.has('todo')) {
+            //     this.$byline.find('.glyphicon').addClass('glyphicon-ok');
+            //     if(!this.hasOwnProperty('todo')) {
+            //         this.todo = new TodosBackbone.Model(this.model.get('todo'));
+            //     }
+            //     this.$card.append(this.todo.getAvatar().render().$el);
+            //     this.$card.addClass('todo');
+            // }
+            // if(this.model.has('file')) {
+            //     this.$byline.find('.glyphicon').addClass('glyphicon-file');
+            //     if(!this.hasOwnProperty('file')) {
+            //         this.file = new FilesBackbone.Model(this.model.get('file'));
+            //     }
+            //     this.$card.append(this.file.getAvatar().render().$el);
+            //     this.$card.addClass('file');
+            // }
+            // if(this.model.has('rating')) {
+            //     this.$byline.find('.glyphicon').addClass('glyphicon-heart');
+            //     if(!this.hasOwnProperty('rating')) {
+            //         this.rating = new RatingsBackbone.Model(this.model.get('rating'));
+            //     }
+            //     this.$card.append(this.rating.getAvatar().render().$el);
+            //     this.$card.addClass('rating');
+            // }
+            // if(this.model.has('activity')) {
+            //     if(!this.hasOwnProperty('activity')) {
+            //         this.activity = new ActivityBackbone.Model(this.model.get('activity'));
+            //     }
+            //     this.$card.append(this.activity.getAvatar().render().$el);
+            //     this.$card.addClass('activity');
+            // }
+            
+            if(this.model.has('ref')) {
+                
             }
-            if(this.model.has('checkin')) {
-                if(!this.hasOwnProperty('checkin')) {
-                    this.checkin = new CheckinsBackbone.Model(this.model.get('checkin'));
-                }
-                this.$el.append(this.checkin.getAvatar().render().$el);
+            
+            if(window.account && (account.isAdmin() || account.isOwner(this.model.get('owner').id))) {
+                this.$byline.append($('<button class="delete btn btn-link glyphicon glyphicon-trash pull-right"> </button>'));
             }
-            if(this.model.has('url')) {
-                if(!this.hasOwnProperty('url')) {
-                    this.url = new UrlsBackbone.Model(this.model.get('url'));
-                }
-                this.$el.append(this.url.getAvatarView().render().$el);
-            }
-            if(this.model.has('todo')) {
-                if(!this.hasOwnProperty('todo')) {
-                    this.todo = new TodosBackbone.Model(this.model.get('todo'));
-                }
-                this.$el.append(this.todo.getAvatar().render().$el);
-            }
-            if(this.model.has('file')) {
-                if(!this.hasOwnProperty('file')) {
-                    this.file = new FilesBackbone.Model(this.model.get('file'));
-                }
-                this.$el.append(this.file.getAvatar().render().$el);
-            }
-            if(this.model.has('rating')) {
-                if(!this.hasOwnProperty('rating')) {
-                    this.rating = new RatingsBackbone.Model(this.model.get('rating'));
-                }
-                this.$el.append(this.rating.getAvatar().render().$el);
-            }
-            if(this.model.has('activity')) {
-                if(!this.hasOwnProperty('activity')) {
-                    this.activity = new ActivityBackbone.Model(this.model.get('activity'));
-                }
-                this.$el.append(this.activity.getAvatar().render().$el);
-            }
-            this.$el.append($byline);
+            
+            this.$card.append(this.$byline);
+            this.$el.append(this.$card);
             this.$el.attr('data-id', this.model.get("_id"));
             //this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
         },
         events: {
-          "click": "select"
+          "click": "select",
+          "click .delete": "clickDelete",
+          "click .deleteConfirmed": "clickDeleteConfirmed"
         },
         select: function(e) {
             var deselectSiblings = function(el) {
@@ -706,8 +845,25 @@
             this.trigger('select');
             this.trigger('resize');
         },
+        clickDeleteConfirmed: function(e) {
+            this.model.destroy({success: function(model, response) {
+              //window.history.back(-1);
+            }, 
+            errorr: function(model, response) {
+                console.log(arguments);
+            },
+            wait: true});
+            return false;
+        },
+        renderDeleteConfirm: function() {
+            this.$byline.find('.delete').html('Sure?').removeClass('delete').addClass('deleteConfirmed');
+        },
+        clickDelete: function(e) {
+            this.renderDeleteConfirm();
+            return false;
+        },
         remove: function() {
-          $(this.el).remove();
+            this.$el.remove();
         }
     });
     

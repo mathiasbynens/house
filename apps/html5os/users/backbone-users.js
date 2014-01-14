@@ -739,6 +739,8 @@
             var defaultImg = '';
             if(options.defaultImg) {
                 defaultImg = options.defaultImg;
+            } else {
+                defaultImg = '/users/iosicon.png';
             }
             this.$span = $('<span class="userAvatarName"><img class="avatar" src="'+defaultImg+'" /><span class="name"></span></span>');
             this.$img = this.$span.find('img');

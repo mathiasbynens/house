@@ -229,6 +229,10 @@ ul.news li.story[selected] .summary img,
 ul.news.expanded .summary img {
     display: inline;
     max-width: 100%;
+    height: auto;
+}
+.news .story .byline {
+    margin-left: 111px;
 }
 ul.news.expanded .summary img.abbrImg {
     float: left;

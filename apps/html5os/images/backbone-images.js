@@ -45,7 +45,10 @@
             for(var i in this.views) {
                 this.views[i].render();
             }
-        }
+        },
+        getNavigatePath: function() {
+            return 'image/' + this.id;
+        },
     });
     
     var ImageTag = Backbone.Model.extend({
@@ -587,7 +590,7 @@
         publish: function() {
             var self = this;
             console.log(this.model);
-            this.model.set({"feed": 0},{silent: true});
+            this.model.set({"feed": 1},{silent: true});
             var saveModel = this.model.save(null, {
                 silent: false,
                 wait: true

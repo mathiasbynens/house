@@ -1,3 +1,13 @@
+body.loading {
+    cursor: wait;
+}
+body.loading #loading {
+    display: block;
+}
+body #loading {
+    display: none;
+}
+body { padding-top: 50px; }
 body {
     background-color: rgba(255, 255, 255, 0);
 }
