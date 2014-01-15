@@ -2,39 +2,40 @@
     var pageSize = 24;
 
     var ImagesView = Backbone.View.extend({
-        tag: 'span',
-        className: 'app',
+        tagName: 'body',
+        className: 'imagesApp',
         initialize: function() {
             var self = this;
+            this.$app = $('<div class="app"></div>');
             require(['/desktop/swipeview.js'], function(){
-            require(['/files/backbone-files.js'], function(FilesBackbone){
-                window.FilesBackbone = FilesBackbone;
-                require(['/images/backbone-images.js'], function(ImagesBackbone){
-                    window.ImagesBackbone = ImagesBackbone;
-                    require(['/checkins/backbone-checkins.js'], function(CheckinsBackbone){
-                        window.CheckinsBackbone = CheckinsBackbone;
-                        self.initFiles(function(){
-                            self.initImages(function(){
-                                var loadCollections = function() {
-                                    self.imagesCollection.load(null, function(){
-                                        self.filesCollection.load(null, function(){
-                                            self.initialized = true;
-                                            self.trigger('initialized');
-                                            self.filesList.filter({contentType: /image/});
+                require(['/files/backbone-files.js'], function(FilesBackbone){
+                    window.FilesBackbone = FilesBackbone;
+                    require(['/images/backbone-images.js'], function(ImagesBackbone){
+                        window.ImagesBackbone = ImagesBackbone;
+                        require(['/checkins/backbone-checkins.js'], function(CheckinsBackbone){
+                            window.CheckinsBackbone = CheckinsBackbone;
+                            self.initFiles(function(){
+                                self.initImages(function(){
+                                    var loadCollections = function() {
+                                        self.imagesCollection.load(null, function(){
+                                            self.filesCollection.load(null, function(){
+                                                self.initialized = true;
+                                                self.trigger('initialized');
+                                                self.filesList.filter({contentType: /image/});
+                                            });
                                         });
-                                    });
-                                }
-                                if(window.account) {
-                                    window.account.on('loggedIn', function(loginView){
-                                        loadCollections();
-                                    });
-                                }
-                                loadCollections();
+                                    }
+                                    if(window.account) {
+                                        window.account.on('loggedIn', function(loginView){
+                                            loadCollections();
+                                        });
+                                    }
+                                    loadCollections();
+                                });
                             });
                         });
                     });
                 });
-            });
             });
             
             /*require(['../desktop/jquery.idle-timer.js'], function() {
@@ -132,7 +133,7 @@
         },
         render: function() {
             var self = this;
-            this.$el.html('');
+            // this.$el.html('');
             this.setElement(this.$el);
             if(!this.initialized) {
                 this.on('initialized', function(){
@@ -142,10 +143,11 @@
             }
             this.$filesList.append(self.newFileForm.render().$el);
             this.$filesList.append(self.filesList.render().$el);
-            this.$el.append(this.$filesList);
+            this.$app.append(this.$filesList);
             this.$imageList.append(self.imagesListView.render().$el);
-            this.$el.append(this.$imageList);
-            this.$el.append(this.$imageViewer);
+            this.$app.append(this.$imageList);
+            this.$app.append(this.$imageViewer);
+            this.$el.append(this.$app);
             return this;
         },
         events: {
@@ -179,7 +181,7 @@
             this.nav = nav;
             this.bindRouter(nav.router);
             
-            nav.col.add({title:"Albums", navigate:""});
+            // nav.col.add({title:"Albums", navigate:""});
             nav.col.add({title:"Import", navigate:"import"});
         },
         bindRouter: function(router) {

@@ -316,7 +316,7 @@
             var self = this;
             self.loading = false;
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> images</div>');
-            var $ul = this.$ul = $('<ul class="images"></ul>');
+            var $ul = this.$ul = $('<ul class="images list-unstyled"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
