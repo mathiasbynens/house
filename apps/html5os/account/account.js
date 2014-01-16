@@ -735,7 +735,9 @@
         login: function(e) {
             var self = this;
             profileView.router.navigate('join', {trigger: true});
-            e.preventDefault();
+            if(e) {
+                e.preventDefault();
+            }
         },
         logout: function(e) {
             if (confirm("Are you sure that you want to log off?")) {
