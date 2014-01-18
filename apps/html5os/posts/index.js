@@ -28,6 +28,7 @@
                                                                     });
                                                                     
                                                                     var subscribeEmailView = account.getEmailSubscribeView();
+                                                                    console.log(subscribeEmailView)
                                                                     if(subscribeEmailView) {
                                                                         if($('.subscribeEmail').length > 0) {
                                                                             subscribeEmailView.setElement($('.subscribeEmail')[0]);
@@ -37,6 +38,8 @@
                                                                             alert('Thank you for subscribing!');
                                                                             subscribeEmailView.remove();
                                                                         });
+                                                                    } else {
+                                                                        $('.subscribeEmail').remove();
                                                                     }
                                                                     
                                                                     require(['/posts/posts.js'], function(Posts) {

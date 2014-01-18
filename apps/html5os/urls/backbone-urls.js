@@ -554,6 +554,7 @@
             this.on('searchComplete', function() {
                 //self.$input.button('reset');
                 self.$form.find('button.go.btn').button('reset');
+                self.$input.removeAttr('disabled');
             });
             this.on('searchLoading', function(query) {
                 if (query) {
@@ -582,15 +583,15 @@
             //}
         },
         clickGo: function() {
-            this.$form.find('button.go.btn').button('loading');
+            this.disableForm();
             this.parseUrlInput();
             this.trigger('submit', this.$input.val().trim());
             return false;
         },
         submit: function(e) {
-            this.$form.find('button.go.btn').button('loading');
+            this.disableForm();
             this.parseUrlInput();
-            this.trigger('submit', this.$input.val());
+            this.trigger('submit', this.$input.val().trim());
             return false;
         },
         parseUrlInput: function() {
@@ -601,10 +602,16 @@
             }
             this.$input.val(v);
         },
+        disableForm: function() {
+            this.$form.find('button.go.btn').button('loading');
+            this.$input.attr('disabled', 'disabled');
+        },
         render: function() {
             var self = this;
-            this.$el.html('');
+            // this.$el.html('');
+            
             this.$el.append(this.$form);
+            
             this.setElement(this.$el);
             return this;
         },
@@ -1612,6 +1619,11 @@
                 var imgSrc = '/files/icon/' + contentTypeKlass + '.png';
                 if(imgSrc !== this.$tdFav.find('img').attr('src')) {
                     this.$tdFav.find('img').attr('src', imgSrc).attr('title', this.model.get('file').contentType);
+                }
+                
+                if(contentTypeKlass.indexOf('icon') !== -1) {
+                    var imgSrc = '/api/files/' + encodeURIComponent(this.model.get('file').filename);
+                    this.$tdFav.find('img').attr('src', imgSrc);
                 }
             }
             
