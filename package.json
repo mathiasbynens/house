@@ -1,6 +1,6 @@
 {
   "name": "house",
-  "version": "0.1.52",
+  "version": "0.1.54",
   "dependencies": {
     "optimist": "latest",
     "formidable-plus": "latest",
@@ -24,7 +24,8 @@
     "string": "latest",
     "node-ga-plus": "latest",
     "hashids": "latest",
-    "count-shares": "latest"
+    "count-shares": "latest",
+    "user-stream": "latest"
   },
   "devDependencies": {
     "mocha": "*"
