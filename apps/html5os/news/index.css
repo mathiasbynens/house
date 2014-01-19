@@ -66,28 +66,29 @@
     line-height: 1.5;
 }
 .pageTitle {
-    text-align: center;
     position: absolute;
-    left: 100px;
-    right: 100px;
-    top: 6px;
+    display: block;
+    left: 0;
+    right: 0;
+    text-align: center;
 }
 li.sub {
     position: relative;
-    margin: 16px 0px;
-    height: 22px;
 }
 li.sub .actions {
     float: right;
 }
 li.sub:hover .actions {} .list-controls {
 }
+.showAllFeeds {
+    padding: 6px;
+}
 .unreadCount {
     padding: 15px;
     color: #BEBEBE;
 }
 .unreadCount.total {
-    padding: 10px 0px;
+    padding: 10px 10px;
 }
 .list-pager {
     text-align: right;
@@ -159,7 +160,7 @@ li.sub:hover .actions {} .list-controls {
     bottom: 4px;
     left: 60px;
     padding: 4px;
-    color: #C0C0C0;
+    color: #FFFFFF;
     background: #E6E6E6;
 }
 .news .story .actions .checkbox input {
@@ -192,10 +193,14 @@ ul.news li.story .fromUrl, .news .story .byline {
 
 ul.news li.story[selected] .summary.full,
 ul.news.expanded li.story .summary,
+ul.news li.story.no-title .summary,
 ul.news li.story[selected] .summary iframe,
 ul.news.expanded .story .summary iframe {
     padding: 12px 6px 0px;
     display: block;
+}
+ul.news li.story.no-title .title, ul.news li.story.no-title .summary.full {
+    display: none;
 }
 .news .story .summary p,
 .news .story .summary h1,
@@ -207,6 +212,7 @@ ul.news.expanded .story .summary iframe {
 }
 ul.news {
     margin-top: 12px;
+    clear: both;
 }
 ul.news li.story {
     position: relative;

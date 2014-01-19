@@ -56,6 +56,9 @@
                                 self.subListView.on('deselect', function(row) {
                                     self.router.navigate('/', {trigger: true});
                                 });
+                                self.subListView.on('newFeed', function() {
+                                    self.router.navigate('subscribe', {trigger: true});
+                                });
                                 self.subListView.on('showSaved', function() {
                                     self.router.navigate('saved', {trigger: true});
                                 });
@@ -145,10 +148,11 @@
             this.bindRouter(nav.router);
             //nav.col.add({title:"News", navigate:""});
             if(window.account && (account.isUser() || account.isAdmin())) {
-                //nav.col.add({title:"Subscribe", navigate:"subscribe"});
-                //nav.col.add({title:"Feeds", navigate:"feeds"});
+                nav.col.add({title:"News", navigate:"", glyphicon: 'list-alt'});
+                nav.col.add({title:"Feeds", navigate:"feeds", glyphicon: 'list'});
+                // nav.col.add({title:"Subscribe", navigate:"subscribe", glyphicon: 'plus',});
             }
-            
+            /*
             var appsNav = new nav.col.model({
                 id: 'AppNav',
                 glyphicon: 'list-alt',
@@ -166,7 +170,7 @@
                 navigate: "subscribe"
             });
             appsNav.subNavCol.list.on('selected', function(navRow) {
-            });
+            });*/
         },
         bindRouter: function(router) {
             var self = this;
@@ -263,7 +267,7 @@
                 self.subListView.$el.show().siblings().hide();
                 self.$el.attr('data-nav', 'feeds')
                 self.subListView.$el.show();
-                router.setTitle('News Feeds');
+                router.setTitle('Feeds');
                 $('body')[0].scrollTop = 0;
                 self.nav.selectByNavigate('feeds');
             });

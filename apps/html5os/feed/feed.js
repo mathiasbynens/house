@@ -8,9 +8,8 @@
             var self = this;
             this.$app = $('<div class="app"></div>');
             self.editForms = {};
-            require(['/desktop/js/masonry.pkgd.min.js'], function(masonry){
-                window.Masonry = masonry;
-                console.log(arguments)
+            require(['/desktop/js/masonry.pkgd.min.js'], function(Masonry){
+                window.Masonry = Masonry;
                 require(['/files/backbone-files.js'], function(FilesBackbone){
                     window.FilesBackbone = FilesBackbone;
                     require(['/images/backbone-images.js'], function(ImagesBackbone){
@@ -323,10 +322,10 @@
                 });
             });
             router.route('item/:id', 'item', function(id){
-                // routerReset();
                 // self.$feedViewer.siblings().hide();
                 // self.$feedViewer.show();
                 // console.log(arguments);
+                router.reset();
                 self.findFeedById(id, function(doc){
                 //     console.log(arguments);
                     if(doc) {

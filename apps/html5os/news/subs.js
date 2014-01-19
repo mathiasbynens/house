@@ -352,7 +352,7 @@
             this.currentPage = 1;
             
             self.loading = false;
-            this.$deselect = $('<div class="showAllFeeds col-lg-6 col-lg-offset-3"><a href="#">All News Feeds</a> <span class="unreadCount total"></span></div>');
+            this.$deselect = $('<div class="showAllFeeds col-lg-6 col-lg-offset-3"><button class="btn btn-link"><span class="glyphicon glyphicon-list-alt"></span> All News</button> <label class="unreadCount total"></label> <span class="addNewFeed pull-right"><button class="btn btn-default"><span class="glyphicon glyphicon-plus"></span> Add Feed</button></span></div>');
             this.$saved = $('<div class="saved col-lg-6 col-lg-offset-3"><a href="#"><span class="star">★</span> Saved Stories</a> <span class="savedCount"></span></div>');
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> subs</div>');
             
@@ -449,9 +449,14 @@
             }
         },
         events: {
+          "click .addNewFeed button": "clickNewFeed",
           "click .list-pager": "loadMore",
           "click .showAllFeeds": "clickShowAll",
-          "click .saved": "clickShowSaved"
+          "click .saved": "clickShowSaved",
+        },
+        clickNewFeed: function() {
+            this.trigger('newFeed');
+            return false;
         },
         clickShowAll: function() {
             this.trigger('deselect');
@@ -597,7 +602,7 @@
         render: function() {
             var self = this;
             this.$el.html('<div class="btn-group">\
-  <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>\
+  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>\
   <ul class="dropdown-menu pull-right" role="menu">\
     <li role="presentation" class="dropdown-header">Details</li>\
     <li class="refresh"><a href="#" class="glyphicon glyphicon-refresh"> Refresh</a></li>\
@@ -1032,7 +1037,7 @@
             }
             
             if(this.model.has('unreadCount')) {
-                this.$el.append(' <span class="unreadCount" title="Unread news stories">'+this.model.get('unreadCount')+'</span>');
+                this.$el.append(' <span class="unreadCount" title="Unread news stories">'+this.model.get('unreadCount').toLocaleString()+'</span>');
             }
             
             if(this.model.has('at')) {

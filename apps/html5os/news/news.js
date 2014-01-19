@@ -601,7 +601,7 @@
                 this.$el.html('<button class="publish">publish to feed</button>');
             } else {
                 var feed = this.model.get('feed');
-                this.$el.html('published at <a href="/feed/item/'+feed.id+'" target="_blank">'+feed.at+'</a><button class="unpublish">remove from feed</button>');
+                this.$el.html('published at <a href="/feed/item/'+feed.id+'" target="_new">'+feed.at+'</a><button class="unpublish">remove from feed</button>');
             }
             this.setElement(this.$el);
             return this;
@@ -940,7 +940,7 @@
             this.starFull = '★';
             this.$star = $('<span title="Star this story" class="rating"><span class="star">'+this.starEmpty+'</span></span>'); // ★☆
             this.$byline = $('<span class="byline"><span class="author"></span> <span class="date"></span></span>');
-            this.$el.append('<a target="_blank" class="title"></a><span class="enclosure"></span>');
+            this.$el.append('<a target="_new" class="title"></a><span class="enclosure"></span>');
             this.$enclosure = this.$el.find('.enclosure');
             this.$summary = $('<span class="summary"></span>');
             this.$summaryFull = $('<span class="summary full"></span>');
@@ -995,7 +995,7 @@
                 var regex = /<img.*?src=('|")(.*?)('|")/;
                 var matches = regex.exec(msgStr);
                 var msgStrTxt = ($('<span>'+br2nl(msgStr)+'</span>').text());
-                var trimLen = 333;
+                var trimLen = 388;
                 if(msgStrTxt.length > trimLen) {
                     msgStrAbbr = msgStrTxt.substr(0, trimLen);
                     msgStrAbbr += ' ... ';
@@ -1027,6 +1027,7 @@
                 }
                 this.$summaryFull.html(msgStr);
             } else {
+                this.$el.addClass('no-title');
                 // console.log(this.model.attributes)
                 if(this.model.get('summary')) {
                     // this.$summary.html(this.model.get('summary'));
@@ -1035,40 +1036,52 @@
                     if(this.model.has('entities')) {
                         var entities = this.model.get('entities');
                         var summaryHtml = this.model.get('summary');
-                        console.log(entities)
+                        // console.log(entities)
                         if(entities.hasOwnProperty('urls') && entities.urls.length > 0) {
                             for(var u in entities.urls) {
                                 var url = entities.urls[u];
-                                // console.log(url.url);
-                                // console.log(url.expanded_url);
-                                // var rege = new RegExp(url.url, 'gi');
-                                
                                 var expandedUrl = url.expanded_url;
                                 
                                 if(expandedUrl.indexOf('http://instagr.am/p/') === 0 || expandedUrl.indexOf('http://instagram.com/p/') === 0) {
                                     //http://api.instagram.com/oembed?url=http://instagr.am/p/BUG/
                                     //http://instagr.am/p/BUG/media/?size=l
-                                    var expandedUrlHtml = '<br><a href="'+expandedUrl+'" target="_blank"><img src="'+expandedUrl+'media/?size=l" class="img-thumbnail" /></a>';
+                                    var expandedUrlHtml = '<br><a href="'+expandedUrl+'" target="_new"><img src="'+expandedUrl+'media/?size=l" class="img-thumbnail" /></a>';
                                     summaryHtml = summaryHtml.replace(url.url, expandedUrlHtml);
                                 } else {
-                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_blank">'+expandedUrl+'</a>');
+                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_new">'+expandedUrl+'</a>');
                                 }
                             }
                         } else if(entities.hasOwnProperty('media') && entities.media.length > 0) {
                             for(var u in entities.media) {
                                 var url = entities.media[u];
-                                // console.log(url.url);
-                                // console.log(url.expanded_url);
-                                // var rege = new RegExp(url.url, 'gi');
-                                
                                 var expandedUrl = url.expanded_url;
                                 if(url.media_url_https) {
-                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_blank"><img src="'+url.media_url_https+'" class="img-thumbnail" /></a>');
+                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_new"><img src="'+url.media_url_https+'" class="img-thumbnail" /></a>');
                                 } else if(url.media_url) {
-                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_blank"><img src="'+url.media_url+'" /></a>');
+                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_new"><img src="'+url.media_url+'" /></a>');
                                 } else {
-                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_blank">'+expandedUrl+'</a>');
+                                    summaryHtml = summaryHtml.replace(url.url, '<br><a href="'+expandedUrl+'" target="_new">'+expandedUrl+'</a>');
                                 }
+                            }
+                        }
+                        if(entities.hasOwnProperty('user_mentions') && entities.user_mentions.length > 0) {
+                            for(var u in entities.user_mentions) {
+                                var user_mention = entities.user_mentions[u];
+                                // id: 453338061
+                                // id_str: "453338061"
+                                // indices: Array[2]
+                                // name: "DOGforDOG"
+                                // screen_name: "DogforDog"
+                                summaryHtml = summaryHtml.replace(user_mention.screen_name, '<a href="https://twitter.com/'+user_mention.screen_name+'" target="_new">'+user_mention.screen_name+'</a>');
+                            }
+                        }
+                        if(entities.hasOwnProperty('hashtags') && entities.hashtags.length > 0) {
+                            for(var h in entities.hashtags) {
+                                var hashTag = entities.hashtags[h];
+                                // text: "Wakarusa"
+                                // https://twitter.com/search?q=%23staypositiveandloveyourlife&src=hash
+                                summaryHtml = summaryHtml.replace(hashTag.text, '<a href="https://twitter.com/search?q=%23'+hashTag.text+'&src=hash" target="_new">'+hashTag.text+'</a>');
+                                
                             }
                         }
                         this.$summary.html(summaryHtml);
@@ -1085,7 +1098,11 @@
                 this.$el.find('.title').attr('href', this.model.get('link'));
             }
             if(this.model.has('author')) {
-                this.$el.find('.author').html(''+this.model.get('author')+'');
+                if(this.model.get('author').indexOf('@') === 0) {
+                    this.$el.find('.author').html('<a target="_new" href="https://twitter.com/'+this.model.get('author').substr(1)+'">'+this.model.get('author')+'</a>');
+                } else {
+                    this.$el.find('.author').html(''+this.model.get('author')+'');
+                }
             }
             if(this.model.has('fromUrl')) {
                 this.$el.find('.fromUrl').html(this.model.get('fromUrl'));
@@ -1095,7 +1112,7 @@
                 var $at = this.$el.find('.date');
                 if(window.clock) {
                     $at.attr('title', clock.moment(this.model.get('date')).format('LLLL'));
-                    $at.html(' &middot; <a href="#" target="_blank">'+clock.moment(this.model.get('date')).calendar()+'</a> &middot; ');
+                    $at.html(' &middot; <a href="#" target="_new">'+clock.moment(this.model.get('date')).calendar()+'</a> &middot; ');
                     if(this.model.has('link')) {
                         $at.find('a').attr('href', this.model.get('link'));
                     }
@@ -1131,7 +1148,7 @@
                 if(color > 255) color = 255;
                 if(v > 0.1 && v < 0.25) v = 0.25;
                 //this.$sharing.css('color', 'rgb('+color+', '+color+','+color+')');
-                this.$sharing.css('color', 'rgba(255, 255, 255, '+v+')');
+                // this.$sharing.css('color', 'rgba(255, 255, 255, '+v+')');
                 this.$sharing.css('background', 'rgba(0, 0, 242, '+v+')');
             }
             
