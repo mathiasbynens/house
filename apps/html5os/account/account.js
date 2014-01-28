@@ -196,9 +196,7 @@
         initialize: function(options) {
             var self = this;
             //self.state = 'reset';
-            this.model.on("login", function() {
-                self.trigger('saved');
-            });
+            
             this.ui = {
                 label: "Get Updates",
             }
@@ -266,6 +264,10 @@
             return false;
         },
         submit: function() {
+            var self = this;
+            this.model.on("login", function() {
+                self.trigger('saved');
+            });
             var email = this.$el.find('input[name="email"]').val();
             if(email == '') {
                 return false;
@@ -1296,11 +1298,12 @@
                                 .on("goToProfile", function(username) {
                                     self.router.navigate('user/'+username, {trigger: true});
                                 })
-                                .on("login", function() {
+                                .render();
+                                
+                                loginStatus.on("login", function() {
                                     loginStatus.getView().render();
                                     self.trigger('loggedIn', loginStatus);
                                 })
-                                .render();
                                 
                                 var userAvatar = loginStatus.view.getUserModel(function(userModel){
                                     if(userModel) {
@@ -1393,7 +1396,9 @@
                 self.$join = $('<div id="joinModal" class="modal"></div>');
                 $('body').append(self.$join);
                 auth.prompt(self.$join, self.authFormOptions).authorized(function() {
-                    self.$join.modal('hide');
+                    if(self.$join) {
+                        self.$join.modal('hide');
+                    }
                 });
                 self.$join.on('hide.bs.modal', function () {
                     auth.authView.remove();
