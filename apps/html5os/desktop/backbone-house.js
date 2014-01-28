@@ -162,12 +162,13 @@ Backbone.House.Collection = Backbone.Collection.extend({
     },
     headCount: function(callback) {
         var self = this;
+        var url = (typeof self.url === 'function') ? self.url() : self.url;
         var aj = $.ajax({
             type: "HEAD",
-            url: self.url,
+            url: url,
             data: {},
             complete: function(json) {
-                callback(aj.getResponseHeader('X-Count'));
+                callback(parseInt(aj.getResponseHeader('X-Count'), 10));
             },
             xhrFields: {
                 withCredentials: true
@@ -190,7 +191,7 @@ Backbone.House.Collection = Backbone.Collection.extend({
         if (!options) {
             options = {};
         }
-        if (!options.limit) {
+        if (!options.limit && self.pageSize !== 0) {
             options.limit = self.pageSize;
         }
         if (!options.sort) {
@@ -389,18 +390,167 @@ Backbone.House.Collection = Backbone.Collection.extend({
 
 });
 
- var ListView = Backbone.View.extend({
+var ListSearch = Backbone.View.extend({
+    initialize: function(options) {
+        var self = this;
+    },
+    render: function() {
+        var self = this;
+        this.setElement(this.$el);
+        return this;
+    },
+    events: {
+    }
+});
+var ListFilters = Backbone.View.extend({
+    initialize: function(options) {
+        var self = this;
+        this.$btnGroup = $('<div class="btn-group filters">\
+    <button title="Filter" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="filterIcon glyphicon glyphicon-filter"></span></button>\
+    <ul class="dropdown-menu" role="menu">\
+        <li data-filter="image"><a href="#" class="glyphicon glyphicon-picture"> Image</a></li>\
+        <li data-filter="audio"><a href="#" class="glyphicon glyphicon-music"> Audio</a></li>\
+        <li data-filter="video"><a href="#" class="glyphicon glyphicon-film"> Video</a></li>\
+        <li data-filter="text"><a href="#" class="glyphicon glyphicon-font"> Text</a></li>\
+        <li class="divider"></li>\
+        <li data-filter="none"><a href="#" class="glyphicon glyphicon-unchecked"> No Filter</a></li>\
+    </ul>\
+</div>');
+    },
+    render: function() {
+        var self = this;
+        this.$el.append(this.$btnGroup);
+        this.setElement(this.$el);
+        return this;
+    },
+    events: {
+        "click .filters li": "clickFilter",
+    },
+    clickFilter: function(e) {
+        var $et = $(e.currentTarget);
+        var f = $et.attr('data-filter');
+        if(f === 'none') {
+            this.trigger('unfilter');
+        } else {
+            this.trigger('filterBy', f);
+        }
+        e.preventDefault();
+    }
+});
+var ListLayout = Backbone.View.extend({
+    initialize: function(options) {
+        var self = this;
+        this.layoutSelected = this.options.list.options.layout || 'row';
+        this.$btnGroup = $('<div class="btn-group layouts" data-toggle="buttons">\
+    <button title="List View" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="filterIcon glyphicon glyphicon-list"></span></button>\
+    <ul class="dropdown-menu" role="menu">\
+        <li data-layout="row"><a href="#" class="glyphicon glyphicon-list"> Row</a></li>\
+        <li data-layout="table"><a href="#" class="glyphicon glyphicon-th-list"> Table</a></li>\
+        <li data-layout="avatar"><a href="#" class="glyphicon glyphicon-th-large"> Avatar</a></li>\
+    </ul>\
+</div>');
+// <label class="btn btn-default row active" data-layout="row" title="Row View">\
+//     <input type="radio" name="options" id="list"><span class="glyphicon glyphicon-list"> </span>\
+//   </label>\
+//   <label class="btn btn-default table" data-layout="table" title="Table View">\
+//     <input type="radio" name="options" id="table"><span class="glyphicon glyphicon-th-list"> </span>\
+//   </label>\
+//   <label class="btn btn-default avatar" data-layout="avatar" title="Avatar View">\
+//     <input type="radio" name="options" id="avatar"><span class="glyphicon glyphicon-th-large"> </span>\
+//   </label>\
+    },
+    renderActiveLayout: function() {
+        var layout = this.layoutSelected;
+        // this.$btnGroup.find('.btn.'+layout).addClass('active').siblings().removeClass('active');
+        var classes = 'filterIcon glyphicon glyphicon-';
+        if(layout === 'row') {
+            classes = classes+'list';
+        } else if(layout === 'table') {
+            classes = classes+'th-list';
+        } else if(layout === 'avatar') {
+            classes = classes+'th-large';
+        } else {
+            classes = classes+'list';
+        }
+        this.$btnGroup.find('.filterIcon').attr('class', classes);
+    },
+    render: function() {
+        var self = this;
+        this.renderActiveLayout();
+        this.$el.append(this.$btnGroup);
+        this.setElement(this.$el);
+        return this;
+    },
+    events: {
+        // "click label.btn": "clickBtnLabel"
+        "click .layouts li": "clickLayout",
+    },
+    clickLayout: function(e) {
+        var $et = $(e.currentTarget);
+        var layout = $et.attr('data-layout');
+        this.layoutSelected = layout;
+        this.renderActiveLayout();
+        if(layout === 'row') {
+            this.trigger('layout', layout);
+        } else if(layout === 'table') {
+            this.trigger('layout', layout);
+        } else if(layout === 'avatar') {
+            this.trigger('layout', layout);
+        } else {
+            this.trigger('layout', layout);
+        }
+        e.preventDefault();
+    },
+    clickBtnLabel: function(e) {
+        var $et = $(e.currentTarget);
+        var layout = $et.attr('data-layout');
+        this.trigger('layout', layout);
+        e.preventDefault();
+    },
+});
+var ListView = Backbone.View.extend({
+    className: 'houseCollection',
     initialize: function(options) {
         var self = this;
         var layout = options.layout || 'avatar';
+        // console.log(options);
         this.initLayout(layout);
         this.pagesLength = 1;
         this.currentPage = 1;
-        this.$pager = $('<div class="pages"><ul class="pagination"><li class="previous"><a href="#">«</a></li><li><a href="#">1</a></li><li class="next"><a href="#">»</a></li></ul></div>');
+        this.$header = $('<div class="houseCollectionHeader"></div>');
+        this.$footer = $('<div class="houseCollectionFooter"></div>');
+        this.$search = $('<div class="search"></div>');
+        this.$filter = $('<div class="filter"></div>');
+        this.$layout = $('<div class="layout"></div>');
+        this.$pager = $('<div class="pages">\
+    <span class="paginationWrap"><ul class="pagination"><li class="previous"><a href="#">«</a></li><li><a href="#">1</a></li><li class="next"><a href="#">»</a></li></ul></span>\
+    <span class="pageSizeWrap">\
+        <div class="btn-group pageSizes" data-toggle="buttons">\
+            <button title="Page Size" type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="pageSize"></span> of <span class="collectionSize"></span> '+this.collection.collectionName+'</button>\
+            <ul class="dropdown-menu" role="menu">\
+                <li data-size="10"><a href="#" class="">10 per page</a></li>\
+                <li data-size="25"><a href="#" class="">25 per page</a></li>\
+                <li data-size="50"><a href="#" class="">50 per page</a></li>\
+                <li data-size="100"><a href="#" class="">100 per page</a></li>\
+                <li data-size="200"><a href="#" class="">200 per page</a></li>\
+                <li class="divider"></li>\
+                <li data-size="0"><a href="#" class="">&#8734; Infinite Scroll</a></li>\
+            </ul>\
+        </div>\
+    </span>\
+</div>');
+        this.$header.append(this.$search);
+        this.$header.append(this.$filter);
+        this.$header.append(this.$layout);
+        this.$header.append(this.$pager);
+        
         if (!this.collection) {
             // this.collection = new Collection();
         }
+        
         this.pageSize = this.collection.pageSize;
+        this.setPageSize(this.pageSize);
+        
         this.collection.bind("add", function(doc) {
             var view = self.getDocLayoutView(doc);
             self.appendRow(view);
@@ -420,14 +570,41 @@ Backbone.House.Collection = Backbone.Collection.extend({
         this.collection.on('reset', function() {
             self.render();
         });
-        /*$(window).scroll(function(){
+        
+        this.filterView = new ListFilters({el: this.$filter, list: this});
+        this.searchView = new ListSearch({el: this.$search, list: this});
+        this.layoutView = new ListLayout({el: this.$layout, list: this});
+        this.layoutView.on('layout', function(layout) {
+            self.setLayout(layout);
+        });
+    },
+    unbindScroll: function() {
+        $(window).off('scroll', this.windowScrollP);
+    },
+    // windowScroll: function(){
+    //     console.log('test')
+    //     var self = this;
+    //     if(self.$el.is(":visible")) {
+    //       if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()){
+    //         self.loading = true;
+    //         self.loadMore();
+    //       }
+    //     }
+    // },
+    bindScroll: function() {
+        var self = this;
+        // TODO when fixed, select element instead of window.
+        this.windowScroll = function(){
+            var self = this;
             if(self.$el.is(":visible")) {
-              if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()){
+              if(!self.loading && $(window).scrollTop() + 333 >= $(document).height() - $(window).height()){
                 self.loading = true;
                 self.loadMore();
               }
             }
-        });*/
+        }
+        this.windowScrollP = $.proxy(this.windowScroll,this);
+        $(window).on('scroll', this.windowScrollP);
     },
     initLayout: function(layout) {
         this.setLayout(layout, false);
@@ -442,18 +619,18 @@ Backbone.House.Collection = Backbone.Collection.extend({
             if(this.$wrap) {
                 this.$wrap.remove();
             }
-            console.log(this.layout)
+            // console.log(this.layout)
             if (this.layout == 'table') {
-                this.$wrap = $('<table class="urlsList table table-striped table-hover"></table>');
+                this.$wrap = $('<table class="houseList table table-striped table-hover"></table>');
                 this.$ul = $('<tbody></tbody>');
                 this.$wrap.append(this.$ul);
             } else if (this.layout == 'avatar') {
-                this.$wrap = this.$ul = $('<div class="urlsList"></div>');
+                this.$wrap = this.$ul = $('<div class="houseList"></div>');
             } else if (this.layout == 'row') {
-                this.$wrap = this.$ul = $('<ul class="urlsList"></ul>');
+                this.$wrap = this.$ul = $('<ul class="houseList list-unstyled"></ul>');
             }
         //}
-        this.$el.prepend(this.$wrap);
+        this.$el.append(this.$wrap);
         if (render) {
             this.renderPage(this.currentPage);
         }
@@ -510,18 +687,29 @@ Backbone.House.Collection = Backbone.Collection.extend({
     events: {
         "click .list-pager": "loadMore",
         "click .pagination li": "selectPage",
+        "click .pageSizes li": "selectPageSize",
     },
     selectPage: function(e) {
-        var i = $(e.target).attr('href').substr(1);
-        if (i == 'next') {
+        var i = $(e.currentTarget).find('a').attr('href').substr(1);
+        if($(e.currentTarget).hasClass('disabled')) {
+            return false;
+        }
+        
+        if (i == 'first') {
+            this.currentPage = 1;
+            this.$pager.find('li a[href="#'+this.currentPage+'"]').addClass('active').siblings().removeClass('active');
+        } else if (i == 'last') {
+            this.currentPage = this.pagesLength;
+            this.$pager.find('li a[href="#'+this.currentPage+'"]').addClass('active').siblings().removeClass('active');
+        } else if (i == 'next') {
             this.currentPage++;
             this.$pager.find('.active').next().addClass('active').siblings().removeClass('active');
         } else if (i == 'prev') {
             this.currentPage--;
             this.$pager.find('.active').prev().addClass('active').siblings().removeClass('active');
         } else {
-            this.currentPage = i;
-            $(e.target).parent().addClass('active').siblings().removeClass('active');
+            this.currentPage = parseInt(i, 10);
+            $(e.currentTarget).addClass('active').siblings().removeClass('active');
         }
         this.renderPage(this.currentPage);
         return false;
@@ -531,6 +719,22 @@ Backbone.House.Collection = Backbone.Collection.extend({
         this.collection.getNextPage(function() {
             self.loading = false;
         });
+    },
+    setPageSize: function(pageSize) {
+        if(pageSize === 0) {
+            this.bindScroll();
+        } else {
+            this.unbindScroll();
+        }
+        this.pageSize = pageSize;
+        this.collection.pageSize = pageSize;
+    },
+    selectPageSize: function(e) {
+        var $et = $(e.currentTarget);
+        var pageSize = parseInt($et.attr('data-size'), 10);
+        this.setPageSize(pageSize);
+        this.renderPage(this.currentPage);
+        e.preventDefault();
     },
     getDocLayoutView: function(doc) {
         var view;
@@ -551,19 +755,51 @@ Backbone.House.Collection = Backbone.Collection.extend({
         return view;
     },
     renderPagination: function() {
-        //var c = this.collection.count > len ? this.collection.count : len;
+        if(this.pageSize === 0) {
+            this.$pager.find('.pageSize').html(this.collection.length);
+            this.$pager.find('ul.pagination').hide();
+        } else {
+            this.$pager.find('.pageSize').html(this.pageSize);
+            this.$pager.find('ul.pagination').show();
+        }
         var cLen = this.collection.length;
         if (this.searchResults) {
             cLen = this.searchResults.length;
         } else if (this.collection.count) {
             cLen = this.collection.count;
         }
+        this.$pager.find('.collectionSize').html(cLen);
         //var cLen = this.searchResults ? this.searchResults.length : this.collection.length;
-        this.pagesLength = Math.ceil(cLen / this.pageSize) + 1;
-        if (this.$pager.find('ul li').length !== this.pagesLength + 2) {
+        this.pagesLength = Math.ceil(cLen / this.pageSize); // + 1;
+        
+        if(this.pagesLength < this.currentPage) {
+            this.currentPage = this.pagesLength;
+            // this.renderPage(pageNum);
+        } else if(this.currentPage < 1) {
+            // pageNum = 1;
+            this.currentPage = 1;
+        }
+        
+        var pageHash = '#'+this.currentPage;
+        this.$pager.find('li a[href="'+pageHash+'"]').addClass('active').siblings().removeClass('active');
+        
+        var maxPagesUi = 2;
+        if (this.$pager.find('ul.pagination li').length !== this.pagesLength + 2 + maxPagesUi) {
             var liPages = '';
             var i = 1;
-            while (i < this.pagesLength) {
+            var p = this.pagesLength;
+            if(this.pagesLength > maxPagesUi) {
+                //i = Math.floor(this.pagesLength / 2)-1;
+                i = this.currentPage - 1;
+                if(i === 0) {
+                    i = 1;
+                }
+                if(this.pagesLength <= i+1) {
+                    i = i-1;
+                }
+                p = maxPagesUi + i;
+            }
+            while (i < p+1) {
                 var liClass = '';
                 if (i == this.currentPage) {
                     liClass = ' class="active"';
@@ -571,14 +807,53 @@ Backbone.House.Collection = Backbone.Collection.extend({
                 liPages = liPages + '<li' + liClass + '><a href="#' + i + '">' + i + '</a></li>';
                 i++;
             }
-            this.$pager.find('ul').html('<li class="previous"><a href="#prev">«</a></li>' + liPages + '<li class="next"><a href="#next">»</a></li>');
+            //this.$pager.find('ul.pagination').html('<li class="previous"><a href="#prev">«</a></li>' + liPages + '<li class="next"><a href="#next">»</a></li>');
+            this.$pager.find('ul.pagination').html('<li class="first"><a href="#first">«</a></li>' + liPages + '<li class="last"><a href="#last">»</a></li>');
         }
+        
+        if(this.currentPage === 1) {
+            this.$pager.find('ul.pagination .first').addClass('disabled');
+        } else {
+            this.$pager.find('ul.pagination .first').removeClass('disabled');
+        }
+        if(this.currentPage === this.pagesLength) {
+            this.$pager.find('ul.pagination .last').addClass('disabled');
+        } else {
+            this.$pager.find('ul.pagination .last').removeClass('disabled');
+        }
+        
+        if(this.currentPage < 2) {
+            this.$pager.find('ul.pagination .previous').addClass('disabled');
+        // } else if(this.pagesLength > 1) {
+            // this.$pager.find('ul.pagination .previous').show();
+        } else {
+            this.$pager.find('ul.pagination .previous').removeClass('disabled');
+        }
+        if(this.currentPage === this.pagesLength) {
+            this.$pager.find('ul.pagination .next').addClass('disabled');
+        } else {
+            this.$pager.find('ul.pagination .next').removeClass('disabled');
+        }
+        
+        return this;
     },
     renderPage: function(pageNum) {
+        if(typeof pageNum !== 'number') {
+            pageNum = parseInt(pageNum, 10);
+        }
         var self = this;
         this.$ul.html('');
         this.currentPage = pageNum; //
-        var s = (pageNum - 1) * this.pageSize;
+        this.renderPagination();
+        // if(this.pagesLength < this.currentPage) {
+        //     this.currentPage = this.pagesLength;
+        //     console.log(pageNum)
+        //     this.renderPage(pageNum);
+        //     return;
+        // } else if(pageNum < 1) {
+        //     pageNum = 1;
+        // }
+        var s = (this.currentPage - 1) * this.pageSize;
         var col = this.searchResults ? this.searchResults : this.collection;
 
         var l = col.length;
@@ -586,21 +861,25 @@ Backbone.House.Collection = Backbone.Collection.extend({
             l = col.count;
         }
         var returnSlice = function() {
-            var e = (l < s + self.pageSize) ? l : s + self.pageSize;
+            var e = (l < (s + self.pageSize)) ? l : (s + self.pageSize);
+            if(self.pageSize === 0) {
+                s = 0;
+                e = col.length;
+            }
             col.slice(s, e).forEach(function(doc, i, c) {
                 //console.log(arguments)
                 var view = self.getDocLayoutView(doc);
                 self.appendRow(view);
-                self.renderPagination();
+                // self.renderPagination();
                 doc.on('remove', function() {
                     view.$el.remove();
                     return false;
                 });
             });
         }
-        if (col.length < col.count) {
+        if (col.length <= s) {
             col.load({
-                skip: col.length
+                skip: s
             }, returnSlice);
         } else {
             returnSlice();
@@ -612,13 +891,21 @@ Backbone.House.Collection = Backbone.Collection.extend({
         // this.$el.append(this.$ul);
         // this.$ul.html('');
         this.setLayout(this.layout, true);
+        
+        this.searchView.render();
+        this.filterView.render();
+        this.layoutView.render();
+        
         //this.collection.sort({silent:true});
         this.collection.each(function(doc) {
             var view = self.getDocLayoutView(doc);
             self.appendRow(view);
         });
-        this.$el.append(this.$pager);
         this.renderPagination();
+        
+        this.$el.prepend(this.$header);
+        this.$el.append(this.$footer);
+        
         this.setElement(this.$el);
         return this;
     },

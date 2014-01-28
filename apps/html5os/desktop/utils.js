@@ -277,7 +277,11 @@
     utils.SelectGroupsInputView = Backbone.View.extend({
         tagName: "div",
         className: "groups",
-        initialize: function() {
+        initialize: function(options) {
+            this.options = options;
+            if(options.model) {
+                this.model = options.model;
+            }
             this.fieldStr = this.options.fieldName || 'groups';
             this.fieldName = this.options.fieldName || 'groups';
             this.fieldSubName = false;
@@ -286,14 +290,15 @@
                 this.fieldSubName = this.fieldName.substr(this.fieldName.indexOf('.')+1);
             }
             //this.$options = $('<option value="public">public</option><option value="private">private</option>');
+//   <button type="button" class="privacy btn btn-default"><span class="glyphicon glyphicon-lock">Privacy</span></button>\n\
+    // <span class="caret"></span>\n\
             this.$options =  $('<div class="btn-group">\n\
-  <button type="button" class="privacy btn btn-default"><span class="glyphicon glyphicon-lock">Privacy</span></button>\n\
-  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">\n\
-    <span class="caret"></span>\n\
+  <button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">\n\
+    <span class="glyphicon glyphicon-lock"></span> \n\
   </button>\n\
   <ul class="dropdown-menu" role="menu">\n\
-    <li><a href="#" class="private glyphicon glyphicon-lock">Private</a></li>\n\
-    <li><a href="#" class="public glyphicon glyphicon-globe">Public</a></li>\n\
+    <li><a href="#" class="private glyphicon glyphicon-lock"> Private</a></li>\n\
+    <li><a href="#" class="public glyphicon glyphicon-globe"> Public</a></li>\n\
     <li class="divider"></li>\n\
     <li><a href="#" class="addGroup">Other Group</a></li>\n\
   </ul>\n\

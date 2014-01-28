@@ -1,5 +1,5 @@
 (function() {
-    var pageSize = 100;
+    var pageSize = 0;
 
     var FilesView = Backbone.View.extend({
         tag: 'span',
@@ -14,8 +14,8 @@
                         window.CheckinsBackbone = CheckinsBackbone;
                         require(['backbone-files.js'], function(FilesBackbone){
                             window.FilesBackbone = FilesBackbone;
-                            self.$list = $('<div class="file-list"></div>');
-                            self.$viewer = $('<div class="file-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
+                            self.$list = $('<div class="files-list houseCollection"></div>');
+                            self.$viewer = $('<div class="file-viewer"></div>');
                             self.collection = window.filesCollection = new FilesBackbone.Collection(); // collection
                             self.collection.pageSize = pageSize;
                             self.listView = new FilesBackbone.List({el: self.$list, collection: self.collection});
@@ -106,7 +106,7 @@
                 return this;
             }
             this.$el.append(self.listView.render().$el);
-            self.$list.prepend(self.listView.searchView.render().$el);
+            // self.$list.prepend(self.listView.searchView.render().$el);
             this.$el.append(this.$viewer);
             return this;
         },
@@ -256,42 +256,18 @@
         },
         bindRouter: function(router) {
             var self = this;
-            var routerReset = function() {
-                $('body').attr('class', '');
-                router.reset();
-            }
             self.router = router;
-            router.on('title', function(title){
-                var $e = $('header h1');
-                $e.html(title);
-                $e.attr('class', '');
-                var eh = $e.height();
-                var eph = $e.offsetParent().height();
-                if(eh > eph) {
-                    var lines = Math.floor(eh/eph);
-                    if(lines > 3) {
-                        $e.addClass('f'+lines);
-                        eh = $e.height();
-                        eph = $e.offsetParent().height();
-                        if(eh > eph) {
-                            lines = Math.floor(eh/eph);
-                            $e.addClass('l'+lines);
-                        }
-                    } else {
-                        $e.addClass('l'+lines);
-                    }
-                }
-            });
             router.on('reset', function(){
-                $('header').removeAttr('class');
+                self.collection.getView().$el.hide();
                 self.nav.unselect();
+                $('body > .shareView').remove();
+                $('body > .fullView').remove();
             });
             router.on('root', function(){
-                self.listView.filter();
-                self.listView.$el.siblings().hide();
-                self.listView.$el.show();
                 router.setTitle('Files');
+                self.collection.getView().$el.show();
                 self.nav.selectByNavigate('');
+                self.renderList();
                 router.trigger('loadingComplete');
             });
             router.route('/file/:filename/edit', 'editSlug', function(filename){

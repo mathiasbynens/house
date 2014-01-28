@@ -1089,6 +1089,12 @@
             }
             return false;
         },
+        isLess: function() {
+            if(this.get('filename').substr(-5) == '.less') {
+                return true;
+            }
+            return false;
+        },
         isHtm: function() {
             return this.isHtml();
         },
@@ -1392,6 +1398,8 @@
                     self.editor.getSession().setMode("ace/mode/css");
                 } else if(self.model.isHtml()) {
                     self.editor.getSession().setMode("ace/mode/html");
+                } else if(self.model.isLess()) {
+                    self.editor.getSession().setMode("ace/mode/less");
                 } else {
                     self.editor.getSession().setMode("ace/mode/javascript");
                 }
