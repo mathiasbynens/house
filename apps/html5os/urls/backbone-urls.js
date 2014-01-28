@@ -254,7 +254,6 @@
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                    console.log(doc);
                     if (_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;
@@ -265,7 +264,7 @@
                         var model = new self.model(doc);
                         self.add(model);
                     } else {
-                        console.log('update model with doc')
+                        // console.log('update model with doc')
                         model.set(doc, {
                             silent: true
                         });
@@ -503,7 +502,12 @@
                         self.add(model);
                     }
                     if (callback) {
-                        callback(model);
+                        callback(null, model);
+                    }
+                });
+                saveModel.fail(function(s, typeStr, respStr) {
+                    if(s.status === 403) {
+                        callback(new Error("Please login to post a URL."));
                     }
                 });
             }
@@ -577,10 +581,11 @@
                 this.$input.val('');
             }
             //console.log(e.keyCode)
-            //if (this.$input.val()) {
+            if (!this.hasOwnProperty('prevInputVal') || this.$input.val() !== this.prevInputVal) {
+                this.prevInputVal = this.$input.val();
                 this.$form.find('button.go.btn').button('loading');
                 this.trigger('search', this.$input.val().trim());
-            //}
+            }
         },
         clickGo: function() {
             this.disableForm();
@@ -760,7 +765,7 @@
                 if(this.$wrap) {
                     this.$wrap.remove();
                 }
-                console.log(this.layout)
+                // console.log(this.layout)
                 if (this.layout == 'table') {
                     this.$wrap = $('<table class="urlsList table table-striped table-hover"></table>');
                     this.$ul = $('<tbody></tbody>');
@@ -1833,7 +1838,7 @@
                 }
             } else {
                 // check if this url is known to have a header X-Frame-Options: SAMEORIGIN
-                if(this.model.has('file') && this.model.get('file') && this.model.get('file').metadata && this.model.get('file').metadata.responseHeaders && this.model.get('file').metadata.responseHeaders.hasOwnProperty('X-Frame-Options') && (this.model.get('file').metadata.responseHeaders['X-Frame-Options'].toLocaleLowerCase() === 'SAMEORIGIN'.toLocaleLowerCase() || this.model.get('file').metadata.responseHeaders['X-Frame-Options'].toLocaleLowerCase() === 'deny')) {
+                if(placeHolder && this.model.has('file') && this.model.get('file') && this.model.get('file').metadata && this.model.get('file').metadata.responseHeaders && this.model.get('file').metadata.responseHeaders.hasOwnProperty('X-Frame-Options') && (this.model.get('file').metadata.responseHeaders['X-Frame-Options'].toLocaleLowerCase() === 'SAMEORIGIN'.toLocaleLowerCase() || this.model.get('file').metadata.responseHeaders['X-Frame-Options'].toLocaleLowerCase() === 'deny')) {
                     iframe = '<span class="image">'+placeHolder[0].innerHTML+'</span>';
                 } else {
                     iframe = '<iframe id="frame" class="frame" style="width:100%; height:100%; margin:0; padding:0; border: 0px;" src="' + this.model.get('url') + '"> </iframe>';

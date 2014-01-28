@@ -151,8 +151,19 @@
                                 console.log(query);
                                 //self.listView.search(query);
                                 
-                                self.collection.newUrl(query, function(urlModel){
-                                    self.searchView.trigger('searchComplete');
+                                self.collection.newUrl(query, function(err, urlModel){
+                                    if(err) {
+                                        if(err.message && err.message.indexOf('Please login') !== -1) {
+                                            if(account) {
+                                                account.on('login', function(loginView){
+                                                    self.searchView.trigger('submit', query);
+                                                });
+                                                account.getView().login();
+                                            }
+                                        }
+                                    } else {
+                                        self.searchView.trigger('searchComplete');
+                                    }
                                 });
                             });
                             self.listView.on('share', function(urlModel){
@@ -380,16 +391,31 @@
                 router.setTitle('Save URL Publicly');
                 self.searchView.trigger('searchLoading', url);
                 
-                self.collection.newUrl(url, {groups: ['public']}, function(urlModel){
-                    if(parent) {
-                        ////parent.postMessage('destroy_bookmarklet', parent.location.origin);
-                        //window.parent.postMessage("destroy_bookmarklet","*")
+                self.collection.newUrl(url, {groups: ['public']}, function(err, urlModel){
+                    if(err) {
+                        if(err.message && err.message.indexOf('Please login') !== -1) {
+                            if(window != top) {
+                                window.top.location.href = window.location.href;
+                            } else {
+                                if(account) {
+                                    account.on('login', function(loginView){
+                                        router.navigate('save/public/'+encodeURIComponent(url), {trigger: true});
+                                    });
+                                    account.getView().login();
+                                }
+                            }
+                        }
+                    } else {
+                        var shareOpts = {iframe: false};
+                        if(window == top) {
+                            shareOpts.iframe = true;
+                        }
                         router.navigate(urlModel.getSharePath(), {trigger: false});
                         //self.renderMetaTagsForDoc(doc);
                         if(urlModel.has('title')) {
                             router.setTitle(urlModel.get('title'));
                         }
-                        var shareView = urlModel.getNewShareView({iframe: false});
+                        var shareView = urlModel.getNewShareView(shareOpts);
                         bindShareViewRoutes(shareView);
                         $('body').append(shareView.render().$el);
                     }
@@ -404,8 +430,25 @@
                 
                 self.searchView.trigger('searchLoading', url);
                 
-                self.collection.newUrl(url, function(urlModel){
-                    if(parent) {
+                self.collection.newUrl(url, function(err, urlModel){
+                    if(err) {
+                        if(err.message && err.message.indexOf('Please login') !== -1) {
+                            if(window != top) {
+                                window.top.location.href = window.location.href;
+                            } else {
+                                if(account) {
+                                    account.on('login', function(loginView){
+                                        router.navigate('save/'+encodeURIComponent(url), {trigger: true});
+                                    });
+                                    account.getView().login();
+                                }
+                            }
+                        }
+                    } else {
+                        var shareOpts = {iframe: false};
+                        if(window == top) {
+                            shareOpts.iframe = true;
+                        }
                         ////parent.postMessage('destroy_bookmarklet', parent.location.origin);
                         //window.parent.postMessage("destroy_bookmarklet","*")
                         router.navigate(urlModel.getSharePath(), {trigger: false});
@@ -413,12 +456,12 @@
                         if(urlModel.has('title')) {
                             router.setTitle(urlModel.get('title'));
                         }
-                        var shareView = urlModel.getNewShareView({iframe: false});
+                        var shareView = urlModel.getNewShareView(shareOpts);
                         bindShareViewRoutes(shareView);
                         $('body').append(shareView.render().$el);
+                        router.trigger('loadingComplete');
+                        self.searchView.trigger('searchComplete');
                     }
-                    router.trigger('loadingComplete');
-                    self.searchView.trigger('searchComplete');
                 });
             });
             router.route('share/:id', 'shareUrl', function(id){
