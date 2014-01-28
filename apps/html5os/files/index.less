@@ -1,0 +1,67 @@
+.files-list .houseList {
+    span.fileAvatar {
+        display: block;
+        float: left;
+        width: 320px;
+        height: 385px;
+        padding: 8px;
+        border: 1px outset rgb(255,255,255);
+        font-size: 11px;
+        overflow: hidden;
+        position: relative;
+        margin: 8px;
+        border-radius: 2px;
+        box-shadow: 0px 0px 2px rgb(102, 102, 102);
+        background: rgb(255,255,255);
+        
+        .title {
+            font-size: 15px;
+        }
+        a {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.88);
+            height: 26px;
+            box-shadow: 0px 0px 100px 8px rgb(190, 190, 190);
+        }
+    }
+}
+
+.feed-item {
+    .byline {
+        display: none;
+    }
+    .byline {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        padding: 8px;
+        background: rgba(0,0,0,0.77);
+        color: white;
+        font-size: 12px;
+        line-height: 28px;
+    }
+    .byline a {
+        color: white;
+    }
+}
+.feed-item:hover .byline {
+    display: block;
+}
+.border-radius (@radius) {
+  -moz-border-radius: @radius;
+  -webkit-border-radius: @radius;
+  border-radius: @radius;
+}
+
+.wrap () {
+  text-wrap: wrap;
+  white-space: -moz-pre-wrap;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+pre { .wrap }

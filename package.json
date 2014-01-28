@@ -6,6 +6,7 @@
     "formidable-plus": "latest",
     "send": "latest",
     "requirejs": "latest",
+    "less": "latest",
     "underscore": "latest",
     "socket.io": "latest",
     "oauth": "latest",
