@@ -605,8 +605,8 @@
                 });
                 self.trigger('navInit', self.nav);
             });
-            this.$guestMenu = $('<li class="login"><a href="/join">Sign in</a></li><li class="feedback"><a href="/feedback">Feedback</a></li>');
-            this.$userMenu = $('<li class="current-user"><a href="/me" class="profile"></a></li><li class="feedback"><a href="/feedback">Feedback</a></li><li class="logout"><a href="/leave">Sign out</a></li>');
+            this.guestMenu = '<li class="login"><a href="/join">Sign in</a></li><li class="feedback"><a href="/feedback">Feedback</a></li>';
+            this.userMenu = '<li class="current-user"><a href="/me" class="profile"></a></li><li class="feedback"><a href="/feedback">Feedback</a></li><li class="logout"><a href="/leave">Sign out</a></li>';
         },
         onNavInit: function(callback) {
             var self = this;
@@ -626,11 +626,11 @@
             var accountMenuStr = this.ui.accountMenuLabel;
             
             if (this.model.get('user')) {
-                this.$el.prepend(this.$userMenu);
-                this.$guestMenu.remove();
+                this.$el.prepend(this.userMenu);
+                this.$el.find('.login').remove();
             } else {
-                this.$el.prepend(this.$guestMenu);
-                this.$userMenu.remove();
+                this.$el.prepend(this.guestMenu);
+                this.$el.find('.current-user').remove();
             }
             
             if (this.userModel) {
