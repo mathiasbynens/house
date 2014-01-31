@@ -20,7 +20,6 @@
         },
         getFullView: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.fullView) {
                 var view = this.fullView = new FullView(options);
@@ -46,7 +45,6 @@
         },
         getAvatar: function(options) {
             options = options || {};
-            options.id = this.get("_id");
             options.model = this;
             if (!this.avatar) {
                 var view = this.avatar = this.getNewAvatarNameView(options);
@@ -742,13 +740,14 @@
             } else {
                 defaultImg = '/users/iosicon.png';
             }
-            this.$span = $('<span class="userAvatarName"><img class="avatar" src="'+defaultImg+'" /><span class="name"></span></span>');
-            this.$img = this.$span.find('img');
+            this.$span = $('<span class="userAvatarName"><span class="name"></span></span>');
+            this.$img = $('<img class="avatar" src="'+defaultImg+'">');
+            // console.log(this.$img)
             this.$span.append(this.$img);
         },
         render: function() {
             var self = this;
-            this.$el.append(this.$span);
+            this.$el.html(this.$span);
             this.$span.find('.name').html(this.model.get('name'));
             this.$img.attr('title', this.model.get('name'));
             if (this.model.has("avatar")) {
