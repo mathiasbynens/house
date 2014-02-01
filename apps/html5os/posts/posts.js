@@ -308,7 +308,11 @@
                     if(doc) {
                         self.editDoc(doc);
                     } else {
-                        router.navigate('new', {replace: true, trigger: true});
+                        if(self.userIsAdmin()) {
+                            router.navigate('new', {replace: true, trigger: true});
+                        } else {
+                            router.navigate('', {replace: true, trigger: true});
+                        }
                     }
                     router.trigger('loadingComplete');
                 });
@@ -321,7 +325,11 @@
                     if(doc) {
                         self.carouselDoc(doc);
                     } else {
-                        router.navigate('new', {replace: true, trigger: true});
+                        if(self.userIsAdmin()) {
+                            router.navigate('new', {replace: true, trigger: true});
+                        } else {
+                            router.navigate('', {replace: true, trigger: true});
+                        }
                     }
                     router.trigger('loadingComplete');
                 });
@@ -377,7 +385,11 @@
                     if(doc) {
                         self.editDoc(doc);
                     } else {
-                        router.navigate('new', {replace: true, trigger: true});
+                        if(self.userIsAdmin()) {
+                            router.navigate('new', {replace: true, trigger: true});
+                        } else {
+                            router.navigate('', {replace: true, trigger: true});
+                        }
                     }
                     router.trigger('loadingComplete');
                 });
@@ -393,7 +405,7 @@
                         }
                         self.carouselDoc(doc);
                     } else {
-                        console.log(id);
+                        // console.log(id);
                         router.navigate('', {replace: true, trigger: true});
                     }
                     router.trigger('loadingComplete');

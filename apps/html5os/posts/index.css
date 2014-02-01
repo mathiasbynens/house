@@ -215,75 +215,8 @@ h1.entry-title {
   font-size: 12px;
   display: inline-block;
   cursor: pointer;
-  height: 32px;
   width: 32px;
-}
-
-[data-wysihtml5-command]:after,
-[data-wysihtml5-action]:after,
-.fore-color:after {
-  content: "";
-  background-image: url(spr_toolbar_icons_r1.png);
-  background-repeat: no-repeat;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-}
-
-[data-wysihtml5-command]:hover,
-[data-wysihtml5-action]:hover,
-.fore-color:hover {
-  background-image: linear-gradient(bottom, rgb(229,240,226) 0%, rgb(255,255,255) 100%);
-  background-image: -o-linear-gradient(bottom, rgb(229,240,226) 0%, rgb(255,255,255) 100%);
-  background-image: -moz-linear-gradient(bottom, rgb(229,240,226) 0%, rgb(255,255,255) 100%);
-  background-image: -webkit-linear-gradient(bottom, rgb(229,240,226) 0%, rgb(255,255,255) 100%);
-  background-image: -ms-linear-gradient(bottom, rgb(229,240,226) 0%, rgb(255,255,255) 100%);
-}
-
-[data-wysihtml5-command="bold"]:after {
-  background-position: 4px center;
-}
-
-[data-wysihtml5-command="italic"]:after {
-  background-position: -68px center;
-}
-
-[data-wysihtml5-command="insertUnorderedList"]:after {
-  background-position: -135px center;
-}
-
-[data-wysihtml5-command="insertOrderedList"]:after {
-  background-position: -217px center;
-}
-
-[data-wysihtml5-command="formatBlock"][data-wysihtml5-command-value="h1"]:after {
-  background-position: -364px center;
-}
-
-[data-wysihtml5-command="formatBlock"][data-wysihtml5-command-value="h2"]:after {
-  background-position: -448px center;
-}
-
-[data-wysihtml5-command="createLink"]:after {
-  background-position: -291px center;
-}
-
-[data-wysihtml5-command="insertImage"]:after {
-  background-position: -533px center;
-}
-
-.fore-color:after {
-  background-position: -761px center;
-}
-
-[data-wysihtml5-command="insertSpeech"]:after {
-  background-position: -616px center;
-}
-
-[data-wysihtml5-action="change_view"]:after {
-  background-position: -690px center;
+  padding: 6px;
 }
 
 .fore-color ul {
@@ -375,29 +308,24 @@ h1.entry-title {
 }
 
 [data-wysihtml5-dialog] {
-  color: #333;
-  font-size: 14px;
-  text-align: left;
-  border-radius: 4px;
-  -ms-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  background: #FFFBE0;
-  position: absolute;
-  text-align: center;
-  left: 0;
-  right: 0;
-  z-index: 10;
+    padding: 0px 0px 0px 0px;
+    background: #FFFBE0;
+    position: absolute;
+    text-align: center;
+    left: 15px;
+    right: 0;
+    z-index: 10;
+    top: 34px;
+}
+
+[data-wysihtml5-dialog="insertImage"] {
+    top: 64px;
+}
+.uploadFrame > span {
+    display: none !important;
 }
 
 [data-wysihtml5-dialog] input {
-  color: #333;
-  border: 1px solid #ccc;
-  padding: 3px;
-  width: 300px;
 }
 
 [data-wysihtml5-dialog] input:focus {
@@ -406,17 +334,11 @@ h1.entry-title {
 }
 
 [data-wysihtml5-dialog-action] {
-  padding: 4px;
-  color: #fff;
-  cursor: pointer;
 }
-
 [data-wysihtml5-dialog-action="save"] {
-  background: #007200;
 }
 
 [data-wysihtml5-dialog-action="cancel"] {
-  background: #999;
 }
 
 @charset "UTF-8";
@@ -904,10 +826,10 @@ textarea {
   box-sizing: border-box;
 }
 .wysihtml5-toolbar .cleanup {
-    display: inline-block;
-    font-size: 12px;
-    cursor: pointer;
     display: none;
+}
+.wysihtml5-toolbar.wysihtml5-commands-disabled .cleanup {
+    display: inline-block !important;
 }
 
 body {

@@ -1089,15 +1089,15 @@
             this.$el.html('');
             var $byline = $('<span class="byline"></span>');
             
+            if(this.model.has('title')) {
+                this.$el.append('<a target="_blank" href="/posts/'+this.model.getNavigatePath()+'" class="title">'+this.model.get('title')+'</a>');
+            }
             if(this.model.get('avatar')) {
                 var avatarImage = this.model.get('avatar');
                 var $avatarImg = $('<img class="avatar" src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
-                //this.$el.append($avatarImg);
+                this.$el.append($avatarImg);
             }
             
-            if(this.model.has('title')) {
-                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
-            }
             if(this.model.has('at')) {
                 var $at = $('<span class="at"></span>');
                 if(window.clock) {
@@ -1558,22 +1558,24 @@
             this.wsyi_id = 'wysihtml5-'+this.cid;
             this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your post" autocomplete="off" class="form-control" />');
             this.$msgToolbar = $('<div class="wysihtml5-toolbar" id="'+this.wsyi_id+'-toolbar"><header><ul class="commands">\
-                  <li data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command"></li>\
-                  <li data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command"></li>\
-                  <li data-wysihtml5-command="insertUnorderedList" title="Insert an unordered list" class="command"></li>\
-                  <li data-wysihtml5-command="insertOrderedList" title="Insert an ordered list" class="command"></li>\
-                  <li data-wysihtml5-command="createLink" title="Insert a link" class="command"></li>\
-                  <li data-wysihtml5-command="insertImage" title="Insert an image" class="command"></li>\
-                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1" title="Insert headline 1" class="command"></li>\
-                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2" title="Insert headline 2" class="command"></li>\
-                  <li data-wysihtml5-command="insertSpeech" title="Insert speech" class="command"></li>\
-                  <li data-wysihtml5-action="change_view" title="Show HTML" class="action"></li>\
-                  <li title="Cleanup HTML" class="cleanup">Cleanup</li>\
+                  <li data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command"><span class="glyphicon glyphicon-bold"></span></li>\
+                  <li data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command"><span class="glyphicon glyphicon-italic"></span></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="blockquote" title="Insert blockquote" class="command"><b>&ldquo;</b></span></li>\
+                  <li data-wysihtml5-command="insertUnorderedList" title="Insert a bulleted list" class="command"><span class="glyphicon glyphicon-th-list"></span></li>\
+                  <li data-wysihtml5-command="insertOrderedList" title="Insert a numbered list" class="command"><span class="glyphicon glyphicon-list"></span></li>\
+                  <li data-wysihtml5-command="createLink" title="Insert a link" class="command"><span class="glyphicon glyphicon-link"></span></li>\
+                  <li data-wysihtml5-command="insertImage" title="Insert an image" class="command"><span class="glyphicon glyphicon-picture"></span></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1" title="Insert headline 1" class="command"><span class="glyphicon glyphicon-header"></span></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2" title="Insert headline 2" class="command"><b>H2</b></span></li>\
+                  <li data-wysihtml5-command="insertSpeech" title="Insert speech" class="command"><span class="glyphicon glyphicon-record"></span></li>\
+                  <li data-wysihtml5-action="change_view" title="Show HTML" class="action"><span class="glyphicon glyphicon-wrench"></span></li>\
+                  <li data-wysihtml5-action="cleanup_html" title="Cleanup HTML" class="cleanup" title="Cleanup Code"><span class="glyphicon glyphicon-text-width"></span></li>\
                   </ul></header>\
-              <div data-wysihtml5-dialog="createLink" style="display: none;"><label>Link:<input data-wysihtml5-dialog-field="href" value="http://"></label><a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a></div>\
+              <div data-wysihtml5-dialog="createLink" style="display: none;" class="input-group"><span class="input-group-btn"><label class="control-label">URL:</label></span><input class="form-control" data-wysihtml5-dialog-field="href" value="http://"><span class="input-group-btn"><a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></span></div>\
               <div data-wysihtml5-dialog="insertImage" style="display: none;">\
-                <label>Image:<input data-wysihtml5-dialog-field="src" value="http://"></label>\
-                <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a></div></div>');
+                <span class="input-group">\
+                <label class="control-label">Image:</label><input data-wysihtml5-dialog-field="src" value="http://" class="form-control">\
+                <a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></div></span></div>');
             this.$inputMsg = $('<textarea id="'+this.wsyi_id+'-textarea" name="msg" placeholder="Your message..."></textarea>');
             this.$inputSlug = $('<input type="text" name="slug" placeholder="post-title" class="form-control" />');
             this.$slugShare = $('<div class="slugShare form-group"></div>');
@@ -1603,36 +1605,39 @@
             this.feedView = new ActionFeedView({model: this.model});
             this.deleteView = new ActionDeleteView({model: this.model});
             
-            this.$form = $('<form class="post"><fieldset class="col-md-8"></fieldset><controls class="col-md-4"></controls></form>');
-            this.$form.find('fieldset').append(this.$inputTitle);
-            this.$form.find('fieldset').append(this.$msgToolbar);
-            this.$form.find('fieldset').append(this.$inputMsg);
-            this.$form.find('fieldset').append(this.$ace);
+            this.$form = $('<form class="post"><div class="col-md-8 fieldset"></div><div class="controls col-md-4"></div></form>');
             
-            this.$form.find('controls').append('<div class="form-group action"><div class="col-md-8"><input type="submit" value="Publish" class="form-control" /></div></div>');
-            this.$form.find('controls .action').prepend(this.inputGroupsView.render().$el);
-            this.$form.find('controls').append('<hr />');
-            this.$form.find('controls').append(this.$slugShare);
-            this.$form.find('controls').append(this.$seqShare);
-            this.$form.find('controls').append(this.inputTagsView.render().$el);
-            this.$form.find('controls').append(this.atPublished);
-            this.$form.find('controls').append(this.youtubeView.render().$el);
-            this.$form.find('controls').append(this.wistiaView.render().$el);
-            this.$form.find('controls').append(this.wistiaAudioView.render().$el);
-            this.$form.find('controls').append(this.tweetInputView.render().$el);
-            this.$form.find('controls').append('<hr />');
-            this.$form.find('controls').append('<span class="avatar"><span class="embed"></span><button class="attachImage" class="form-control">Attach Image</button></span>');
-            this.$form.find('controls').append('<span class="audio"><span class="embed"></span><button class="attachAudio" class="form-control">Attach Audio</button></span>');
-            this.$form.find('controls').append('<span class="video"><span class="embed"></span><button class="attachVideo" class="form-control">Attach Video</button></span>');
+            this.$fieldset = this.$form.find('.fieldset');
+            this.$fieldset.append(this.$inputTitle);
+            this.$fieldset.append(this.$msgToolbar);
+            this.$fieldset.append(this.$inputMsg);
+            this.$fieldset.append(this.$ace);
             
-            this.$form.find('controls').append(this.uploadAvatarFrame.render().$el.hide());
-            this.$form.find('controls').append(this.uploadMediaAudioFrame.render().$el.hide());
-            this.$form.find('controls').append(this.uploadMediaVideoFrame.render().$el.hide());
+            this.$controls = this.$form.find('.controls');
+            this.$controls.append('<div class="form-group action"><div class="col-md-8"><input type="submit" value="Publish" class="form-control btn btn-primary" /></div></div>');
+            this.$controls.find('.action').prepend(this.inputGroupsView.render().$el);
+            this.$controls.append('<hr />');
+            this.$controls.append(this.$slugShare);
+            this.$controls.append(this.$seqShare);
+            this.$controls.append(this.inputTagsView.render().$el);
+            this.$controls.append(this.atPublished);
+            this.$controls.append(this.youtubeView.render().$el);
+            this.$controls.append(this.wistiaView.render().$el);
+            this.$controls.append(this.wistiaAudioView.render().$el);
+            this.$controls.append(this.tweetInputView.render().$el);
+            this.$controls.append('<hr />');
+            this.$controls.append('<span class="avatar"><span class="embed"></span><button class="attachImage" class="form-control">Attach Image</button></span>');
+            this.$controls.append('<span class="audio"><span class="embed"></span><button class="attachAudio" class="form-control">Attach Audio</button></span>');
+            this.$controls.append('<span class="video"><span class="embed"></span><button class="attachVideo" class="form-control">Attach Video</button></span>');
             
-            this.$form.find('controls').append('<hr />');
-            this.$form.find('controls').append(this.feedView.render().$el);
+            this.$controls.append(this.uploadAvatarFrame.render().$el.hide());
+            this.$controls.append(this.uploadMediaAudioFrame.render().$el.hide());
+            this.$controls.append(this.uploadMediaVideoFrame.render().$el.hide());
+            
+            this.$controls.append('<hr />');
+            this.$controls.append(this.feedView.render().$el);
             if(!this.model.isNew()) {
-                this.$form.find('controls').append(this.deleteView.render().$el);
+                this.$controls.append(this.deleteView.render().$el);
             }
         },
         render: function() {
@@ -1980,7 +1985,7 @@
         initialize: function(options) {
             var editor = options.editor || false;
             var self = this;
-            this.$html = $('<label>Image:<input data-wysihtml5-dialog-field="src" value="http://"></label><label>Caption:<input name="alt" placeholder="caption"></label><label class="justify"><input type="radio" name="klass" value="original"> Center </label><label class="justify"><input type="radio" name="klass" value="pull-left"> Left </label><label class="justify"><input type="radio" name="klass" value="pull-right"> Right </label><button class="save">OK</button>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>');
+            this.$html = $('<span class="input-group"><span class="input-group-btn"><label class="control-label">Image:</label></span><input data-wysihtml5-dialog-field="src" value="http://" class="form-control"><span class="input-group-btn"><label class="control-label">Caption: </label></span><input name="alt" placeholder="caption" class="form-control"><span class="input-group-btn"><label class="justify"><input type="radio" name="klass" value="original"> <span class="glyphicon glyphicon-align-center"></span> </label><label class="justify"><input type="radio" name="klass" value="pull-left"> <span class="glyphicon glyphicon-align-left"></span> </label><label class="justify"><input type="radio" name="klass" value="pull-right"> <span class="glyphicon glyphicon-align-right"></span> </label> <button class="save" class="btn btn-primary">OK</button>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></span></span>');
             self.$inputUrl = this.$html.find('input[data-wysihtml5-dialog-field="src"]');
             self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
             self.uploadFrame.on('uploaded', function(data){

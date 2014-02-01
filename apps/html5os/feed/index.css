@@ -46,6 +46,10 @@ img {
     background: rgb(255,255,255);
     -webkit-transition: 0.22s all;
 }
+.feed-item .card.post {
+    overflow: hidden;
+    max-height: 420px;
+}
 .feed-item:hover .card {
     border: 2px outset rgb(228, 228, 228);
 }
