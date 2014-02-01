@@ -869,13 +869,10 @@
         className: 'btn-group',
         initialize: function() {
             var self = this;
-            this.$btn = $('<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">\
-  <span class="glyphicon glyphicon-tag"></span>\
-  <span class="sr-only">Toggle Dropdown</span>\
-</button>');
+            this.$btn = $('<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"></button>');
             this.$dropdownMenu = $('<ul class="dropdown-menu pull-right tags" role="menu"></ul>');
             this.collectionOf = new CollectionOf(this.model.get('tags') || [],{of: this.model});
-            this.$liNewTag = $('<li class="newTagForm"><input name="tagName" placeholder="Enter a tag name" class="form-control" /></li>');
+            this.$liNewTag = $('<li class="newTagForm"></li>');
             this.$currentTagsDiv = $('<li class="divider currentTags"></li>');
             this.$tagSelectList = $('<li class="selectList" title="Select a Tag"></li>');
             if(!window.tagsCollection) {
@@ -944,13 +941,13 @@
             this.renderColors();
             
             if(account.isOwner(this.model.get('owner').id)) { //  || account.isAdmin()
-                this.$dropdownMenu.append(this.$liNewTag);
+                this.$dropdownMenu.append(this.$liNewTag.html('<input name="tagName" placeholder="Enter a tag name" class="form-control" />'));
                 this.$dropdownMenu.append(this.$tagSelectList);
             } else {
                 // this.$el.find('.divider').hide();
             }
             
-            this.$el.append(this.$btn);
+            this.$el.append(this.$btn.html('<span class="glyphicon glyphicon-tag"></span>  <span class="sr-only">Toggle Dropdown</span>'));
             this.$el.append(this.$dropdownMenu);
             this.setElement(this.$el);
             return this;
@@ -1008,7 +1005,9 @@
             "click .tagsOfSong.tagsList li.tag": "goToTag",
             "click .selectList .tagsList li.tag": "selectTag",
             "click input[name='tagName']": "clickInput",
-            "keyup input[name='tagName']": "debouncedKeyUp",
+            // "keyup input[name='tagName']": "debouncedKeyUp",
+            "keydown input[name='tagName']": "debouncedKeyDown",
+            // "submit": "submitForm"
         },
         goToTag: function(e) {
             var $t = $(e.currentTarget);
@@ -1017,7 +1016,6 @@
         },
         selectTag: function(e) {
             var self = this;
-            console.log(e)
             var $t = $(e.currentTarget);
             
             // lazy, but getting the .on('selected') event from the singlton would fire on all rows listening... maybe need to detach better
@@ -1029,9 +1027,24 @@
             e.stopPropagation();
             e.preventDefault();
         },
+        // submitForm: function(e) {
+        //     e.preventDefault();
+        // },
+        debouncedKeyDown: _.debounce(function(e) {
+            this.keyDown(e);
+        }, 500),
         debouncedKeyUp: _.debounce(function(e) {
             this.keyUp(e);
         }, 500),
+        keyDown: function(e) {
+            if (e.keyCode == 27) {
+                this.$liNewTag.find("input").val('');
+            } else if (e.keyCode == 13) {
+                this.submit();
+            } else {
+                
+            }
+        },
         keyUp: function(e) {
             if (e.keyCode == 27) {
                 this.$liNewTag.find("input").val('');
@@ -1040,10 +1053,11 @@
             } else {
                 
             }
-            console.log(e.keyCode);
         },
         submit: function(callback) {
             var self = this;
+            if(self.submitting) return;
+            self.submitting = true;
             var name = this.$liNewTag.find("input").val().trim();
             var newTag = {};
             if (name && name !== "") {
@@ -1060,12 +1074,13 @@
                     wait: true
                 });
                 s.done(function() {
+                    delete self.submitting;
                     var attr = _.clone(m.attributes);
                     var newTagAttr = {
                         id: attr.id,
                         name: attr.name
                     }
-                    console.log(newTagAttr);
+                    // console.log(newTagAttr);
                     //
                     var newTags = self.model.get('tags') || [];
                     newTags.push(newTagAttr);

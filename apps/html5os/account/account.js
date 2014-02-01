@@ -634,7 +634,7 @@
             }
             
             if (this.userModel) {
-                this.$el.find(".profile").append(this.userModel.getAvatarView().render().el);
+                this.$el.find(".profile").append(this.userModel.getNewAvatarNameView().render().el);
             } else if (this.model.has("user")) {
                 if(!recursive) {
                     this.getUserModel(function(){
