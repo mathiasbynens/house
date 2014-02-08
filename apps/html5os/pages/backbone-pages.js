@@ -2040,22 +2040,42 @@ output=embed"></iframe>*/
                     self.editor.on("external_change_view", function(view){
                         if(view === "textarea") {
                             require(['/fs/js-beautify/beautify-html.js'], function(html_beautify){
-                            window.html_beautify = html_beautify.html_beautify;
-                            require([ "/fs/ace/ace.js" ], function() {
-                                self.editor.aceVisible = true;
-                                self.$ace.show();
-                                self.$cleanup.show();
-                                if(!self.hasOwnProperty('aceEditor')) {
-                                    self.$ace.css({zIndex:11111,opacity:1,background:"white"});
-                                    self.$ace.offset(self.$inputHtml.offset()).width(self.$inputHtml.outerWidth()).height(self.$inputHtml.outerHeight());
-                                    self.$ace.html("");
-                                    self.aceEditor = ace.edit("ace-editor");
-                                    self.aceEditor.setTheme("ace/theme/chrome");
-                                    self.aceEditor.getSession().setMode("ace/mode/html");
-                                }
-                                self.aceEditor.setValue(self.editor.textarea.getValue());
-                                self.aceEditor.clearSelection();
-                            });
+                                window.html_beautify = html_beautify.html_beautify;
+                                require([ "/fs/ace/ace.js" ], function() {
+                                    self.editor.aceVisible = true;
+                                    self.$ace.show();
+                                    self.$cleanup.show();
+                                    if(!self.hasOwnProperty('aceEditor')) {
+                                        self.$ace.css({zIndex:11111,opacity:1,background:"white"});
+                                        self.$ace.offset(self.$inputHtml.offset()).width(self.$inputHtml.outerWidth()).height(self.$inputHtml.outerHeight());
+                                        self.$ace.html("");
+                                        self.aceEditor = ace.edit("ace-editor");
+                                        self.aceEditor.setTheme("ace/theme/chrome");
+                                        self.aceEditor.getSession().setMode("ace/mode/html");
+                                        
+                                        // TEST this as a fix for typing scrolling the page around
+                                        self.aceEditor.renderer.moveTextAreaToCursor = function(textarea) {
+                                             var pos = this.$cursorLayer.getPixelPosition();
+                                        
+                                             if (!pos) return;
+                                        
+                                             var bounds = this.content.getBoundingClientRect();
+                                             var offset = this.layerConfig.offset;
+                                        
+                                             textarea.style.left = (bounds.left + pos.left) + "px";
+                                             textarea.style.top = (bounds.top + pos.top - this.scrollTop + offset) + "px";
+                                        };
+                                        
+                                        self.aceEditor.onFocus = function() {
+                                            this.renderer.showCursor();
+                                            this.renderer.visualizeFocus();
+                                            this._emit("focus");
+                                            this.renderer.moveTextAreaToCursor(this.textInput.getElement());
+                                        };
+                                    }
+                                    self.aceEditor.setValue(self.editor.textarea.getValue());
+                                    self.aceEditor.clearSelection();
+                                });
                             });
                         } else {
                             self.editor.aceVisible = false;

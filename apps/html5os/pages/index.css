@@ -22,15 +22,7 @@ footer {
     .navbar-collapse.in {
         overflow-y: visible;
     }
-}
-.navbar-collapse.in {
-    overflow-y: visible;
-}
-.navbar-collapse.collapse, .navbar-collapse.in {
-    height: 50px !important;
-}
-@media (min-width: 768px) {
-    .navbar-collapse.collapse {
+    .navbar-collapse.collapse, .navbar-collapse.in {
         height: 50px !important;
     }
 }
