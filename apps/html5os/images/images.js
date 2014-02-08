@@ -199,6 +199,9 @@
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
             });
+            router.route('id/:id', 'id', function(id){
+                router.navigate('image/'+id, {trigger: true, replace: true});
+            });
             router.route('image/:id', 'menu', function(id){
                 router.reset();
                 self.$imageViewer.show();

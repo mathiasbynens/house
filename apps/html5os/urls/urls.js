@@ -487,6 +487,13 @@
                     router.trigger('loadingComplete');
                 });
             });
+            router.route('id/:id', 'id', function(id){
+                self.collection.getOrFetch(id, function(doc){
+                    if(doc) {
+                        router.navigate('url/'+encodeURIComponent(doc.get('url')), {trigger: true, replace: true});
+                    }
+                });
+            });
             router.route('url/:url', 'url', function(url){
                 url = decodeURIComponent(url);
                 router.reset();
