@@ -948,7 +948,8 @@ output=embed"></iframe>*/
             
             if(window.account && (account.isAdmin()) && this.$el.find('.actions').length == 0) {
                 this.$actions = $('<ul class="actions container"></ul>');
-                this.$actions.append('<li><button class="edit">Edit</button></li><li><button class="moveUp" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove">Remove</button></li><li><button class="new">New</button></li>');
+                var btnClass = ' btn btn-default';
+                this.$actions.append('<li><button class="edit'+btnClass+'">Edit</button></li><li><button class="moveUp'+btnClass+'" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove'+btnClass+'">Remove</button></li><li><button class="new'+btnClass+'">New</button></li>');
                 this.$el.append(this.$actions);
             }
             
@@ -1083,8 +1084,9 @@ output=embed"></iframe>*/
                 }
             });
             this.$actions = $('<ul class="actions"></ul>');
+            var btnClass = ' btn btn-default';
             if(window.account && (account.isAdmin())) {
-                this.$actions.append('<li><button class="edit">Edit</button></li><li class="image"><button class="attach">Attach image</button></li><li><button class="moveUp" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove">Remove</button></li><li><button class="new">New</button></li>');
+                this.$actions.append('<li><button class="edit'+btnClass+'">Edit</button></li><li class="image"><button class="attach'+btnClass+'">Attach image</button></li><li><button class="moveUp'+btnClass+'" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove'+btnClass+'">Remove</button></li><li><button class="new'+btnClass+'">New</button></li>');
             }
             
             this.model.bind("change", this.render, this);
@@ -1351,7 +1353,7 @@ output=embed"></iframe>*/
             }
             
             if(window.account && (account.isAdmin()) && this.$el.find('.edit').length == 0) {
-                this.$el.append('<button class="edit">edit</button>');
+                this.$el.append('<button class="edit btn btn-default">edit</button>');
             }
             
             this.$el.attr('data-id', this.model.id);
