@@ -1,30 +1,185 @@
-.files-list .houseList {
+@icon-font-path: '/desktop/libs/bootstrap/fonts/';
+@lightTextColor: #B1B1B1;
+
+.glyphicon-star.btn-link {
+    color: lighten(@brand-primary, 33%);
+}
+.houseCollection.files .houseList {
     span.fileAvatar {
         display: block;
         float: left;
-        width: 320px;
-        height: 385px;
-        padding: 8px;
-        border: 1px outset rgb(255,255,255);
-        font-size: 11px;
-        overflow: hidden;
+        width: 310px;
         position: relative;
         margin: 8px;
-        border-radius: 2px;
-        box-shadow: 0px 0px 2px rgb(102, 102, 102);
-        background: rgb(255,255,255);
-        
-        .title {
-            font-size: 15px;
+        z-index: 1;
+        .panel-body {
+            -webkit-transform-style: preserve-3d;
+    		-moz-transform-style: preserve-3d;
+    		transform-style: preserve-3d;
+            
+            -webkit-transition: all .4s ease-in-out;
+    		transition: all .4s ease-in-out;
+            min-height: 111px;
+            cursor: pointer;
         }
-        a {
+        .caption {
+        }
+        .filename {
+            .contentTypeIcon {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+            }
+            word-wrap: break-word;
+        }
+        .actions {
+            display: none;
             position: absolute;
-            bottom: 0;
+            top: 0;
+            right: 0;
+            background: @dropdown-bg;
+            border: 1px solid @dropdown-border;
+            border-radius: 4px;
+            -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+            
+            > div {
+                float: left;
+            }
+        }
+        .contentIcon {
+            text-align: center;
+            display: block;
+            font-size: 56px;
+            img {
+                max-height: 300px;
+            }
+        }
+        .filename a, .byline a {
+        }
+        .contentLength {
+        }
+        .contentType {
+            padding: 0px 4px 0px 0px;
+        }
+        .byline {
+            float: right;
+        }
+        .extraInfo {
+            z-index: -1;
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            top: 0;
             left: 0;
             right: 0;
-            background: rgba(255, 255, 255, 0.88);
-            height: 26px;
-            box-shadow: 0px 0px 100px 8px rgb(190, 190, 190);
+            bottom: 0;
+            background: fadeout(@table-bg-hover, 30%);
+            padding: 10px;
+            overflow-y: auto;
+            word-break: break-word;
+            
+            -webkit-transform: rotateY(180deg);
+            -moz-transform: rotateY(180deg);
+            transform: rotateY(180deg); 
+            -webkit-transform-style: preserve-3d;
+    		-moz-transform-style: preserve-3d;
+    		transform-style: preserve-3d;
+            
+            -webkit-transition: all .4s ease-in-out;
+    		transition: all .4s ease-in-out;
+    		
+    		/* Let's get this party started */
+            &::-webkit-scrollbar {
+                width: 12px;
+            }
+             
+            /* Track */
+            &::-webkit-scrollbar-track {
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+            }
+             
+            /* Handle */
+            &::-webkit-scrollbar-thumb {
+                background: fadeout(@brand-primary, 20%);
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+            }
+            &::-webkit-scrollbar-thumb:window-inactive {
+            	background: fadeout(@brand-primary, 60%);
+            }
+            
+            h3 {
+                margin-top: 0;
+            }
+        }
+        &:hover {
+            .actions {
+                display: block;
+            }
+        }
+        &[selected] {
+            
+            .panel-body {
+                -webkit-transform: translatez(-1px) rotateY(180deg);
+                -moz-transform: translatez(-1px) rotateY(180deg);
+                -ms-transform: translatez(-1px) rotateY(180deg);
+                -o-transform: translatez(-1px) rotateY(180deg);
+                transform: translatez(-1px) rotateY(180deg);
+                .contentIcon {
+                    -webkit-filter: blur(3px);
+                    -moz-filter: blur(3px);
+                    -ms-filter: blur(3px);
+                    filter: blur(3px);
+                }
+            }
+            .extraInfo {
+                z-index: 3;
+                display: block;
+                opacity: 1;
+                visibility: visible;
+            }
+            .contentIcon, .byline, .filename {
+            }
+            .actions {
+                display: none;
+            }
+        }
+    }
+    
+    tr.fileRow {
+        td.icon {
+            width: 40px;
+        }
+        td.name {
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+        td.actions {
+            width: 220px;
+            div.actions > div {
+                float: left;
+            }
+        }
+    }
+}
+.doc .file {
+    .actions {
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+    }
+    .actions > div {
+        float: left;
+    }
+    .byline {
+        float: right;
+    }
+    .contentLength, .contentType {
+        padding: 0 6px;
+    }
+    .contentIcon {
+        audio, video {
+            width: 100%;
         }
     }
 }
@@ -51,17 +206,154 @@
 .feed-item:hover .byline {
     display: block;
 }
-.border-radius (@radius) {
-  -moz-border-radius: @radius;
-  -webkit-border-radius: @radius;
-  border-radius: @radius;
+.actions {
+    .share {
+        .owner {
+            .name {
+                padding: 6px;
+            }
+        }
+    }
+}
+.privacySelector {
+    position: relative;
+    text-align: center;
+    cursor: pointer;
+    .off, .on {
+        padding: 2px;
+        display: block;
+        width: 40px;
+        top: 0;
+    }
+    .off {
+        left: 0;
+        position: absolute;
+    }
+    .on {
+        position: absolute;
+        right: 0;
+    }
+    .bulb {
+        width: 60px;
+        background: rgb(111, 111, 111);
+        display: block;
+        height: 22px;
+        border-radius: 25px;
+        margin: 0 auto;
+    }
+    .bulb:after {
+        border-radius: 50%;
+        border: 1px inset black;
+        background: #FFF;
+        display: block;
+        width: 22px;
+        height: 22px;
+        position: absolute;
+        content: " ";
+    }
+}
+.privacySelector.public {
+    .bulb:after {
+        left: 55%;
+    }
+    .bulb {
+        background: #47a447;
+    }
+    .on {
+        color: @brand-primary;
+    }
+}
+.privacySelector.private {
+    .bulb:after {
+        right: 55%;
+    }
+    .off {
+        color: #000;
+    }
+}
+.actions .share .dropdown-header {
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
 }
 
-.wrap () {
-  text-wrap: wrap;
-  white-space: -moz-pre-wrap;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+body > .doc {
+    position: fixed;
+    top: 50px;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    z-index: 9999;
+    overflow: auto;
 }
 
-pre { .wrap }
+.uploadFrame {
+    position: fixed;
+    top: 50px;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    text-align: center;
+    z-index: 9999;
+    font-size: 24px;
+    .dropzone {
+        position: fixed;
+        top: 50px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+    
+    .fileForm {
+        z-index: 100;
+        position: absolute;
+        left: 0;
+        right: 0;
+        font-size: 24px;
+    }
+    ul.uploadFileList {
+        position: absolute;
+        top: 120px;
+        left: 0;
+        right: 0;
+        text-align: left;
+        li {
+            position: relative;
+            .title {
+                position: absolute;
+                left: 0;
+                color: white;
+            }
+            .size {
+                position: absolute;
+                right: 0;
+                top: 0;
+                color: white;
+            }
+            .progress {
+                height: 32px;
+            }
+        }
+    }
+}
+.uploadFrame.dragover {
+    span {
+        visibility: hidden;
+    }
+    .dropzone {
+        background: rgba(0, 0, 0, 0.27);
+        display: block;
+        visibility: visible;
+        border: 3px dashed black;
+    }
+    .fileForm {
+        visibility: hidden;
+    }
+}
+
+body.appBlurred {
+    overflow: hidden;
+}
+body.appBlurred > .app {
+    .blur(3px);
+}

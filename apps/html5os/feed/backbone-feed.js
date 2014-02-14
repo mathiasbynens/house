@@ -105,11 +105,11 @@
             if(!this.refModel) {
                 var refObj = this.getRefObj();
                 if(refObj) {
-                    console.log(refObj);
+                    // console.log(refObj);
                     if(refObj && refObj.id) {
                         var refCol = this.getRefCol();
                         var bbClassName = refCol[0].toUpperCase()+refCol.substr(1)+"Backbone";
-                        console.log(bbClassName)
+                        // console.log(bbClassName)
                         if(bbClassName) {
                             var bbClass = window[bbClassName];
                             if(bbClass) {
@@ -153,6 +153,10 @@
                     socketOpts.secure = false;
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
+                if (socket.socket.connected) {
+                    console.log('already connected and now joining ' + self.collectionName);
+                    socket.emit('join', self.collectionName);
+                }
                 socket.on('connect', function(data) {
                     console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);

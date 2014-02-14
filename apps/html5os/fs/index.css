@@ -2968,15 +2968,24 @@ header h1.f7, header h1.f8, header h1.f9 {
 
 .browser {
     position: fixed;
-    width: 333px;
+    width: 100px;
     top: 55px;
     bottom: 0px;
     left: 0px;
     overflow: scroll;
+    z-index: 999;
+    background-color: #2f3129;
+}
+.browser:hover {
+    width: auto;
+}
+.browser controls {
+    min-width: 400px;
+    display: block;
 }
 .files-open {
     position: fixed;
-    left: 333px;
+    left: 100px;
     top: 55px;
     height: 36px;
     right: 0px;
@@ -2985,6 +2994,7 @@ header h1.f7, header h1.f8, header h1.f9 {
     float: left;
     padding: 10px;
     width: 200px;
+    height: 40px;
 }
 .files-open li .filename {
     float: right;
@@ -2992,14 +3002,14 @@ header h1.f7, header h1.f8, header h1.f9 {
 }
 .file-viewer controls {
     position: fixed;
-    left: 333px;
+    left: 100px;
     bottom: 0px;
     height: 32px;
     right: 0px;
 }
 .file-viewer .data {
     position: absolute;
-    left: 333px;
+    left: 100px;
     top: 132px;
     right: 0px;
     bottom: 36px;

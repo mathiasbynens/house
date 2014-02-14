@@ -111,6 +111,10 @@
                     socketOpts.secure = false;
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
+                if (socket.socket.connected) {
+                    console.log('already connected and now joining ' + self.collectionName);
+                    socket.emit('join', self.collectionName);
+                }
                 socket.on('connect', function(data) {
                     console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
@@ -141,6 +145,7 @@
                     insertOrUpdateDoc(doc);
                 });
                 socket.on('deletedImages', function(id) {
+                    console.log('deleted image');
                     self.remove(id);
                     self.count--;
                     self.trigger('count', self.count);
@@ -656,7 +661,8 @@
             
             var removeOriginalFiles = function() {
                 var ref = self.model.get("ref");
-                if(ref && ref.col === 'files.files') {
+                
+                if(ref && ref.col.indexOf('.files') !== -1) {
                     getAndDestroyModel(ref.id);
                 }
             }
@@ -903,7 +909,7 @@
                     }
                 }
             }
-            this.$el.css('background', 'url("/api/files/'+encodeURIComponent(imageThumbSrc)+'")');
+            this.$el.css('background', 'url("'+getFilenamePath(imageThumbSrc)+'")');
             this.$el.css('background-size', 'cover');
             //this.$el.css('background-position-y', '50%');
             this.setElement(this.$el); // hmm - needed this to get click handlers //this.delegateEvents(); // why doesn't this run before
@@ -945,10 +951,15 @@
         }
     });
     
+    var getFilenamePath = function(filename) {
+        var apiFilesPath = config.filesPath || '/api/files/';
+        return apiFilesPath + encodeURIComponent(filename);
+    }
+    
     var ImageFullView = Backbone.View.extend({
         tagName: "div",
         className: "imageFullView",
-        htmlTemplate: '<img src="/api/files/<%= imgSrc %>" />\
+        htmlTemplate: '<img src="<%= imgSrc %>" />\
                         <span class="info">\
                             <h3 class="caption"></h3>\
                             <span class="at" data-datetime="<%= at ? at : "" %>" title="<%= createdAtFormatted %>">created: <%= createdAtShort %></span>\
@@ -988,17 +999,17 @@
                 doc.createdAtFormatted = '';
                 doc.createdAtShort = '';
             }
-            doc.downloadMenu = '<a target="_new" href="/api/files/'+encodeURIComponent(doc.filename)+'">original</a>';
+            doc.downloadMenu = '<a target="_new" href="'+getFilenamePath(doc.filename)+'">original</a>';
             doc.imgSrc = doc.filename;
             if(doc.hasOwnProperty('sizes')) {
                 for(var sizeName in doc.sizes) {
                     var size = doc.sizes[sizeName];
                     
                     if(sizeName == 'full') {
-                        doc.imgSrc = size.filename;
+                        doc.imgSrc = getFilenamePath(size.filename);
                     }
                     
-                    var downloadSize = ' <a target="_new" href="/api/files/'+encodeURIComponent(size.filename)+'">'+sizeName+'</a> ';
+                    var downloadSize = ' <a target="_new" href="'+getFilenamePath(size.filename)+'">'+sizeName+'</a> ';
                     doc.downloadMenu += downloadSize;
                 }
             }
@@ -1129,7 +1140,7 @@
                     }
                 }
             }
-            this.$el.html('<img src="/api/files/'+encodeURIComponent(imageThumbSrc)+'" />');
+            this.$el.html('<img src="'+getFilenamePath(imageThumbSrc)+'" />');
             //this.$el.css('background', 'url("/api/files/'+imageThumbSrc+'")');
             //this.$el.css('background-size', 'cover');
             this.$el.attr('data-id', this.model.get("id"));

@@ -24,11 +24,11 @@
                                                             $('body').removeClass('loading');
                                                         });
                                                         require(['/files/files.js'], function(Files) {
-                                                            window.app = new Files();
+                                                            window.app = new Files({el: $('body')});
                                                             //app.bindUser(accountProfile.loginStatus.getView().userModel);
                                                             app.on('initialized', function() {
-                                                                $('body').append(app.render().$el);
-                                                                //app.bindNav(nav);
+                                                                app.render();
+                                                                app.bindNav(nav);
                                                                 accountProfile.bindRouter(nav.router);
                                                                 nav.startRouter('/files/');
                                                                 if(callback) callback(app);

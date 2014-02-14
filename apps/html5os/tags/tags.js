@@ -72,7 +72,9 @@
             if (!options) {
                 options = models;
             }
-            this.options = options;
+            this.options = options || {};
+            var tagsStr = this.options.name || 'tags';
+            this.url = '/api/'+tagsStr;
         },
         url: "/api/tags",
         getView: function(options) {
@@ -86,6 +88,16 @@
                 });
             }
             return this.view;
+        },
+        getNewView: function(options) {
+            var self = this;
+            if (!options) options = {};
+            options.collection = this;
+            var view = new ListView(options);
+            view.on("selected", function(m) {
+                self.trigger("selected", m);
+            });
+            return view;
         },
         getForm: function(options) {
             var self = this;
@@ -198,6 +210,49 @@
                 return v;
             }
         },
+        getOrFetchId: function(id, callback) {
+            var self = this;
+            if(this.fetchingId) {
+                // todo
+                this.once('fetchingIdComplete', function(){
+                    console.log('fetch complete');
+                    self.getOrFetchId(id, callback);
+                })
+                return;
+            }
+            var doc;
+            doc = this.get(id);
+            if (doc) {
+                callback(doc);
+            } else {
+                this.fetchingId = true;
+                var options = {
+                };
+                if(this.length > 0) {
+                    options["_id"] = id;
+                }
+                this.fetch({
+                    data: options,
+                    update: true,
+                    remove: false,
+                    success: function(collection, response) {
+                        self.fetchingId = false;
+                        if (response) {
+                            doc = self.get(id);
+                            callback(doc);
+                        } else {
+                            callback(false);
+                        }
+                        self.trigger('fetchingIdComplete');
+                    },
+                    error: function(collection, response) {
+                        self.fetchingId = false;
+                        callback(false);
+                        self.trigger('fetchingIdComplete');
+                    }
+                });
+            }
+        },
         getOrFetch: function(id, callback) {
             var self = this;
             var doc;
@@ -259,14 +314,17 @@
             if (!options) {
                 options = models;
             }
+            if(!options.ofFieldName) {
+                options.ofFieldName = 'tags';
+            }
             if(options.of) {
-                models = options.of.get('tags') || [];
+                models = options.of.get(options.ofFieldName) || [];
             }
             // console.log(models)
             this.options = options;
         },
         url: function() {
-            return this.options.of.url() + "/tags";
+            return this.options.of.url() + "/"+this.options.ofFieldName;
         },
     });
 
@@ -409,7 +467,7 @@
                 } else if (this.layout == 'avatar') {
                     this.$wrap = this.$ul = $('<div class="tagsList"></div>');
                 } else if (this.layout == 'row' || this.layout == 'list') {
-                    this.$wrap = this.$ul = $('<ul class="tagsList"></ul>');
+                    this.$wrap = this.$ul = $('<ul class="tagsList list-unstyled"></ul>');
                 }
             //}
             this.$el.prepend(this.$wrap);
@@ -634,14 +692,15 @@
                 // console.log(this.list.collection)
                 this.of = false;
                 if(this.list.collection.options && this.list.collection.options.of) {
-                    this.user = this.list.collection.options.of.get('owner');
+                    // this.user = this.list.collection.options.of.get('owner');
                     this.of = this.list.collection.options.of;
+                    this.user = this.of.getOwnerAttr ? this.of.getOwnerAttr() : this.of.get('owner');
                 }
             }
             // console.log(this.list.collection.options.of)
             this.$user = $('<span class="user"></span>');
             this.$at = $('<span class="at"></span>');
-            this.$name = $('<span class="name"></span>');
+            this.$name = $('<a class="name" href="#"></a>');
             this.$colorInput = $('<input type="color" id="tag-color" name="color" class="form-control" />');
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
@@ -657,6 +716,7 @@
             // console.log(this.model.attributes);
             var self = this;
             this.$el.html('');
+            this.$el.attr('data-id', this.model.id);
             
             if(this.model.has('color')) {
                 this.$el.css('border-left-color', this.model.get('color'));
@@ -704,10 +764,14 @@
         },
         events: {
             "click input[type='color']": "clickColorInput",
+            "click a.name": "preventDefault",
             "click": "clickEl",
             "click .delete": "clickDelete",
             "click .deleteTag": "clickDeleteTag",
             "change input[name=\"color\"]": "debounceChangeColor"
+        },
+        preventDefault: function(e) {
+            e.preventDefault();
         },
         clickColorInput: function(e) {
             console.log('click color input')
@@ -864,14 +928,160 @@
         }
     });
     
+    var SelectDropdown = Backbone.View.extend({
+        tagName: 'div',
+        className: 'btn-group',
+        initialize: function() {
+            var self = this;
+            var dropdownMenuClassName = this.options.dropdownMenuClassName || 'tags'; // pull-right
+            this.$btn = $('<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"></button>');
+            this.$dropdownMenu = $('<ul class="dropdown-menu '+dropdownMenuClassName+'" role="menu"></ul>');
+            this.$liNewTag = $('<li class="newTagForm"></li>');
+            this.$currentTagsDiv = $('<li class="divider currentTags"></li>');
+            this.$tagSelectList = $('<li class="selectList" title="Select a Tag"></li>');
+            // this.$tagNone = $('<li class="selectList" title="Select a Tag"></li>');
+            // this.$tagDeselect = $('<li class="selectList" title="Deselect Tag"></li>');
+            if(!window.tagsCollection) {
+                window.tagsCollection = new Collection();
+            }
+            this.tagsFullList = window.tagsCollection.getView({el: this.$tagSelectList}); // 
+            // console.log(this.model)
+        },
+        render: function() {
+            var self = this;
+            // this.$el.find('ul.tags').html('');
+            
+            // bs btn steals my dropdown click
+            this.$el.on('shown.bs.dropdown', function(){
+                self.shownDropdown();
+            });
+            // this.$dropdownMenu.append(this.$liNewTag.html('<input name="tagName" placeholder="Enter a tag name" class="form-control" />'));
+            this.$dropdownMenu.append(this.$tagSelectList);
+            // this.$dropdownMenu.append(this.$tagNone);
+            // this.$dropdownMenu.append(this.$tagDeselect);
+            
+            this.$el.append(this.$btn.html('<span class="glyphicon glyphicon-tag"></span>  <span class="sr-only">Toggle Dropdown</span>'));
+            this.$el.append(this.$dropdownMenu);
+            this.setElement(this.$el);
+            return this;
+        },
+        renderColors: function(origTag) {
+            var self = this;
+            // console.log(this.model.get('tags'))
+            if(origTag) {
+                if(origTag.has('color')) {
+                    self.$btn.css('color', origTag.get('color'));
+                    hasColor = true;
+                } else {
+                    self.$btn.css('color', '#000');
+                }
+            } else {
+                self.$btn.css('color', '');
+            }
+        },
+        renderTopTags: function() {
+            var self = this;
+            this.tagsFullList.filter(function(){
+                return true;
+            });
+            this.tagsFullList.setElement(this.$tagSelectList).render();
+            if(this.tagsFullList.collection.length === 0) {
+                this.tagsFullList.collection.load();
+            }
+            
+            // mark selected row
+            if(this.selectedTag) {
+                var $tag = this.$el.find('.tag[data-id="'+this.selectedTag.id+'"]');
+                console.log($tag)
+                if($tag.length) {
+                    $tag.addClass('selected').siblings().removeClass('selected');
+                }
+            } else {
+                this.$el.find('.tag').removeClass('selected');
+            }
+            
+            return this;
+        },
+        events: {
+            // "click .btn.dropdown-toggle": "clickBtnDropdown",
+            // "click .tagsOfSong.tagsList li.tag": "goToTag",
+            "click .selectList .tagsList li.tag": "selectTag",
+            // "keyup input[name='tagName']": "debouncedKeyUp",
+            // "keydown input[name='tagName']": "debouncedKeyDown",
+            // "submit": "submitForm"
+        },
+        // goToTag: function(e) {
+        //     var $t = $(e.currentTarget);
+        //     var tagName = $t.find('[data-name]').attr('data-name');
+        //     this.trigger('selectedTagName', tagName);
+        // },
+        selectTag: function(e) {
+            var self = this;
+            var $t = $(e.currentTarget);
+            console.log($t)
+            console.log($t.attr('data-id'))
+            var tag = this.tagsFullList.collection.get($t.attr('data-id'));
+            console.log(tag)
+            if(this.selectedTag) {
+                if(tag.id == this.selectedTag.id) {
+                    this.deselectTag();
+                    return;
+                }
+            }
+            this.selectedTag = tag;
+            if(tag) {
+                self.renderColors(tag);
+                this.trigger('selected', tag);
+            }
+            e.stopPropagation();
+            e.preventDefault();
+            $(e.currentTarget).dropdown('toggle');
+        },
+        selectTagByName: function(tagName) {
+            var self = this;
+            console.log(tagName)
+            var tags = this.tagsFullList.collection.where({name: tagName});
+            if(tags) {
+                var tag = _.first(tags);
+                if(this.selectedTag) {
+                    if(tag.id == this.selectedTag.id) {
+                        this.deselectTag();
+                        return;
+                    }
+                }
+                this.selectedTag = tag;
+                self.renderColors(tag);
+                this.trigger('selected', tag);
+            }
+        },
+        deselectTag: function() {
+            delete this.selectedTag;
+            this.$el.find('.tag').removeClass('selected');
+            this.renderColors();
+            this.trigger('deselected');
+        },
+        shownDropdown: function() {
+            this.renderTopTags();
+            // this.focus();
+        },
+        // clickBtnDropdown: function(e) {
+        //     this.renderTopTags();
+        //     $(e.currentTarget).dropdown('toggle');
+        //     e.stopPropagation();
+        //     e.preventDefault();
+        // },
+    });
+    
     var Dropdown = Backbone.View.extend({
         tagName: 'div',
         className: 'btn-group',
         initialize: function() {
             var self = this;
+            this.fieldName = (this.options.fieldName) ? this.options.fieldName : 'tags';
+            var dropdownMenuClassName = this.options.dropdownMenuClassName || 'tags'; // pull-right
             this.$btn = $('<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"></button>');
-            this.$dropdownMenu = $('<ul class="dropdown-menu pull-right tags" role="menu"></ul>');
-            this.collectionOf = new CollectionOf(this.model.get('tags') || [],{of: this.model});
+            this.$dropdownMenu = $('<ul class="dropdown-menu '+dropdownMenuClassName+'" role="menu"></ul>');
+            this.collectionOf = new CollectionOf(this.model.get(this.fieldName) || [],{of: this.model, ofFieldName: this.fieldName});
             this.$liNewTag = $('<li class="newTagForm"></li>');
             this.$currentTagsDiv = $('<li class="divider currentTags"></li>');
             this.$tagSelectList = $('<li class="selectList" title="Select a Tag"></li>');
@@ -883,7 +1093,7 @@
             // console.log(this.model)
             
             this.model.on('change', function(){
-                if(self.model.has('tags') && self.model.get('tags').length > 0) {
+                if(self.model.has(self.fieldName) && self.model.get(self.fieldName).length > 0) {
                     self.renderColors();
                 }
                 self.listenToTags();
@@ -892,26 +1102,24 @@
         },
         listenToTags: function() {
             var self = this;
-            if(self.model.has('tags') && self.model.get('tags').length > 0) {
-                var modelTags = self.model.get('tags');
+            if(self.model.has(this.fieldName) && self.model.get(this.fieldName).length > 0) {
+                var modelTags = self.model.get(this.fieldName);
                 modelTags.forEach(function(e,i,a){
                     var ofTag = self.collectionOf.get(e.id);
                     if(ofTag) {
                         self.stopListening(ofTag, 'destroy');
                         self.listenTo(ofTag, 'destroy', function(){
-                            console.log(self.collectionOf.length);
                             // self.collectionOf.remove(e.id);
                             
-                            var newTags = self.model.get('tags') || [];
+                            var newTags = self.model.get(self.fieldName) || [];
                             for(var i in newTags) {
                                 var t = newTags[i];
                                 if(t.id == e.id) {
-                                    console.log('--------remove the tag');
+                                    // console.log('--------remove the tag');
                                     delete newTags[i];
                                 }
                             }
-                            self.model.set({"tags": newTags}, {silent: true});
-                            
+                            self.model.set(self.fieldName, newTags, {silent: true});
                             
                             self.renderColors();
                         });
@@ -920,6 +1128,14 @@
                     if(origTag) {
                         self.stopListening(origTag, 'change');
                         self.listenTo(origTag, 'change', self.renderColors);
+                    } else {
+                        window.tagsCollection.getOrFetchId(e.id, function(origTag){
+                            if(origTag) {
+                                self.stopListening(origTag, 'change');
+                                self.listenTo(origTag, 'change', self.renderColors);
+                                self.renderColors();
+                            }
+                        });
                     }
                 });
             }
@@ -932,15 +1148,15 @@
             this.$el.on('shown.bs.dropdown', function(){
                 self.shownDropdown();
             });
-            if(this.model.has('tags') && this.model.get('tags').length > 0) {
+            if(this.model.has(this.fieldName) && this.model.get(this.fieldName).length > 0) {
                 this.$el.addClass('hasTags');
                 this.$dropdownMenu.append(this.$currentTagsDiv);
             } else {
                 this.$el.removeClass('hasTags');
             }
             this.renderColors();
-            
-            if(account.isOwner(this.model.get('owner').id)) { //  || account.isAdmin()
+            var owner = this.model.getOwnerAttr ? this.model.getOwnerAttr() : this.model.get('owner');
+            if(owner && account.isOwner(owner.id)) { //  || account.isAdmin()
                 this.$dropdownMenu.append(this.$liNewTag.html('<input name="tagName" placeholder="Enter a tag name" class="form-control" />'));
                 this.$dropdownMenu.append(this.$tagSelectList);
             } else {
@@ -955,8 +1171,8 @@
         renderColors: function() {
             var self = this;
             // console.log(this.model.get('tags'))
-            if(this.model.has('tags') && this.model.get('tags').length > 0) {
-                var modelTags = this.model.get('tags');
+            if(this.model.has(this.fieldName) && this.model.get(this.fieldName).length > 0) {
+                var modelTags = this.model.get(this.fieldName);
                 var hasColor = false;
                 modelTags.forEach(function(e,i,a){
                     var origTag = window.tagsCollection.get(e.id);
@@ -996,7 +1212,7 @@
         focus: function() {
             var self = this;
             setTimeout(function(){
-                self.$liNewTag.find("input")[0].focus();
+                self.$liNewTag.find("input").focus();
             },200);
             return this;
         },
@@ -1082,9 +1298,10 @@
                     }
                     // console.log(newTagAttr);
                     //
-                    var newTags = self.model.get('tags') || [];
+                    console.log(self.fieldName);
+                    var newTags = self.model.get(self.fieldName) || [];
                     newTags.push(newTagAttr);
-                    self.model.set({"tags": newTags}, {silent: true});
+                    self.model.set(self.fieldName, newTags, {silent: true});
                     self.$el.addClass('hasTags');
                     self.renderClear();
                     self.trigger("saved", m);
@@ -1136,6 +1353,7 @@
                 Row: RowView,
                 Avatar: AvatarView,
                 Form: FormView,
+                SelectDropdown: SelectDropdown,
                 Dropdown: Dropdown
             }
         });

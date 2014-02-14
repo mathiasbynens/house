@@ -10,26 +10,67 @@
         "application/pdf": ""
     }
     
+    if(!window.filesize) {
+        require(['/files/filesize.min.js'], function(filesize){
+            window.filesize = filesize;
+        });
+    }
+    
     var Model = Backbone.House.Model.extend({
         collectionName: "files",
-        initialize: function() {
+        initialize: function(attrs, options) {
             this.TableRowView = FileRow;
             this.RowView = FileRow;
             this.AvatarView = FileAvatar;
-            this.FullView = FileAvatar;
+            this.FullView = FileFullView;
+            options = options || {};
+            options.ownerFieldName = 'metadata.owner';
+            Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
         getLengthFormatted: function() {
-          var bytes = this.get("length");
-          var metric = 'B';
-          if(bytes > 1024) {
-            bytes = Math.floor(bytes / 1024);
-            metric = 'K';
-          }
-          if(bytes > 1024) {
-            bytes = Math.floor(bytes / 1024);
-            metric = 'M';
-          }
-          return bytes+metric;
+            var self = this;
+            
+            if(filesize) {
+                return filesize(this.get("length"), {unix: true});
+            }
+            
+            var bytes = this.get("length");
+            var metric = 'B';
+            if(bytes > 1024) {
+                bytes = Math.floor(bytes / 1024);
+                metric = 'K';
+            }
+            if(bytes > 1024) {
+                bytes = Math.floor(bytes / 1024);
+                metric = 'M';
+            }
+            return bytes+metric;
+        },
+        getContentTypeGlphyicon: function() {
+            if(this.has('contentType')) {
+                var contentType = this.get('contentType');
+                if(contentType.indexOf('image') === 0) {
+                    return 'picture';
+                } else if(contentType.indexOf('text') === 0) {
+                    return 'file';
+                } else if(contentType.indexOf('audio') === 0) {
+                    return 'music';
+                } else if(contentType.indexOf('video') === 0) {
+                    return 'film';
+                }
+            }
+        },
+        getFilenameSrc: function() {
+            var apiFilesPath = config.filesPath || '/api/files/';
+            return apiFilesPath + encodeURIComponent(this.get('filename'));
+        },
+        getOwner: function(callback) {
+            if (this.has('metadata')) {
+                var metadata = this.get('metadata');
+                if(metadata && metadata.owner) {
+                    var user = window.usersCollection.getOrFetch(metadata.owner.id, callback);
+                }
+            }
         }
     });
     
@@ -260,233 +301,627 @@
     //     }
     // });
     
-    var FileActions = Backbone.View.extend({
-        tagName: "div",
-        className: "fileActions",
-        render: function() {
-            var self = this;
-            this.$el.html('');
-            
-            this.actions.forEach(function(action){
-                self.$el.append(action.render().el);
-            });
-            
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            this.actions = [];
-            
-            this.fileActionDelete = new FileActionDelete({id: this.id, model: this.model});
-            this.$el.append(this.fileActionDelete.render().el);
-            this.actions.push(this.fileActionDelete);
-            
-            /*this.fileActionProcess = new FileActionProcess({id: this.id, model: this.model});
-            this.$el.append(this.fileActionProcess.render().el);
-            this.actions.push(this.fileActionProcess);*/
-        }
-    });
-    
-    var FileActionProcess = Backbone.View.extend({
-        tagName: "span",
-        className: "process",
-        render: function() {
-            var $btn = $('<button>process</button>');
-            var metadata = this.model.get('metadata');
-            if(metadata.hasOwnProperty('proc')) {
-                $btn.attr('processed', metadata.proc);
-            }
-            this.$el.html($btn);
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click": "select"
-        },
-        select: function() {
-            if(confirm("Are you sure that you want to process this file?")) {
-                
-                var m = this.model.get("metadata");
-                //m.proc = 1;
-                console.log(this.model);
-                this.model.set({"metadata.proc": 0},{wait: true});
-                console.log(this.model);
-            }
-            return false;
-        }
-    });
-    
-    var FileActionDelete = Backbone.View.extend({
-        tagName: "span",
-        className: "delete",
-        render: function() {
-            this.$el.html('<button>delete</button>');
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click": "select"
-        },
-        select: function() {
-            console.log(this.model);
-            if(confirm("Are you sure that you want to delete this file?")) {
-                this.model.destroy({success: function(model, response) {
-                  console.log('delete');
-                }, 
-                error: function(model, response) {
-                    console.log(arguments);
-                },
-                wait: true});
-            }
-            return false;
-        }
-    });
-    
     var FileRow = Backbone.View.extend({
-        tagName: "li",
+        tagName: "tr",
         className: "fileRow",
         initialize: function() {
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
-            this.fileActions = new FileActions({model: this.model});
-            this.$checkbox = $('<input type="checkbox" name="select" />');
-            
-            this.fileGroupsView = new utils.SelectGroupsInputView({model: this.model});
-        },
-        render: function() {
-            var $byline = $('<span class="byline"></span>');
-            this.$el.html('');
-            this.$el.append(this.$checkbox);
-            var contentType = this.model.get('contentType');
-            var $icon = $('<span class="contentIcon '+contentType.substr(0, contentType.indexOf('/'))+'"></span>');
-            if(contentType.indexOf('image') === 0) {
-                if(this.model.get('length') < 1000000) {
-                    var $img = $('<img src="/api/files/'+this.model.get('filename')+'" />');
-                    $icon.append($img);
+            var opts = {
+                model: this.model, 
+                actionOptions: {
+                    fav: {fieldName: 'metadata.fav'},
+                    tags: {fieldName: 'metadata.tags'},
+                    groups: {fieldName: 'metadata.groups'}
                 }
             }
-            this.$el.append($icon);
-            this.$el.append('<span class="filename"><a href="/api/files/'+this.model.get('filename')+'" target="_new">'+this.model.get('filename')+'</a></span>');
-            this.$el.append('<span class="contentLength">'+this.model.getLengthFormatted()+'</span>');
-            this.$el.append('<span class="contentType">'+this.model.get('contentType')+'</span>');
-            
-            var $at = $('<span class="uploadDate">'+this.model.get('uploadDate')+'</span>');
-            if(window.clock) {
-                $at.attr('title', clock.moment(this.model.get('uploadDate')).format('LLLL'));
-                $at.html(clock.moment(this.model.get('uploadDate')).calendar());
-            }
-            $byline.append($at);
-            if(this.model.has('metadata')) {
-                if(this.model.get('metadata').owner) {
-                    $byline.append(' by '+this.model.get('metadata').owner.name);
+            if(this.model.get('metadata').src) {
+                var src = this.model.get('metadata').src;
+                var modelName = src.substr(0, src.length-1);
+                opts.actionOptions.more = {
+                    "deleteSrc": {
+                        title: "Delete "+modelName,
+                        glyphicon: 'trash',
+                        action: function(model) {
+                            if(confirm("Are you sure that you want to delete the source "+modelName+"?")) {
+                                console.log(typeof model.url);
+                                console.log(model.url);
+                                model.url = model.url() + '/src';
+                                // model.url = model.url+'/src';
+                                // return;
+                                model.destroy({success: function(model, response) {
+                                  console.log('deleted src');
+                                }, 
+                                error: function(model, response) {
+                                    console.log(arguments);
+                                },
+                                wait: true});
+                            }
+                        }
+                    }
                 }
             }
-            this.$el.append($byline);
-            this.$el.append(this.fileGroupsView.render().$el);
-            this.$el.append(this.fileActions.render().$el);
-            this.setElement(this.$el);
-            return this;
-        },
-        events: {
-          "click": "select"
-        },
-        select: function() {
-        },
-        remove: function() {
-          this.$el.remove();
-        }
-    });
-    
-    var FileAvatar = Backbone.View.extend({
-        tagName: "span",
-        className: "fileAvatar",
-        initialize: function() {
-            this.model.bind('change', this.render, this);
-            this.model.bind('destroy', this.remove, this);
-            this.fileActions = new FileActions({model: this.model});
+            this.fileActions = new utils.ModelActionsView(opts);
+            this.fileActions.on('goToTagName', function(tagName){
+                app.collection.view.tagsView.tagSelectView.selectTagByName(tagName);
+            });
+            
+            this.$tdIcon = $('<td class="icon"></td>');
+            this.$tdName = $('<td class="name"></td>');
+            this.$tdSize = $('<td class="size"></td>');
+            this.$tdAt = $('<td class="at"></td>');
+            this.$tdActions = $('<td class="actions"></td>');
+            
+            // this.$panelHead = $('<div class="panel-heading"></div>');
+            // this.$panelBody = $('<div class="panel-body"></div>');
+            // this.$panelFoot = $('<div class="panel-footer"></div>');
             // this.$checkbox = $('<input type="checkbox" name="select" />');
-            
-            this.fileGroupsView = new utils.SelectGroupsInputView({model: this.model});
+            // this.$caption = $('<span class="caption"></span>');
+            // this.$byline = $('<span class="byline"></span>');
+            // this.$extraInfo = $('<div class="extraInfo"><h3>Metadata</h3></div>');
+            // this.$icon = $('<span class="contentIcon"></span>');
+            // this.$filename = $('<span class="filename"></span>');
         },
         render: function() {
-            var $byline = $('<span class="byline"></span>');
-            this.$el.html('');
+            // this.$el.html('');
+            this.$el.append(this.$tdIcon);
+            this.$el.append(this.$tdName);
+            this.$el.append(this.$tdSize);
+            this.$el.append(this.$tdAt);
+            this.$el.append(this.$tdActions);
             // this.$el.append(this.$checkbox);
             var contentType = this.model.get('contentType');
-            var $icon = $('<span class="contentIcon '+contentType.substr(0, contentType.indexOf('/'))+'"></span>');
+            this.$tdIcon.addClass(contentType.substr(0, contentType.indexOf('/')));
             if(contentType.indexOf('image') === 0) {
                 if(this.model.get('length') < 1000000) {
-                    var $img = $('<img src="/api/files/'+this.model.get('filename')+'" />');
-                    $icon.append($img);
+                    var $img = $('<img src="'+this.model.getFilenameSrc()+'" />');
+                    this.$tdIcon.html($img);
+                } else {
+                    // too large to download on render
                 }
+            } else {
+                this.$tdIcon.html('<span class="contentTypeIcon"><span class="glyphicon"> </span></span>');
+                this.$tdIcon.find('.glyphicon').addClass('glyphicon-'+this.model.getContentTypeGlphyicon());
             }
-            this.$el.append($icon);
-            this.$el.append('<span class="filename"><a href="/api/files/'+this.model.get('filename')+'" target="_new">'+this.model.get('filename')+'</a></span>');
-            this.$el.append('<span class="contentLength">'+this.model.getLengthFormatted()+'</span>');
-            this.$el.append('<span class="contentType">'+this.model.get('contentType')+'</span>');
+            // this.$panelBody.append(this.$extraInfo);
+            // this.$el.append('<span class="filename" title="'+this.model.get('filename')+'"><a href="/api/files/'+this.model.get('filename')+'" target="_blank">'+this.model.get('filename')+'</a></span>');
+            this.$tdName.attr('title', this.model.get('filename'));
+            this.$tdName.html('<a href="/api/files/'+encodeURIComponent(this.model.get('filename'))+'" target="_blank">'+this.model.get('filename')+'</a>');
+            // this.$tdName.append(this.$filename);
             
-            var $at = $('<span class="uploadDate">'+this.model.get('uploadDate')+'</span>');
+            this.$tdSize.html(this.model.getLengthFormatted());
+            // this.$caption.html('');
+            // this.$caption.append('<span class="contentType">'+this.model.get('contentType')+'</span>');
+            // this.$caption.append('<span class="contentLength">'+this.model.getLengthFormatted()+'</span>');
+            // this.$panelFoot.append(this.$caption);
+            
+            var $at = $('<a href="'+this.model.getNavigateUrl()+'" class="uploadDate">'+this.model.get('uploadDate')+'</a>');
             if(window.clock) {
                 $at.attr('title', clock.moment(this.model.get('uploadDate')).format('LLLL'));
                 $at.html(clock.moment(this.model.get('uploadDate')).calendar());
             }
-            $byline.append($at);
+            this.$tdAt.html($at);
             if(this.model.has('metadata')) {
+                var meta = this.model.get('metadata');
+                var $ei = this.$el.find('.extraInfo').html('<h3>Metadata</h3>');
                 if(this.model.get('metadata').owner) {
-                    $byline.append(' by '+this.model.get('metadata').owner.name);
+                    // $byline.append('<span class="owner"> by '+this.model.get('metadata').owner.name+'</span>');
+                }
+                if(meta.refs) {
+                    var refs = '';
+                    for(var r in meta.refs) {
+                        var ref = meta.refs[r];
+                        var refUrl = '/'+ref.col+'/id/'+ref.id;
+                        refs = refs + '<div class="ref"><a href="'+refUrl+'" target="_blank">'+ref.col+' '+ref.id+'</a></div>';
+                    }
+                    $ei.append('<div class="refs"><h4>Refs</h4>'+refs+'</div>');
+                }
+                if(meta.src) {
+                    $ei.append('<div class="src"><h4>Src</h4>'+meta.src+'</div>');
+                }
+                if(meta.srcUrl) {
+                    $ei.append('<div class="srcUrl"><h4>Src URL</h4>'+meta.srcUrl+'</div>');
+                }
+                if(meta.exif) {
+                    var resStr = '';
+                    for(var fieldName in meta.exif) {
+                        var v = meta.exif[fieldName];
+                        resStr = resStr + fieldName+': '+v+'\n';
+                    }
+                    $ei.append('<div class="exif"><h4>Exif</h4><pre>'+resStr+'</pre></div>');
+                }
+                if(meta.responseHeaders) {
+                    var resStr = '';
+                    for(var fieldName in meta.responseHeaders) {
+                        var v = meta.responseHeaders[fieldName];
+                        resStr = resStr + fieldName+': '+v+'\n';
+                    }
+                    $ei.append('<div class="responseHeaders"><h4>Response Headers</h4><pre>'+resStr+'</pre></div>');
                 }
             }
-            this.$el.append($byline);
-            this.$el.append(this.fileGroupsView.render().$el);
-            this.$el.append(this.fileActions.render().$el);
+            // this.$panelFoot.append(this.$byline);
+            this.$tdActions.append(this.fileActions.render().$el);
+            
             this.setElement(this.$el);
             return this;
         },
         events: {
-          "click": "select",
-          "touchstart input": "touchstartstopprop"
+          "click": "clickSelect",
+          "touchstart input": "touchstartstopprop",
+          "click .byline a": "clickByline"
+        },
+        clickByline: function() {
+            this.model.collection.trigger('goToNavigatePath', this.model);
+            return false;
         },
         touchstartstopprop: function(e) {
             e.stopPropagation();
         },
         select: function() {
-            // One click to select, another to deselect.  Can only have one selection at a time.
-            
-            if(this.hasOwnProperty('list') && this.list.hasOwnProperty('multiSelect') && this.list.multiSelect) {
-                this.$el.addClass("selected");
-                this.$el.attr("selected", true);
-            } else {
-            
-                var deselectSiblings = function(el) {
-                    el.siblings().removeClass('selected');
-                    el.siblings().removeAttr('selected');
-                }
-                
-                if(this.$el.hasClass('selected')) {
-                    this.$el.removeClass("selected");
-                    this.$el.removeAttr('selected');
-                    
-                    // Un Filter the Actions List
-                    //body.actionsListView.filterSession(false);
-                    //this.trigger('select', true);
-                } else {
-                    deselectSiblings(this.$el);
-                    this.$el.addClass("selected");
-                    this.$el.attr("selected", true);
-                    //this.trigger('select', false);
-                }
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('selected', this);
             }
-            this.trigger('resize');
+        },
+        deselect: function() {
+            this.$el.removeClass("selected");
+            this.$el.removeAttr('selected');
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('deselected', this);
+            }
+        },
+        clickSelect: function(e) {
+            var self = this;
+            var $et = $(e.target);
+            if($et.parents('.actions').length) {
+            } else {
+                // One click to select, another to deselect.  Can only have one selection at a time.
+                // if(this.hasOwnProperty('list') && this.list.hasOwnProperty('multiSelect') && this.list.multiSelect) {
+                    // this.$el.addClass("selected");
+                    // this.$el.attr("selected", true);
+                // } else {
+                
+                    var deselectSiblings = function(el) {
+                        el.siblings().removeClass('selected');
+                        el.siblings().removeAttr('selected');
+                    }
+                    
+                    if(this.$el.hasClass('selected')) {
+                        this.deselect();
+                        // Un Filter the Actions List
+                        //body.actionsListView.filterSession(false);
+                        //this.trigger('select', true);
+                    } else {
+                        // deselectSiblings(this.$el);
+                        this.select();
+                        //this.trigger('select', false);
+                    }
+                    
+                // }
+                // this.trigger('resize');
+            }
         },
         remove: function() {
-          $(this.el).remove();
+            if(this.$el.hasClass('selected')) {
+                this.deselect();
+            }
+            this.$el.remove();
+        }
+    });
+    
+    var FileAvatar = Backbone.View.extend({
+        tagName: "span",
+        className: "fileAvatar panel panel-default",
+        initialize: function() {
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
+            var opts = {
+                model: this.model, 
+                actionOptions: {
+                    fav: {fieldName: 'metadata.fav'},
+                    tags: {fieldName: 'metadata.tags'},
+                    groups: {fieldName: 'metadata.groups'}
+                }
+            }
+            if(this.model.get('metadata').src) {
+                var src = this.model.get('metadata').src;
+                var modelName = src.substr(0, src.length-1);
+                opts.actionOptions.more = {
+                    "deleteSrc": {
+                        title: "Delete "+modelName,
+                        glyphicon: 'trash',
+                        action: function(model) {
+                            if(confirm("Are you sure that you want to delete the source "+modelName+"?")) {
+                                console.log(typeof model.url);
+                                console.log(model.url);
+                                model.url = model.url() + '/src';
+                                // model.url = model.url+'/src';
+                                // return;
+                                model.destroy({success: function(model, response) {
+                                  console.log('deleted src');
+                                }, 
+                                error: function(model, response) {
+                                    console.log(arguments);
+                                },
+                                wait: true});
+                            }
+                        }
+                    }
+                }
+            }
+            this.fileActions = new utils.ModelActionsView(opts);
+            this.fileActions.on('goToTagName', function(tagName){
+                app.collection.view.tagsView.tagSelectView.selectTagByName(tagName);
+            });
+            this.$panelHead = $('<div class="panel-heading"></div>');
+            this.$panelBody = $('<div class="panel-body"></div>');
+            this.$panelFoot = $('<div class="panel-footer"></div>');
+            // this.$checkbox = $('<input type="checkbox" name="select" />');
+            this.$caption = $('<span class="caption"></span>');
+            this.$byline = $('<span class="byline"></span>');
+            this.$extraInfo = $('<div class="extraInfo"><h3>Metadata</h3></div>');
+            this.$icon = $('<span class="contentIcon"></span>');
+            this.$filename = $('<span class="filename"></span>');
+        },
+        render: function() {
+            // this.$el.html('');
+            this.$el.append(this.$panelHead);
+            this.$el.append(this.$panelBody);
+            this.$el.append(this.$panelFoot);
+            // this.$el.append(this.$checkbox);
+            var contentType = this.model.get('contentType');
+            this.$icon.addClass(contentType.substr(0, contentType.indexOf('/')));
+            if(contentType.indexOf('image') === 0) {
+                if(this.model.get('length') < 1000000) {
+                    var $img = $('<img src="'+this.model.getFilenameSrc()+'" />');
+                    this.$icon.html($img);
+                } else {
+                    // too large to download on render
+                }
+            } else {
+                this.$icon.html('<span class="contentTypeIcon"><span class="glyphicon"> </span></span>');
+                this.$icon.find('.glyphicon').addClass('glyphicon-'+this.model.getContentTypeGlphyicon());
+            }
+            this.$panelBody.append(this.$icon);
+            this.$panelBody.append(this.$extraInfo);
+            // this.$el.append('<span class="filename" title="'+this.model.get('filename')+'"><a href="/api/files/'+this.model.get('filename')+'" target="_blank">'+this.model.get('filename')+'</a></span>');
+            this.$filename.attr('title', this.model.get('filename'));
+            this.$filename.html('<a href="/api/files/'+encodeURIComponent(this.model.get('filename'))+'" target="_blank">'+this.model.get('filename')+'</a>');
+            this.$panelHead.append(this.$filename);
+            
+            this.$caption.html('');
+            // this.$caption.find('.glyphicon').addClass('glyphicon-'+this.model.getContentTypeGlphyicon());
+            this.$caption.append('<span class="contentType">'+this.model.get('contentType')+'</span>');
+            this.$caption.append('<span class="contentLength">'+this.model.getLengthFormatted()+'</span>');
+            this.$panelFoot.append(this.$caption);
+            
+            var $at = $('<a href="'+this.model.getNavigateUrl()+'" class="uploadDate">'+this.model.get('uploadDate')+'</a>');
+            if(window.clock) {
+                $at.attr('title', clock.moment(this.model.get('uploadDate')).format('LLLL'));
+                $at.html(clock.moment(this.model.get('uploadDate')).calendar());
+            }
+            this.$byline.html($at);
+            if(this.model.has('metadata')) {
+                var meta = this.model.get('metadata');
+                var $ei = this.$el.find('.extraInfo').html('<h3>Metadata</h3>');
+                if(this.model.get('metadata').owner) {
+                    // $byline.append('<span class="owner"> by '+this.model.get('metadata').owner.name+'</span>');
+                }
+                if(meta.refs) {
+                    var refs = '';
+                    for(var r in meta.refs) {
+                        var ref = meta.refs[r];
+                        var refUrl = '/'+ref.col+'/id/'+ref.id;
+                        refs = refs + '<div class="ref"><a href="'+refUrl+'" target="_blank">'+ref.col+' '+ref.id+'</a></div>';
+                    }
+                    $ei.append('<div class="refs"><h4>Refs</h4>'+refs+'</div>');
+                }
+                if(meta.src) {
+                    $ei.append('<div class="src"><h4>Src</h4>'+meta.src+'</div>');
+                }
+                if(meta.srcUrl) {
+                    $ei.append('<div class="srcUrl"><h4>Src URL</h4>'+meta.srcUrl+'</div>');
+                }
+                if(meta.exif) {
+                    var resStr = '';
+                    for(var fieldName in meta.exif) {
+                        var v = meta.exif[fieldName];
+                        resStr = resStr + fieldName+': '+v+'\n';
+                    }
+                    $ei.append('<div class="exif"><h4>Exif</h4><pre>'+resStr+'</pre></div>');
+                }
+                if(meta.responseHeaders) {
+                    var resStr = '';
+                    for(var fieldName in meta.responseHeaders) {
+                        var v = meta.responseHeaders[fieldName];
+                        resStr = resStr + fieldName+': '+v+'\n';
+                    }
+                    $ei.append('<div class="responseHeaders"><h4>Response Headers</h4><pre>'+resStr+'</pre></div>');
+                }
+            }
+            this.$panelFoot.append(this.$byline);
+            this.$el.append(this.fileActions.render().$el);
+            
+            
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+          "click": "clickSelect",
+          "touchstart input": "touchstartstopprop",
+          "click .byline a": "clickByline"
+        },
+        clickByline: function() {
+            this.model.collection.trigger('goToNavigatePath', this.model);
+            return false;
+        },
+        touchstartstopprop: function(e) {
+            e.stopPropagation();
+        },
+        select: function() {
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('selected', this);
+            }
+        },
+        deselect: function() {
+            this.$el.removeClass("selected");
+            this.$el.removeAttr('selected');
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('deselected', this);
+            }
+        },
+        clickSelect: function(e) {
+            var self = this;
+            var $et = $(e.target);
+            if($et.parents('.actions').length) {
+            } else {
+                // One click to select, another to deselect.  Can only have one selection at a time.
+                // if(this.hasOwnProperty('list') && this.list.hasOwnProperty('multiSelect') && this.list.multiSelect) {
+                    // this.$el.addClass("selected");
+                    // this.$el.attr("selected", true);
+                // } else {
+                
+                    var deselectSiblings = function(el) {
+                        el.siblings().removeClass('selected');
+                        el.siblings().removeAttr('selected');
+                    }
+                    
+                    if(this.$el.hasClass('selected')) {
+                        this.deselect();
+                        // Un Filter the Actions List
+                        //body.actionsListView.filterSession(false);
+                        //this.trigger('select', true);
+                    } else {
+                        // deselectSiblings(this.$el);
+                        this.select();
+                        //this.trigger('select', false);
+                    }
+                    
+                // }
+                // this.trigger('resize');
+            }
+        },
+        remove: function() {
+            if(this.$el.hasClass('selected')) {
+                this.deselect();
+            }
+            this.$el.remove();
+        }
+    });
+    
+    var FileFullView = Backbone.View.extend({
+        tagName: "span",
+        className: "file",
+        initialize: function() {
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
+            var opts = {
+                model: this.model, 
+                actionOptions: {
+                    fav: {fieldName: 'metadata.fav'},
+                    tags: {fieldName: 'metadata.tags'},
+                    groups: {fieldName: 'metadata.groups'}
+                }
+            }
+            if(this.model.get('metadata').src) {
+                var src = this.model.get('metadata').src;
+                var modelName = src.substr(0, src.length-1);
+                opts.actionOptions.more = {
+                    "deleteSrc": {
+                        title: "Delete "+modelName,
+                        glyphicon: 'trash',
+                        action: function(model) {
+                            if(confirm("Are you sure that you want to delete the source "+modelName+"?")) {
+                                console.log(typeof model.url);
+                                console.log(model.url);
+                                model.url = model.url() + '/src';
+                                // model.url = model.url+'/src';
+                                // return;
+                                model.destroy({success: function(model, response) {
+                                  console.log('deleted src');
+                                }, 
+                                error: function(model, response) {
+                                    console.log(arguments);
+                                },
+                                wait: true});
+                            }
+                        }
+                    }
+                }
+            }
+            this.fileActions = new utils.ModelActionsView(opts);
+            this.fileActions.on('goToTagName', function(tagName){
+                app.collection.view.tagsView.tagSelectView.selectTagByName(tagName);
+            });
+            this.$panelHead = $('<div class="panel-heading"></div>');
+            this.$panelBody = $('<div class="panel-body"></div>');
+            this.$panelFoot = $('<div class="panel-footer"></div>');
+            // this.$checkbox = $('<input type="checkbox" name="select" />');
+            this.$caption = $('<span class="caption"></span>');
+            this.$byline = $('<span class="byline"></span>');
+            this.$extraInfo = $('<div class="extraInfo"><h3>Metadata</h3></div>');
+            this.$icon = $('<span class="contentIcon"></span>');
+            this.$filename = $('<span class="filename"></span>');
+        },
+        render: function() {
+            // this.$el.html('');
+            this.$el.append(this.$panelHead);
+            this.$el.append(this.$panelBody);
+            this.$el.append(this.$panelFoot);
+            // this.$el.append(this.$checkbox);
+            var contentType = this.model.get('contentType');
+            this.$icon.addClass(contentType.substr(0, contentType.indexOf('/')));
+            if(contentType.indexOf('image') === 0) {
+                if(this.model.get('length') < 1000000) {
+                    var $img = $('<img src="'+this.model.getFilenameSrc()+'" />');
+                    this.$icon.html($img);
+                } else {
+                    // too large to download on render
+                    // var $img = $('<img src="'+this.model.getFilenameSrc()+'" />');
+                    // this.$icon.html('<span class="loadMedia">Image is '+this.model.getLengthFormatted()+', <button>Load</button>.</span>');
+                }
+            } else if(contentType.indexOf('audio') === 0) {
+                this.$media = $('<audio src="'+this.model.getFilenameSrc()+'" preload="metadata" controls></audio>');
+                this.$icon.html(this.$media);
+            } else if(contentType.indexOf('video') === 0) {
+                this.$media = $('<video src="'+this.model.getFilenameSrc()+'" preload="metadata" controls></video>');
+                this.$icon.html(this.$media);
+            } else {
+                this.$icon.html('<span class="contentTypeIcon"><span class="glyphicon"> </span></span>');
+                this.$icon.find('.glyphicon').addClass('glyphicon-'+this.model.getContentTypeGlphyicon());
+            }
+            this.$panelBody.append(this.$icon);
+            this.$panelBody.append(this.$extraInfo);
+            // this.$el.append('<span class="filename" title="'+this.model.get('filename')+'"><a href="/api/files/'+this.model.get('filename')+'" target="_blank">'+this.model.get('filename')+'</a></span>');
+            this.$filename.attr('title', this.model.get('filename'));
+            this.$filename.html('<a href="/api/files/'+encodeURIComponent(this.model.get('filename'))+'" target="_blank">'+this.model.get('filename')+'</a>');
+            this.$panelBody.append(this.$filename);
+            
+            this.$caption.html('');
+            // this.$caption.find('.glyphicon').addClass('glyphicon-'+this.model.getContentTypeGlphyicon());
+            this.$caption.html('<span class="contentTypeIcon"><span class="glyphicon"> </span></span>');
+            this.$caption.find('.glyphicon').addClass('glyphicon-'+this.model.getContentTypeGlphyicon());
+            this.$caption.append('<span class="contentType">'+this.model.get('contentType')+'</span>');
+            
+            
+            this.$caption.append('<span class="contentLength">'+this.model.getLengthFormatted()+'</span>');
+            this.$panelFoot.append(this.$caption);
+            
+            var $at = $('<a href="'+this.model.getNavigateUrl()+'" class="uploadDate">'+this.model.get('uploadDate')+'</a>');
+            if(window.clock) {
+                $at.attr('title', clock.moment(this.model.get('uploadDate')).format('LLLL'));
+                $at.html(clock.moment(this.model.get('uploadDate')).calendar());
+            }
+            this.$byline.html($at);
+            if(this.model.has('metadata')) {
+                var meta = this.model.get('metadata');
+                var $ei = this.$el.find('.extraInfo').html('<h3>Metadata</h3>');
+                if(this.model.get('metadata').owner) {
+                    // $byline.append('<span class="owner"> by '+this.model.get('metadata').owner.name+'</span>');
+                }
+                if(meta.refs) {
+                    var refs = '';
+                    for(var r in meta.refs) {
+                        var ref = meta.refs[r];
+                        var refUrl = '/'+ref.col+'/id/'+ref.id;
+                        refs = refs + '<div class="ref"><a href="'+refUrl+'" target="_blank">'+ref.col+' '+ref.id+'</a></div>';
+                    }
+                    $ei.append('<div class="refs"><h4>Refs</h4>'+refs+'</div>');
+                }
+                if(meta.src) {
+                    $ei.append('<div class="src"><h4>Src</h4>'+meta.src+'</div>');
+                }
+                if(meta.srcUrl) {
+                    $ei.append('<div class="srcUrl"><h4>Src URL</h4>'+meta.srcUrl+'</div>');
+                }
+                if(meta.exif) {
+                    var resStr = '';
+                    for(var fieldName in meta.exif) {
+                        var v = meta.exif[fieldName];
+                        resStr = resStr + fieldName+': '+v+'\n';
+                    }
+                    $ei.append('<div class="exif"><h4>Exif</h4><pre>'+resStr+'</pre></div>');
+                }
+                if(meta.responseHeaders) {
+                    var resStr = '';
+                    for(var fieldName in meta.responseHeaders) {
+                        var v = meta.responseHeaders[fieldName];
+                        resStr = resStr + fieldName+': '+v+'\n';
+                    }
+                    $ei.append('<div class="responseHeaders"><h4>Response Headers</h4><pre>'+resStr+'</pre></div>');
+                }
+            }
+            this.$panelFoot.append(this.$byline);
+            this.$el.append(this.fileActions.render().$el);
+            
+            
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+          "touchstart input": "touchstartstopprop",
+          "click .byline a": "clickByline"
+        },
+        clickByline: function() {
+            this.model.collection.trigger('goToNavigatePath', this.model);
+            return false;
+        },
+        touchstartstopprop: function(e) {
+            e.stopPropagation();
+        },
+        select: function() {
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('selected', this);
+            }
+        },
+        deselect: function() {
+            this.$el.removeClass("selected");
+            this.$el.removeAttr('selected');
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('deselected', this);
+            }
+        },
+        clickSelect: function(e) {
+            var self = this;
+            var $et = $(e.target);
+            if($et.parents('.actions').length) {
+            } else {
+                // One click to select, another to deselect.  Can only have one selection at a time.
+                // if(this.hasOwnProperty('list') && this.list.hasOwnProperty('multiSelect') && this.list.multiSelect) {
+                    // this.$el.addClass("selected");
+                    // this.$el.attr("selected", true);
+                // } else {
+                
+                    var deselectSiblings = function(el) {
+                        el.siblings().removeClass('selected');
+                        el.siblings().removeAttr('selected');
+                    }
+                    
+                    if(this.$el.hasClass('selected')) {
+                        this.deselect();
+                        // Un Filter the Actions List
+                        //body.actionsListView.filterSession(false);
+                        //this.trigger('select', true);
+                    } else {
+                        // deselectSiblings(this.$el);
+                        this.select();
+                        //this.trigger('select', false);
+                    }
+                    
+                // }
+                // this.trigger('resize');
+            }
+        },
+        remove: function() {
+            if(this.$el.hasClass('selected')) {
+                this.deselect();
+            }
+            this.$el.remove();
         }
     });
     
@@ -601,7 +1036,6 @@
                 formData.append("metadata", JSON.stringify(self.options.metadata));
             }
             formData.append("files", blobOrFile);
-            xhr.open("POST", "/api/files", true);
             xhr.addEventListener("error", onError, false);
             xhr.addEventListener("readystatechange", onReady, false);
             xhr.onload = function(e) {
@@ -615,12 +1049,21 @@
                 self.trigger('uploaded', {localfile: blobOrFile, data: data});
                 if (callback) callback(data);
             };
+            // xhr.upload.addEventListener("progress", function(){
+            //     console.log(arguments);
+            // }, false);
+            // xhr.onprogress = function(e) {
+            //     console.log('onprogress')
+            //     console.log(e)
+            // }
             xhr.upload.onprogress = function(e) {
+                // console.log(e);
                 if (e.lengthComputable) {
                     self.trigger('progress', {localfile: blobOrFile, loaded: e.loaded, total: e.total});
                 }
             };
-            xhr.setRequestHeader('cache-control', 'no-cache');
+            xhr.open("POST", "/api/files", true);
+            xhr.setRequestHeader('Cache-Control', 'no-cache');
             xhr.send(formData);
         },
         render: function() {
@@ -678,6 +1121,8 @@
         initialize: function(options) {
             var self = this;
             self.options = options || {};
+            this.dragTxt = 'Drag files here';
+            this.dropTxt = 'Drop files';
         },
         uploadFile: function(blobOrFile, callback) {
             var self = this;
@@ -770,24 +1215,30 @@
                 }
             };
             process();
+            this.$el.html(this.dragTxt);
             this.$el.removeClass('dragover');
+            this.trigger('dragleave');
             return false;
         },
         handleDragEnter: function(e) {
             e.originalEvent.stopPropagation();
             e.originalEvent.preventDefault();
+            this.$el.html(this.dropTxt);
             this.$el.addClass('dragover');
+            this.trigger('dragover');
             e.originalEvent.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
             return false;
         },
         handleDragLeave: function(e) {
             e.originalEvent.stopPropagation();
             e.originalEvent.preventDefault();
+            this.$el.html(this.dragTxt);
             this.$el.removeClass('dragover');
+            this.trigger('dragleave');
             return false;
         },
         remove: function() {
-          $(this.el).remove();
+            this.$el.remove();
         }
     });
     
@@ -803,11 +1254,18 @@
                 self.appendFile(f);
             });
             this.fileForm.on('progress', function(progress) {
+                console.log(progress);
                 var name = progress.localfile.name;
                 var $file = self.$uploadFileList.find('[data-filename="'+name+'"]');
                 $file.find('.progress').show();
                 var per = Math.floor((progress.loaded / progress.total) * 100);
                 $file.find('.progress-bar').css('width', per+'%');
+                
+                if(filesize) {
+                    $file.find('.size').html(filesize(progress.total, {unix: true}));
+                } else {
+                    $file.find('.size').html(progress.total);
+                }
             });
             this.fileForm.on('uploaded', function(data) {
                 if(_.isArray(data)) {
@@ -821,6 +1279,12 @@
                 self.trigger('uploaded', data.data);
             });
             this.uploadDragDrop = new DragDropView(options);
+            this.uploadDragDrop.on('dragover', function() {
+                self.$el.addClass('dragover');
+            });
+            this.uploadDragDrop.on('dragleave', function() {
+                self.$el.removeClass('dragover');
+            });
             this.uploadDragDrop.on('file', function(f) {
                 self.appendFile(f);
             });
@@ -864,9 +1328,13 @@
             var self = this;
             var $localFile = $('<li class="localFile"></li>');
             var $title = $('<span class="title"></span> ');
+            
             $title.html(f.webkitRelativePath || f.mozFullPath || f.name);
             $localFile.append($title);
-            $localFile.append('<div class="progress progress-striped"><div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"><span class="sr-only">0% Complete</span></div></div>');
+            
+            $localFile.append('<div class="progress progress-striped active"><div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"><span class="sr-only">0% Complete</span></div></div>');
+            $localFile.append('<span class="size"></span>');
+            
             var url;
             if(window.createObjectURL){
               url = window.createObjectURL(f)

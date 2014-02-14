@@ -959,6 +959,10 @@
         }
     });
 
+    var getFilenameSrc = function(filename) {
+        return '/api/files/'+encodeURIComponent(filename);
+    }
+
     var RowView = Backbone.View.extend({
         tagName: "li",
         className: "sub",
@@ -983,11 +987,11 @@
                     }
                     var $channel = $('<span class="channel"></span>');
                     if(urlDoc.channel.url && urlDoc.channel.url.faviconfile && urlDoc.channel.url.faviconfile.contentType.indexOf('image') === 0) {
-                        $channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span>');
+                        $channel.append('<span class="favicon"><img src="'+getFilenameSrc(urlDoc.channel.url.faviconfile.filename)+'" /></span>');
                     } else if(this.model.has('channelUrlDoc') && this.model.get('channelUrlDoc').faviconfile && this.model.get('channelUrlDoc').faviconfile.contentType.indexOf('image') === 0) {
-                        $channel.append('<span class="favicon"><img src="/api/files/'+this.model.get('channelUrlDoc').faviconfile.filename+'" /></span>');
+                        $channel.append('<span class="favicon"><img src="'+getFilenameSrc(this.model.get('channelUrlDoc').faviconfile.filename)+'" /></span>');
                     } else if(urlDoc.channel && urlDoc.channel.hasOwnProperty('image')) {
-                        $channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.image.filename+'" /></span>');
+                        $channel.append('<span class="favicon"><img src="'+getFilenameSrc(urlDoc.channel.image.filename)+'" /></span>');
                     } else {
                         $channel.append('<span class="favicon"><img src="favicon.ico" /></span>');
                     }
@@ -1015,7 +1019,7 @@
                     var channelUrlDoc = this.model.get('channelUrlDoc');
                     var $channel = $('<span class="channel"></span>');
                     if(channelUrlDoc.faviconfile && channelUrlDoc.faviconfile.contentType.indexOf('image') === 0) {
-                        $channel.append('<span class="favicon"><img src="/api/files/'+channelUrlDoc.faviconfile.filename+'" /></span>');
+                        $channel.append('<span class="favicon"><img src="'+getFilenameSrc(channelUrlDoc.faviconfile.filename)+'" /></span>');
                     } else {
                         $channel.append('<span class="favicon"><img src="favicon.ico" /></span>');
                     }
@@ -1200,11 +1204,11 @@
                 if(urlDoc.channel) {
                     
                     if(urlDoc.channel.url && urlDoc.channel.url.faviconfile && urlDoc.channel.url.faviconfile.contentType.indexOf('image') === 0) {
-                        this.$channel.html('<span class="favicon"><img src="/api/files/'+urlDoc.channel.url.faviconfile.filename+'" /></span> ');
+                        this.$channel.html('<span class="favicon"><img src="'+getFilenameSrc(urlDoc.channel.url.faviconfile.filename)+'" /></span> ');
                     } else if(this.model.has('channelUrlDoc') && this.model.get('channelUrlDoc').faviconfile && this.model.get('channelUrlDoc').faviconfile.contentType.indexOf('image') === 0) {
-                        this.$channel.html('<span class="favicon"><img src="/api/files/'+this.model.get('channelUrlDoc').faviconfile.filename+'" /></span> ');
+                        this.$channel.html('<span class="favicon"><img src="'+getFilenameSrc(this.model.get('channelUrlDoc').faviconfile.filename)+'" /></span> ');
                     } else if(urlDoc.channel && urlDoc.channel.hasOwnProperty('image')) {
-                        this.$channel.append('<span class="favicon"><img src="/api/files/'+urlDoc.channel.image.filename+'" /></span>');
+                        this.$channel.append('<span class="favicon"><img src="'+getFilenameSrc(urlDoc.channel.image.filename)+'" /></span>');
                     } else {
                         this.$channel.html('<span class="favicon"><img src="favicon.ico" /></span> ');
                     }

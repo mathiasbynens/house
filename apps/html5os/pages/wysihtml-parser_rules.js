@@ -422,7 +422,7 @@ var wysihtml5ParserRules = {
             }
         },
         "style": {
-            "remove": 1
+            "remove": 0,
         },
         "device": {
             "remove": 1
@@ -539,7 +539,11 @@ var wysihtml5ParserRules = {
             "remove": 1
         },
         "script": {
-            "remove": 1
+            "remove": 0,
+            "check_attributes": {
+                "type": true,
+                "src": true,
+            }
         },
         "bdo": {
             "rename_tag": "span"
