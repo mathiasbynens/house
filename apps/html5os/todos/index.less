@@ -1,0 +1,118 @@
+body > .app {
+    padding-top: 0;
+}
+button.focusForm {
+}
+.allTodos {
+    position: relative;
+}
+.list-filters {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+.focusFormCol, .list-filters {
+    padding: 16px;
+}
+.list-pager {
+    display: none;
+}
+.list-filters[data-filter="showTodo"] {
+    .showAll {
+        display: block;
+    }
+    .showTodo {
+        display: none;
+    }
+}
+.list-filters[data-filter="showAll"] {
+    .showAll {
+        display: none;
+    }
+    .showTodo {
+        display: block;
+    }
+}
+.todos {
+    &[data-filter-list-id] {
+        .list-group-item-text {
+            display: none;
+        }
+    }
+    .todo {
+        .check {
+        }
+        .title {
+            padding: 8px 12px;
+        }
+        .edit {
+            display: none;
+        }
+        input[name="dueAt-date"], .actions {
+            float: right;
+        }
+        input[type="date"], input[type="text"], .todoListSelect, .actions {
+            display: none;
+        }
+        .list-group-item-text {
+            clear: both;
+            .listRef {
+                padding: 4px;
+            }
+        }
+        .moreInfo {
+            text-align: right;
+        }
+        .form-control {
+            font-size: 20px;
+            color: @list-group-active-text-color;
+        }
+        input[type="checkbox"].form-control {
+            margin: 0 0;
+        }
+        &.selected {
+            .list-group-item-heading {
+                
+            }
+            .list-group-item-text {
+                .listRef {
+                }
+            }
+            input[type="date"], input[type="text"], .todoListSelect, .actions {
+                display: inline;
+            }
+            .listRef, .title, .due {
+                display: none;
+            }
+            input, select {
+                background: transparent;
+                border: 0;
+            }
+        }
+    }
+}
+.todoLists {
+    a {
+        .center {
+            input {
+                display: none;
+            }
+        }
+    }
+    a.selected {
+        .center {
+            input {
+                display: inline;
+            }
+            .name {
+                display: none;
+            }
+        }
+    }
+    .right {
+        text-align: right;
+    }
+}
+option {
+    background: @brand-primary;
+}

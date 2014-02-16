@@ -1,15 +1,15 @@
 (function() {
     
-    var Model = Backbone.Model.extend({
+    var Model = Backbone.House.Model.extend({
         collectionName: "todos",
-        initialize: function(attr, opts) {
-            var colOpts = {
-                image: this
-            };
-            this.on("change", function(model, options){
-                console.log(arguments);
-            });
-            this.views = {};
+        initialize: function(attr, options) {
+            this.TableRowView = RowView;
+            this.RowView = RowView;
+            this.AvatarView = RowView;
+            this.FullView = RowView;
+            options = options || {};
+            options.ownerFieldName = 'owner';
+            Backbone.House.Model.prototype.initialize.apply(this, arguments);
             this.statusNames = { 0: "todo", 1: "done" };
         },
         defaults: function() {
@@ -30,29 +30,6 @@
             saveModel.done(function() {
                 self.renderViews();
             });
-        },
-        getOwner: function(callback) {
-            if(this.has('owner')) {
-                var owner = this.get('owner');
-                var user = window.usersCollection.getOrFetch(owner.id, callback);
-            }
-        },
-        getRow: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.row) {
-                var row = this.row = new RowView(options);
-                this.views.row = row;
-            }
-            return this.row;
-        },
-        renderViews: function() {
-            for(var i in this.views) {
-                this.views[i].render();
-            }
-        },
-        getNavigatePath: function() {
-            return 'id/'+this.id;
         },
         getList: function(callback) {
             if(this.has('list')) {
@@ -280,9 +257,9 @@
         initialize: function() {
             var self = this;
             self.loading = false;
-            this.$filters = $('<div class="list-filters" data-filter="showTodo"><button class="showTodo">show todos</button> <button class="showAll">show all</button></div>');
+            this.$filters = $('<div class="list-filters" data-filter="showTodo"><button class="showTodo btn btn-default">show todos</button> <button class="showAll btn btn-default">show all</button></div>');
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> todos</div>');
-            var $ul = this.$ul = $('<ul class="todos list-unstyled"></ul>');
+            var $ul = this.$ul = $('<div class="todos list-group"></div>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
@@ -642,7 +619,7 @@
         tagName: "span",
         className: "delete",
         render: function() {
-            this.$el.html('<button>x</button>');
+            this.$el.html('<button class="btn btn-primary">x</button>');
             this.setElement(this.$el);
             return this;
         },
@@ -874,8 +851,8 @@
 
 
     var RowView = Backbone.View.extend({
-        tagName: "li",
-        className: "todo",
+        tagName: "a",
+        className: "todo list-group-item",
         initialize: function(options) {
             if(options.list) {
                 this.list = options.list;
@@ -883,27 +860,46 @@
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             this.actions = new ActionsView({model: this.model});
-            this.$check = $('<input class="check" type="checkbox" />');
-            this.$title = $('<span class="title"></span>');
+            this.$check = $('<input class="check form-control" type="checkbox" />');
+            this.$title = $('<div class="title"></div>');
             this.$listRef = $('<span class="listRef"></span>');
             
-            this.$titleInput = $('<input type="text" name="title" />');
-            this.$dueAtInput = $('<span class="due">due on <span class="dueAt"></span></span>');
+            this.$titleInput = $('<input type="text" name="title" class="form-control" />');
+            this.$dueAtInput = $('<span class="due"><span class="dueAt"></span></span>');
             this.$dueAtDateInput = $('<input name="dueAt-date" type="date" title="Due At" />');
             //this.$dueAtTimeInput = $('<input name="dueAt-time" type="time" />');
+            // this.$a = $('<a href="#" class="list-group-item"></a>');
             
             this.selectTodoListView = new todoListsCollection.getSelectView({todo: this.model});
+            this.$header = $('<h4 class="list-group-item-heading row">\n\
+            <span class="doneCheck col-xs-1"></span>\n\
+            <span class="titleInput col-xs-7"></span>\n\
+            <span class="moreInfo col-xs-4"></span>\n\
+            </h4>');
+            this.$text = $('<p class="list-group-item-text row">\n\
+            <span class="listColor col-xs-1">&nbsp;</span>\n\
+            <span class="listInfo col-xs-11"></span>\n\
+            </p>');
+            
+            this.$header.find('.doneCheck').append(this.$check);
+            this.$header.find('.titleInput').append(this.$title);
+            this.$header.find('.titleInput').append(this.$titleInput);
+            this.$header.find('.moreInfo').append(this.$dueAtInput);
+            this.$header.find('.moreInfo').append(this.$dueAtDateInput);
         },
         render: function() {
             var self = this;
-            console.log('render todo row');
+            // this.$el.append(this.$a);
+            // console.log('render todo row');
             if(this.model.get('done')) {
                 this.$check.attr('checked', 'checked');
             } else {
                 this.$check.removeAttr('checked');
             }
-            
+            this.$el.append(this.$header);
+            this.$el.append(this.$text);
             if(this.model.get('title')) {
+                // this.$header.append(this.model.get('title'));
                 this.$title.text(this.model.get('title'));
                 this.$titleInput.val(this.model.get('title'));
             }
@@ -936,7 +932,8 @@
                         self.$listRef.html($listA);
                         
                         if(list.has('color')) {
-                            self.$el.css('border-left-color', list.get('color'));
+                            console.log(list.get('color'))
+                            self.$el.find('.listColor').css('background-color', list.get('color'));
                         }
                     });
                 } else {
@@ -950,17 +947,12 @@
                 this.selectTodoListView.val('');
             }
             
-            this.$el.append(this.$check);
-            this.$el.append(this.$titleInput);
-            this.$el.append(this.$dueAtInput);
-            this.$el.append(this.$dueAtDateInput);
-            //this.$el.append(this.$dueAtTimeInput);
-            this.$el.append(this.$title);
-            this.$el.append(this.$listRef);
+            // this.$el.append(this.$check);
+            this.$text.find('.listInfo').html(this.$listRef);
+            this.$text.find('.listInfo').append(this.selectTodoListView.render().$el);
+            // this.$header.append(this.$edit);
             
-            this.$el.append(this.selectTodoListView.render().$el);
-            
-            this.$el.append(this.actions.render().$el);
+            this.$dueAtDateInput.before(this.actions.render().$el);
             
             this.$el.attr('data-id', this.model.id);
             this.setElement(this.$el);
@@ -996,7 +988,7 @@
             if(this.isSelected()) {
                 deselect = true;
             }
-            this.$el.addClass("selected");
+            this.$el.addClass("selected").addClass("active").siblings().removeClass("active");
             this.$el.attr("selected", true);
             if(this.hasOwnProperty('list')) {
                 this.list.trigger('select', this);
@@ -1154,10 +1146,8 @@
                 }
             }
             
-            this.$inputTitle = $('<input type="text" name="title" placeholder="The next thing to do..." autocomplete="off" />');
-            this.$form = $('<form class="todo"><fieldset></fieldset><controls></controls></form>');
-            this.$form.find('fieldset').append(this.$inputTitle);
-            this.$form.find('controls').append('<input type="submit" value="Save" />');
+            this.$form = $('<form class="todo"><div class="input-group"><input type="text" name="title" placeholder="The next thing to do..." autocomplete="off" class="form-control" /><span class="input-group-btn"><button class="btn btn-default" type="button">Save</button></span></div></form>');
+            this.$inputTitle = this.$form.find('input');
         },
         render: function() {
             var self = this;

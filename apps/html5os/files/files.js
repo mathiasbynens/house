@@ -44,6 +44,7 @@
                                     // }
                                 }
                                 var listOpts = {
+                                    className: 'houseCollection files table-responsive',
                                     headerEl: $('#navbar-header-form'),
                                     search: {
                                         'fieldName': 'filename'

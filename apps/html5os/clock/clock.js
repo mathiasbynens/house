@@ -16,6 +16,18 @@
                 self.init = true;
                 self.trigger('init');
                 self.startClocks();
+                
+                moment.lang('en', {
+                    calendar : {
+                        lastDay : 'dd LT',
+                        sameDay : 'dd LT',
+                        nextDay : '[Tomorrow at] LT',
+                        lastWeek : 'ddd LT',
+                        nextWeek : '[next] ddd [at] LT',
+                        sameElse : 'L'
+                    }
+                });
+                
                 self.moment = moment;
             });
             this.$clock = $('<span class="clock"></span>');

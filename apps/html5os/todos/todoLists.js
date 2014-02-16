@@ -1,16 +1,16 @@
 (function() {
     
-    var Model = Backbone.Model.extend({
+    var Model = Backbone.House.Model.extend({
         collectionName: "todoLists",
-        initialize: function(attr, opts) {
-            var colOpts = {
-                image: this
-            };
-            this.on("change", function(model, options){
-                console.log(arguments);
-            });
-            this.views = {};
+        initialize: function(attr, options) {
+            this.TableRowView = RowView;
+            this.RowView = RowView;
+            this.AvatarView = RowView;
+            this.FullView = RowView;
+            options = options || {};
+            options.ownerFieldName = 'owner';
             this.statusNames = { 0: "todo", 1: "done" };
+            Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
         defaults: function() {
           return {
@@ -19,26 +19,6 @@
         },
         getStatus: function() {
             return this.statusNames[this.get("done")];
-        },
-        getOwner: function(callback) {
-            if(this.has('owner')) {
-                var owner = this.get('owner');
-                var user = window.usersCollection.getOrFetch(owner.id, callback);
-            }
-        },
-        getRow: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.row) {
-                var row = this.row = new RowView(options);
-                this.views.row = row;
-            }
-            return this.row;
-        },
-        renderViews: function() {
-            for(var i in this.views) {
-                this.views[i].render();
-            }
         },
         slugStr: function(str) {
             return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
@@ -270,10 +250,11 @@
             var self = this;
             self.loading = false;
             this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> lists</div>');
-            var $ul = this.$ul = $('<ul class="todoLists list-unstyled"></ul>');
+            var $ul = this.$ul = $('<div class="todoLists list-group"></div>');
             this.collection.on('add', function(doc) {
                 var view;
                 if(self.layout === 'row') {
+                    console.log(self);
                     view = doc.getRow({list: self});
                 }
                 self.appendRow(view);
@@ -322,6 +303,7 @@
         },
         getDocLayoutView: function(doc) {
             var view;
+            var self = this;
             if(this.layout === 'row') {
                 view = doc.getRow({list: self});
             } else if(this.layout === 'avatar') {
@@ -502,7 +484,7 @@
         tagName: "span",
         className: "delete",
         render: function() {
-            this.$el.html('<button>delete</button>');
+            this.$el.html('<button class="btn btn-link glyphicon glyphicon-trash"></button>');
             this.setElement(this.$el);
             return this;
         },
@@ -734,20 +716,31 @@
 
 
     var RowView = Backbone.View.extend({
-        tagName: "li",
-        className: "todoList",
+        tagName: "a",
+        className: "list-group-item",
         initialize: function(options) {
             if(options.list) {
                 this.list = options.list;
             }
+            console.log(this.list);
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             this.actions = new ActionsView({model: this.model});
             this.$name = $('<span class="name"></span>');
             this.$color = $('<span class="color"></span>');
-            this.$nameInput = $('<input type="text" name="name" />');
+            this.$nameInput = $('<input type="text" name="name" class="form-control" />');
             this.$colorInput = $('<input type="color" id="list-color" name="color" />'); ///  <label for="list-color">list color</label>
             this.$progress = $('<span class="progress"><span class="doneCount"></span> / <span class="todosCount"></span></span>');
+            
+            this.$header = $('<h4 class="list-group-item-heading row">\n\
+            <span class="left col-xs-1"></span>\n\
+            <span class="center col-xs-7"></span>\n\
+            <span class="right col-xs-4"></span>\n\
+            </h4>');
+            this.$text = $('<p class="list-group-item-text row">\n\
+            <span class="left col-xs-1"></span>\n\
+            <span class="center col-xs-11"></span>\n\
+            </p>');
         },
         render: function() {
             var self = this;
@@ -767,14 +760,15 @@
                 this.$progress.find('.todosCount').text(this.model.get('todosCount'));
             }
             
-            this.$el.append(this.$colorInput);
-            this.$el.append(this.$color);
-            this.$el.append(this.$name);
-            this.$el.append(this.$nameInput);
+            this.$el.append(this.$header);
+            this.$header.find('.left').append(this.$colorInput);
+            // this.$el.append(this.$color);
+            this.$header.find('.center').append(this.$name);
+            this.$header.find('.center').append(this.$nameInput);
             //this.$el.append(this.$progress);
+            this.$header.find('.right').append(this.actions.render().$el);
             
             this.$el.attr('data-id', this.model.id);
-            this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
         },
@@ -807,6 +801,7 @@
         },
         selectName: function(e) {
             if(this.hasOwnProperty('list')) {
+                console.log(this.list)
                 this.list.trigger('selectName', this);
             }
             this.trigger('selectName');
@@ -909,11 +904,8 @@
                 }
             }
             
-            this.$inputName = $('<input type="text" name="name" placeholder="New list name..." autocomplete="off" />');
-            
-            this.$form = $('<form class="todoList"><fieldset></fieldset><controls></controls></form>');
-            this.$form.find('fieldset').append(this.$inputName);
-            this.$form.find('controls').append('<input type="submit" value="Save" />');
+            this.$form = $('<form class="todoList"><div class="input-group"><input type="text" name="name" placeholder="New list name..." autocomplete="off" class="form-control" /><span class="input-group-btn"><input type="submit" value="Save" class="btn btn-default" /></span></div></form>');
+            this.$inputName = this.$form.find('input');
         },
         render: function() {
             var self = this;

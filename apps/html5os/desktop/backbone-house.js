@@ -6,6 +6,11 @@ Backbone.House.Model = Backbone.Model.extend({
         this.options = options || {};
         this.options.ownerFieldName = this.options.ownerFieldName || 'owner';
         this.options.userFieldName = this.options.userFieldName || 'user';
+        if(!this.attributes.at && this.id) {
+            var timestamp = this.id.toString().substring(0,8)
+            var date = new Date( parseInt( timestamp, 16 ) * 1000 )
+            this.attributes.at = date;
+        }
     },
     next: function() {
         return this.collection.next(this);
@@ -385,7 +390,7 @@ Backbone.House.Collection = Backbone.Collection.extend({
             callback(doc);
         } else {
             var options = {
-                "_id": id
+                "id": id
             };
             this.fetch({
                 data: options,
@@ -598,6 +603,7 @@ var ListSorts = Backbone.View.extend({
     clickSort: function(e) {
         var self = this;
         var $et = $(e.currentTarget);
+        $et.addClass('active').siblings().removeClass('active');
         var sortField = $et.attr('data-sort');
         if(this.sortFieldSelected && this.sortFieldSelected === sortField) {
             if(sortField.substr(-1) === '-') {
@@ -748,6 +754,7 @@ var ListFilters = Backbone.View.extend({
     clickFilter: function(e) {
         var self = this;
         var $et = $(e.currentTarget);
+        $et.addClass('active').siblings().removeClass('active');
         var f = $et.attr('data-filter');
         if(f === 'none') {
             // this.trigger('unfilter');
@@ -973,6 +980,7 @@ var ListPagination = Backbone.View.extend({
     selectPageSize: function(e) {
         // console.log(e)
         var $et = $(e.currentTarget);
+        $et.addClass('active').siblings().removeClass('active');
         var pageSize = parseInt($et.attr('data-size'), 10);
         this.options.list.setPageSize(pageSize);
         this.options.list.renderPage(this.options.list.currentPage);

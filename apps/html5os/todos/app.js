@@ -27,13 +27,15 @@
                     $('body').scrollTo($(todo.getRow().$el[0]));
                 },100);
             });
-            this.$el.find('ul.todos').after(self.todosFormView.render().$el);
+            this.$el.find('.todos').after(self.todosFormView.render().$el);
         },
         render: function() {
             var self = this;
-            this.$el.append('<button class="focusForm" title="New Todo">+</button>');
+            this.$el.append('<div style="clear: both;overflow: auto;"><span class="focusFormCol col-xs-1"><button class="focusForm form-control btn btn-primary" title="New Todo">+</button></span>\n\
+            <span class="col-xs-7"></span>\n\
+            <span class="col-xs-4"></span></div>');
             this.$el.append(self.todosView.render().$el);
-            this.$el.find('ul.todos').after(self.todosFormView.render().$el);
+            this.$el.find('.todos').after(self.todosFormView.render().$el);
             return this;
         },
         filterByTodoList: function(todoList) {
@@ -188,8 +190,8 @@
                 nav.router.navigate('', true);
             });
             this.bindRouter(nav.router);
+            nav.col.add({title: "Todo Lists", navigate: "lists"});
             nav.col.add({title: "All Todos", navigate: ""});
-            nav.col.add({title: "All Lists", navigate: "lists"});
             if(window.account && (account.isUser() || account.isAdmin())) {
             }
         },

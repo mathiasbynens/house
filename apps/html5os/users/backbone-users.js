@@ -1,35 +1,31 @@
 (function() {
     
-    var Model = Backbone.Model.extend({
+    var Model = Backbone.House.Model.extend({
         collectionName: "users",
-        initialize: function(attr, opts) {
-            var self = this;
-            var timestamp = this.id.toString().substring(0,8)
-            var date = new Date( parseInt( timestamp, 16 ) * 1000 )
-            this.attributes.at = date;
-            this.on("change", function(model, options){
-                //console.log(arguments);
-            });
-            this.views = {};
-        },
-        getOwner: function(callback) {
-            if(this.has('owner')) {
-                var owner = this.get('owner');
-                var user = window.usersCollection.getOrFetch(owner.id, callback);
-            }
-        },
-        getFullView: function(options) {
+        initialize: function(attr, options) {
+            this.TableRowView = RowView;
+            this.RowView = RowView;
+            this.AvatarView = AvatarView;
+            this.FullView = FullView;
             options = options || {};
-            options.model = this;
-            if (!this.fullView) {
-                var view = this.fullView = new FullView(options);
-                view.on('goToProfile', function(model){
-                    options.list.trigger('goToProfile', model);
-                });
-                this.views.fullView = view;
-            }
-            return this.fullView;
+            options.ownerFieldName = 'id';
+            Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
+        // getOwner: function(callback) {
+        //     window.usersCollection.getOrFetch(this.id, callback);
+        // },
+        // getFullView: function(options) {
+        //     options = options || {};
+        //     options.model = this;
+        //     if (!this.fullView) {
+        //         var view = this.fullView = new FullView(options);
+        //         view.on('goToProfile', function(model){
+        //             options.list.trigger('goToProfile', model);
+        //         });
+        //         this.views.fullView = view;
+        //     }
+        //     return this.fullView;
+        // },
         getWelcomeView: function(options) {
             console.log(options)
             options = options || {};
@@ -43,18 +39,18 @@
             }
             return this.welcomeView;
         },
-        getAvatar: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.avatar) {
-                var view = this.avatar = this.getNewAvatarNameView(options);
-                this.views.avatar = view;
-            }
-            return this.avatar;
-        },
-        getAvatarView: function(options) {
-            return this.getAvatar(options);
-        },
+        // getAvatar: function(options) {
+        //     options = options || {};
+        //     options.model = this;
+        //     if (!this.avatar) {
+        //         var view = this.avatar = this.getNewAvatarNameView(options);
+        //         this.views.avatar = view;
+        //     }
+        //     return this.avatar;
+        // },
+        // getAvatarView: function(options) {
+        //     return this.getAvatar(options);
+        // },
         getNewAvatarNameView: function(options) {
             if (!options) options = {};
             options.model = this;
@@ -71,20 +67,20 @@
         getUserView: function(options) {
             return this.getFullView(options);
         },
-        getRow: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.row) {
-                var row = this.row = new RowView(options);
-                this.views.row = row;
-            }
-            return this.row;
-        },
-        renderViews: function() {
-            for(var i in this.views) {
-                this.views[i].render();
-            }
-        },
+        // getRow: function(options) {
+        //     options = options || {};
+        //     options.model = this;
+        //     if (!this.row) {
+        //         var row = this.row = new RowView(options);
+        //         this.views.row = row;
+        //     }
+        //     return this.row;
+        // },
+        // renderViews: function() {
+        //     for(var i in this.views) {
+        //         this.views[i].render();
+        //     }
+        // },
         slugStr: function(str) {
             return str.toLowerCase().replace(/ /gi, '-');
         },
@@ -93,362 +89,23 @@
         },
         getNavigatePath: function() {
             if(this.has('name')) {
-                return this.get('name');
+                return 'user/'+this.get('name');
             } else {
-                return 'user/'+this.id;
+                return 'id/'+this.id;
             }
         }
     });
     
-    var Collection = Backbone.Collection.extend({
+    var Collection = Backbone.House.Collection.extend({
         model: Model,
         collectionName: 'users',
         url: '/api/users',
-        initialize: function() {
-            var self = this;
-            self.pageSize = 10;
-            this.resetFilters();
-            
-            require(['/desktop/socket.io.min.js'], function() {
-                var socketOpts = {};
-                if(window.location.protocol.indexOf('https') !== -1) {
-                    socketOpts.secure = true;
-                } else {
-                    socketOpts.secure = false;
-                }
-                var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
-                if(socket.socket.connected) {
-                    //console.log('already connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
-                }
-                socket.on('connect', function(data) {
-                    //console.log('connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
-                });
-                var insertOrUpdateDoc = function(doc) {
-                        //console.log(doc);
-                    if(_.isArray(doc)) {
-                        _.each(doc, insertOrUpdateDoc);
-                        return;s
-                    }
-                    var model = self.get(doc.id);
-                    if(!model) {
-                        var model = new self.model(doc);
-                        self.add(model);
-                    } else {
-                        //console.log(model);
-                        model.set(doc, {silent:true});
-                        model.renderViews();
-                    }
-                }
-                socket.on('insertedUsers', function(doc) {
-                    //console.log('inserted user');
-                    insertOrUpdateDoc(doc);
-                    self.count++;
-                    self.trigger('count', self.count);
-                });
-                socket.on('updatedUsers', function(doc) {
-                    insertOrUpdateDoc(doc);
-                });
-                socket.on('deletedUsers', function(id) {
-                    self.remove(id);
-                    self.count--;
-                    self.trigger('count', self.count);
-                });
-                
-                self.initialized = true;
-                self.trigger('initialized');
-            });
-        },
-        headCount: function(callback) {
-            var self = this;
-            var aj = $.ajax({type: "HEAD",url: self.url,data: {},
-                complete: function(json) {
-                    callback(aj.getResponseHeader('X-Count'));
-                },xhrFields: {withCredentials: true}
-            });
-        },
-        refreshCount: function() {
-            var self = this;
-            self.headCount(function(count){
-                self.count = count;
-                self.trigger('count', count);
-            });
-        },
-        load: function(options, success) {
-            var self = this;
-            if(!this.count) {
-                this.refreshCount();
-            }
-            if(!options) {
-                options = {};
-            }
-            if(!options.limit) {
-                options.limit = self.pageSize;
-            }
-            if(!options.sort) {
-                options.sort = "at-";
-            }
-            this.applyFilters(options);
-            return this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                    if(success) {
-                        success();
-                    }
-                },
-                error: function(collection, response){
-                }
-            });
-        },
-        getNextPage: function(callback) {
-            if(this.length < this.count) {
-                this.load({skip:this.length}, callback);
-            }
-        },
-        applyFilters: function(options) {
-            
-        },
-        updateFilter: function(filter) {
-            this.reset();
-            this.load();
-        },
-        comparator: function(doc) {
-            var d;
-            if(doc.get("at")) {
-                d = new Date(doc.get("at")).getTime();
-                return d * -1;
-            } else {
-                return 1;
-            }
-        },
-        resetFilters: function() {
-        },
-        getOrFetch: function(id, callback) {
-            var self = this;
-            if(!this.fetchingId) {
-                this.fetchingId = {};
-            }
-            if(this.fetchingId.hasOwnProperty(id) && this.fetchingId[id]) {
-                this.once('fetchedId:'+id, function(doc){
-                    if(doc) {
-                        callback(doc);
-                    } else {
-                        //self.getOrFetchUrl(url, callback);
-                        callback(false);
-                    }
-                });
-                return;
-            }
-            this.fetchingId[id] = true;
-            var doc;
-            doc = this.get(id);
-            if(doc) {
-                delete self.fetchingId[id];
-                callback(doc);
-                self.trigger('fetchedId:'+id, doc);
-            } else {
-                var options = { "id": id };
-                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                        delete self.fetchingId[id];
-                        if(response) {
-                            doc = self.get(id);
-                            callback(doc);
-                            self.trigger('fetchedId:'+id, doc);
-                        } else {
-                            callback(false);
-                            self.trigger('fetchedId:'+id);
-                        }
-                    },
-                    error: function(collection, response){
-                        callback(false);
-                    }
-                });
-            }
-        },
+        sortField: 'id-',
         getOrFetchName: function(slug, callback) {
-            var self = this;
-            var doc;
-            doc = _.first(this.where({name:slug}));
-            if(doc) {
-                callback(doc);
-            } else {
-                var options = { "name": slug };
-                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                        if(response) {
-                            doc = _.first(self.where({name:slug}));
-                            callback(doc);
-                        } else {
-                            callback(false);
-                        }
-                    },
-                    error: function(collection, response){
-                        callback(false);
-                    }
-                });
-            }
-        },
-        getView: function(options) {
-            var self = this;
-            if (!options) options = {};
-            if (!this.hasOwnProperty("view")) {
-                options.collection = this;
-                this.view = new ListView(options);
-                this.view.on("selected", function(m) {
-                    self.trigger("selected", m);
-                });
-            }
-            return this.view;
+            this.getOrFetchField('name', slug, callback);
         }
     });
     
-    var ListView = Backbone.View.extend({
-        layout: 'row',
-        initialize: function() {
-            var self = this;
-            self.loading = false;
-            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> users</div>');
-            var $ul = this.$ul = $('<ul class="images"></ul>');
-            this.collection.on('add', function(doc) {
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatar({list: self});
-                }
-                self.appendRow(view);
-                self.renderPager();
-                doc.on('remove', function(){
-                    view.$el.remove();
-                    return false;
-                });
-            });
-            this.collection.on('remove', function(doc, col, options) {
-                self.renderPager();
-            });
-            this.collection.on('count', function() {
-                self.renderPager();
-            });
-            this.collection.on('reset', function(){
-                self.render();
-            });
-            
-            $(window).scroll(function(){
-                if(self.$el.is(":visible")) {
-                  if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()){
-                    self.loading = true;
-                    self.loadMore();
-                  }
-                }
-            });
-        },
-        filter: function(f) {
-            var self = this;
-            if(f && typeof f == 'function') {
-                this.currentFilter = f;
-                this.collection.filter(function(model) {
-                  if(f(model)) {
-                      self.getDocLayoutView(model).$el.show();
-                      return true;
-                  }
-                  self.getDocLayoutView(model).$el.hide();
-                  return false;
-                });
-            } else {
-                // show all
-                self.$ul.children().show();
-                self.currentFilter = false;
-            }
-        },
-        events: {
-          "click .list-pager": "loadMore"
-        },
-        loadMore: function() {
-            var self = this;
-            this.collection.getNextPage(function(){
-                self.loading = false;
-            });
-        },
-        getDocLayoutView: function(doc) {
-            var view;
-            if(this.layout === 'row') {
-                view = doc.getRow({list: this});
-            } else if(this.layout === 'avatar') {
-                view = doc.getAvatar({list: this});
-            }
-            return view;
-        },
-        render: function() {
-            var self = this;
-            this.$el.html('');
-            this.$el.append(this.$ul);
-            this.$ul.html('');
-            //this.collection.sort({silent:true});
-            this.collection.each(function(doc){
-                var view = self.getDocLayoutView(doc);
-                self.appendRow(view);
-            });
-            this.$el.append(this.$pager);
-            this.renderPager();
-            this.trigger('resize');
-            this.setElement(this.$el);
-            return this;
-        },
-        renderPager: function() {
-            var len = this.collection.length;
-            var c = this.collection.count > len ? this.collection.count : len;
-            this.$pager.find('.list-length').html(len);
-            this.$pager.find('.list-count').html(c);
-        },
-        appendRow: function(row) {
-            var rank = new Date(row.model.get('at'));
-            rank = rank.getTime();
-            var rowEl = row.render().$el;
-            if(this.currentFilter && !this.currentFilter(row.model)) {
-                rowEl.hide();
-            }
-            rowEl.attr('data-sort-rank', rank);
-            var d = false;
-            var $lis = this.$ul.children();
-            var last = $lis.last();
-            var lastRank = parseInt(last.attr('data-sort-rank'), 10);
-            if(rank > lastRank) {
-                $lis.each(function(i,e){
-                    if(d) return;
-                    var r = parseInt($(e).attr('data-sort-rank'), 10);
-                    if(rank > r) {
-                        $(e).before(rowEl);
-                        d = true;
-                    }
-                });
-            }
-            if(!d) {
-                this.$ul.append(rowEl);
-            }
-        }
-    });
-    
-    
-    var ActionsView = Backbone.View.extend({
-        tagName: "span",
-        className: "actions",
-        render: function() {
-            var self = this;
-            this.$el.html('');
-            //self.$el.append(this.tagsView.render().$el);
-            //self.$el.append(this.groupsView.render().$el);
-            //self.$el.append(this.editView.render().$el);
-            //self.$el.append(this.deleteView.render().$el);
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            this.actions = [];
-            //this.groupsView = new GroupsView({id: this.id, model: this.model});
-            //this.tagsView = new TagsView({id: this.id, model: this.model});
-            //this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
-            //this.editView = new ActionEditView({id: this.id, model: this.model});
-        }
-    });
-
     var ActionFeedView = Backbone.View.extend({
         tagName: "span",
         className: "feed",
@@ -774,8 +431,8 @@
     });
 
     var RowView = Backbone.View.extend({
-        tagName: "li",
-        className: "row",
+        tagName: "tr",
+        className: "user",
         initialize: function(options) {
             if(options.list) {
                 this.list = options.list;
@@ -783,11 +440,15 @@
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             //this.actions = new ActionsView({id: this.id, model: this.model});
+            
+            this.$tdIcon = $('<td class="icon"></td>');
+            this.$tdName = $('<td class="name"></td>');
+            this.$tdGroups = $('<td class="groups"></td>');
+            this.$tdJoin = $('<td class="join"></td>');
         },
         render: function() {
-            this.$el.html('');
-            var $byline = $('<span class="byline"></span>');
-            this.$el.append('<span class="avatar"></span>');
+            // this.$el.html('');
+            
             if (this.model.has("avatar") && this.model.get("avatar")) {
                 var src = this.model.get("avatar");
                 if (typeof src == 'string') {
@@ -799,54 +460,66 @@
                 } else {
                     src = "/api/files/" + src;
                 }
-                this.$el.find('.avatar').append('<img src="' + src + '" />');
+                this.$tdIcon.html('<img src="' + src + '" />');
             }
             if(this.model.has('name')) {
-                this.$el.append('<strong class="name">'+this.model.get('name')+'</strong>');
+                this.$tdName.html(this.model.get('name'));
                 if(this.model.has('displayName')) {
-                    this.$el.append('<span class="displayName">'+this.model.get('displayName')+'</span>');
+                    // this.$el.append('<span class="displayName">'+this.model.get('displayName')+'</span>');
                 }
             }
             if(this.model.has('at')) {
-                var $at = $('<span class="at"></span>');
                 if(window.clock) {
-                    $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
-                    $at.html(clock.moment(this.model.get('at')).calendar());
+                    this.$tdJoin.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
+                    this.$tdJoin.html(clock.moment(this.model.get('at')).calendar());
                 } else {
-                    $at.html(this.model.get('at'));
+                    this.$tdJoin.html(this.model.get('at'));
                 }
-                $byline.append($at);
             }
             if(this.model.has('groups')) {
-                this.$el.append('<span class="groups">'+this.model.get('groups')+'</span>');
+                this.$tdGroups.html('<span class="groups">'+this.model.get('groups')+'</span>');
             }
-            this.$el.append($byline);
-            this.$el.attr('data-id', this.model.get("id"));
+            
+            this.$el.append(this.$tdIcon);
+            this.$el.append(this.$tdName);
+            this.$el.append(this.$tdGroups);
+            this.$el.append(this.$tdJoin);
+            
+            this.$el.attr('data-id', this.model.id);
             //this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
         },
-        events: {
-          "click": "select"
-        },
-        select: function(e) {
-            var deselectSiblings = function(el) {
-                el.siblings().removeClass('selected');
-                el.siblings().removeAttr('selected');
-            }
-            deselectSiblings(this.$el);
+        select: function() {
             this.$el.addClass("selected");
             this.$el.attr("selected", true);
-            if(this.hasOwnProperty('list')) {
-                this.list.trigger('select', this);
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('selected', this);
             }
-            this.trigger('select');
-            this.trigger('resize');
+        },
+        deselect: function() {
+            this.$el.removeClass("selected");
+            this.$el.removeAttr('selected');
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('deselected', this);
+            }
+        },
+        events: {
+          "click": "clickSelect"
+        },
+        clickSelect: function(e) {
+            if(this.$el.hasClass('selected')) {
+                this.deselect();
+            } else {
+                this.select();
+            }
         },
         remove: function() {
-          $(this.el).remove();
+            this.$el.remove();
         }
     });
+    
+    
     var FullView = Backbone.View.extend({
         tagName: "div",
         className: "fullView",
@@ -857,7 +530,7 @@
             }
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
-            this.actions = new ActionsView({id: this.id, model: this.model});
+            // this.actions = new ActionsView({id: this.id, model: this.model});
         },
         render: function() {
             var self = this;
@@ -1535,58 +1208,88 @@
     
     var AvatarView = Backbone.View.extend({
         tagName: "span",
-        className: "avatar",
+        className: "fileAvatar panel panel-default",
+        initialize: function(options) {
+            if(options.list) {
+                this.list = options.list;
+            }
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
+            //this.actions = new ActionsView({id: this.id, model: this.model});
+            
+            this.$panelHead = $('<div class="panel-heading"></div>');
+            this.$panelBody = $('<div class="panel-body"></div>');
+            this.$panelFoot = $('<div class="panel-footer"></div>');
+        },
         render: function() {
-            this.$el.html('');
-            var $byline = $('<span class="byline"></span>');
-            if(this.model.has('title')) {
-                this.$el.append('<strong class="title">'+this.model.get('title')+'</strong>');
+            // this.$el.html('');
+            
+            if (this.model.has("avatar") && this.model.get("avatar")) {
+                var src = this.model.get("avatar");
+                if (typeof src == 'string') {
+                } else if(src.hasOwnProperty('url')) {
+                    src = src.url;
+                }
+                if (src.indexOf("http") === 0) {
+                    
+                } else {
+                    src = "/api/files/" + src;
+                }
+                this.$panelBody.html('<img src="' + src + '" />');
             }
-            if(this.model.has('owner')) {
-                $byline.append(' by '+this.model.get('owner').name);
+            if(this.model.has('name')) {
+                this.$panelHead.html(this.model.get('name'));
+                if(this.model.has('displayName')) {
+                    // this.$el.append('<span class="displayName">'+this.model.get('displayName')+'</span>');
+                }
             }
-            if(this.model.has('msg')) {
-                var $msg = $('<span class="msg"></span>');
-                $msg.html(this.model.get('msg'));
-                this.$el.append($msg);
+            if(this.model.has('at')) {
+                if(window.clock) {
+                    this.$panelFoot.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
+                    this.$panelFoot.html(clock.moment(this.model.get('at')).calendar());
+                } else {
+                    this.$panelFoot.html(this.model.get('at'));
+                }
             }
-            this.$el.append($byline);
-            this.$el.attr('data-id', this.model.get("_id"));
+            if(this.model.has('groups')) {
+                // this.$panelFoot.html('<span class="groups">'+this.model.get('groups')+'</span>');
+            }
+            
+            this.$el.append(this.$panelHead);
+            this.$el.append(this.$panelBody);
+            this.$el.append(this.$panelFoot);
+            
+            this.$el.attr('data-id', this.model.id);
             //this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
         },
-        initialize: function(options) {
-            if(options && options.list) {
-                this.list = options.list;
+        select: function() {
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('selected', this);
             }
-            if(this.model) {
-                this.model.bind('change', this.render, this);
-                this.model.bind('destroy', this.remove, this);
+        },
+        deselect: function() {
+            this.$el.removeClass("selected");
+            this.$el.removeAttr('selected');
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('deselected', this);
             }
         },
         events: {
-          "click": "select"
+          "click": "clickSelect"
         },
-        select: function(e) {
-            var deselectSiblings = function(el) {
-                el.siblings().removeClass('selected');
-                el.siblings().removeAttr('selected');
+        clickSelect: function(e) {
+            if(this.$el.hasClass('selected')) {
+                this.deselect();
+            } else {
+                this.select();
             }
-            
-            deselectSiblings(this.$el);
-            this.$el.addClass("selected");
-            this.$el.attr("selected", true);
-            
-            if(this.hasOwnProperty('list')) {
-                this.list.trigger('select', this);
-            }
-                
-            this.trigger('select');
-            this.trigger('resize');
         },
         remove: function() {
-          $(this.el).remove();
+            this.$el.remove();
         }
     });
     var SelectGroupsView = Backbone.View.extend({

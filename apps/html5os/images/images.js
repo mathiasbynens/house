@@ -21,7 +21,7 @@
                                             self.filesCollection.load(null, function(){
                                                 self.initialized = true;
                                                 self.trigger('initialized');
-                                                self.filesList.filter({contentType: /image/});
+                                                // self.filesList.filter({contentType: /image/});
                                             });
                                         });
                                     }
@@ -77,7 +77,7 @@
             self.filesCollection.pageSize = pageSize;
             //self.filesCollection.filterContentType('image');
             //self.filesCollection.filterProc(true);
-            self.filesList = new FilesBackbone.List({collection: self.filesCollection});
+            // self.filesList = self.filesCollection.getView();
             //options["metadata.proc"] = {"$exists": false};
             this.$upload = $('<span class="upload"></span>');
             self.newFileForm = new FilesBackbone.FileForm({collection: self.filesCollection, type: 'image'});
@@ -142,7 +142,7 @@
                 return this;
             }
             this.$filesList.append(self.newFileForm.render().$el);
-            this.$filesList.append(self.filesList.render().$el);
+            // this.$filesList.append(self.filesList.render().$el);
             this.$app.append(this.$filesList);
             this.$imageList.append(self.imagesListView.render().$el);
             this.$app.append(this.$imageList);
