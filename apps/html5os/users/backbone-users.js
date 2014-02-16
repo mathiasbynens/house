@@ -102,7 +102,8 @@
         url: '/api/users',
         sortField: 'id-',
         getOrFetchName: function(slug, callback) {
-            this.getOrFetchField('name', slug, callback);
+            console.log(slug)
+            this.getOrFetchByField('name', slug, callback);
         }
     });
     
@@ -654,7 +655,7 @@
                     }
                     
                     if(isa) {
-                        self.$el.append(self.actions.render().$el);
+                        // self.$el.append(self.actions.render().$el);
                     }
                 });
             } else {
@@ -666,7 +667,7 @@
             return this;
         },
         renderActions: function() {
-            this.actions.render();
+            // this.actions.render();
         },
         show: function() {
             this.$el.show();

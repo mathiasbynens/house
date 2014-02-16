@@ -13,9 +13,6 @@
                 this.formatStr = options.format;
             }
             require(['/clock/moment.js'], function() {
-                self.init = true;
-                self.trigger('init');
-                self.startClocks();
                 
                 moment.lang('en', {
                     calendar : {
@@ -29,6 +26,9 @@
                 });
                 
                 self.moment = moment;
+                self.init = true;
+                self.trigger('init');
+                self.startClocks();
             });
             this.$clock = $('<span class="clock"></span>');
         },
