@@ -708,51 +708,54 @@
         },
         feedback: function(e) {
             var self = this;
-            var screenshot = function() {
-                require(['/account/html2canvas.js'], function(){
-                    try {
-                        var options = {};
-                        options.onrendered = options.onrendered || function( canvas ) {
-                            var data = canvas.toDataURL();
-                            var img = new Image();
-                            img.src = data;
-                            img.className = 'screenshot';
-                            // img.style.width = "300px";
-                            // self.feedbackForm.$el.append( img );
-                            // self.imgScreenshot = img;
-                            self.feedbackForm.screenshotImg = img;
-                        };
-            
-                        window.html2canvas([ document.body ], options);
-                    } catch( e ) {
-                        console.log(e)
+            var msgOpts = {
+                formTitle: "Feedback",
+                sendPlaceholder: "Send",
+                msgPlaceholder: "Your message and feedback details.",
+                subjectPlaceholder: "The subject of your message",
+                msgLabel: "Leave your contant info, and we'll get back to you as soon as possible.",
+                subjectLabel: "Subject"
+            };
+            var grabScreenshot = function(callback) {
+                require(['/msgs/msgs.js'], function(MsgsBackbone){
+                    if(MsgsBackbone) {
+                        self.feedbackForm = new window.MsgsBackbone.Form({
+                            collection: window.msgsCollection,
+                            ui: msgOpts
+                        });
+                        require(['/account/html2canvas.js'], function(){
+                            try {
+                                var options = {};
+                                options.onrendered = function( canvas ) {
+                                    var data = canvas.toDataURL();
+                                    var img = new Image();
+                                    img.src = data;
+                                    img.className = 'screenshot';
+                                    // img.style.width = "300px";
+                                    // self.feedbackForm.$el.append( img );
+                                    // self.imgScreenshot = img;
+                                    self.feedbackForm.screenshotImg = img;
+                                    if(callback) {
+                                        callback();
+                                    }
+                                };
+                    
+                                window.html2canvas([ document.body ], options);
+                            } catch( e ) {
+                                console.log(e)
+                            }
+                        });
                     }
                 });
             }
-            screenshot();
-            require(['/msgs/msgs.js'], function(MsgsBackbone){
-                if(MsgsBackbone) {
-                    var msgOpts = {
-                        formTitle: "Feedback",
-                        sendPlaceholder: "Send",
-                        msgPlaceholder: "Your message and feedback details.",
-                        subjectPlaceholder: "The subject of your message",
-                        msgLabel: "Leave your contant info, and we'll get back to you as soon as possible.",
-                        subjectLabel: "Subject"
-                    };
-                    self.feedbackForm = new window.MsgsBackbone.Form({
-                        collection: window.msgsCollection,
-                        ui: msgOpts
-                    });
-                    var lightbox = utils.appendLightBox(self.feedbackForm.render().$el, msgOpts.formTitle);
-                    self.feedbackForm.focus();
-                    self.feedbackForm.on("saved", function(doc) {
-                        self.feedbackForm.clear();
-                        alert('Thank you for your feedback!');
-                        lightbox.remove();
-                    });
-                } else {
-                }
+            grabScreenshot(function(){
+                var lightbox = utils.appendLightBox(self.feedbackForm.render().$el, msgOpts.formTitle);
+                self.feedbackForm.focus();
+                self.feedbackForm.on("saved", function(doc) {
+                    self.feedbackForm.clear();
+                    alert('Thank you for your feedback!');
+                    lightbox.remove();
+                });
             });
             e.preventDefault();
         },

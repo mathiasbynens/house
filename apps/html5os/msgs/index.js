@@ -1,40 +1,39 @@
-(function(){
+(function() {
     var index = {};
     index.init = function(callback) {
-        require(['/desktop/jquery.js'], function(){
-            $(document).ready(function() {
-            require(['/desktop/underscore.js'], function(){
-                require(['/desktop/backbone.js'], function(){
-                    require(['/desktop/backbone-house.js'], function(){
-                        require(['/desktop/utils.js'], function(utils){
-                            window.utils = utils;
-                            require(['/clock/clock.js'], function(Clock) {
-                                window.clock = new Clock();
-                                clock.on('init', function(){
-                                    require(['/account/account.js'], function(account){
-                                        account.on('init', function(){
-                                            var $account = $('<div id="account"></div>');
-                                            $('#header').append($account);
-                                            $account.append(account.render().$el);
-                                            require(['/desktop/nav.js'], function(nav){
-                                                index.nav = nav;
-                                                nav.init();
-                                                nav.router.on('loading', function(){
-                                                    $('body').addClass('loading');
-                                                });
-                                                nav.router.on('loadingComplete', function(){
-                                                    $('body').removeClass('loading');
-                                                });
-                                                $('#header').append(nav.list.render().$el);
-                                                require(['app.js'], function(App) {
-                                                    window.app = new App();
-                                                    window.app.bindUser(account.loginStatus.getView().userModel);
-                                                    window.app.on('initialized', function(){
-                                                        $('body').append(window.app.render().$el);
-                                                        window.app.bindNav(nav);
-                                                        account.bindRouter(nav.router);
-                                                        nav.startRouter('/msgs/');
-                                                        if(callback) callback(window.app);
+        require(['/desktop/jquery.js'], function() {
+            require(['/pages/bootstrap.js'], function() {
+                $(document).ready(function() {
+                    require(['/desktop/underscore.js'], function() {
+                        require(['/desktop/backbone.js'], function() {
+                            require(['/desktop/backbone-house.js'], function() {
+                                require(['/desktop/utils.js'], function(utils) {
+                                    window.utils = utils;
+                                    require(['/clock/clock.js'], function(Clock) {
+                                        window.clock = new Clock();
+                                        clock.on('init', function() {
+                                            require(['/account/account.js'], function(accountProfile) {
+                                                accountProfile.auth(function() {
+                                                    accountProfile.setElement($('#siteMenu')).render();
+                                                    account.getView().onNavInit(function(nav) {
+                                                        index.nav = nav;
+                                                        nav.router.on('loading', function() {
+                                                            $('body').addClass('loading');
+                                                        });
+                                                        nav.router.on('loadingComplete', function() {
+                                                            $('body').removeClass('loading');
+                                                        });
+                                                        require(['/msgs/app.js'], function(BackboneBody) {
+                                                            window.app = new BackboneBody({el: $('body')});
+                                                            //app.bindUser(accountProfile.loginStatus.getView().userModel);
+                                                            app.on('initialized', function() {
+                                                                app.render();
+                                                                app.bindNav(nav);
+                                                                accountProfile.bindRouter(nav.router);
+                                                                nav.startRouter('/msgs/');
+                                                                if(callback) callback(app);
+                                                            });
+                                                        });
                                                     });
                                                 });
                                             });
@@ -46,12 +45,11 @@
                     });
                 });
             });
-            });
         });
     }
-    
+
     if(define) {
-        define(function () {
+        define(function() {
             return index;
         });
     }

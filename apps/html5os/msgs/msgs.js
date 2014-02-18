@@ -1,12 +1,16 @@
 (function() {
     
-    var Model = Backbone.Model.extend({
+    var Model = Backbone.House.Model.extend({
         collectionName: "msgs",
-        initialize: function(attr, opts) {
+        initialize: function(attr, options) {
             var self = this;
-            //this.on("change", function(model, options){
-            //});
-            this.views = {};
+            this.TableRowView = RowView;
+            this.RowView = RowView;
+            this.AvatarView = RowView;
+            this.FullView = RowView;
+            options = options || {};
+            options.ownerFieldName = 'from';
+            Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
         getFrom: function(callback) {
             if(this.has('from')) {
@@ -28,30 +32,6 @@
                 }
             }
         },
-        getFullView: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.fullView) {
-                var view = this.fullView = new FullView(options);
-                view.on('goToProfile', function(model){
-                    options.list.trigger('goToProfile', model);
-                });
-                this.views.fullView = view;
-            }
-            return this.fullView;
-        },
-        getAvatar: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.avatar) {
-                var view = this.avatar = this.getNewAvatarNameView(options);
-                this.views.avatar = view;
-            }
-            return this.avatar;
-        },
-        getAvatarView: function(options) {
-            return this.getAvatar(options);
-        },
         getNewAvatarNameView: function(options) {
             if (!options) options = {};
             options.model = this;
@@ -68,175 +48,18 @@
         getUserView: function(options) {
             return this.getFullView(options);
         },
-        getRow: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.row) {
-                var row = this.row = new RowView(options);
-                this.views.row = row;
-            }
-            return this.row;
-        },
-        renderViews: function() {
-            for(var i in this.views) {
-                this.views[i].render();
-            }
-        },
         slugStr: function(str) {
             return str.toLowerCase().replace(/ /gi, '-');
         },
         setSlug: function(slug) {
             this.set('slug', this.slugStr(slug));
         },
-        getNavigatePath: function() {
-            return 'id/'+this.id;
-        }
     });
     
-    var Collection = Backbone.Collection.extend({
+    var Collection = Backbone.House.Collection.extend({
         model: Model,
         collectionName: 'msgs',
         url: '/api/msgs',
-        initialize: function() {
-            var self = this;
-            self.pageSize = 10;
-            this.resetFilters();
-            
-            require(['/desktop/socket.io.min.js'], function() {
-                var socketOpts = {};
-                if(window.location.protocol.indexOf('https') !== -1) {
-                    socketOpts.secure = true;
-                } else {
-                    socketOpts.secure = false;
-                }
-                var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
-                if(socket.socket.connected) {
-                    //console.log('already connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
-                }
-                socket.on('connect', function(data) {
-                    //console.log('connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
-                });
-                var insertOrUpdateDoc = function(doc) {
-                        console.log(doc);
-                    if(_.isArray(doc)) {
-                        _.each(doc, insertOrUpdateDoc);
-                        return;s
-                    }
-                    var model = self.get(doc.id);
-                    if(!model) {
-                        var model = new self.model(doc);
-                        self.add(model);
-                    } else {
-                        console.log(model);
-                        model.set(doc, {silent:true});
-                        model.renderViews();
-                    }
-                }
-                socket.on('insertedMsgs', function(doc) {
-                    console.log('inserted msgs');
-                    insertOrUpdateDoc(doc);
-                    self.count++;
-                    self.trigger('count', self.count);
-                });
-                socket.on('updatedMsgs', function(doc) {
-                    insertOrUpdateDoc(doc);
-                });
-                socket.on('deletedMsgs', function(id) {
-                    self.remove(id);
-                    self.count--;
-                    self.trigger('count', self.count);
-                });
-                
-                self.initialized = true;
-                self.trigger('initialized');
-            });
-        },
-        headCount: function(callback) {
-            var self = this;
-            var aj = $.ajax({type: "HEAD",url: self.url,data: {},
-                complete: function(json) {
-                    callback(aj.getResponseHeader('X-Count'));
-                },xhrFields: {withCredentials: true}
-            });
-        },
-        refreshCount: function() {
-            var self = this;
-            self.headCount(function(count){
-                self.count = count;
-                self.trigger('count', count);
-            });
-        },
-        load: function(options, success) {
-            var self = this;
-            if(!this.count) {
-                this.refreshCount();
-            }
-            if(!options) {
-                options = {};
-            }
-            if(!options.limit) {
-                options.limit = self.pageSize;
-            }
-            if(!options.sort) {
-                options.sort = "at-";
-            }
-            this.applyFilters(options);
-            return this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                    if(success) {
-                        success();
-                    }
-                },
-                error: function(collection, response){
-                }
-            });
-        },
-        getNextPage: function(callback) {
-            if(this.length < this.count) {
-                this.load({skip:this.length}, callback);
-            }
-        },
-        applyFilters: function(options) {
-            
-        },
-        updateFilter: function(filter) {
-            this.reset();
-            this.load();
-        },
-        comparator: function(doc) {
-            var d;
-            if(doc.get("at")) {
-                d = new Date(doc.get("at")).getTime();
-                return d * -1;
-            } else {
-                return 1;
-            }
-        },
-        resetFilters: function() {
-        },
-        getOrFetch: function(id, callback) {
-            var self = this;
-            var doc;
-            doc = this.get(id);
-            if(doc) {
-                callback(doc);
-            } else {
-                var options = { "id": id };
-                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                        if(response) {
-                            doc = self.get(id);
-                            callback(doc);
-                        } else {
-                            callback(false);
-                        }
-                    },
-                    error: function(collection, response){
-                        callback(false);
-                    }
-                });
-            }
-        },
         getOrFetchName: function(slug, callback) {
             var self = this;
             var doc;
@@ -259,18 +82,6 @@
                 });
             }
         },
-        getView: function(options) {
-            var self = this;
-            if (!options) options = {};
-            if (!this.hasOwnProperty("view")) {
-                options.collection = this;
-                this.view = new ListView(options);
-                this.view.on("selected", function(m) {
-                    self.trigger("selected", m);
-                });
-            }
-            return this.view;
-        }
     });
     
     var ListView = Backbone.View.extend({

@@ -1098,25 +1098,38 @@ _html2canvas.Parse = function (images, options, cb) {
           var rules = sheets[i].cssRules;
           for (var k = 0, l = rules.length; k < l; k++) {
             if(findPsuedoEls.test(rules[k].selectorText)) {
-                console.log(rules[k].selectorText)
-                if(rules[k].selectorText.indexOf('*,') === -1) {
-                    classes.push(rules[k].selectorText);
-                }
+                classes.push(rules[k].selectorText);
+                // try {
+                //     var txt = rules[k].selectorText.trim();
+                //     if(txt != '') {
+                //         // document.querySelectorAll(txt);
+                //     }
+                // } catch (e) {
+                //     console.log(rules[k].selectorText);
+                //     console.log(e);
+                // }
+                // if(rules[k].selectorText.indexOf('*,') === -1) {
+                // }
             }
           }
         }
         catch(e) { // will throw security exception for style sheets loaded from external domains
+            console.log(e)
         }
       }
       // Trim off the :after and :before (or ::after and ::before)
+      var badClasses = [];
       for (i = 0, j = classes.length; i < j; i++) {
         classes[i] = classes[i].match(/(^[^:]*)/)[1];
-        if(classes[i].indexOf('*,') !== -1) {
-            // delete classes[i];
-            
-            classes.splice(i, 1);
-        } else {
+        try {
+            document.querySelectorAll(classes[i]);
+        } catch(e) {
+            // classes.splice(i, 1);
+            badClasses.push(i);
         }
+      }
+      for(var b in badClasses) {
+          classes.splice(badClasses[b], 1);
       }
       console.log(classes.length)
     }

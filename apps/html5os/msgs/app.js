@@ -2,8 +2,8 @@
     var pageSize = 24;
 
     var AppView = Backbone.View.extend({
-        tag: 'span',
-        className: 'app',
+        tagName: 'body',
+        className: 'msgs-app',
         initialize: function() {
             var self = this;
             require(['/msgs/msgs.js'], function(MsgsBackbone){
@@ -13,7 +13,84 @@
                     self.$msgsList = $('<div class="msgs-list"></div>');
                     self.$msgViewer = $('<div class="msg-viewer"><a class="carousel-control left" href="#home" data-slide="prev">‹</a><a class="carousel-control right" href="#home" data-slide="next">›</a></div>');
                     window.msgsCollection.pageSize = pageSize;
-                    self.listView = window.msgsCollection.getView({el: self.$msgsList});
+                    // self.listView = window.msgsCollection.getView({el: self.$msgsList});
+                    
+                    var filterFunc = function(model, filterObj) {
+                        // console.log(model);
+                        var filterId = filterObj.filter;
+                        if(filterId === 'favs') {
+                            return model.get('metadata').fav;
+                        }
+                        var m = model.get('contentType');
+                        // console.log(filterId);
+                        // console.log(m)
+                        // console.log(m.indexOf(filterId));
+                        return (m.indexOf(filterId) === 0);
+                        // if(filterId === 'text') {
+                        // } else if(filterId === 'image') {
+                        // } else if(filterId === 'audio') {
+                        // } else if(filterId === 'video') {
+                        // } else {
+                        // }
+                    }
+                    var listOpts = {
+                        className: 'houseCollection msgs table-responsive',
+                        headerEl: $('#navbar-header-form'),
+                        search: {
+                            'fieldName': 'to'
+                        },
+                        // filters: {
+                        //     'favs': {txt: 'Favs', glyphicon: 'star', filter: filterFunc, load: {"metadata.fav": 1}},
+                        //     'text': {txt: 'Text', glyphicon: 'file', filter: filterFunc, load: {contentType: new RegExp('text')}},
+                        //     'image': {txt: 'Image', glyphicon: 'picture', filter: filterFunc, load: {contentType: new RegExp('image')}},
+                        //     'audio': {txt: 'Audio', glyphicon: 'music', filter: filterFunc, load: {contentType: new RegExp('audio')}},
+                        //     'video': {txt: 'Video', glyphicon: 'film', filter: filterFunc, load: {contentType: new RegExp('video')}},
+                        // },
+                        // sorts: [
+                        //     {name: 'Upload Date', field: 'uploadDate', type: 'date', glyphicon: 'time', default: -1},
+                        //     {name: 'Filename', field: 'filename', glyphicon: 'sort-by-alphabet'},
+                        //     {name: 'File size', field: 'length', type: 'number', glyphicon: 'sort-by-order'}
+                        // ],
+                        // layouts: {
+                        //     "table": {
+                        //         title: 'Table',
+                        //         glyphicon: 'th-list',
+                        //         default: true
+                        //     },
+                        //     "avatar": {
+                        //         title: 'Avatar',
+                        //         glyphicon: 'th-large'
+                        //     }
+                        // },
+                        selection: {
+                            actions: {
+                                "delete": {
+                                    title: "Delete File",
+                                    glyphicon: 'trash',
+                                    confirm: function() {
+                                        return confirm("Are you sure that you want to delete the selected messages?");
+                                    },
+                                    action: function(model, callback) {
+                                        // model.url = model.url+'/src';
+                                        // return;
+                                        model.destroy({success: function(model, response) {
+                                            callback();
+                                        }, 
+                                        error: function(model, response) {
+                                            console.log(arguments);
+                                        },
+                                        wait: true});
+                                    },
+                                    complete: function() {
+                                        // alert('Files removed.');
+                                        self.listView.renderPage(1);
+                                    }
+                                },
+                            }
+                        }
+                    }
+                    self.listView = msgsCollection.getView(listOpts);
+                    
                     self.listView.on('select', function(row) {
                         self.router.navigate(row.model.getNavigatePath(), true);
                     });
@@ -39,6 +116,7 @@
                     loadCollections();
                 });
             });
+            this.$app = $('<div class="app"></div>');
         },
         initCarousel: function() {
             var self = this;
@@ -81,7 +159,7 @@
         },
         render: function() {
             var self = this;
-            this.$el.html('');
+            // this.$el.html('');
             this.setElement(this.$el);
             if(!this.initialized) {
                 this.on('initialized', function(){
@@ -89,8 +167,9 @@
                 });
                 return this;
             }
-            this.$el.append(self.listView.render().$el);
-            this.$el.append(this.$msgViewer);
+            this.$el.append(this.$app);
+            this.$app.append(self.listView.render().$el);
+            this.$app.append(this.$msgViewer);
             return this;
         },
         events: {
@@ -238,7 +317,7 @@
         bindNav: function(nav) {
             this.nav = nav;
             this.bindRouter(nav.router);
-            nav.col.add({title:"Messages", navigate:""});
+            // nav.col.add({title:"Messages", navigate:""});
             //if(window.account && (account.isUser() || account.isAdmin())) {
                 nav.col.add({title:"New message", navigate:"new"});
             //}
