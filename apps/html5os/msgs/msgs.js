@@ -1253,13 +1253,15 @@
             }
             
             if(this.to) {
-                console.log('has to')
                 setDoc.to = {
                     id: this.to.model.id,
                     name: this.to.model.get('name')
                 }
             }
-            console.log(setDoc)
+            if(this.screenshotImg) {
+                setDoc.screenshotImg = this.screenshotImg.outerHTML;
+            }
+            // console.log(setDoc)
             this.model.set(setDoc, {silent: true});
             var saveModel = this.model.save(null, {
                 silent: false ,

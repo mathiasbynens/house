@@ -708,15 +708,37 @@
         },
         feedback: function(e) {
             var self = this;
+            var screenshot = function() {
+                require(['/account/html2canvas.js'], function(){
+                    try {
+                        var options = {};
+                        options.onrendered = options.onrendered || function( canvas ) {
+                            var data = canvas.toDataURL();
+                            var img = new Image();
+                            img.src = data;
+                            img.className = 'screenshot';
+                            // img.style.width = "300px";
+                            // self.feedbackForm.$el.append( img );
+                            // self.imgScreenshot = img;
+                            self.feedbackForm.screenshotImg = img;
+                        };
+            
+                        window.html2canvas([ document.body ], options);
+                    } catch( e ) {
+                        console.log(e)
+                    }
+                });
+            }
+            screenshot();
             require(['/msgs/msgs.js'], function(MsgsBackbone){
                 if(MsgsBackbone) {
                     var msgOpts = {
-                        formTitle: "Contact Us",
-                        sendPlaceholder: "Send Message",
-                        msgPlaceholder: "Your message and info.",
-                        subjectPlaceholder: "Subject of your feedback",
+                        formTitle: "Feedback",
+                        sendPlaceholder: "Send",
+                        msgPlaceholder: "Your message and feedback details.",
+                        subjectPlaceholder: "The subject of your message",
                         msgLabel: "Leave your contant info, and we'll get back to you as soon as possible.",
-                        subjectLabel: "How can we help you?"
+                        subjectLabel: "Subject"
                     };
                     self.feedbackForm = new window.MsgsBackbone.Form({
                         collection: window.msgsCollection,
