@@ -1,73 +1,15 @@
 (function() {
     
-    var Model = Backbone.Model.extend({
+    var Model = Backbone.House.Model.extend({
         collectionName: "posts",
-        initialize: function(attr, opts) {
-            var colOpts = {
-                image: this
-            };
-            //attr.sizes = attr.sizes || [];
-            //this.imageSizeCollection = new ImageSizeCollection(attr.sizes, colOpts);
-            this.on("change", function(model, options){
-                console.log(arguments);
-            });
-            this.views = {};
-        },
-        getOwner: function(callback) {
-            if(this.has('owner')) {
-                var owner = this.get('owner');
-                var user = window.usersCollection.getOrFetch(owner.id, callback);
-            }
-        },
-        getFullView: function(options) {
+        initialize: function(attr, options) {
+            this.TableRowView = RowView;
+            this.RowView = RowView;
+            this.AvatarView = AvatarView;
+            this.FullView = FullView;
             options = options || {};
-            options.model = this;
-            if (!this.fullView) {
-                var view = this.fullView = new FullView(options);
-                view.on('goToAuthor', function(model){
-                    options.list.trigger('goToAuthor', model);
-                });
-                view.on('goToTag', function(tagName){
-                    options.list.trigger('goToTag', tagName);
-                });
-                this.views.fullView = view;
-            }
-            return this.fullView;
-        },
-        getAvatar: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.avatar) {
-                var view = this.avatar = new AvatarView(options);
-                view.on('goToAuthor', function(model){
-                    options.list.trigger('goToAuthor', model);
-                });
-                view.on('goToTag', function(tagName){
-                    options.list.trigger('goToTag', tagName);
-                });
-                this.views.avatar = view;
-            }
-            return this.avatar;
-        },
-        getRow: function(options) {
-            options = options || {};
-            options.model = this;
-            if (!this.row) {
-                var row = this.row = new RowView(options);
-                row.on('goToAuthor', function(model){
-                    options.list.trigger('goToAuthor', model);
-                });
-                row.on('goToTag', function(tagName){
-                    options.list.trigger('goToTag', tagName);
-                });
-                this.views.row = row;
-            }
-            return this.row;
-        },
-        renderViews: function() {
-            for(var i in this.views) {
-                this.views[i].render();
-            }
+            options.ownerFieldName = 'metadata.owner';
+            Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
         slugStr: function(str) {
             return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
@@ -84,150 +26,11 @@
         }
     });
     
-    var Collection = Backbone.Collection.extend({
+    var Collection = Backbone.House.Collection.extend({
         model: Model,
         collectionName: 'posts',
         url: '/api/posts',
-        initialize: function() {
-            var self = this;
-            self.pageSize = 10;
-            this.resetFilters();
-            
-            require(['/desktop/socket.io.min.js'], function() {
-                var socketOpts = {};
-                if(window.location.protocol.indexOf('https') !== -1) {
-                    socketOpts.secure = true;
-                } else {
-                    socketOpts.secure = false;
-                }
-                var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
-                if(socket.socket.connected) {
-                    //console.log('already connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
-                }
-                socket.on('connect', function(data) {
-                    //console.log('connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
-                });
-                var insertOrUpdateDoc = function(doc) {
-                        console.log(doc);
-                    if(_.isArray(doc)) {
-                        _.each(doc, insertOrUpdateDoc);
-                        return;s
-                    }
-                    var model = self.get(doc.id);
-                    if(!model) {
-                        var model = new self.model(doc);
-                        self.add(model);
-                    } else {
-                        console.log(model);
-                        model.set(doc, {silent:true});
-                        model.renderViews();
-                    }
-                }
-                socket.on('insertedPosts', function(doc) {
-                    console.log('inserted post');
-                    insertOrUpdateDoc(doc);
-                    self.count++;
-                    self.trigger('count', self.count);
-                });
-                socket.on('updatedPosts', function(doc) {
-                    insertOrUpdateDoc(doc);
-                });
-                socket.on('deletedPosts', function(id) {
-                    self.remove(id);
-                    self.count--;
-                    self.trigger('count', self.count);
-                });
-                
-                self.initialized = true;
-                self.trigger('initialized');
-            });
-        },
-        headCount: function(callback) {
-            var self = this;
-            var aj = $.ajax({type: "HEAD",url: self.url,data: {},
-                complete: function(json) {
-                    callback(aj.getResponseHeader('X-Count'));
-                },xhrFields: {withCredentials: true}
-            });
-        },
-        refreshCount: function() {
-            var self = this;
-            self.headCount(function(count){
-                self.count = count;
-                self.trigger('count', count);
-            });
-        },
-        load: function(options, success) {
-            var self = this;
-            if(!this.count) {
-                this.refreshCount();
-            }
-            if(!options) {
-                options = {};
-            }
-            if(!options.limit) {
-                options.limit = self.pageSize;
-            }
-            if(!options.sort) {
-                options.sort = "at-";
-            }
-            this.applyFilters(options);
-            this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                    if(success) {
-                        success();
-                    }
-                },
-                error: function(collection, response){
-                }
-            });
-        },
-        getNextPage: function(callback) {
-            if(this.length < this.count) {
-                this.load({skip:this.length}, callback);
-            }
-        },
-        applyFilters: function(options) {
-            
-        },
-        updateFilter: function(filter) {
-            this.reset();
-            this.load();
-        },
-        comparator: function(doc) {
-            var d;
-            if(doc.get("at")) {
-                d = new Date(doc.get("at")).getTime();
-                return d * -1;
-            } else {
-                return 1;
-            }
-        },
-        resetFilters: function() {
-        },
-        getOrFetch: function(id, callback) {
-            var self = this;
-            var doc;
-            doc = this.get(id);
-            if(doc) {
-                callback(doc);
-            } else {
-                var options = { "_id": id };
-                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                        if(response) {
-                            doc = self.get(id);
-                            callback(doc);
-                        } else {
-                            callback(false);
-                        }
-                    },
-                    error: function(collection, response){
-                        callback(false);
-                    }
-                });
-            }
-        },
+        sortField: 'at-',
         getOrFetchSlug: function(slug, callback) {
             var self = this;
             var doc;
@@ -271,18 +74,6 @@
                     }
                 });
             }
-        },
-        getView: function(options) {
-            var self = this;
-            if (!options) options = {};
-            if (!this.hasOwnProperty("view")) {
-                options.collection = this;
-                this.view = new ListView(options);
-                this.view.on("selected", function(m) {
-                    self.trigger("selected", m);
-                });
-            }
-            return this.view;
         },
         getSelectView: function(options) {
             var self = this;
@@ -779,7 +570,7 @@
 
     var RowView = Backbone.View.extend({
         tagName: "div",
-        className: "row",
+        className: "post row",
         initialize: function(options) {
             if(options.list) {
                 this.list = options.list;

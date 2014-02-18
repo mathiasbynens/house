@@ -854,16 +854,15 @@ var ListPagination = Backbone.View.extend({
     },
     render: function() {
         var self = this;
-        
+        var pageSize = this.options.list.pageSize;
         if(this.options.list.pageSize === 0) {
             if (this.options.list.searchResults) {
-                this.$pageSizeWrap.find('.pageSize').html(this.options.list.searchResults.length);
+                pageSize = this.options.list.searchResults.length;
             } else {
-                this.$pageSizeWrap.find('.pageSize').html(this.options.list.collection.length);
+                pageSize = this.options.list.collection.length;
             }
             this.$pageWrap.find('ul.pagination').hide();
         } else {
-            this.$pageSizeWrap.find('.pageSize').html(this.options.list.pageSize);
             this.$pageWrap.find('ul.pagination').show();
         }
         var cLen = this.options.list.collection.length;
@@ -876,13 +875,19 @@ var ListPagination = Backbone.View.extend({
         } else if (this.options.list.collection.count) {
             cLen = this.options.list.collection.count;
         }
+        if(pageSize > cLen) {
+            pageSize = cLen;
+        }
+        this.$pageSizeWrap.find('.pageSize').html(pageSize);
         this.$pageSizeWrap.find('.collectionSize').html(cLen.toLocaleString());
         //var cLen = this.searchResults ? this.searchResults.length : this.collection.length;
         this.options.list.pagesLength = Math.ceil(cLen / this.options.list.pageSize); // + 1;
-        
         if(this.options.list.pagesLength < this.options.list.currentPage) {
             this.options.list.currentPage = this.options.list.pagesLength;
             // this.renderPage(pageNum);
+            if(this.options.list.currentPage < 1) {
+                this.options.list.currentPage = 1;
+            }
         } else if(this.options.list.currentPage < 1) {
             // pageNum = 1;
             this.options.list.currentPage = 1;
@@ -952,7 +957,6 @@ var ListPagination = Backbone.View.extend({
         "click .pageSizes li": "selectPageSize",
     },
     selectPage: function(e) {
-        // console.log(e)
         var i = $(e.currentTarget).find('a').attr('href').substr(1);
         if($(e.currentTarget).hasClass('disabled')) {
             return false;
@@ -1664,7 +1668,6 @@ var ListView = Backbone.View.extend({
         // } else if(pageNum < 1) {
         //     pageNum = 1;
         // }
-        console.log(this.pageSize)
         var s = (this.currentPage - 1) * this.pageSize;
         var col = this.searchResults ? this.searchResults : this.collection;
         var l = col.length;
@@ -1694,7 +1697,6 @@ var ListView = Backbone.View.extend({
                 self.mason.layout();
             }
         }
-            // alert(s)
         if (col.length <= s + this.pageSize) {
             if(col.load) {
                 col.load({

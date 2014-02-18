@@ -17,7 +17,89 @@
                         self.$postList = $('<div class="post-list"></div>');
                         self.$postViewer = $('<div class="post-viewer"></div>');
                         window.postsCollection.pageSize = pageSize;
-                        self.listView = new ModelBackbone.List({el: self.$postList, collection: window.postsCollection});
+                        // self.listView = new ModelBackbone.List({el: self.$postList, collection: window.postsCollection});
+                        var filterFunc = function(model, filterObj) {
+                            // console.log(model);
+                            var filterId = filterObj.filter;
+                            if(filterId === 'favs') {
+                                return model.get('metadata').fav;
+                            }
+                            var m = model.get('contentType');
+                            // console.log(filterId);
+                            // console.log(m)
+                            // console.log(m.indexOf(filterId));
+                            return (m.indexOf(filterId) === 0);
+                            // if(filterId === 'text') {
+                            // } else if(filterId === 'image') {
+                            // } else if(filterId === 'audio') {
+                            // } else if(filterId === 'video') {
+                            // } else {
+                            // }
+                        }
+                        var listOpts = {
+                            className: 'houseCollection posts table-responsive',
+                            headerEl: $('#navbar-header-form'),
+                            search: {
+                                'fieldName': 'title'
+                            },
+                            filters: {
+                                'favs': {txt: 'Favs', glyphicon: 'star', filter: filterFunc, load: {"metadata.fav": 1}},
+                                'text': {txt: 'Text', glyphicon: 'file', filter: filterFunc, load: {contentType: new RegExp('text')}},
+                                'image': {txt: 'Image', glyphicon: 'picture', filter: filterFunc, load: {contentType: new RegExp('image')}},
+                                'audio': {txt: 'Audio', glyphicon: 'music', filter: filterFunc, load: {contentType: new RegExp('audio')}},
+                                'video': {txt: 'Video', glyphicon: 'film', filter: filterFunc, load: {contentType: new RegExp('video')}},
+                            },
+                            tags: {
+                                'fieldName': 'tags'
+                            },
+                            sorts: [
+                                {name: 'Upload Date', field: 'uploadDate', type: 'date', glyphicon: 'time', default: -1},
+                                {name: 'Filename', field: 'filename', glyphicon: 'sort-by-alphabet'},
+                                {name: 'File size', field: 'length', type: 'number', glyphicon: 'sort-by-order'}
+                            ],
+                            layouts: {
+                                "table": {
+                                    title: 'Table',
+                                    glyphicon: 'th-list',
+                                },
+                                "avatar": {
+                                    title: 'Avatar',
+                                    glyphicon: 'th-large',
+                                },
+                                "row": {
+                                    title: 'Row',
+                                    glyphicon: 'th-large',
+                                    default: true
+                                }
+                            },
+                            selection: {
+                                actions: {
+                                    "delete": {
+                                        title: "Delete Posts",
+                                        glyphicon: 'trash',
+                                        confirm: function() {
+                                            return confirm("Are you sure that you want to delete the selected files?");
+                                        },
+                                        action: function(model, callback) {
+                                            // model.url = model.url+'/src';
+                                            // return;
+                                            model.destroy({success: function(model, response) {
+                                                callback();
+                                            }, 
+                                            error: function(model, response) {
+                                                console.log(arguments);
+                                            },
+                                            wait: true});
+                                        },
+                                        complete: function() {
+                                            // alert('Files removed.');
+                                            self.listView.renderPage(1);
+                                        }
+                                    },
+                                }
+                            }
+                        }
+                        self.listView = postsCollection.getView(listOpts);
                         self.listView.on('select', function(row) {
                             self.router.navigate(row.model.getNavigatePath(), {trigger: true});
                         });

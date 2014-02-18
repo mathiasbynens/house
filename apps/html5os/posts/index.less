@@ -1,43 +1,60 @@
-@icon-font-path: '/desktop/libs/bootstrap/fonts/';
-
-.navbar-toggle .icon-bar {
-    background-color: @brand-primary;
+body > .app {
+    padding-top: 0px;
 }
 
-.blur (@pixels) {
-    -webkit-filter: blur(@pixels);
-    -moz-filter: blur(@pixels);
-    -ms-filter: blur(@pixels);
-    filter: blur(@pixels);
+@font-face {
+    font-family: 'FreeUniversal';
+    src: url('/pages/fonts/FreeUniversal-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
 }
+/*@font-face {*/
 
-.border-radius (@radius) {
-  -moz-border-radius: @radius;
-  -webkit-border-radius: @radius;
-  border-radius: @radius;
-}
+/*font-family: 'FreeUniversal';*/
 
-.wrap () {
-  text-wrap: wrap;
-  white-space: -moz-pre-wrap;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
+/*    src: url('/pages/fonts/FreeUniversal-Italic.ttf') format('truetype');*/
 
-pre { .wrap }
+/*font-weight: normal;*/
 
-body.loading {
-    cursor: wait;
+/*font-style: italic;*/
+
+/*  }*/
+
+/*@font-face {*/
+
+/*font-family: 'FreeUniversal';*/
+
+/*    src: url('/pages/fonts/FreeUniversal-BoldItalic.ttf') format('truetype');*/
+
+/*font-weight: bold;*/
+
+/*font-style: italic;*/
+
+/*  }*/
+
+@font-face {
+    font-family: 'FreeUniversal';
+    src: url('/pages/fonts/FreeUniversal-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
 }
-body.loading #loading {
-    display: block;
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Bold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
 }
-body #loading {
-    display: none;
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Italic.otf') format('opentype');
+    font-weight: normal;
+    font-style: italic;
 }
-body > .app { padding-top: 50px; }
-img {
-    max-width: 100%;
+@font-face {
+    font-family: 'Crimson';
+    src: url('/pages/fonts/Crimson-Roman.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
 }
 #accountNav .dropdown-toggle img.avatar, #accountMenu img.avatar {
     max-height: 18px;
@@ -50,108 +67,290 @@ img {
 #accountNav .dropdown-toggle .userAvatarName .name {
     display: none;
 }
-.btn-group img.avatar {
-    max-height: 26px;
-    max-width: 26px;
+h1.entry-title a, .entry-meta, .entry-meta a {
+    font-family: 'FreeUniversal';
 }
-.houseCollection .search, .houseCollection .filter, .houseCollection .layout, .houseCollection .pages {
+h1.entry-title a {
+    font-weight: bold;
+}
+.post-viewer h1.entry-title a {
+    font-size: 32px;
+    font-weight: bold;
+}
+.msg {
+    font-family: 'Crimson';
+    font-size: 22px;
+    line-height: 1.5;
+}
+.msg h1, .msg h2, .msg h3, .msg h4 {
+    font-family: 'FreeUniversal';
+}
+img.rss {
+    filter: url(filters.svg#grayscale);
+    filter: gray;
+    -webkit-filter: grayscale(1);
+}
+img.rss:hover {
+    filter: none;
+    filter: none;
+    -webkit-filter: none;
+}
+.entry-meta, .entry-meta a {
+    color: #6A8DAC;
+}
+h1.entry-title {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.post .msg img.thumbnail {
     float: left;
+    margin-right: 20px;
 }
-.houseCollection .houseCollectionHeader {
-    clear: both;
+.entry-meta {
+    margin-top: 12px;
+    margin-bottom: 32px;
+}
+.entry-meta .date, .entry-meta .tags-links {
+    margin-right: 12px;
+}
+.entry-meta .date a {
+    margin-left: 6px;
+}
+.entry-meta .tags-links a:first-child {
+    margin-left: 6px;
+}
+.entry-meta .author a {
+    margin-left: 6px;
+}
+.post-viewer .msg {
+    margin-bottom: 100px;
+}
+.post-viewer .msg img {
+    max-width: 100%;
+}
+.houseList img.avatar, .fullView img.avatar {
     width: 100%;
-    display: block;
-    float: left;
+    margin-top: -50px;
 }
-.houseCollection .houseCollectionHeader .pages .pagination {
-    margin: 0 0 0 10px;
-}
-.paginationWrap, .pageSizeWrap {
-}
-nav > .navbar-form {
-    padding-left: 0;
+.msg blockquote {
+    border-left: 0;
+	font-style: italic;
+	font-weight: 300;
+	padding-left: 75px;
+	position: relative;
 }
 
-.navbar-default .navbar-form {
-    .box-shadow(none);
-    padding-top: 0;
-    padding-bottom: 0;
-    
-    ul.pagination {
-        display: inline;
-    }
-    @input-bg: @navbar-default-bg;
-    .form-control {
-        background-color: @input-bg;
-        border: 0;
-    }
+.msg blockquote:before {
+	content: '\201C';
+	font-size: 140px;
+	font-weight: 400;
+	line-height: .8;
+	padding-right: 25px;
+	position: absolute;
+	left: -15px;
+	top: -3px;
 }
 
-.table-striped > tbody > tr:nth-child(odd).selected > td,
-.table-hover > tbody > tr.selected:hover > td,
-.table tr.selected {
-    background-color: darken(@dropdown-link-active-bg, 0%);
-    color: @dropdown-link-active-color;
-    a, .btn-link {
-        color: @dropdown-link-active-color;
-    }
+.houseList .post {
+    padding-bottom: 50px;
+    padding-top: 50px;
+    margin-left: 0;
+    margin-right: 0;
 }
-.panel.selected {
-    border: 1px solid darken(@dropdown-link-active-bg, 0%);
+.houseList .post:nth-child(even) {
+   background-color: #161616;
+   border-color: #080808;
+   color: #BDBDBD;
 }
-.modal-header {
-    word-wrap: break-word;
-}
-
-.tagsList {
-    @tagLineHeight: 34px;
-    .tag {
-        position: relative;
-        .delete.btn,
-        .deleteTag.btn {
-            display: none;
-        }
-        &:hover .delete.btn,
-        &:hover .deleteTag.btn {
-            display: block;
-        }
-        .delete.btn,
-        .deleteTag.btn {
-            position: absolute;
-            right: 0px;
-            bottom: 0;
-            top: auto;
-        }
-        input[type="color"] {
-            padding: 0px;
-            margin: 0px;
-            border: 0px;
-            width: @tagLineHeight;
-            height: @tagLineHeight;
-            border: 0;
-            float: left;
-            background: transparent;
-        }
-        .name {
-            padding: 0px 6px;
-            line-height: @tagLineHeight;
-            word-break: break-all;
-        }
-    }
-    .tag.selected {
-        background-color: darken(@brand-primary, 30%);
-    }
+.houseList .post:nth-child(even) .entry-title a {
+    color: white;
 }
 
+#accountNav {
+    margin-left: 20px;
+}
+.navbar-header .glyphicon-home {
+}
+.navbar-header .glyphicon-home:hover {
+    color: white;
+}
+.navbar-header .navbar-form {
+    padding: 0 0;
+}
+.avatarName img {
+    max-height: 30px;
+    border-radius: 50%;
+}
+.form-signin input[type="email"] {
+  margin-bottom: -1px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.wysihtml5-toolbar header {
+  display: block;
+  border-radius: 4px;
+  background: #f6f6f6;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  border: 1px solid #ddd\9; /* IE 8 and below */
+  background-image: linear-gradient(bottom, rgb(238,238,238) 0%, rgb(255,255,255) 100%);
+  background-image: -o-linear-gradient(bottom, rgb(238,238,238) 0%, rgb(255,255,255) 100%);
+  background-image: -moz-linear-gradient(bottom, rgb(238,238,238) 0%, rgb(255,255,255) 100%);
+  background-image: -webkit-linear-gradient(bottom, rgb(238,238,238) 0%, rgb(255,255,255) 100%);
+  background-image: -ms-linear-gradient(bottom, rgb(238,238,238) 0%, rgb(255,255,255) 100%);
+  box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.3);
+  font-size: 0;
+  text-align: center;
+  height: auto;
+}
+[data-wysihtml5-command],
+[data-wysihtml5-action],
+.fore-color {
+  position: relative;
+  border-right: 1px solid #ddd;
+  border-left: 1px solid #fff;
+  list-style: none;
+  font-size: 12px;
+  display: inline-block;
+  cursor: pointer;
+  width: 32px;
+  padding: 6px;
+}
+
+.fore-color ul {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  top: 40px;
+  right: -1px;
+  left: -2px;
+  border: 1px solid #ccc;
+  border-top: 0;
+  background: #fff;
+  overflow: hidden;
+}
+
+.fore-color li {
+  display: block;
+  margin: 3px;
+  width: auto;
+  border: 0;
+  height: 15px;
+}
+
+.fore-color li:after {
+  display: none;
+}
+
+.fore-color:hover ul {
+  display: block;
+}
+
+.fore-color [data-wysihtml5-command-value="silver"] {
+  background: silver !important;
+}
 
 
+.fore-color [data-wysihtml5-command-value="gray"] {
+  background: gray !important;
+}
+
+.fore-color [data-wysihtml5-command-value="maroon"] {
+  background: maroon !important;
+}
+
+.fore-color [data-wysihtml5-command-value="red"] {
+  background: red !important;
+}
+
+.fore-color [data-wysihtml5-command-value="purple"] {
+  background: purple !important;
+}
+
+.fore-color [data-wysihtml5-command-value="green"] {
+  background: green !important;
+}
+
+.fore-color [data-wysihtml5-command-value="olive"] {
+  background: olive !important;
+}
+
+.fore-color [data-wysihtml5-command-value="navy"] {
+  background: navy !important;
+}
+
+.fore-color [data-wysihtml5-command-value="blue"] {
+  background: blue !important;
+}
+
+.fore-color .wysihtml5-command-active {
+  outline: 1px solid #666;
+  outline-offset: 1px;
+}
+
+.wysihtml5-commands-disabled .fore-color ul {
+  display: none;
+}
+
+.wysihtml5-action-active,
+.wysihtml5-command-active {
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.2);
+  background: #eee !important;
+}
+
+.wysihtml5-commands-disabled [data-wysihtml5-command],
+.wysihtml5-commands-disabled .fore-color {
+  opacity: 0.4;
+  cursor: default;
+  background-image: none !important;
+}
+
+[data-wysihtml5-dialog] {
+    padding: 0px 0px 0px 0px;
+    background: #FFFBE0;
+    position: absolute;
+    text-align: center;
+    left: 15px;
+    right: 0;
+    z-index: 10;
+    top: 34px;
+}
+
+[data-wysihtml5-dialog="insertImage"] {
+    top: 64px;
+}
+.uploadFrame > span {
+    display: none !important;
+}
+
+[data-wysihtml5-dialog] input {
+}
+
+[data-wysihtml5-dialog] input:focus {
+  outline: 0;
+  border: 1px solid #666;
+}
+
+[data-wysihtml5-dialog-action] {
+}
+[data-wysihtml5-dialog-action="save"] {
+}
+
+[data-wysihtml5-dialog-action="cancel"] {
+}
 
 @charset "UTF-8";
 /*!
     Zocial Butons
     http://zocial.smcllns.com
     by Sam Collins (@smcllns)
-    License: http://opensource.org/licenses/mit-license.php
+	License: http://opensource.org/licenses/mit-license.php
 	
 	You are free to use and modify, as long as you keep this license comment intact or link back to zocial.smcllns.com on your site.
 */
@@ -618,4 +817,124 @@ button:-moz-focus-inner {
 body .zocial {
     margin: 8px 4px;
     font-size: 13px;
+}
+textarea {
+  background: transparent;
+  border: 0;
+  resize: none;
+  white-space: pre;
+  padding: 10px;
+  -ms-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.wysihtml5-toolbar .cleanup {
+    display: none;
+}
+.wysihtml5-toolbar.wysihtml5-commands-disabled .cleanup {
+    display: inline-block !important;
+}
+
+body {
+    margin: 0 0;
+}
+.app > .form {
+    margin-bottom: 44px;
+    padding-bottom: 44px;
+}
+.app > .form, .app > .form form.post, .app > .form form.post fieldset {
+    height: 100%;
+}
+textarea[name="msg"] {
+    margin: 0 0;
+    font-size: 16px;
+    margin: 0px 0px 12px;
+    height: 600px;
+    width: 100%;
+}
+
+.fullView .wistia_video {
+    width: 320px;
+    height: 180px;
+    display: block;
+    margin: 0 auto;
+    clear: both;
+}
+img[data-active-src] {
+    opacity: 0.8;
+    border-radius: 3px;
+    background: #CCC;
+}
+img[data-deactive-src] {
+    opacity: 1;
+    border-radius: 0px;
+    background: transparent;
+}
+img[data-active-src]::before {
+color: white;
+content: "\25B6";
+opacity: 0.5;
+position: absolute;
+text-shadow: 0 3px black;
+z-index: 100;
+    font-size:50px;
+    position:absolute;
+    left:220px;
+    top:150px;
+}
+
+@media only screen and (min-width: 767px) {
+.fullView .wistia_video {
+    width: 640px;
+    height: 360px;
+}
+}
+
+@media only screen and (max-width: 767px) {
+}
+@media only screen and (min-width: 767px) {
+}
+@media only screen and (min-width: 1024px) {
+}
+
+body.loading {
+    cursor: wait;
+}
+body.loading #loading {
+    display: block;
+}
+body #loading {
+    display: none;
+}
+body { overflow-y: scroll; }
+.navbar-header .navbar-form {
+    position: fixed;
+    left: 13px;
+    top: 3px;
+    z-index: 1;
+}
+@media (max-width: 767px) {
+    .navbar-header .navbar-form {
+        left: 20px;
+    }
+}
+.navbar-header .navbar-form .homeBtn {
+}
+.navbar-header .navbar-brand {
+    margin-left: 60px;
+}
+.pageTitle {
+    display: none;
+}
+header.navbar {
+    background: #F3F3F3;
+}
+.navbar-form label {
+    padding-right: 4px;
+}
+@media (min-width: 768px) {
+    .navbar-form .form-group {
+        width: 200px;
+    }
 }
