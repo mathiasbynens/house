@@ -31,6 +31,9 @@
                                     if(filterId === 'favs') {
                                         return model.get('metadata').fav;
                                     }
+                                    if(filterId === 'owner') {
+                                        return (model.get('metadata').owner.id === account.get('user'));
+                                    }
                                     var m = model.get('contentType');
                                     // console.log(filterId);
                                     // console.log(m)
@@ -50,6 +53,7 @@
                                         'fieldName': 'filename'
                                     },
                                     filters: {
+                                        'owner': {txt: 'Only My Files', glyphicon: 'user', filter: filterFunc, load: {"metadata.owner.id": account.get('user')}},
                                         'favs': {txt: 'Favs', glyphicon: 'star', filter: filterFunc, load: {"metadata.fav": 1}},
                                         'text': {txt: 'Text', glyphicon: 'file', filter: filterFunc, load: {contentType: new RegExp('text')}},
                                         'image': {txt: 'Image', glyphicon: 'picture', filter: filterFunc, load: {contentType: new RegExp('image')}},

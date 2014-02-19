@@ -86,7 +86,9 @@
                 actionOptions: {
                     fav: {fieldName: 'metadata.fav'},
                     tags: {fieldName: 'metadata.tags'},
-                    groups: {fieldName: 'metadata.groups'}
+                    groups: {fieldName: 'metadata.groups'},
+                    detail: true,
+                    share: true,
                 }
             }
             if(this.model.get('metadata').src) {
@@ -497,7 +499,8 @@
                 actionOptions: {
                     fav: {fieldName: 'metadata.fav'},
                     tags: {fieldName: 'metadata.tags'},
-                    groups: {fieldName: 'metadata.groups'}
+                    groups: {fieldName: 'metadata.groups'},
+                    share: true,
                 }
             }
             if(this.model.get('metadata').src) {

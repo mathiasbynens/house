@@ -14,7 +14,7 @@
             }
             require(['/clock/moment.js'], function() {
                 
-                moment.lang('en', {
+                /*moment.lang('en', {
                     calendar : {
                         lastDay : 'dd LT',
                         sameDay : 'dd LT',
@@ -23,7 +23,7 @@
                         nextWeek : '[next] ddd [at] LT',
                         sameElse : 'L'
                     }
-                });
+                });*/ // Needs more testing
                 
                 self.moment = moment;
                 self.init = true;
