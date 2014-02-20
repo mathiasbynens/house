@@ -1,5 +1,5 @@
 (function() {
-    var pageSize = 24;
+    var pageSize = 0;
 
     var AppView = Backbone.View.extend({
         tagName: 'body',
@@ -351,7 +351,7 @@
                 }
             });
             router.on('reset', function(){
-                $('header').removeAttr('class');
+                // $('header').removeAttr('class');
                 self.nav.unselect();
             });
             router.on('root', function(){

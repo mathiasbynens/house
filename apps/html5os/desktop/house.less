@@ -68,10 +68,37 @@ img {
 }
 .paginationWrap, .pageSizeWrap {
 }
+
+table.houseList {
+    tr {
+        position: relative;
+    }
+    & > tbody > tr > td {
+        vertical-align: middle;
+    }
+    td.icon {
+        width: 80px;
+        vertical-align: middle;
+    }
+    td.at {
+        width: 200px;
+    }
+    img.avatar {
+        max-height: 64px;
+        max-width: 64px;
+        margin-top: 0px;
+    }
+    td.actions {
+        width: 244px;
+    }
+}
+
+div.actions > div {
+    float: left;
+}
 nav > .navbar-form {
     padding-left: 0;
 }
-
 .navbar-default .navbar-form {
     .box-shadow(none);
     padding-top: 0;

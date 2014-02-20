@@ -205,8 +205,8 @@
                     this.ui[i] = options.ui[i];
                 }
             }
-            this.$form = $('<form class="navbar-form navbar-right" role="joinNewsletter"> <span class="glyphicon glyphicon-bullhorn"></span>\
-                                <label>'+this.ui.label+'</label>\
+            this.$form = $('<form class="navbar-form navbar-right" role="joinNewsletter">\
+                                <label>'+this.ui.label+'</label> <span class="glyphicon glyphicon-bullhorn"></span> \
                                 <div class="form-group">\
                                     <div class="input-group">\
                                         <input type="email" class="form-control" name="email" placeholder="your email" data-loading-text="loading">\

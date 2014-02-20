@@ -276,7 +276,7 @@
                 
             } else {
                 if(this.model.has('glyphicon')) {
-                    this.$e.prepend('<span class="glyphicon glyphicon-'+this.model.get('glyphicon')+'"></span> ');
+                    this.$e.append('<span class="glyphicon glyphicon-'+this.model.get('glyphicon')+'"></span> ');
                 }
             }
             if(this.model.has('el')) {

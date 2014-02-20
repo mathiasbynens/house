@@ -328,9 +328,14 @@
             // console.log(this.actionOptions)
             
             // this.groupsView = new utils.SelectGroupsInputView(this.actionOptions);
-            this.infoView = new utils.ModelActionInfo(this.actionOptions);
+            if(this.actionOptions.detail) {
+                this.infoView = new utils.ModelActionInfo(this.actionOptions);
+            }
             this.favView = new utils.ModelActionFav(this.actionOptions);
-            this.shareView = new utils.ModelActionShare(this.actionOptions);
+            
+            if(this.actionOptions.share) {
+                this.shareView = new utils.ModelActionShare(this.actionOptions);
+            }
             // this.deleteView = new utils.ModelActionDelete(this.actionOptions);
             this.moreActionsView = new utils.MoreActionsView(this.actionOptions);
             if(this.actionOptions.tags) {
@@ -369,8 +374,12 @@
             if(this.taggingDropdown) {
                 this.$el.append(this.taggingDropdown.render().$el);
             }
-            this.$el.append(this.infoView.render().$el);
-            this.$el.append(this.shareView.render().$el);
+            if(this.infoView) {
+                this.$el.append(this.infoView.render().$el);
+            }
+            if(this.shareView) {
+                this.$el.append(this.shareView.render().$el);
+            }
             this.$el.append(this.moreActionsView.render().$el);
             
             return this;
@@ -770,7 +779,7 @@
   </button>\n\
   <ul class="dropdown-menu pull-right" role="menu">\n\
   '+moreLis+'\n\
-    <li><a class="delete" href="#"><span class="glyphicon glyphicon-trash"></span> Delete</a></li>\n\
+    <li><a class="delete" href="#"><span class="glyphicon glyphicon-trash"></span> Delete '+this.model.collection.collectionName.substring(0, this.model.collection.collectionName.length-1)+'</a></li>\n\
   </ul>\n\
 </div>');
         },
@@ -815,6 +824,7 @@
             } else {
                 console.log('err no action for id '+actionId);
             }
+            e.preventDefault();
         },
         saveVal: function() {
             var setDoc = {

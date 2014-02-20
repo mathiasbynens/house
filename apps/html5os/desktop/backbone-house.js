@@ -1,5 +1,139 @@
 var apiPathPrefix = (window.hasOwnProperty('config')) ? config.apiPrefix : '/api';
 Backbone.House = {};
+Backbone.Model.prototype.pull = function(key, value, options) {
+    var attrs, attr, val;
+    
+    // Handle both `"key", value` and `{key: value}` -style arguments.
+    if (_.isObject(key) || key == null) {
+      attrs = key;
+      options = value;
+    } else {
+      attrs = {};
+      attrs[key] = value;
+    }
+    
+    // Extract attributes and options.
+    options || (options = {});
+    if (!attrs) return this;
+    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
+    options.pulls = {};
+    var now = this.attributes;
+    var escaped = this._escapedAttributes;
+    var prev = this._previousAttributes || {};
+    
+    if(!this.pulls) this.pulls = {};
+    // For each `set` attribute...
+    for (attr in attrs) {
+        val = attrs[attr];
+        options.pulls[attr] = true;
+        this.pulls[attr] = val;
+        var ni = now[attr].indexOf(val);
+        if(ni != -1) {
+            delete now[attr][ni];
+        }
+    }
+    // Fire the `"change"` events.
+    if (!options.silent) {
+        var pulling = this._pullings;
+        this._pulling = true;
+        for (var attr in this._silentPulls) this._pendingPulls[attr] = true;
+        
+        var pulls = _.extend({}, options.pulls, this._silentPulls);
+        this._silent = {};
+        for (var attr in pulls) {
+            this.trigger('change:' + attr, this, this.get(attr), options);
+        }
+        if (pulling) return this;
+        
+        this.trigger('change', this, options);
+        this._pulling = false;
+    }
+    return this;
+}
+Backbone.Model.prototype.push = function(key, value, options) {
+    var attrs, attr, val;
+    
+    // Handle both `"key", value` and `{key: value}` -style arguments.
+    if (_.isObject(key) || key == null) {
+      attrs = key;
+      options = value;
+    } else {
+      attrs = {};
+      attrs[key] = value;
+    }
+    
+    // Extract attributes and options.
+    options || (options = {});
+    if (!attrs) return this;
+    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
+    options.pushes = {};
+    var now = this.attributes;
+    var escaped = this._escapedAttributes;
+    var prev = this._previousAttributes || {};
+    
+    if(!this.pushes) this.pushes = {};
+    
+    // For each `set` attribute...
+    for (attr in attrs) {
+        val = attrs[attr];
+        options.pushes[attr] = true;
+    
+        this.pushes[attr] = val;
+        if(!now.hasOwnProperty(attr)) {
+            now[attr] = [];
+        }
+        now[attr].push(val);
+    }
+    // Fire the `"change"` events.
+    if (!options.silent) {
+        for (var attr in options.pushes) {
+            this.trigger('change:' + attr, this, this.get(attr), options);
+        }
+        this.trigger('change', this, options);
+    }
+    return this;
+}
+Backbone.Model.prototype.pushAll = function(key, value, options) {
+    var attrs, attr, val;
+    
+    // Handle both `"key", value` and `{key: value}` -style arguments.
+    if (_.isObject(key) || key == null) {
+      attrs = key;
+      options = value;
+    } else {
+      attrs = {};
+      attrs[key] = value;
+    }
+    
+    // Extract attributes and options.
+    options || (options = {});
+    if (!attrs) return this;
+    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
+    options.pushAlls = {};
+    var now = this.attributes;
+    
+    if(!this.pushAlls) this.pushAlls = {};
+    
+    // For each `set` attribute...
+    for (attr in attrs) {
+        val = attrs[attr];
+        options.pushAlls[attr] = true;
+    
+        this.pushAlls[attr] = val;
+        
+        for(var i in val) {
+            now[attr].push(val[i]);
+        }
+    }
+    // Fire the `"change"` events.
+    if (!options.silent) {
+        for (var attr in options.pushAlls) {
+            this.trigger('change:' + attr, this, this.get(attr), options);
+        }
+        this.trigger('change', this, options);
+    }
+    return this;
+}
 Backbone.House.Model = Backbone.Model.extend({
     views: {},
     initialize: function(attrs, options) {
@@ -693,9 +827,8 @@ var ListTags = Backbone.View.extend({
     },
     getTagFilterFunc: function() {
         var self = this;
-        if(self.tagSelectView.selectedTag) {
+        if(self.tagSelectView && self.tagSelectView.selectedTag) {
             return function(model, filterObj) {
-                console.log(filterObj)
                 var filterId = filterObj.tag;
                 // console.log(model);
                 // console.log(filterId);
@@ -756,6 +889,11 @@ var ListFilters = Backbone.View.extend({
         var $et = $(e.currentTarget);
         $et.addClass('active').siblings().removeClass('active');
         var f = $et.attr('data-filter');
+        this.filterBy(f);
+        e.preventDefault();
+    },
+    filterBy: function(f) {
+        var self = this;
         if(f === 'none') {
             // this.trigger('unfilter');
             this.$btnGroup.find('.filterIcon').addClass('glyphicon-filter');
@@ -778,31 +916,28 @@ var ListFilters = Backbone.View.extend({
         } else {
             // this.trigger('filterBy', f);
             if(this.options.filters && this.options.filters[f]) {
-                // console.log(this.options.filters[f]);
                 // var filterFunc = this.options.filters[f].filter;
                 this.selectedFilter = f;
                 var filterFunc = function(m, v) {
-                    // console.log(arguments)
                     if(self.options.list.tagsView.getTagFilterFunc()(m,v)) {
                         if(self.getFilterFunc()(m,v)) {
                             return true;
                         }
                     }
+                    return false;
                 }
                 var filterObj = {};
                 var loadObj = this.options.filters[f].load;
                 filterObj.filter = f;
-                if(self.options.list.tagsView.tagSelectView.selectedTag) {
+                if(self.options.list.tagsView && self.options.list.tagsView.tagSelectView && self.options.list.tagsView.tagSelectView.selectedTag) {
                     filterObj.tag = self.options.list.tagsView.tagSelectView.selectedTag.get('name');
                     loadObj[self.options.list.tagsView.fieldName] = self.options.list.tagsView.tagSelectView.selectedTag.get('name');
                 }
-                console.log(filterObj)
                 this.options.list.filter(filterFunc, filterObj, loadObj);
                 this.$btnGroup.find('.filterIcon').attr('class', 'filterIcon glyphicon glyphicon-'+this.options.filters[f].glyphicon);
             }
             this.trigger('filteredBy', f);
         }
-        e.preventDefault();
     },
     getFilterFunc: function() {
         if(this.selectedFilter) {
@@ -821,7 +956,7 @@ var ListPagination = Backbone.View.extend({
         this.$pageWrap = $('<span class="paginationWrap"><ul class="pagination"><li class="previous"><a href="#">«</a></li><li><a href="#">1</a></li><li class="next"><a href="#">»</a></li></ul></span>');
         this.$pageSizeWrap = $('<span class="pageSizeWrap">\
     <div class="btn-group pageSizes" data-toggle="buttons">\
-        <button title="Page Size" type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="pageSize"></span> of <span class="collectionSize"></span> <span class="collectionName">'+this.options.list.collection.collectionName+'</span></button>\
+        <button title="Page Size" type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="pageSize"></span> <span class="ofText">of</span> <span class="collectionSize"></span> <span class="collectionName">'+this.options.list.collection.collectionName+'</span></button>\
         <ul class="dropdown-menu" role="menu">\
             <li data-size="10"><a href="#" class="">10 per page</a></li>\
             <li data-size="25"><a href="#" class="">25 per page</a></li>\
@@ -880,6 +1015,15 @@ var ListPagination = Backbone.View.extend({
         }
         this.$pageSizeWrap.find('.pageSize').html(pageSize);
         this.$pageSizeWrap.find('.collectionSize').html(cLen.toLocaleString());
+        
+        if(cLen == pageSize) {
+            this.$pageSizeWrap.find('.pageSize').hide();
+            this.$el.find('.ofText').hide();
+        } else {
+            this.$pageSizeWrap.find('.pageSize').show();
+            this.$el.find('.ofText').show();
+        }
+        
         //var cLen = this.searchResults ? this.searchResults.length : this.collection.length;
         this.options.list.pagesLength = Math.ceil(cLen / this.options.list.pageSize); // + 1;
         if(this.options.list.pagesLength < this.options.list.currentPage) {
@@ -1526,7 +1670,6 @@ var ListView = Backbone.View.extend({
             // });
             
             // this.searchLoad.skip = s;
-            console.log(this.searchLoad)
             // this.collection.refreshCount(this.searchLoad);
             var self = this;
             var headCountOpts = _.clone(this.searchLoad);
@@ -1545,8 +1688,6 @@ var ListView = Backbone.View.extend({
                     //     return false;
                     // });
                     self.getCollectionFiltered();
-                    console.log(self.searchResults)
-                    console.log(self.searchResults.length)
                     self.renderPage(1);
                     self.renderPagination();
                 });
@@ -2050,137 +2191,4 @@ Backbone.sync = function(method, model, options) {
   return $.ajax(_.extend(params, options));
 };
 
-Backbone.Model.prototype.pull = function(key, value, options) {
-    var attrs, attr, val;
-    
-    // Handle both `"key", value` and `{key: value}` -style arguments.
-    if (_.isObject(key) || key == null) {
-      attrs = key;
-      options = value;
-    } else {
-      attrs = {};
-      attrs[key] = value;
-    }
-    
-    // Extract attributes and options.
-    options || (options = {});
-    if (!attrs) return this;
-    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
-    options.pulls = {};
-    var now = this.attributes;
-    var escaped = this._escapedAttributes;
-    var prev = this._previousAttributes || {};
-    
-    if(!this.pulls) this.pulls = {};
-    // For each `set` attribute...
-    for (attr in attrs) {
-        val = attrs[attr];
-        options.pulls[attr] = true;
-        this.pulls[attr] = val;
-        var ni = now[attr].indexOf(val);
-        if(ni != -1) {
-            delete now[attr][ni];
-        }
-    }
-    // Fire the `"change"` events.
-    if (!options.silent) {
-        var pulling = this._pullings;
-        this._pulling = true;
-        for (var attr in this._silentPulls) this._pendingPulls[attr] = true;
-        
-        var pulls = _.extend({}, options.pulls, this._silentPulls);
-        this._silent = {};
-        for (var attr in pulls) {
-            this.trigger('change:' + attr, this, this.get(attr), options);
-        }
-        if (pulling) return this;
-        
-        this.trigger('change', this, options);
-        this._pulling = false;
-    }
-    return this;
-}
-Backbone.Model.prototype.push = function(key, value, options) {
-    var attrs, attr, val;
-    
-    // Handle both `"key", value` and `{key: value}` -style arguments.
-    if (_.isObject(key) || key == null) {
-      attrs = key;
-      options = value;
-    } else {
-      attrs = {};
-      attrs[key] = value;
-    }
-    
-    // Extract attributes and options.
-    options || (options = {});
-    if (!attrs) return this;
-    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
-    options.pushes = {};
-    var now = this.attributes;
-    var escaped = this._escapedAttributes;
-    var prev = this._previousAttributes || {};
-    
-    if(!this.pushes) this.pushes = {};
-    
-    // For each `set` attribute...
-    for (attr in attrs) {
-        val = attrs[attr];
-        options.pushes[attr] = true;
-    
-        this.pushes[attr] = val;
-        if(!now.hasOwnProperty(attr)) {
-            now[attr] = [];
-        }
-        now[attr].push(val);
-    }
-    // Fire the `"change"` events.
-    if (!options.silent) {
-        for (var attr in options.pushes) {
-            this.trigger('change:' + attr, this, this.get(attr), options);
-        }
-        this.trigger('change', this, options);
-    }
-    return this;
-}
-Backbone.Model.prototype.pushAll = function(key, value, options) {
-    var attrs, attr, val;
-    
-    // Handle both `"key", value` and `{key: value}` -style arguments.
-    if (_.isObject(key) || key == null) {
-      attrs = key;
-      options = value;
-    } else {
-      attrs = {};
-      attrs[key] = value;
-    }
-    
-    // Extract attributes and options.
-    options || (options = {});
-    if (!attrs) return this;
-    if (attrs instanceof Backbone.Model) attrs = attrs.attributes;
-    options.pushAlls = {};
-    var now = this.attributes;
-    
-    if(!this.pushAlls) this.pushAlls = {};
-    
-    // For each `set` attribute...
-    for (attr in attrs) {
-        val = attrs[attr];
-        options.pushAlls[attr] = true;
-    
-        this.pushAlls[attr] = val;
-        
-        for(var i in val) {
-            now[attr].push(val[i]);
-        }
-    }
-    // Fire the `"change"` events.
-    if (!options.silent) {
-        for (var attr in options.pushAlls) {
-            this.trigger('change:' + attr, this, this.get(attr), options);
-        }
-        this.trigger('change', this, options);
-    }
-    return this;
-}
+

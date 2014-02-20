@@ -442,10 +442,25 @@
             this.model.bind('destroy', this.remove, this);
             //this.actions = new ActionsView({id: this.id, model: this.model});
             
+            var opts = {
+                model: this.model, 
+                actionOptions: {
+                    // fav: {fieldName: 'fav'},
+                    // tags: {fieldName: 'tags'},
+                    // groups: {fieldName: 'groups'},
+                    detail: true,
+                }
+            }
+            this.modelActions = new utils.ModelActionsView(opts);
+            // this.modelActions.on('goToTagName', function(tagName){
+            //     app.collection.view.tagsView.tagSelectView.selectTagByName(tagName);
+            // });
+            
             this.$tdIcon = $('<td class="icon"></td>');
             this.$tdName = $('<td class="name"></td>');
             this.$tdGroups = $('<td class="groups"></td>');
             this.$tdJoin = $('<td class="join"></td>');
+            this.$tdActions = $('<td class="actions"></td>');
         },
         render: function() {
             // this.$el.html('');
@@ -480,11 +495,13 @@
             if(this.model.has('groups')) {
                 this.$tdGroups.html('<span class="groups">'+this.model.get('groups')+'</span>');
             }
+            this.$tdActions.append(this.modelActions.render().$el);
             
             this.$el.append(this.$tdIcon);
             this.$el.append(this.$tdName);
             this.$el.append(this.$tdGroups);
             this.$el.append(this.$tdJoin);
+            this.$el.append(this.$tdActions);
             
             this.$el.attr('data-id', this.model.id);
             //this.$el.append(this.actions.render().$el);
@@ -604,8 +621,8 @@
                         }
                     }
                     
-                    if(!account.isOwner(self.model.id)) {
-                        self.$el.append('<button class="sendMsg">Send Message</button>');
+                    if(!account.isOwner(self.model.id) && account.isAdmin()) {
+                        self.$el.append('<button class="sendMsg btn btn-info pull-right">Send Message</button>');
                     }
                     
                     if(self.model.has('at')) {
