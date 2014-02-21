@@ -4,10 +4,25 @@
         e.stopPropagation();
         e.preventDefault();
     }
-
     var Model = Backbone.Model.extend({
         initialize: function(attr, opts) {
+            console.log(attr);
+            if(typeof attr === 'string') {
+                console.log('string');
+                opts.parse = true;
+            }
             this.options = opts;
+        },
+        parse: function(data, options) {
+            console.log(data);
+            if(typeof data === 'string') {
+                data = {
+                    id: data,
+                    name: data,
+                    title: data
+                }
+            }
+            return data;
         },
         getUser: function(callback) {
             if(this.has('user')) {
@@ -616,66 +631,72 @@
 
     var AvatarView = Backbone.View.extend({
         tagName: "span",
-        className: "avatar",
+        className: "tag",
         initialize: function(options) {
+            console.log(options.model)
             if (options.list) {
                 this.list = options.list;
+                // console.log(this.list.collection)
+                this.of = false;
+                if(this.list.collection.options && this.list.collection.options.of) {
+                    // this.user = this.list.collection.options.of.get('owner');
+                    this.of = this.list.collection.options.of;
+                }
             }
+            // console.log(this.list.collection.options.of)
+            this.$icon = $('<span class="glyphicon glyphicon-tag"></span>');
+            this.$name = $('<a class="name" href="#"></a>');
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
+            
+            if(this.of && this.model.id) {
+                var origTag = window.tagsCollection.get(this.model.id);
+                if(origTag) {
+                    origTag.bind('change', this.render, this);
+                }
+            }
+            
         },
         render: function() {
+            // console.log(this.model.attributes);
             var self = this;
-            this.$el.html('');
-
-            if (this.model.has('ogImage')) {
-                console.log(self.model.get('ogImage'))
-                //self.$el.append('<img src="/api/files/'+self.model.get('ogImage').filename+'">');
-                if (!this.hasOwnProperty('ogImageView')) {
-                    self.ogImageView = new ImagesBackbone.Model(self.model.get('ogImage')).getAvatar();
+            this.$el.attr('data-id', this.model.id);
+            this.$el.append(this.$icon);
+            
+            if(this.model.has('color')) {
+                this.$icon.css('color', this.model.get('color'));
+            }
+            if(this.of) {
+                var origTag = window.tagsCollection.get(this.model.id);
+                if(origTag && origTag.has('color')) {
+                    this.$icon.css('color', origTag.get('color'));
                 }
-                self.$el.append(self.ogImageView.render().$el);
-            } else if (this.model.has('image')) {
-                if (!this.hasOwnProperty('imageView')) {
-                    self.imageView = new ImagesBackbone.Model(self.model.get('image')).getAvatar();
-                }
-                self.$el.append(self.imageView.render().$el);
             }
-
-            var matches = this.model.get('url').match(/(youtu\.be\/|youtube\.com\/(watch\?(.*&)?v=|(embed|v)\/))([^\?&"'>]+)/);
-            if (matches && matches.length > 1) {
-                var youtubeId = matches[5];
-                if (youtubeId) {}
-                //this.$el.find('.youtube').fitVids();
-            } else if (this.model.get('url').indexOf('twitter.com') !== -1) {} else {}
-
-            this.$el.append('<a href="' + this.model.get('url') + '" target="_new"><img class="faviconfile" src=""><span class="url">' + this.model.get('url') + '</span></a>');
-            if (this.model.has('title')) {
-                this.$el.prepend('<a href="' + this.model.get('url') + '" target="_new" class="title">' + this.model.get('title') + '</a>');
+            this.$name.attr('data-name', this.model.get('name'));
+            this.$name.attr('href', 'tag/'+this.model.get('name'));
+            this.$name.html(this.model.get('name'));
+            if(this.model.has('title')) {
+                this.$name.html(this.model.get('title'));
             }
-
-            if (this.model.has('faviconfile')) {
-                this.$el.find('.faviconfile').attr('src', '/api/files/' + encodeURIComponent(this.model.get('faviconfile').filename));
-                //self.$el.append($fav);
-            } else if (this.model.has('file')) {
-                var contentTypeKlass = this.model.get('file').contentType.replace(/\//gi, '-');
-                //this.$el.find('.url').after('<span title="'+this.model.get('file').contentType+'" class="contentType '+contentTypeKlass+'">'+this.model.get('file').contentType+'</span>');
-                this.$el.find('.faviconfile').attr('src', '/files/icon/' + contentTypeKlass + '.png').attr('title', this.model.get('file').contentType);
-            }
-
+            this.$el.append(this.$name);
+            
             this.setElement(this.$el);
             return this;
         },
         events: {
-            "click": "clickAvatar"
+            "click a.name": "preventDefault",
+            "click": "clickEl",
         },
-        clickAvatar: function(e) {
-
+        preventDefault: function(e) {
+            e.preventDefault();
+            return false;
+        },
+        clickEl: function(e) {
+console.log('ckic')
             this.trigger('selected');
             if (this.list) {
                 this.list.trigger('selected', this);
             }
-
             //e.preventDefault();
         },
         remove: function() {
@@ -725,26 +746,15 @@
             if(this.of) {
                 var origTag = window.tagsCollection.get(this.model.id);
                 if(origTag && origTag.has('color')) {
-                    // this.$style.html('.song[data-id="'+this.of.id+'"] { color: '+origTag.get('color')+'}')
                     this.$el.css('border-left-color', origTag.get('color'));
                     this.$colorInput.val(origTag.get('color'));
                 }
             }
-            // if (this.model.has('user')) {
-            //     this.model.getUser(function(userModel) {
-            //         if (userModel) {
-            //             self.$user.append(userModel.getNewAvatarNameView().render().$el);
-            //         }
-            //     });
-            //     this.$at.html(this.model.get('user').name+' said '+this.model.getAt().calendar());
-            // }
             this.$name.attr('data-name', this.model.get('name'));
             this.$name.html(this.model.get('name'));
             if(this.model.has('title')) {
                 this.$name.html(this.model.get('title'));
             }
-            // this.$el.append(this.$user);
-            // this.$el.append(this.$at);
             this.$el.append(this.$name);
             this.$el.append(this.$colorInput);
             
@@ -1039,20 +1049,19 @@
         },
         selectTagByName: function(tagName) {
             var self = this;
-            console.log(tagName)
-            var tags = this.tagsFullList.collection.where({name: tagName});
-            if(tags) {
-                var tag = _.first(tags);
-                if(this.selectedTag) {
-                    if(tag.id == this.selectedTag.id) {
-                        this.deselectTag();
-                        return;
+            this.tagsFullList.collection.getOrFetchName(tagName, function(tag){
+                if(tag) {
+                    if(self.selectedTag) {
+                        if(tag.id == self.selectedTag.id) {
+                            self.deselectTag();
+                            return;
+                        }
                     }
+                    self.selectedTag = tag;
+                    self.renderColors(tag);
+                    self.trigger('selected', tag);
                 }
-                this.selectedTag = tag;
-                self.renderColors(tag);
-                this.trigger('selected', tag);
-            }
+            });
         },
         deselectTag: function() {
             delete this.selectedTag;
@@ -1070,6 +1079,48 @@
         //     e.stopPropagation();
         //     e.preventDefault();
         // },
+    });
+    
+    var ListOfView = Backbone.View.extend({
+        tagName: 'span',
+        className: 'listOfTags',
+        initialize: function() {
+            var self = this;
+            this.fieldName = (this.options.fieldName) ? this.options.fieldName : 'tags';
+            var modelFieldVal = this.model.get(this.fieldName);
+            if(modelFieldVal) {
+                for(var i in modelFieldVal) {
+                    var v = modelFieldVal[i];
+                    if(typeof v === 'string') {
+                        modelFieldVal[i] = {
+                            id: v,
+                            name: v,
+                            title: v,
+                        }
+                    }
+                }
+            } else {
+                modelFieldVal = [];
+            }
+            this.collectionOf = new CollectionOf(modelFieldVal, {of: this.model, ofFieldName: this.fieldName});
+            this.$tagsList = $('<div class="tagsListOf"></li>');
+            this.tagsOfList = this.collectionOf.getNewView({el: this.$tagsList, layout: 'avatar'});
+        },
+        render: function() {
+            this.tagsOfList.render();
+            this.$el.html(this.$tagsList);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click .tag": "goToTag",
+        },
+        goToTag: function(e) {
+            var $t = $(e.currentTarget);
+            var tagName = $t.find('[data-name]').attr('data-name');
+            this.trigger('selectedTagName', tagName);
+            e.preventDefault();
+        },
     });
     
     var Dropdown = Backbone.View.extend({
@@ -1354,7 +1405,8 @@
                 Avatar: AvatarView,
                 Form: FormView,
                 SelectDropdown: SelectDropdown,
-                Dropdown: Dropdown
+                Dropdown: Dropdown,
+                ListOfView: ListOfView
             }
         });
     }

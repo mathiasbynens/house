@@ -270,6 +270,14 @@ Backbone.House.Model = Backbone.Model.extend({
             this.views[i].render();
         }
     },
+    getTagsList: function(opts) {
+        opts = opts || {};
+        opts.model = this;
+        if(!this.tagsListView) {
+            this.tagsListView = new TagsBackbone.ListOfView(opts); 
+        }
+        return this.tagsListView;
+    },
     getNavigatePath: function() {
         return 'id/' + this.id;
     },
@@ -453,6 +461,9 @@ Backbone.House.Collection = Backbone.Collection.extend({
                 }
             }
         });
+    },
+    hasMore: function() {
+        return (this.length < this.count);
     },
     loadSkip: function(skip, callback) {
         this.load({skip: skip}, callback);
@@ -787,12 +798,8 @@ var ListTags = Backbone.View.extend({
                 }
             });
             self.tagSelectView.on('selected', function(tag) {
-                // console.log(tag);
-                
                 var filterFunc = function(m, v) {
-                    console.log(arguments)
                     if(self.getTagFilterFunc()(m,v)) {
-                        console.log('testatags')
                         if(self.options.list.filterView.getFilterFunc()(m,v)) {
                             return true;
                         }
@@ -812,6 +819,9 @@ var ListTags = Backbone.View.extend({
             self.initialized = true;
             self.trigger('initialized');
         });
+    },
+    reset: function() {
+        
     },
     render: function() {
         var self = this;
@@ -892,12 +902,16 @@ var ListFilters = Backbone.View.extend({
         this.filterBy(f);
         e.preventDefault();
     },
+    reset: function() {
+        // this.filterBy('none');
+        this.$btnGroup.find('.filterIcon').addClass('glyphicon-filter');
+        delete this.selectedFilter;
+    },
     filterBy: function(f) {
         var self = this;
         if(f === 'none') {
             // this.trigger('unfilter');
-            this.$btnGroup.find('.filterIcon').addClass('glyphicon-filter');
-            delete this.selectedFilter;
+            this.reset();
             
             if(self.options.list.tagsView.tagSelectView.selectedTag) {
                 var filterObj = {};
@@ -1416,6 +1430,7 @@ var ListView = Backbone.View.extend({
         this.$pager = $('<span class="pages"></span>');
         if(this.options.headerEl) {
             this.$header = this.options.headerEl;
+            this.$header.html('');
         }
         this.$header.append(this.$search);
         this.$header.append(this.$tags);
@@ -1649,6 +1664,11 @@ var ListView = Backbone.View.extend({
             });
         }
     },
+    resetViewControls: function() {
+        self.currentFilter = false;
+        delete self.searchResults;
+        this.filterView.reset();
+    },
     filter: function(f, id, load) {
         var self = this;
         if(load) {
@@ -1743,6 +1763,12 @@ var ListView = Backbone.View.extend({
     },
     loadMore: function(callback) {
         var self = this;
+        if(!this.collection.hasMore()) {
+            if(callback) {
+                callback();
+            }
+            return;
+        }
         if (this.searchResults) {
             this.collection.loadSkip(this.searchResults.length, function() {
                 self.loading = false;
