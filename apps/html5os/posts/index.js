@@ -43,15 +43,10 @@
                                                                     }
                                                                     
                                                                     require(['/posts/posts.js'], function(Posts) {
-                                                                        var $app = $('.app');
-                                                                        var postOpts = {};
-                                                                        if($app.length > 0) {
-                                                                            postOpts.el = $app;
-                                                                        }
-                                                                        window.posts = new Posts(postOpts);
+                                                                        window.posts = new Posts({el: $('body')});
                                                                         // posts.bindUser(accountProfile.loginStatus.getView().userModel);
                                                                         posts.on('initialized', function(){
-                                                                            $('body').append(posts.render().$el);
+                                                                            posts.render();
                                                                             posts.bindNav(nav);
                                                                             accountProfile.bindRouter(nav.router);
                                                                             nav.startRouter('/posts/');

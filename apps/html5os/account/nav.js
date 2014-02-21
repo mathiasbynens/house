@@ -12,8 +12,11 @@
             "_-_": "gohome",
             "": "root"
         },
-        gohome: function() {
+        gohome: function(root) {
             this.navigate('', {trigger: true, replace: true});
+            if(root) {
+                this.root();
+            }
         },
         reset: function() {
             this.setTitle('');
@@ -114,7 +117,7 @@
         },
         goHome: function() {
             $('body')[0].scrollTop = 0;
-            nav.router.gohome();
+            nav.router.gohome(true);
             return false;
         },
         titleClick: function(e) {

@@ -6,15 +6,12 @@
     }
     var Model = Backbone.Model.extend({
         initialize: function(attr, opts) {
-            console.log(attr);
             if(typeof attr === 'string') {
-                console.log('string');
                 opts.parse = true;
             }
             this.options = opts;
         },
         parse: function(data, options) {
-            console.log(data);
             if(typeof data === 'string') {
                 data = {
                     id: data,
@@ -230,7 +227,6 @@
             if(this.fetchingId) {
                 // todo
                 this.once('fetchingIdComplete', function(){
-                    console.log('fetch complete');
                     self.getOrFetchId(id, callback);
                 })
                 return;
@@ -512,7 +508,6 @@
         search: function(q, callback) {
             var self = this;
             this.searchQ = q;
-            console.log(q);
             if (q === '') {
                 delete self.searchResults;
                 self.renderPage(1);
@@ -562,7 +557,6 @@
             this.$ul.html('');
             var col = this.searchResults ? this.searchResults : this.collection;
             col.forEach(function(doc, i, c) {
-                //console.log(arguments)
                 var view = self.getDocLayoutView(doc);
                 self.appendRow(view);
                 doc.on('remove', function() {
@@ -602,7 +596,6 @@
             }
         },
         appendRow: function(row) {
-            //console.log(row.model)
             var rank = this.getModelSortRank(row.model);
             var rowEl = row.render().$el;
             if (this.currentFilter && !this.currentFilter(row.model)) {
@@ -633,17 +626,14 @@
         tagName: "span",
         className: "tag",
         initialize: function(options) {
-            console.log(options.model)
             if (options.list) {
                 this.list = options.list;
-                // console.log(this.list.collection)
                 this.of = false;
                 if(this.list.collection.options && this.list.collection.options.of) {
                     // this.user = this.list.collection.options.of.get('owner');
                     this.of = this.list.collection.options.of;
                 }
             }
-            // console.log(this.list.collection.options.of)
             this.$icon = $('<span class="glyphicon glyphicon-tag"></span>');
             this.$name = $('<a class="name" href="#"></a>');
             this.model.bind('change', this.render, this);
@@ -658,7 +648,6 @@
             
         },
         render: function() {
-            // console.log(this.model.attributes);
             var self = this;
             this.$el.attr('data-id', this.model.id);
             this.$el.append(this.$icon);
@@ -692,7 +681,6 @@
             return false;
         },
         clickEl: function(e) {
-console.log('ckic')
             this.trigger('selected');
             if (this.list) {
                 this.list.trigger('selected', this);
@@ -710,7 +698,6 @@ console.log('ckic')
         initialize: function(options) {
             if (options.list) {
                 this.list = options.list;
-                // console.log(this.list.collection)
                 this.of = false;
                 if(this.list.collection.options && this.list.collection.options.of) {
                     // this.user = this.list.collection.options.of.get('owner');
@@ -718,7 +705,6 @@ console.log('ckic')
                     this.user = this.of.getOwnerAttr ? this.of.getOwnerAttr() : this.of.get('owner');
                 }
             }
-            // console.log(this.list.collection.options.of)
             this.$user = $('<span class="user"></span>');
             this.$at = $('<span class="at"></span>');
             this.$name = $('<a class="name" href="#"></a>');
@@ -734,7 +720,6 @@ console.log('ckic')
             }
         },
         render: function() {
-            // console.log(this.model.attributes);
             var self = this;
             this.$el.html('');
             this.$el.attr('data-id', this.model.id);
@@ -784,7 +769,6 @@ console.log('ckic')
             e.preventDefault();
         },
         clickColorInput: function(e) {
-            console.log('click color input')
             e.stopPropagation();
         },
         clickEl: function(e) {
@@ -830,7 +814,6 @@ console.log('ckic')
             var self = this;
             var $et = $(e.target);
             var color = $et.val();
-            console.log(this.of);
             if(!this.of) {
                 this.model.set({"color": color}, {silent: true});
                 var s = this.model.save(null, {silent: false, wait: true});
@@ -846,7 +829,6 @@ console.log('ckic')
                 }
             } else {
                 var origTag = window.tagsCollection.get(this.model.id);
-                console.log(origTag);
                 if(origTag) {
                     origTag.set({"color": color}, {silent: true});
                     var s = origTag.save(null, {silent: false, wait: true});
@@ -893,12 +875,10 @@ console.log('ckic')
         submit: function() {
             var self = this;
             var msg = this.$el.find('[name="msg"]').val();
-            console.log(msg);
             var newComment = {};
             if (msg && msg !== "") {
                 newComment.msg = msg;
             }
-            console.log(newComment);
             if (newComment != {}) {
                 var m = new this.collection.model({}, {collection: this.collection});
                 m.set(newComment);
@@ -955,6 +935,12 @@ console.log('ckic')
                 window.tagsCollection = new Collection();
             }
             this.tagsFullList = window.tagsCollection.getView({el: this.$tagSelectList}); // 
+            
+            this.on('deselectAll', function(options){
+                if(options.silent)
+                var silent = options.silent || false;
+                self.deselectTag(silent);
+            })
             // console.log(this.model)
         },
         render: function() {
@@ -1063,11 +1049,13 @@ console.log('ckic')
                 }
             });
         },
-        deselectTag: function() {
+        deselectTag: function(silent) {
             delete this.selectedTag;
             this.$el.find('.tag').removeClass('selected');
             this.renderColors();
-            this.trigger('deselected');
+            if(!silent) {
+                this.trigger('deselected');
+            }
         },
         shownDropdown: function() {
             this.renderTopTags();

@@ -3,12 +3,23 @@
     var Model = Backbone.House.Model.extend({
         collectionName: "posts",
         initialize: function(attr, options) {
-            this.TableRowView = RowView;
+            this.TableRowView = TableRowView;
             this.RowView = RowView;
             this.AvatarView = AvatarView;
             this.FullView = FullView;
             options = options || {};
-            options.ownerFieldName = 'metadata.owner';
+            options.ownerFieldName = 'owner';
+            
+            if(attr.tags) {
+                for(var t in attr.tags) {
+                    if(attr.tags[t].id) {
+                        if(!tagsCollection.get(attr.tags[t].id)) {
+                            tagsCollection.add(attr.tags[t]);
+                        }
+                    }
+                }
+            }
+            
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
         slugStr: function(str) {
@@ -89,131 +100,131 @@
         },
     });
     
-    var ListView = Backbone.View.extend({
-        layout: 'row',
-        initialize: function() {
-            var self = this;
-            self.loading = false;
-            this.$pager = $('<div class="list-pager container text-center">showing <span class="list-length"></span> of <span class="list-count"></span> posts</div>');
-            var $ul = this.$ul = $('<div class="postList"></div>');
-            this.collection.on('add', function(doc) {
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                } else if(self.layout === 'avatar') {
-                    view = doc.getAvatar({list: self});
-                }
-                self.appendRow(view);
-                self.renderPager();
-                doc.on('remove', function(){
-                    view.$el.remove();
-                    return false;
-                });
-            });
-            this.collection.on('remove', function(doc, col, options) {
-                self.renderPager();
-            });
-            this.collection.on('count', function() {
-                self.renderPager();
-            });
-            this.collection.on('reset', function(){
-                self.render();
-            });
+    // var ListView = Backbone.View.extend({
+    //     layout: 'row',
+    //     initialize: function() {
+    //         var self = this;
+    //         self.loading = false;
+    //         this.$pager = $('<div class="list-pager container text-center">showing <span class="list-length"></span> of <span class="list-count"></span> posts</div>');
+    //         var $ul = this.$ul = $('<div class="postList"></div>');
+    //         this.collection.on('add', function(doc) {
+    //             var view;
+    //             if(self.layout === 'row') {
+    //                 view = doc.getRow({list: self});
+    //             } else if(self.layout === 'avatar') {
+    //                 view = doc.getAvatar({list: self});
+    //             }
+    //             self.appendRow(view);
+    //             self.renderPager();
+    //             doc.on('remove', function(){
+    //                 view.$el.remove();
+    //                 return false;
+    //             });
+    //         });
+    //         this.collection.on('remove', function(doc, col, options) {
+    //             self.renderPager();
+    //         });
+    //         this.collection.on('count', function() {
+    //             self.renderPager();
+    //         });
+    //         this.collection.on('reset', function(){
+    //             self.render();
+    //         });
             
-            $(window).scroll(function(){
-                if(self.$el.is(":visible")) {
-                  if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()){
-                    self.loading = true;
-                    self.loadMore();
-                  }
-                }
-            });
-        },
-        filter: function(f) {
-            var self = this;
-            if(f && typeof f == 'function') {
-                this.currentFilter = f;
-                this.collection.filter(function(model) {
-                  if(f(model)) {
-                      self.getDocLayoutView(model).$el.show();
-                      return true;
-                  }
-                  self.getDocLayoutView(model).$el.hide();
-                  return false;
-                });
-            } else {
-                // show all
-                self.$ul.children().show();
-                self.currentFilter = false;
-            }
-        },
-        events: {
-          "click .list-pager": "loadMore",
-        },
-        loadMore: function() {
-            var self = this;
-            this.collection.getNextPage(function(){
-                self.loading = false;
-            });
-        },
-        getDocLayoutView: function(doc) {
-            var view;
-            if(this.layout === 'row') {
-                view = doc.getRow({list: self});
-            } else if(this.layout === 'avatar') {
-                view = doc.getAvatar({list: self});
-            }
-            return view;
-        },
-        render: function() {
-            var self = this;
-            this.$el.html('');
-            this.$el.append(this.$ul);
-            this.$ul.html('');
-            //this.collection.sort({silent:true});
-            this.collection.each(function(doc){
-                var view = self.getDocLayoutView(doc);
-                self.appendRow(view);
-            });
-            this.$el.append(this.$pager);
-            this.renderPager();
-            this.trigger('resize');
-            this.setElement(this.$el);
-            return this;
-        },
-        renderPager: function() {
-            var len = this.collection.length;
-            var c = this.collection.count > len ? this.collection.count : len;
-            this.$pager.find('.list-length').html(len);
-            this.$pager.find('.list-count').html(c);
-        },
-        appendRow: function(row) {
-            var rank = new Date(row.model.get('at'));
-            rank = rank.getTime();
-            var rowEl = row.render().$el;
-            if(this.currentFilter && !this.currentFilter(row.model)) {
-                rowEl.hide();
-            }
-            rowEl.attr('data-sort-rank', rank);
-            var d = false;
-            var $lis = this.$ul.children();
-            var last = $lis.last();
-            var lastRank = parseInt(last.attr('data-sort-rank'), 10);
-            if(rank > lastRank) {
-                $lis.each(function(i,e){
-                    if(d) return;
-                    var r = parseInt($(e).attr('data-sort-rank'), 10);
-                    if(rank > r) {
-                        $(e).before(rowEl);
-                        d = true;
-                    }
-                });
-            }
-            if(!d) {
-                this.$ul.append(rowEl);
-            }
-        }
-    });
+    //         $(window).scroll(function(){
+    //             if(self.$el.is(":visible")) {
+    //               if(!self.loading && $(window).scrollTop() + 250 >= $(document).height() - $(window).height()){
+    //                 self.loading = true;
+    //                 self.loadMore();
+    //               }
+    //             }
+    //         });
+    //     },
+    //     filter: function(f) {
+    //         var self = this;
+    //         if(f && typeof f == 'function') {
+    //             this.currentFilter = f;
+    //             this.collection.filter(function(model) {
+    //               if(f(model)) {
+    //                   self.getDocLayoutView(model).$el.show();
+    //                   return true;
+    //               }
+    //               self.getDocLayoutView(model).$el.hide();
+    //               return false;
+    //             });
+    //         } else {
+    //             // show all
+    //             self.$ul.children().show();
+    //             self.currentFilter = false;
+    //         }
+    //     },
+    //     events: {
+    //       "click .list-pager": "loadMore",
+    //     },
+    //     loadMore: function() {
+    //         var self = this;
+    //         this.collection.getNextPage(function(){
+    //             self.loading = false;
+    //         });
+    //     },
+    //     getDocLayoutView: function(doc) {
+    //         var view;
+    //         if(this.layout === 'row') {
+    //             view = doc.getRow({list: self});
+    //         } else if(this.layout === 'avatar') {
+    //             view = doc.getAvatar({list: self});
+    //         }
+    //         return view;
+    //     },
+    //     render: function() {
+    //         var self = this;
+    //         this.$el.html('');
+    //         this.$el.append(this.$ul);
+    //         this.$ul.html('');
+    //         //this.collection.sort({silent:true});
+    //         this.collection.each(function(doc){
+    //             var view = self.getDocLayoutView(doc);
+    //             self.appendRow(view);
+    //         });
+    //         this.$el.append(this.$pager);
+    //         this.renderPager();
+    //         this.trigger('resize');
+    //         this.setElement(this.$el);
+    //         return this;
+    //     },
+    //     renderPager: function() {
+    //         var len = this.collection.length;
+    //         var c = this.collection.count > len ? this.collection.count : len;
+    //         this.$pager.find('.list-length').html(len);
+    //         this.$pager.find('.list-count').html(c);
+    //     },
+    //     appendRow: function(row) {
+    //         var rank = new Date(row.model.get('at'));
+    //         rank = rank.getTime();
+    //         var rowEl = row.render().$el;
+    //         if(this.currentFilter && !this.currentFilter(row.model)) {
+    //             rowEl.hide();
+    //         }
+    //         rowEl.attr('data-sort-rank', rank);
+    //         var d = false;
+    //         var $lis = this.$ul.children();
+    //         var last = $lis.last();
+    //         var lastRank = parseInt(last.attr('data-sort-rank'), 10);
+    //         if(rank > lastRank) {
+    //             $lis.each(function(i,e){
+    //                 if(d) return;
+    //                 var r = parseInt($(e).attr('data-sort-rank'), 10);
+    //                 if(rank > r) {
+    //                     $(e).before(rowEl);
+    //                     d = true;
+    //                 }
+    //             });
+    //         }
+    //         if(!d) {
+    //             this.$ul.append(rowEl);
+    //         }
+    //     }
+    // });
     
     var SelectListView = Backbone.View.extend({
         tagName: "select",
@@ -572,12 +583,19 @@
         tagName: "div",
         className: "post row",
         initialize: function(options) {
+            var self = this;
             if(options.list) {
                 this.list = options.list;
             }
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             //this.actions = new ActionsView({id: this.id, model: this.model});
+            this.tagListView = this.model.getTagsList();
+            this.tagListView.on('selectedTagName', function(tagName) {
+                if(self.list) {
+                    self.list.trigger('goToTagName', tagName);
+                }
+            });
         },
         render: function() {
             var self = this;
@@ -609,18 +627,29 @@
                     $permalink.find('time').html(this.model.get('at'));
                 }
             }
-            if(this.model.has('tags')) {
-                var $tags = $('<span class="tags-links"><span class="glyphicon glyphicon-tag"></span> </span>');
-                var tags = this.model.get('tags');
-                for(var t in tags) {
-                    var tag = tags[t];
-                    $tags.append('<a href="tag/'+tag+'" data-tag="'+tag+'" rel="tag">'+tag+'</a>');
-                    if(tags.length > 1 && t < tags.length-1) {
-                        $tags.append(', ');
-                    }
-                }
-                $byline.append($tags);
-            }
+            
+            $byline.append(this.tagListView.render().$el);
+            // if(this.model.has('tags')) {
+                
+            //     var $tags = $('<span class="tags-links"><span class="glyphicon glyphicon-tag"></span> </span>');
+            //     var tags = this.model.get('tags');
+            //     for(var t in tags) {
+            //         var tag = tags[t];
+            //         console.log(tag)
+            //         if(typeof tag === 'string') {
+            //             $tags.append('<a href="tag/'+tag+'" data-tag="'+tag+'" rel="tag">'+tag+'</a>');
+            //         } else {
+            //             if(tag.color) {
+            //                 $tags.find('.glyphicon-tag').css('color', tag.color);
+            //             }
+            //             $tags.append('<a href="tag/'+tag.name+'" data-tag="'+tag.name+'" rel="tag">'+tag.name+'</a>');
+            //         }
+            //         if(tags.length > 1 && t < tags.length-1) {
+            //             $tags.append(', ');
+            //         }
+            //     }
+            //     $byline.append($tags);
+            // }
             if(this.model.has('owner')) {
                 $byline.append('<span class="author vcard"><span class="glyphicon glyphicon-user"></span> <a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
                 this.model.getOwner(function(owner){
@@ -661,9 +690,175 @@
         events: {
             "click .readMore": "clickReadMore",
           "click": "select",
-          "click .entry-title a": "clickTitle",
+          "click .entry-title a": "goToDetail",
+          "click .date a": "goToDetail",
+          "click a.readMore": "goToDetail",
+          "click .avatar": "goToDetail",
           "click .author a": "clickAuthor",
           "click .tags-links a": "clickTag"
+        },
+        goToDetail: function() {
+            this.model.collection.trigger('goToNavigatePath', this.model);
+            return false;
+        },
+        clickReadMore: function(e) {
+            this.select();
+            return false;
+        },
+        clickAuthor: function(e) {
+            if(this.author) {
+                if(this.hasOwnProperty('list')) {
+                    this.list.trigger('goToAuthor', this.author);
+                }
+                this.trigger('goToAuthor', this.author);
+            }
+            return false;
+        },
+        clickTag: function(e) {
+            var $et = $(e.target);
+            if($et.attr('data-tag')) {
+                this.list.trigger('goToTag', $et.attr('data-tag'));
+            }
+            return false;
+        },
+        select: function(e) {
+            // var deselectSiblings = function(el) {
+            //     el.siblings().removeClass('selected');
+            //     el.siblings().removeAttr('selected');
+            // }
+            // deselectSiblings(this.$el);
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
+            if(this.hasOwnProperty('list')) {
+                this.list.selectedPost = this;
+                this.list.trigger('select', this);
+            }
+            this.trigger('select');
+            this.trigger('resize');
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+    
+    var TableRowView = Backbone.View.extend({
+        tagName: "tr",
+        className: "post",
+        initialize: function(options) {
+            if(options.list) {
+                this.list = options.list;
+            }
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
+            //this.actions = new ActionsView({id: this.id, model: this.model});
+            
+            this.$tdIcon = $('<td class="icon"></td>');
+            this.$tdTitle = $('<td class="title"></td>');
+            this.$tdAt = $('<td class="at"></td>');
+            this.$tdActions = $('<td class="actions"></td>');
+            
+            var opts = {
+                className: 'actions',
+                model: this.model, 
+                actionOptions: {
+                    fav: {fieldName: 'fav'},
+                    tags: {fieldName: 'tags'},
+                    groups: {fieldName: 'groups'},
+                    detail: false
+                }
+            }
+            this.modelActions = new utils.ModelActionsView(opts);
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$tdIcon);
+            this.$el.append(this.$tdTitle);
+            this.$el.append(this.$tdAt);
+            this.$el.append(this.$tdActions);
+            this.$tdActions.html(this.modelActions.render().$el);
+            var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
+            this.$tdAt.html($permalink);
+            
+            if(this.model.get('avatar')) {
+                var avatarImage = this.model.get('avatar');
+                var $avatarImg = $('<img class="avatar" src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
+                this.$tdIcon.html($avatarImg);
+            }
+            
+            if(this.model.has('title')) {
+                this.$tdTitle.html('<div class=""><h1 class="entry-title"><a href="'+this.model.getNavigatePath()+'">'+this.model.get('title')+'</a></h1></div>');
+                $permalink.attr('title', 'Permalink to '+this.model.get('title'));
+            }
+            if(this.model.has('at')) {
+                if(window.clock) {
+                    var m = clock.moment(this.model.get('at'));
+                    $permalink.find('time').attr('datetime', m.format("YYYY-MM-DDTHH:mm:ssZZ"));
+                    this.$tdAt.attr('title', m.format('LLLL'));
+                    $permalink.find('time').html(m.calendar());
+                } else {
+                    $permalink.find('time').html(this.model.get('at'));
+                }
+            }
+            // if(this.model.has('tags')) {
+            //     var $tags = $('<span class="tags-links"><span class="glyphicon glyphicon-tag"></span> </span>');
+            //     var tags = this.model.get('tags');
+            //     for(var t in tags) {
+            //         var tag = tags[t];
+            //         $tags.append('<a href="tag/'+tag+'" data-tag="'+tag+'" rel="tag">'+tag+'</a>');
+            //         if(tags.length > 1 && t < tags.length-1) {
+            //             $tags.append(', ');
+            //         }
+            //     }
+            //     $byline.append($tags);
+            // }
+            // if(this.model.has('owner')) {
+            //     $byline.append('<span class="author vcard"><span class="glyphicon glyphicon-user"></span> <a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
+            //     this.model.getOwner(function(owner){
+            //         self.author = owner;
+            //         if(owner) {
+            //         }
+            //     });
+            // }
+            
+            // if(this.model.has('msg')) {
+            //     var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
+            //     var msgStr = this.model.get('msg');
+            //     var msgStrTxt = nl2br($('<span>'+br2nl(msgStr)+'</span>').text());
+            //     var trimLen = 555;
+            //     if(msgStrTxt.length > trimLen) {
+            //         msgStr = msgStrTxt.substr(0, trimLen);
+            //         msgStr += '... <a href="#" class="readMore">Read more</a>'; // strip html
+            //     }
+            //     $msg.html(msgStr);
+            //     this.$el.append($msg);
+            // }
+            
+            if(this.model.has('youtube')) {
+                var yt = this.model.get('youtube');
+                if(yt.id) {
+                    var ytid = yt.id;
+                    //this.$el.append('<span class="youtube col-md-8 col-md-offset-2"><img class="thumbnail" src="//i1.ytimg.com/vi/'+ytid+'/hqdefault.jpg"></span>');
+                    this.$tdIcon.html('<img src="//i1.ytimg.com/vi/'+ytid+'/hqdefault.jpg">');
+                }
+            }
+            
+            this.$el.attr('data-id', this.model.id);
+            //this.$el.append(this.actions.render().$el);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click .readMore": "clickReadMore",
+          "click .entry-title a": "goToDetail",
+          "click .at a": "goToDetail",
+          "click .icon": "goToDetail",
+          "click .author a": "clickAuthor",
+          "click .tags-links a": "clickTag",
+          "click": "select",
+        },
+        goToDetail: function() {
+            this.model.collection.trigger('goToNavigatePath', this.model);
+            return false;
         },
         clickReadMore: function(e) {
             this.select();
@@ -689,12 +884,7 @@
             return false;
         },
         select: function(e) {
-            var deselectSiblings = function(el) {
-                el.siblings().removeClass('selected');
-                el.siblings().removeAttr('selected');
-            }
-            deselectSiblings(this.$el);
-            this.$el.addClass("selected");
+            this.$el.toggleClass("selected");
             this.$el.attr("selected", true);
             if(this.hasOwnProperty('list')) {
                 this.list.selectedPost = this;
@@ -718,12 +908,17 @@
             }
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
+            this.tagListView = this.model.getTagsList();
+            this.tagListView.on('selectedTagName', function(tagName) {
+                if(self.list) {
+                    self.list.trigger('goToTagName', tagName);
+                }
+            });
             this.actions = new ActionsView({id: this.id, model: this.model});
         },
         render: function() {
             var self = this;
             this.$el.html('');
-            
             if(this.model.get('avatar')) {
                 var avatarImage = this.model.get('avatar');
                 var $avatarImg = $('<img class="avatar" src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
@@ -749,18 +944,18 @@
                     $permalink.find('time').html(this.model.get('at'));
                 }
             }
-            if(this.model.has('tags')) {
-                var $tags = $('<span class="tags-links glyphicon glyphicon-tag"></span>');
-                var tags = this.model.get('tags');
-                for(var t in tags) {
-                    var tag = tags[t];
-                    $tags.append('<a href="tag/'+tag+'" data-tag="'+tag+'" rel="tag">'+tag+'</a>');
-                    if(tags.length > 1 && t < tags.length-1) {
-                        $tags.append(', ');
-                    }
-                }
-                $byline.append($tags);
-            }
+            // if(this.model.has('tags')) {
+            //     var $tags = $('<span class="tags-links glyphicon glyphicon-tag"></span>');
+            //     var tags = this.model.get('tags');
+            //     for(var t in tags) {
+            //         var tag = tags[t];
+            //         $tags.append('<a href="tag/'+tag+'" data-tag="'+tag+'" rel="tag">'+tag+'</a>');
+            //         if(tags.length > 1 && t < tags.length-1) {
+            //             $tags.append(', ');
+            //         }
+            //     }
+            //     $byline.append($tags);
+            // }
             if(this.model.has('owner')) {
                 $byline.append('<span class="author vcard glyphicon glyphicon-user"><a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
                 this.model.getOwner(function(owner){
@@ -769,6 +964,7 @@
                     }
                 });
             }
+            $byline.append(this.tagListView.render().$el);
             
             var isJsCacher = function() {
                 return (!navigator || (navigator.userAgent && navigator.userAgent.indexOf('HouseJs HTML Cacher') !== -1));
@@ -876,6 +1072,14 @@
     var AvatarView = Backbone.View.extend({
         tagName: "span",
         className: "avatar",
+        initialize: function(options) {
+            if(options.list) {
+                this.list = options.list;
+            }
+            
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
+        },
         render: function() {
             this.$el.html('');
             var $byline = $('<span class="byline"></span>');
@@ -912,14 +1116,6 @@
             //this.$el.append(this.actions.render().$el);
             this.setElement(this.$el);
             return this;
-        },
-        initialize: function(options) {
-            if(options.list) {
-                this.list = options.list;
-            }
-            
-            this.model.bind('change', this.render, this);
-            this.model.bind('destroy', this.remove, this);
         },
         events: {
           "click": "select"
@@ -1268,9 +1464,63 @@
                     this.model = new Model({}, {
                         collection: this.collection
                     });
-                } else {
                 }
             }
+            var opts = {
+                className: 'actions col-md-4 col-md-offset-8',
+                model: this.model, 
+                actionOptions: {
+                    fav: {fieldName: 'fav'},
+                    tags: {fieldName: 'tags'},
+                    groups: {fieldName: 'groups'},
+                }
+            }
+            opts.actionOptions.more = {
+                "attachImage": {
+                    title: "Header Image",
+                    glyphicon: 'picture',
+                    action: function(model) {
+                        self.attachImage();
+                        return false;
+                    }
+                },
+                "attachAudio": {
+                    title: "Embed Audio",
+                    glyphicon: 'music',
+                    action: function(model) {
+                        self.attachAudio();
+                        return false;
+                    }
+                },
+                "attachVideo": {
+                    title: "Embed Video",
+                    glyphicon: 'film',
+                    action: function(model) {
+                        self.attachVideo();
+                        return false;
+                    }
+                },
+                "attachYoutube": {
+                    title: "Embed YouTube",
+                    glyphicon: 'film',
+                    action: function(model) {
+                        self.attachYoutube();
+                        return false;
+                    }
+                },
+                "attachTweet": {
+                    title: "Embed Tweet",
+                    glyphicon: 'comment',
+                    action: function(model) {
+                        self.attachTweet();
+                        return false;
+                    }
+                }
+            }
+            this.modelActions = new utils.ModelActionsView(opts);
+            this.modelActions.on('goToTagName', function(tagName){
+                app.listView.tagsView.tagSelectView.selectTagByName(tagName);
+            });
             self.uploadAvatarFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
             self.uploadAvatarFrame.on('uploaded', function(data){
                 if(_.isArray(data)) {
@@ -1346,8 +1596,9 @@
                 }
             });
             this.$ace = $('<div id="ace-editor"></div>');
+            this.$affix = $('<div class="affixTools"></div>');
             this.wsyi_id = 'wysihtml5-'+this.cid;
-            this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your post" autocomplete="off" class="form-control" />');
+            this.$inputTitle = $('<input type="text" name="title" placeholder="Title of your post" autocomplete="off" class="form-control entry-title" />');
             this.$msgToolbar = $('<div class="wysihtml5-toolbar" id="'+this.wsyi_id+'-toolbar"><header><ul class="commands">\
                   <li data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command"><span class="glyphicon glyphicon-bold"></span></li>\
                   <li data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command"><span class="glyphicon glyphicon-italic"></span></li>\
@@ -1362,77 +1613,100 @@
                   <li data-wysihtml5-action="change_view" title="Show HTML" class="action"><span class="glyphicon glyphicon-wrench"></span></li>\
                   <li data-wysihtml5-action="cleanup_html" title="Cleanup HTML" class="cleanup" title="Cleanup Code"><span class="glyphicon glyphicon-text-width"></span></li>\
                   </ul></header>\
+              <div data-wysihtml5-dialog="publishedAt" style="display: none;" class="input-group"></div>\
               <div data-wysihtml5-dialog="createLink" style="display: none;" class="input-group"><span class="input-group-btn"><label class="control-label">URL:</label></span><input class="form-control" data-wysihtml5-dialog-field="href" value="http://"><span class="input-group-btn"><a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></span></div>\
               <div data-wysihtml5-dialog="insertImage" style="display: none;">\
                 <span class="input-group">\
                 <label class="control-label">Image:</label><input data-wysihtml5-dialog-field="src" value="http://" class="form-control">\
                 <a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></div></span></div>');
-            this.$inputMsg = $('<textarea id="'+this.wsyi_id+'-textarea" name="msg" placeholder="Your message..."></textarea>');
+            this.$inputMsg = $('<textarea id="'+this.wsyi_id+'-textarea" name="msg" placeholder="Your message..." cols="100"></textarea>');
             this.$inputSlug = $('<input type="text" name="slug" placeholder="post-title" class="form-control" />');
             this.$slugShare = $('<div class="slugShare form-group"></div>');
-            this.$slugShare.html('<label class="glyphicon glyphicon-link col-lg-4 control-label">/posts/</label><div class="col-lg-8"></div>'); //window.location.origin+
+            this.$slugShare.html('<label class="glyphicon glyphicon-link control-label">/posts/</label><div class=""></div>'); //window.location.origin+
             this.$slugShare.find('div').append(this.$inputSlug);
             
-            this.$inputSeq = $('<input type="text" name="seq" placeholder="sequence #" class="form-control" />');
-            this.$seqShare = $('<div class="slugShare form-group"></div>');
-            this.$seqShare.html('<label class="seqShare glyphicon glyphicon-link col-lg-4 control-label">/posts/seq/</label><div class="col-lg-8"></div>');
-            this.$seqShare.find('div').append(this.$inputSeq);
+            this.$inputSeq = $('<input title="Post number" type="text" name="seq" placeholder="post number" class="form-control" />');
+            this.$seqShare = $('<div class="seqUrl"></div>');
+            // this.$seqShare.html('<label class="seqShare glyphicon glyphicon-link col-lg-4 control-label">/posts/seq/</label><div class="col-lg-8"></div>');
+            this.$seqShare.html(''); // <label class="seqShare">#</label>
+            this.$seqShare.append(this.$inputSeq);
             
             this.$inputAtDate = $('<input name="at-date" type="date" class="form-control" />');
             this.$inputAtTime = $('<input name="at-time" type="time" class="form-control" />');
             
-            this.atPublished = $('<span class="published"><div class="by glyphicon glyphicon-user">by <span class="owner"></span></div>\n\
-            <div class="at form-group"><div class="glyphicon glyphicon-time col-md-1">at</div> <div class="atDate col-md-7"></div><div class="atTime col-md-4"></div></div></span>');
-            this.atPublished.find('.owner').append(this.$owner);
-            this.atPublished.find('.atDate').append(this.$inputAtDate);
-            this.atPublished.find('.atTime').append(this.$inputAtTime);
+            this.atPublished = $('<span class="published">\n\
+            <div class="at form-group"> <div class="atDate col-md-7"></div><div class="atTime col-md-4"></div></div></span>');
+            // this.atPublished.find('.owner').append(this.$owner);
+            this.$msgToolbar.find('[data-wysihtml5-dialog="publishedAt"]').append(this.$inputAtDate).append(this.$inputAtTime).append('<span class="input-group-btn"><a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a></span>');
             
-            this.inputTagsView = new TagsInputView({model: this.model});
+            // this.inputTagsView = new TagsInputView({model: this.model});
             this.youtubeView = new YoutubeView({model: this.model});
             this.wistiaView = new WistiaMediaView({model: this.model, label: 'Wistia Video ID'});
             this.wistiaAudioView = new WistiaMediaView({model: this.model, label: 'Wistia Audio ID'});
             this.tweetInputView = new TweetInputView({model: this.model});
-            this.inputGroupsView = new SelectGroupsView({model: this.model});
-            this.feedView = new ActionFeedView({model: this.model});
-            this.deleteView = new ActionDeleteView({model: this.model});
+            // this.inputGroupsView = new SelectGroupsView({model: this.model});
+            // this.feedView = new ActionFeedView({model: this.model});
+            // this.deleteView = new ActionDeleteView({model: this.model});
             
-            this.$form = $('<form class="post"><div class="col-md-8 fieldset"></div><div class="controls col-md-4"></div></form>');
+            this.$form = $('<form class="post container"><div class="col-md-8 col-md-offset-2 fieldset"></div><div sytle="display:none;" class="controls col-md-8 col-md-offset-2"></div></form>');
             
             this.$fieldset = this.$form.find('.fieldset');
             this.$fieldset.append(this.$inputTitle);
-            this.$fieldset.append(this.$msgToolbar);
+            this.$fieldset.append('<span class="avatar"><span class="embed"></span></span>');
+            this.$fieldset.append('<span class="audio"><span class="embed"></span></span>');
+            this.$fieldset.append('<span class="video"><span class="embed"></span></span>');
+            this.$fieldset.append(this.$affix);
+            this.$publishButton = $('<div class="btn-group publish">\n\
+      <button type="button" class="btn btn-link btn-sm save">Save Draft</button>\n\
+      <button type="button" class="btn btn-link btn-sm dropdown-toggle" data-toggle="dropdown">\n\
+        <span class="glyphicon glyphicon-lock"></span>\n\
+        <span class="sr-only">Toggle Dropdown</span>\n\
+      </button>\n\
+      <ul class="dropdown-menu pull-right" role="menu">\n\
+        <li class="active"><a href="#" class="private"><span class="glyphicon glyphicon-check"></span> Private Draft</a></li>\n\
+        <li><a href="#" class="public"><span class="glyphicon glyphicon-globe"></span> Publish Publicly</a></li>\n\
+      </ul>\n\
+    </div>');
+            // this.$fieldset.append('<div class="form-group "><div class=""><input type="submit" value="Publish" class="form-control btn btn-primary" /></div></div>');
+            this.$affix.append(this.$publishButton);
+            if(!this.model.isNew()) {
+                this.$slugShare.hide();
+            }
+            this.$affix.append(this.$slugShare);
+            this.$affix.append(this.$seqShare);
+            this.$affix.append('<span class="atBtn glyphicon glyphicon-time btn btn-link"> </span>');
+            this.$affix.append('<div class="by" title="Post author"><span class="glyphicon glyphicon-user"></span> <span class="owner"></span></div>');
+            this.$owner = this.$affix.find('.by .owner');
+            this.$affix.append(this.$msgToolbar);
             this.$fieldset.append(this.$inputMsg);
             this.$fieldset.append(this.$ace);
             
             this.$controls = this.$form.find('.controls');
-            this.$controls.append('<div class="form-group action"><div class="col-md-8"><input type="submit" value="Publish" class="form-control btn btn-primary" /></div></div>');
-            this.$controls.find('.action').prepend(this.inputGroupsView.render().$el);
-            this.$controls.append('<hr />');
-            this.$controls.append(this.$slugShare);
-            this.$controls.append(this.$seqShare);
-            this.$controls.append(this.inputTagsView.render().$el);
-            this.$controls.append(this.atPublished);
-            this.$controls.append(this.youtubeView.render().$el);
-            this.$controls.append(this.wistiaView.render().$el);
-            this.$controls.append(this.wistiaAudioView.render().$el);
-            this.$controls.append(this.tweetInputView.render().$el);
-            this.$controls.append('<hr />');
-            this.$controls.append('<span class="avatar"><span class="embed"></span><button class="attachImage" class="form-control">Attach Image</button></span>');
-            this.$controls.append('<span class="audio"><span class="embed"></span><button class="attachAudio" class="form-control">Attach Audio</button></span>');
-            this.$controls.append('<span class="video"><span class="embed"></span><button class="attachVideo" class="form-control">Attach Video</button></span>');
+            // this.$controls.prepend(this.inputGroupsView.render().$el);
+            // this.$controls.append('<hr />');
+            // this.$controls.append(this.inputTagsView.render().$el);
+            // this.$controls.append(this.atPublished);
+            // this.$controls.append(this.youtubeView.render().$el);
+            // this.$controls.append(this.wistiaView.render().$el);
+            // this.$controls.append(this.wistiaAudioView.render().$el);
+            // this.$controls.append(this.tweetInputView.render().$el);
+            // this.$controls.append('<hr />');
             
             this.$controls.append(this.uploadAvatarFrame.render().$el.hide());
             this.$controls.append(this.uploadMediaAudioFrame.render().$el.hide());
             this.$controls.append(this.uploadMediaVideoFrame.render().$el.hide());
             
-            this.$controls.append('<hr />');
-            this.$controls.append(this.feedView.render().$el);
+            // this.$controls.append('<hr />');
+            // this.$controls.append(this.feedView.render().$el);
             if(!this.model.isNew()) {
-                this.$controls.append(this.deleteView.render().$el);
+                // this.$controls.append(this.deleteView.render().$el);
             }
         },
         render: function() {
             var self = this;
+            if(!this.model.isNew()) {
+                this.$el.prepend(this.modelActions.render().$el);
+            }
             if(this.$el.find('form').length === 0) {
                 //console.log('append form');
                 this.$el.append(this.$form);
@@ -1498,8 +1772,15 @@
                     this.$form.find('.video .embed').html('');
                 }
                 
+                
+                if(this.model.has('groups') && this.model.get('groups').indexOf('public') !== -1) {
+                    this.renderPublishPublic(this.$publishButton.find('.public'));
+                } else {
+                    this.renderPublishPrivate(this.$publishButton.find('.private'));
+                }
+                
                 if(this.model.has('groups')) {
-                    this.inputGroupsView.val(this.model.get('groups'));
+                    // this.inputGroupsView.val(this.model.get('groups'));
                 }
                 if(this.model.has('at')) {
                     var m = moment(this.model.get('at'));
@@ -1528,9 +1809,48 @@
                 stylesheets.push($(e).attr('href'));
             });
             
+            // Affix the toolbar
+            this.$affix.affix({
+                offset: {
+                    top: 127
+                    , bottom: function () {
+                        return (this.bottom = self.$el.find('.controls').outerHeight(true)+88)
+                    }
+                }
+              });
+            this.$affix.on('affix.bs.affix', function () {
+                self.$el.addClass('affixToolbar').removeClass('affixToolbarTop').removeClass('affixToolbarBottom');
+            });
+            this.$affix.on('affix-top.bs.affix', function () {
+                self.$el.addClass('affixToolbarTop').removeClass('affixToolbar').removeClass('affixToolbarBottom');
+            });
+            this.$affix.on('affix-bottom.bs.affix', function () {
+                self.$el.addClass('affixToolbarBottom').removeClass('affixToolbarTop').removeClass('affixToolbar');
+            });
+            
             // set h/w of textarea
-            $('#'+this.wsyi_id+'-textarea').css('height', $('#'+this.wsyi_id+'-textarea').outerHeight());
+            // $('#'+this.wsyi_id+'-textarea').css('height', $('#'+this.wsyi_id+'-textarea').outerHeight());
+            // $('#'+this.wsyi_id+'-textarea').css('width', $('#'+this.wsyi_id+'-textarea').outerWidth());
+            // $('#'+this.wsyi_id+'-textarea').css('height', $('#'+this.wsyi_id+'-textarea').outerHeight());
             $('#'+this.wsyi_id+'-textarea').css('width', $('#'+this.wsyi_id+'-textarea').outerWidth());
+            var str = $('#'+this.wsyi_id+'-textarea')[0].value;
+            var cols = $('#'+this.wsyi_id+'-textarea')[0].cols;
+            var linecount = 0;
+            var lines = str.split("\n");
+            for(var i in lines) {
+                l = lines[i];
+              linecount += Math.ceil( l.length / cols ); // take into account long lines
+            }
+            console.log(linecount + 1)
+            $('#'+this.wsyi_id+'-textarea')[0].rows = linecount + 1;
+            var lineHeight = $('#'+this.wsyi_id+'-textarea').css('line-height');
+            lineHeight = lineHeight.substr(0, lineHeight.length - 2) - 4;
+            console.log(linecount)
+            if(linecount < 60) {
+                linecount = 60;
+            }
+            var h = linecount*lineHeight;
+            $('#'+this.wsyi_id+'-textarea').css('height', h+'px');
             
             require([ "/posts/wysihtml-parser_rules.js" ], function() {
                 require([ "/posts/wysihtml5-0.4.0pre.min.js" ], function() {
@@ -1540,7 +1860,10 @@
                       parserRules:  wysihtml5ParserRules // defined in parser rules set 
                     });
                     self.editor.aceVisible = false;
-                    console.log(self.editor.ace);
+                    // console.log(self.editor.ace);
+                    self.editor.on("change", function(){
+                        // console.log(arguments)
+                    });
                     self.editor.on("external_change_view", function(view){
                         if(view === "textarea") {
                             require(['/fs/js-beautify/beautify-html.js'], function(html_beautify){
@@ -1569,24 +1892,92 @@
                             self.$ace.hide();
                         }    
                     });
+                    $('.wysihtml5-sandbox').contents().find('body').on("keydown",function() {
+                        if(self.model.get('msg') !== self.editor.textarea.getValue()) {
+                            // dirty and needs saving
+                            self.markAsDirty();
+                        } else {
+                            self.markAsDirty(false);
+                        }
+                    });
                     self.wysiImagePicker = new WysiImagePicker({el: self.$msgToolbar.find('[data-wysihtml5-dialog="insertImage"]')[0], editor: self.editor});
                     self.wysiImagePicker.render();
                 });
             });
             //$(this.editor.composer.iframe.contentDocument).find('head').append($('head style').clone());
         },
+        markAsDirty: function(isDirty) {
+            if(isDirty === false) {
+                this.$el.removeClass('dirty');
+                this.$publishButton.find('.save').addClass('btn-link').removeClass('btn-primary');
+            } else {
+                this.$el.addClass('dirty');
+                this.$publishButton.find('.save').addClass('btn-primary').removeClass('btn-link');
+            }
+        },
         events: {
             "submit form": "submit",
+            "click .publish .save": "submit",
+            "click .publish .dropdown-toggle": "clickPublishDropdown",
+            "click .publish .dropdown-menu a": "clickPublishDropdownItem",
+            "click .slugShare": "clickShare",
             "click .cleanup": "cleanup",
             'keyup input[name="title"]': "throttleTitle",
+            'focus input[name="title"]': "focusTitle",
             'blur input[name="title"]': "blurTitle",
-            "click .attachImage": "attachImage",
-            "click .attachAudio": "attachAudio",
-            "click .attachVideo": "attachVideo",
+            'blur input[name="slug"]': 'blurSlug',
+            // 'change textarea[name="msg"]': "msgChange",
+            // "click .attachImage": "attachImage",
+            // "click .attachAudio": "attachAudio",
+            // "click .attachVideo": "attachVideo",
             "click .detachImage": "detachImage",
             "click .detachAudio": "detachAudio",
             "click .detachVideo": "detachVideo",
-            'click [data-wysihtml5-command="insertImage"]': "insertImageHtml"
+            'click [data-wysihtml5-command="insertImage"]': "insertImageHtml",
+            'click [data-wysihtml5-dialog="publishedAt"] [data-wysihtml5-dialog-action="save"]': "toggleAtInput",
+            "click .atBtn": "toggleAtInput",
+        },
+        // msgChange: function(e) {
+        //     console.log($(e.currentTarget));
+        // },
+        toggleAtInput: function(e) {
+            this.$el.find('[data-wysihtml5-dialog="publishedAt"]').toggle();
+        },
+        clickShare: function(e) {
+            this.$slugShare.show();
+            this.$slugShare.find('input').focus();
+        },
+        clickPublishDropdown: function(e) {
+            $(e.currentTarget).dropdown('toggle');
+            return false;
+        },
+        renderPublishPublic: function($et) {
+            $et.parent('li').addClass('active').siblings().removeClass('active');
+            this.$publishButton.find('.dropdown-menu .glyphicon').removeClass('glyphicon-check');
+            $et.find('.glyphicon').addClass('glyphicon-check').removeClass('glyphicon-globe');
+            this.$publishButton.find('.private .glyphicon').addClass('glyphicon-lock');
+            this.$publishButton.find('.save').html('Publish');
+            this.$publishButton.find('.dropdown-toggle .glyphicon').addClass('glyphicon-globe').removeClass('glyphicon-lock');
+            this.$publishButton.addClass('public').removeClass('private');
+        },
+        renderPublishPrivate: function($et) {
+            $et.parent('li').addClass('active').siblings().removeClass('active');
+            this.$publishButton.find('.dropdown-menu .glyphicon').removeClass('glyphicon-check');
+            $et.find('.glyphicon').addClass('glyphicon-check').removeClass('glyphicon-lock');
+            this.$publishButton.find('.public .glyphicon').addClass('glyphicon-globe');
+            this.$publishButton.find('.save').html('Save Draft');
+            this.$publishButton.find('.dropdown-toggle .glyphicon').addClass('glyphicon-lock').removeClass('glyphicon-globe');
+            this.$publishButton.addClass('private').removeClass('public');
+        },
+        clickPublishDropdownItem: function(e) {
+            var $et = $(e.currentTarget);
+            if($et.hasClass('public')) {
+                this.renderPublishPublic($et);
+            } else {
+                this.renderPublishPrivate($et);
+            }
+            this.$publishButton.find('.dropdown-toggle').dropdown('toggle');
+            return false;
         },
         insertImageHtml: function() {
             this.wysiImagePicker.uploadFrame.pickFiles();
@@ -1617,6 +2008,13 @@
             this.uploadMediaVideoFrame.pickFiles();
             this.uploadMediaVideoFrame.$el.show();
             return false;
+        },
+        attachYoutube: function() {
+            utils.appendLightBox(this.youtubeView.render().$el, 'Embed a YouTube Video', ' ');
+            // var mod = utils.getNewModalContent({title: doc.get('filename'), body: doc.getFullView().render().$el, className: 'modal-content container'});
+        },
+        attachTweet: function() {
+            utils.appendLightBox(this.tweetInputView.render().$el, 'Embed a Tweet', ' ');
         },
         detachImage: function() {
             var self = this;
@@ -1669,18 +2067,38 @@
             }
             return false;
         },
-        blurTitle: function() {
-            console.log('blur title');
+        focusTitle: function() {
+            this.$slugShare.show();
             var titleStr = this.$inputTitle.val().trim();
             if(titleStr != '') {
                 // autosave
             }
         },
+        blurTitle: function() {
+            var self = this;
+            setTimeout(function(){
+                if(!self.$slugShare.find('input').is(":focus")) {
+                    self.$slugShare.hide();
+                }
+            },100); // enough time to catch the click to the slug input
+            var titleStr = this.$inputTitle.val().trim();
+            if(titleStr != '') {
+                // autosave
+            }
+        },
+        blurSlug: function() {
+            this.$slugShare.hide();
+        },
         throttleTitle: _.debounce(function(){
             this.refreshTitle.call(this, arguments);
-        }, 300),
+        }, 50),
         refreshTitle: function(e) {
             var titleStr = this.$inputTitle.val().trim();
+            if(titleStr !== this.model.get('title')) {
+                this.markAsDirty();
+            } else {
+                this.markAsDirty(false);
+            }
             this.trigger('title', titleStr);
             //this.model.set('title', titleStr);
             if(!this.model.has('slug') || this.model.isNew()) {
@@ -1691,6 +2109,7 @@
             //this.focus();
         },
         submit: function() {
+            console.log('submit')
             var self = this;
             var setDoc = {};
             if(self.editor.aceVisible) {
@@ -1700,8 +2119,8 @@
             var seq = this.$inputSeq.val();
             var msg = this.$inputMsg.val();
             var slug = this.$inputSlug.val();
-            var tags = this.inputTagsView.val();
-            var groups = this.inputGroupsView.val();
+            // var tags = this.inputTagsView.val();
+            var groups = this.$publishButton.hasClass('public') ? ['public'] : null;
             var youtube = this.youtubeView.val();
             var wistia = this.wistiaView.val();
             var wistiaAudio = this.wistiaAudioView.val();
@@ -1711,6 +2130,8 @@
             var atTime = this.$inputAtTime.val();
             
             if(atDate && atTime) {
+                console.log(atDate)
+                console.log(atTime)
                 var formDate = moment(atDate+' '+atTime, "YYYY-MM-DD HH:mm");
                 var at = new Date(this.model.get('at'));
                 if(formDate && at.getTime() !== formDate.toDate().getTime()) {
@@ -1729,10 +2150,10 @@
             if(slug !== '' && slug !== this.model.get('slug')) {
                 setDoc.slug = slug;
             }
-            if(tags.length > 0 && tags !== this.model.get('tags')) {
-                setDoc.tags = tags;
-            }
-            if(groups && groups !== this.model.get('groups')) {
+            // if(tags && tags.length > 0 && tags !== this.model.get('tags')) {
+            //     setDoc.tags = tags;
+            // }
+            if(groups !== this.model.get('groups')) {
                 setDoc.groups = groups;
             }
             if(wistia && (!this.model.get('wistia') || !_.isEqual(wistia.id, this.model.get('wistia').id))) {
@@ -1764,6 +2185,9 @@
             }
             return false;
         },
+        focusMsg: function() {
+            this.$inputMsg.focus();
+        },
         focus: function() {
             this.$inputTitle.focus();
         },
@@ -1776,7 +2200,7 @@
         initialize: function(options) {
             var editor = options.editor || false;
             var self = this;
-            this.$html = $('<span class="input-group"><span class="input-group-btn"><label class="control-label">Image:</label></span><input data-wysihtml5-dialog-field="src" value="http://" class="form-control"><span class="input-group-btn"><label class="control-label">Caption: </label></span><input name="alt" placeholder="caption" class="form-control"><span class="input-group-btn"><label class="justify"><input type="radio" name="klass" value="original"> <span class="glyphicon glyphicon-align-center"></span> </label><label class="justify"><input type="radio" name="klass" value="pull-left"> <span class="glyphicon glyphicon-align-left"></span> </label><label class="justify"><input type="radio" name="klass" value="pull-right"> <span class="glyphicon glyphicon-align-right"></span> </label> <button class="save" class="btn btn-primary">OK</button>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></span></span>');
+            this.$html = $('<span class="input-group"><span class="input-group-btn"><label class="control-label">Image:</label></span><input data-wysihtml5-dialog-field="src" value="http://" class="form-control"><span class="input-group-btn"><label class="control-label">Caption: </label></span><input name="alt" placeholder="caption" class="form-control"><span class="input-group-btn"><label class="justify"><input type="radio" name="klass" value="original"> <span class="glyphicon glyphicon-align-center"></span> </label><label class="justify"><input type="radio" name="klass" value="pull-left"> <span class="glyphicon glyphicon-align-left"></span> </label><label class="justify"><input type="radio" name="klass" value="pull-right"> <span class="glyphicon glyphicon-align-right"></span> </label> <button class="save btn btn-primary" class="btn btn-primary">OK</button>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></span></span>');
             self.$inputUrl = this.$html.find('input[data-wysihtml5-dialog-field="src"]');
             self.uploadFrame = new window.FilesBackbone.UploadFrame({collection: window.filesCollection, type:'image', metadata:{groups: ['public']}});
             self.uploadFrame.on('uploaded', function(data){

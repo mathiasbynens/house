@@ -1,12 +1,16 @@
 (function() {
-    var pageSize = 24;
+    var pageSize = 0;
 
     var PostsView = Backbone.View.extend({
-        tag: 'span',
-        className: 'app',
+        tagName: 'body',
+        className: 'posts-app',
         initialize: function() {
             var self = this;
+            this.$app = $('<div class="app"></div>');
             self.editForms = {};
+            require(['/tags/tags.js'], function(ModelBackbone){
+                    window.TagsBackbone = ModelBackbone;
+                    window.tagsCollection = new ModelBackbone.Collection(); // collection
                 require(['/posts/backbone-posts.js'], function(ModelBackbone){
                     window.PostsBackbone = ModelBackbone;
                     window.postsCollection = new ModelBackbone.Collection(); // collection
@@ -19,22 +23,14 @@
                         window.postsCollection.pageSize = pageSize;
                         // self.listView = new ModelBackbone.List({el: self.$postList, collection: window.postsCollection});
                         var filterFunc = function(model, filterObj) {
-                            // console.log(model);
+                            console.log(model);
+                            console.log(filterObj);
                             var filterId = filterObj.filter;
-                            if(filterId === 'favs') {
-                                return model.get('metadata').fav;
+                            if(filterId === 'drafts') {
+                                var r = model.has('groups') ? model.get('groups').length === 0 : true;
+                                console.log(r)
+                                return r;
                             }
-                            var m = model.get('contentType');
-                            // console.log(filterId);
-                            // console.log(m)
-                            // console.log(m.indexOf(filterId));
-                            return (m.indexOf(filterId) === 0);
-                            // if(filterId === 'text') {
-                            // } else if(filterId === 'image') {
-                            // } else if(filterId === 'audio') {
-                            // } else if(filterId === 'video') {
-                            // } else {
-                            // }
                         }
                         var listOpts = {
                             className: 'houseCollection posts table-responsive',
@@ -43,81 +39,51 @@
                                 'fieldName': 'title'
                             },
                             filters: {
-                                'favs': {txt: 'Favs', glyphicon: 'star', filter: filterFunc, load: {"metadata.fav": 1}},
-                                'text': {txt: 'Text', glyphicon: 'file', filter: filterFunc, load: {contentType: new RegExp('text')}},
-                                'image': {txt: 'Image', glyphicon: 'picture', filter: filterFunc, load: {contentType: new RegExp('image')}},
-                                'audio': {txt: 'Audio', glyphicon: 'music', filter: filterFunc, load: {contentType: new RegExp('audio')}},
-                                'video': {txt: 'Video', glyphicon: 'film', filter: filterFunc, load: {contentType: new RegExp('video')}},
+                                'drafts': {txt: 'Drafts', glyphicon: 'edit', filter: filterFunc, load: {"groups": null}},
                             },
                             tags: {
                                 'fieldName': 'tags'
                             },
                             sorts: [
-                                {name: 'Upload Date', field: 'uploadDate', type: 'date', glyphicon: 'time', default: -1},
-                                {name: 'Filename', field: 'filename', glyphicon: 'sort-by-alphabet'},
-                                {name: 'File size', field: 'length', type: 'number', glyphicon: 'sort-by-order'}
+                                {name: 'Published At', field: 'at', type: 'date', glyphicon: 'time', default: -1},
                             ],
                             layouts: {
                                 "table": {
                                     title: 'Table',
                                     glyphicon: 'th-list',
                                 },
-                                "avatar": {
-                                    title: 'Avatar',
-                                    glyphicon: 'th-large',
-                                },
                                 "row": {
-                                    title: 'Row',
+                                    title: 'Summary',
                                     glyphicon: 'th-large',
                                     default: true
                                 }
                             },
-                            selection: {
-                                actions: {
-                                    "delete": {
-                                        title: "Delete Posts",
-                                        glyphicon: 'trash',
-                                        confirm: function() {
-                                            return confirm("Are you sure that you want to delete the selected files?");
-                                        },
-                                        action: function(model, callback) {
-                                            // model.url = model.url+'/src';
-                                            // return;
-                                            model.destroy({success: function(model, response) {
-                                                callback();
-                                            }, 
-                                            error: function(model, response) {
-                                                console.log(arguments);
-                                            },
-                                            wait: true});
-                                        },
-                                        complete: function() {
-                                            // alert('Files removed.');
-                                            self.listView.renderPage(1);
-                                        }
-                                    },
-                                }
-                            }
+                            selection: false
                         }
                         self.listView = postsCollection.getView(listOpts);
                         self.listView.on('select', function(row) {
-                            self.router.navigate(row.model.getNavigatePath(), {trigger: true});
+                            // self.router.navigate(row.model.getNavigatePath(), {trigger: true});
                         });
                         self.listView.on('goToAuthor', function(user){
                             self.router.navigate('by/'+user.get('name'), {trigger: true});
                         });
-                        self.listView.on('goToTag', function(tagName){
+                        self.listView.on('goToTagName', function(tagName){
                             self.router.navigate('tag/'+tagName, {trigger: true});
                         });
                         
+                        window.postsCollection.on('goToNavigatePath', function(model) {
+                            self.router.navigate(model.getNavigatePath(), {trigger: true});
+                        });
                         window.postsCollection.on('editModel', function(model) {
                             self.router.navigate(model.getNavigatePath()+'/edit', {trigger: true});
                         });
                         
                         var loadCollections = function() {
-                            window.postsCollection.load(null, function(){
-                                self.initialized = true;
-                                self.trigger('initialized');
+                            window.tagsCollection.load(null, function(){
+                                window.postsCollection.load(null, function(){
+                                    self.initialized = true;
+                                    self.trigger('initialized');
+                                });
                             });
                         }
                         if(window.account) {
@@ -127,6 +93,7 @@
                         }
                         loadCollections();
                     });
+                });
             });
             
             /*require(['../desktop/jquery.idle-timer.js'], function() {
@@ -141,15 +108,16 @@
         },
         render: function() {
             var self = this;
-            this.$el.html('');
+            // this.$el.html('');
             if(!this.initialized) {
                 this.on('initialized', function(){
                     self.render();
                 });
                 return this;
             }
-            this.$el.append(self.listView.render().$el);
-            this.$el.append(this.$postViewer);
+            this.$app.append(self.listView.render().$el);
+            this.$app.append(this.$postViewer);
+            this.$el.append(this.$app);
             this.setElement(this.$el);
             return this;
         },
@@ -282,12 +250,11 @@
                     });
                     $form = self.newForm.render().$el;
                     $form.show();
-                    self.$el.append($form);
+                    self.$app.append($form);
                     self.newForm.wysiEditor();
                 } else {
                     $form = self.newForm.render().$el;
                     $form.show();
-                    // self.$el.append($form);
                 }
                 $form.siblings().hide();
                 self.newForm.focus();
@@ -308,15 +275,14 @@
                     });
                     $form = self.editForms[doc.id].render().$el;
                     $form.show();
-                    self.$el.append($form);
+                    self.$app.append($form);
                     self.editForms[doc.id].wysiEditor();
                 } else {
                     $form = self.editForms[doc.id].render().$el;
                     $form.show();
-                    //self.$el.append($form);
                 }
                 $form.siblings().hide();
-                self.editForms[doc.id].focus();
+                self.editForms[doc.id].focusMsg();
             }
         },
         findPostById: function(id, callback) {
@@ -350,8 +316,9 @@
             // });
             this.bindRouter(nav.router);
             // nav.col.add({title:"Posts", navigate:""});
-            nav.col.add({id: 'rss', title:'Subscribe via RSS', a:'<img src="/news/rss.ico" height="16" width="16" class="rss">', href:"/api/posts?_format=rss"});
+            nav.col.add({title:"Drafts", navigate:"drafts", glyphicon: "edit", renderCondition: "isAdmin"});
             nav.col.add({title:"New post", navigate:"new", glyphicon: "pencil", renderCondition: "isAdmin"});
+            nav.col.add({id: 'rss', title:'Subscribe via RSS', a:'<img src="/news/rss.ico" height="16" width="16" class="rss">', href:"/api/posts?_format=rss"});
         },
         bindRouter: function(router) {
             var self = this;
@@ -368,6 +335,7 @@
             });
             router.on('root', function(){
                 router.reset();
+                self.listView.resetViewControls();
                 self.listView.filter();
                 self.listView.$el.show().siblings().hide();
                 
@@ -377,13 +345,12 @@
                 } else {
                     $('body')[0].scrollTop = 0;
                 }
-                
                 router.setTitle('Posts');
+                
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
             });
             router.route(':slug/edit', 'editSlug', function(slug){
-                console.log('edit via slug')
                 router.reset();
                 $('#header').addClass('hideTitle');
                 self.findPostBySlug(slug, function(doc){
@@ -435,10 +402,11 @@
                 
                 usersCollection.getOrFetchName(name, function(user){
                     if(user) {
+                        console.log(user);
                         self.listView.filter(function(model) {
                           if (user.id !== model.get('owner').id) return false;
                           return true;
-                        });
+                        }, {owner: user.id}, {});
                         self.listView.$el.siblings().hide();
                         self.listView.$el.show();
                         router.trigger('loadingComplete');
@@ -449,13 +417,19 @@
                 router.reset();
                 router.setTitle('Posts tagged '+tagName);
                 self.nav.selectByNavigate('');
-                self.listView.filter(function(model) {
-                    if(model.has('tags') && model.get('tags').indexOf(tagName) !== -1) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                });
+                $('body')[0].scrollTop = 0;
+                if(self.listView.tagsView && self.listView.tagsView.tagSelectView) {
+                    self.listView.tagsView.tagSelectView.selectTagByName(tagName);
+                }
+                // TODO trigger for callback 
+                
+                // self.listView.filter(function(model) {
+                //     if(model.has('tags') && model.get('tags').indexOf(tagName) !== -1) {
+                //         return true;
+                //     } else {
+                //         return false;
+                //     }
+                // });
                 self.listView.$el.siblings().hide();
                 self.listView.$el.show();
                 router.trigger('loadingComplete');
@@ -492,6 +466,14 @@
                     }
                     router.trigger('loadingComplete');
                 });
+            });
+            router.route('drafts', 'drafts', function(){
+                router.reset();
+                self.listView.filterView.filterBy('drafts');
+                self.listView.$el.show().siblings().hide();
+                router.setTitle('Draft posts');
+                self.nav.selectByNavigate('drafts');
+                router.trigger('loadingComplete');
             });
             router.route('new', 'new', function(){
                 router.reset();

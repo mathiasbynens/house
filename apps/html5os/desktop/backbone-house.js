@@ -649,6 +649,10 @@ var ListSearch = Backbone.View.extend({
         this.options.placeholder = this.options.placeholder || 'Search '+this.options.list.collection.collectionName;
         this.$input = $('<input type="text" class="form-control" placeholder="'+this.options.placeholder+'" data-loading-text="loading">');
     },
+    reset: function() {
+        this.$input.val('');
+        delete this.selectedQuery;
+    },
     render: function() {
         var self = this;
         this.$el.append(this.$input);
@@ -671,8 +675,7 @@ var ListSearch = Backbone.View.extend({
     }, 500),
     keyUp: function(e) {
         if (e.keyCode == 27) {
-            this.$input.val('');
-            delete this.selectedQuery;
+            this.reset();
         }
         //console.log(e.keyCode)
         if (!this.hasOwnProperty('prevInputVal') || this.$input.val() !== this.prevInputVal) {
@@ -716,8 +719,6 @@ var ListSearch = Backbone.View.extend({
 var ListSorts = Backbone.View.extend({
     initialize: function(options) {
         var self = this;
-        console.log(this.options)
-        console.log(this.options.sorts)
         this.defaultSort = this.options.defaultSort || 'id-';
         var lis = '';
         for(var s in this.options.sorts) {
@@ -777,10 +778,8 @@ var ListTags = Backbone.View.extend({
         var self = this;
         this.options = options;
         self.fieldName = options.tags.fieldName || 'tags';
-        console.log(self.fieldName)
         utils.initTags(function(){
             self.tagSelectView = new TagsBackbone.SelectDropdown({});
-            var loadObj = {};
             self.tagSelectView.on('deselected', function() {
                 var deselectFilterObj = {};
                 if(self.options.list.filterView.selectedFilter) {
@@ -798,30 +797,36 @@ var ListTags = Backbone.View.extend({
                 }
             });
             self.tagSelectView.on('selected', function(tag) {
-                var filterFunc = function(m, v) {
-                    if(self.getTagFilterFunc()(m,v)) {
-                        if(self.options.list.filterView.getFilterFunc()(m,v)) {
-                            return true;
-                        }
-                    }
-                }
-                
-                var filterObj = {tag: tag.get('name')};
-                
-                if(self.options.list.filterView.selectedFilter) {
-                    filterObj.filter = self.options.list.filterView.selectedFilter;
-                    loadObj = self.options.list.filterView.options.filters[self.options.list.filterView.selectedFilter].load;
-                }
-                loadObj[self.fieldName] = tag.get('name');
-                
-                self.options.list.filter(filterFunc, filterObj, loadObj);
+                // self.options.list.trigger('goToTagName', tag.get('name'));
+                self.selectedTag(tag);
             });
             self.initialized = true;
             self.trigger('initialized');
         });
     },
     reset: function() {
+        this.tagSelectView.trigger('deselectAll', {silent: true});
+    },
+    selectedTag: function(tag) {
+        var self = this;
+        var loadObj = {};
+        var filterFunc = function(m, v) {
+            if(self.getTagFilterFunc()(m,v)) {
+                if(self.options.list.filterView.getFilterFunc()(m,v)) {
+                    return true;
+                }
+            }
+        }
         
+        var filterObj = {tag: tag.get('name')};
+        
+        if(self.options.list.filterView.selectedFilter) {
+            filterObj.filter = self.options.list.filterView.selectedFilter;
+            loadObj = self.options.list.filterView.options.filters[self.options.list.filterView.selectedFilter].load;
+        }
+        loadObj[self.fieldName] = tag.get('name');
+        
+        self.options.list.filter(filterFunc, filterObj, loadObj);
     },
     render: function() {
         var self = this;
@@ -1174,12 +1179,13 @@ var ListLayout = Backbone.View.extend({
             var action = this.layouts[i];
             if(action.default) {
                 this.layoutSelected = i;
+                this.defaultLayout = i;
             }
             lis = lis + '<li class="layout" data-layout="'+i+'"><a href="#"><span class="glyphicon glyphicon-'+action.glyphicon+'"> </span> '+action.title+'</a></li>';
         }
         
         this.$btnGroup = $('<div class="btn-group layouts" data-toggle="buttons">\
-    <button title="List View" type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="filterIcon glyphicon glyphicon-list"></span></button>\
+    <button title="List View" type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="layoutIcon glyphicon glyphicon-list"></span></button>\
     <ul class="dropdown-menu" role="menu">\
         '+lis+'\n\
     </ul>\
@@ -1194,20 +1200,22 @@ var ListLayout = Backbone.View.extend({
 //     <input type="radio" name="options" id="avatar"><span class="glyphicon glyphicon-th-large"> </span>\
 //   </label>\
     },
+    reset: function() {
+        if(this.layoutSelected !== this.defaultLayout) {
+            this.layoutSelected = this.defaultLayout;
+            this.renderActiveLayout();
+            this.trigger('layout', this.layoutSelected);
+        } else {
+            this.layoutSelected = this.defaultLayout;
+            this.renderActiveLayout();
+        }
+    },
     renderActiveLayout: function() {
         var layout = this.layoutSelected;
-        // this.$btnGroup.find('.btn.'+layout).addClass('active').siblings().removeClass('active');
-        var classes = 'filterIcon glyphicon glyphicon-';
-        if(layout === 'row') {
-            classes = classes+'list';
-        } else if(layout === 'table') {
-            classes = classes+'th-list';
-        } else if(layout === 'avatar') {
-            classes = classes+'th-large';
-        } else {
-            classes = classes+'list';
-        }
-        this.$btnGroup.find('.filterIcon').attr('class', classes);
+        var classes = 'layoutIcon glyphicon glyphicon-';
+        var glyph = this.layouts[layout].glyphicon || 'list';
+        classes = classes+glyph;
+        this.$btnGroup.find('.layoutIcon').attr('class', classes);
     },
     render: function() {
         var self = this;
@@ -1667,7 +1675,25 @@ var ListView = Backbone.View.extend({
     resetViewControls: function() {
         self.currentFilter = false;
         delete self.searchResults;
-        this.filterView.reset();
+        
+        if(this.filterView) {
+            this.filterView.reset();
+        }
+        if(this.tagsView) {
+            this.tagsView.reset();
+        }
+        if(this.layoutView) {
+            this.layoutView.reset();
+        }
+        if(this.sortView) {
+            // this.sortView.reset();
+        }
+        if(this.selectionView) {
+            // this.selectionView.reset();
+        }
+        if(this.searchView) {
+            this.searchView.reset();
+        }
     },
     filter: function(f, id, load) {
         var self = this;

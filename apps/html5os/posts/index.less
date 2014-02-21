@@ -67,15 +67,114 @@ body > .app {
 #accountNav .dropdown-toggle .userAvatarName .name {
     display: none;
 }
-h1.entry-title a, .entry-meta, .entry-meta a {
+h1.entry-title a, .entry-meta, .entry-meta a, .entry-title {
     font-family: 'FreeUniversal';
 }
 h1.entry-title a {
     font-weight: bold;
 }
-.post-viewer h1.entry-title a {
+.post-viewer h1.entry-title a, .entry-title {
     font-size: 32px;
     font-weight: bold;
+}
+input.entry-title {
+    height: auto;
+    border: 0;
+}
+.affixTools {
+    position: relative;
+    height: 29px;
+}
+.affixTools.affix {
+    top: 0 !important;
+    width: 730px !important;
+    position: fixed !important;
+}
+.affixTools.affix-top {
+    top: auto !important;
+}
+.form.affixToolbar {
+    input.entry-title {
+        padding-bottom: 39px;
+    }
+}
+.fieldset .slugShare {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 8;
+    background: white;
+    padding: 0px 14px;
+    .control-label {
+        position: absolute;
+        z-index: 9;
+        margin-left: 8px;
+        margin-right: 8px;
+    }
+    .form-control {
+        text-indent: 62px;
+    }
+}
+.fieldset .seqUrl:before {
+    content: '#';
+    position: absolute;
+    right: 100%;
+    padding: 6px 0px;
+}
+.atBtn {
+    position: absolute;
+    z-index: 2;
+    left: 62px;
+    padding: 6px 0px;
+    color: @gray-light;
+}
+.btn.btn-link.dropdown-toggle {
+    color: @gray-light;
+}
+.form .actions > div, td.actions .actions > div {
+    float: left;
+}
+[data-wysihtml5-dialog="publishedAt"] .form-control {
+    width: 50%;
+}
+.fieldset .seqUrl {
+    position: absolute;
+    z-index: 2;
+    width: 55px;
+    left: 18px;
+    color: @gray-light;
+}
+.fieldset .seqUrl .form-control {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: @gray-light;
+    height: 30px;
+    padding: 0px 12px;
+}
+.fieldset .publish {
+    position: absolute;
+    z-index: 2;
+    right: 0px;
+}
+.wysihtml5-toolbar .commands {
+    color: @gray-light;
+}
+.wysihtml5-toolbar .commands li:hover {
+    color: black;
+}
+.form .post .by {
+    position: absolute;
+    z-index: 2;
+    top: auto;
+    left: 85px;
+    padding: 5px;
+    color: @gray-light;
+    .userAvatarName {
+        .avatar {
+            display: none;
+        }
+    }
 }
 .msg {
     font-family: 'Crimson';
@@ -102,19 +201,36 @@ h1.entry-title {
     margin-top: 20px;
     margin-bottom: 20px;
 }
-.post .msg img.thumbnail {
-    float: left;
-    margin-right: 20px;
+.listOfTags {
+    .tagsListOf, .tagsList {
+        display: inline;
+    }
+    .tagsList .tag {
+        padding-right: 6px;
+    }
+    .glyphicon {
+        top: 4px;
+    }
+}
+.post {
+    .msg {
+        word-break: break-all;
+        img.thumbnail {
+            float: left;
+            margin-right: 20px;
+        }
+    }
 }
 .entry-meta {
     margin-top: 12px;
     margin-bottom: 32px;
-}
-.entry-meta .date, .entry-meta .tags-links {
-    margin-right: 12px;
-}
-.entry-meta .date a {
-    margin-left: 6px;
+    
+    .date, .author {
+        margin-right: 16px;
+    }
+    .date a {
+        margin-left: 6px;
+    }
 }
 .entry-meta .tags-links a:first-child {
     margin-left: 6px;
@@ -124,6 +240,7 @@ h1.entry-title {
 }
 .post-viewer .msg {
     margin-bottom: 100px;
+    word-break: break-all;
 }
 .post-viewer .msg img {
     max-width: 100%;
@@ -131,6 +248,34 @@ h1.entry-title {
 .houseList img.avatar, .fullView img.avatar {
     width: 100%;
     margin-top: -50px;
+}
+table.houseList {
+    tr {
+        position: relative;
+    }
+    & > tbody > tr > td {
+        vertical-align: middle;
+    }
+    td.icon {
+        width: 80px;
+        vertical-align: middle;
+    }
+    td.at {
+        width: 200px;
+    }
+    img.avatar {
+        max-height: 64px;
+        max-width: 64px;
+        margin-top: 0px;
+    }
+    td.actions {
+        width: 177px;
+    }
+    h1.entry-title {
+        font-size: 22px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
 }
 .msg blockquote {
     border-left: 0;
@@ -151,19 +296,21 @@ h1.entry-title {
 	top: -3px;
 }
 
-.houseList .post {
-    padding-bottom: 50px;
-    padding-top: 50px;
-    margin-left: 0;
-    margin-right: 0;
-}
-.houseList .post:nth-child(even) {
-   background-color: #161616;
-   border-color: #080808;
-   color: #BDBDBD;
-}
-.houseList .post:nth-child(even) .entry-title a {
-    color: white;
+ul.houseList {
+    .post {
+        padding-bottom: 50px;
+        padding-top: 50px;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .post:nth-child(even) {
+       background-color: #161616;
+       border-color: #080808;
+       color: #BDBDBD;
+    }
+    .post:nth-child(even) .entry-title a {
+        color: white;
+    }
 }
 
 #accountNav {
@@ -172,7 +319,6 @@ h1.entry-title {
 .navbar-header .glyphicon-home {
 }
 .navbar-header .glyphicon-home:hover {
-    color: white;
 }
 .navbar-header .navbar-form {
     padding: 0 0;
@@ -316,7 +462,7 @@ h1.entry-title {
     background: #FFFBE0;
     position: absolute;
     text-align: center;
-    left: 15px;
+    left: 0px;
     right: 0;
     z-index: 10;
     top: 34px;
@@ -330,6 +476,10 @@ h1.entry-title {
 }
 
 [data-wysihtml5-dialog] input {
+}
+
+.wysihtml5-toolbar .justify {
+    display: none;
 }
 
 [data-wysihtml5-dialog] input:focus {
@@ -852,6 +1002,7 @@ textarea[name="msg"] {
     margin: 0px 0px 12px;
     height: 600px;
     width: 100%;
+    line-height: 22px;
 }
 
 .fullView .wistia_video {
@@ -897,6 +1048,11 @@ z-index: 100;
 }
 @media only screen and (min-width: 1024px) {
 }
+.navbar-form {
+    .sort, .filter {
+        display: none;
+    }
+}
 
 body.loading {
     cursor: wait;
@@ -907,12 +1063,9 @@ body.loading #loading {
 body #loading {
     display: none;
 }
-body { overflow-y: scroll; }
+body {
+}
 .navbar-header .navbar-form {
-    position: fixed;
-    left: 13px;
-    top: 3px;
-    z-index: 1;
 }
 @media (max-width: 767px) {
     .navbar-header .navbar-form {
