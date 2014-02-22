@@ -11,6 +11,19 @@
             options.ownerFieldName = 'id';
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
+        url: function() {
+            if(window.config && window.config.secureApiUrl) {
+                return window.config.secureApiUrl+'/users/'+this.id;
+            } else if(window.config && window.config.usersUrl) {
+                return window.config.usersUrl+"/"+this.id;
+            } else {
+                var hostPath = window.location.hostname;
+                if(window.location.port) {
+                    hostPath = hostPath + ':' + window.location.port;
+                }
+                return "https://"+hostPath+"/api/users/"+this.id;
+            }
+        },
         // getOwner: function(callback) {
         //     window.usersCollection.getOrFetch(this.id, callback);
         // },
@@ -99,7 +112,16 @@
     var Collection = Backbone.House.Collection.extend({
         model: Model,
         collectionName: 'users',
-        url: '/api/users',
+        //url: '/api/users',
+        url: function() {
+            if(window.config && window.config.secureApiUrl) {
+                return window.config.secureApiUrl+'/users';
+            } else if(window.config && window.config.usersUrl) {
+                return window.config.usersUrl;
+            } else {
+                return "https://"+window.location.hostname+"/api/users";
+            }
+        },
         sortField: 'id-',
         getOrFetchName: function(slug, callback) {
             console.log(slug)
@@ -553,7 +575,7 @@
         render: function() {
             var self = this;
             this.$el.html('');
-            var $byline = $('<span class="membership"></span>');
+            var $byline = $('<span class="membership row"></span>');
             var displayName = this.model.get('displayName') || this.model.get('name');
             this.$el.append('<h1 class="displayName">'+displayName+'</h1>');
             this.$el.append('<h2 class="name">'+this.model.get('name')+'</h2>');
@@ -580,9 +602,8 @@
                         self.$el.find('h1').html('<a class="editDisplayName" title="Edit display name" href="#">'+self.$el.find('h1').html()+'</a>');
                         self.$el.find('h2').html('<a class="editName" title="Edit user name" href="#">'+self.$el.find('h2').html()+'</a>');
                         
-                        var $setPass = $('<div class="inputPass">\n\
-                            <a href="/" class="showPassForm zocial guest">Set Password</a>\n\
-                            <form style="display: none" class="form-horizontal">\n\
+                        var $setPass = $('<span class="inputPass row"><a href="/" class="btn btn-link showPassForm"><span class="glyphicon glyphicon-lock"></span> Change Password</a></span>');
+                        var $setPassForm = $('<form style="display: none" class="passForm form-horizontal">\n\
                                 <div class="currentPassword form-group">\n\
                                     <label for="inputCurr" class="col-xs-4 control-label">Current password: </label>\n\
                                     <div class="col-xs-8">\n\
@@ -601,11 +622,11 @@
                                         <input id="inputPassAgain" type="password" name="pass_again" class="form-control" tabindex=3 />\n\
                                     </div>\n\
                                 </div>\n\
-                            </form></div>');
+                            </form>');
                         
                         self.$el.find('.avatar').append('<br /><a class="editAvatar" title="Upload avatar" href="#">upload avatar</a><br />');
                         
-                        self.$el.append('<span class="groups"></span>');
+                        self.$el.append('<span class="groups row"></span>');
                         if(self.model.has('groups')) {
                             var groups = self.model.get('groups');
                             for(var g in groups) {
@@ -625,7 +646,7 @@
                     }
                     if (self.model.has("url") || isa) {
                         var src = self.model.get("url") || 'http://yourwebsite.com/';
-                        self.$el.append(' <span class="url"><a href="'+src+'" target="_new">' + src + '</a></span>');
+                        self.$el.append(' <span class="url row"><a href="'+src+'" target="_new">' + src + '</a></span>');
                         if(isa) {
                             self.$el.find('.url').append(' <a class="editUrl" title="Edit web address" href="#">edit</a>');
                         }
@@ -646,7 +667,9 @@
                         $byline.append(' member since ');
                         $byline.append($at);
                     }
-                    var $msg = $('<div class="email"></div>');
+                    
+                    var $row = $('<span class="row"></span>');
+                    var $msg = $('<span class="email row"></span>');
                     if(self.model.has('email')) {
                         $msg.html(self.model.get('email'));
                     }
@@ -655,11 +678,14 @@
                         $msg.append(' <a class="editEmail" title="Edit email address" href="#">edit email</a>');
                     }
                     
+                    
+                    
                     // if(account.isOwner(self.model.id)) {
                         // self.$el.append('<a class="editPass" title="Edit user password" href="#">change password</a><br />');
                     // }
                     if(isa && $setPass) {
                         self.$el.append($setPass);
+                        self.$el.append($setPassForm);
                     }
                     
                     
@@ -734,6 +760,7 @@
                     wait: true
                 });
                 saveModel.done(function() {
+                    delete self.model.changed.groups;
                     self.render();
                 });
             }
@@ -965,14 +992,15 @@
             return false;
         },
         resetPassForm: function() {
-            this.$el.find('.inputPass input').val('');
-            this.$el.find('.inputPass .showPassForm').show();
-            this.$el.find('.inputPass form').hide();
+            // this.$el.find('.inputPass').hide();
+            this.$el.find('.inputPass').show();
+            this.$el.find('.passForm input').val('');
+            this.$el.find('.passForm .showPassForm').show();
+            this.$el.find('.passForm').hide();
         },
         showPassForm: function(e) {
-            var $e = $(e.target);
-            $e.siblings().show();
-            $e.hide();
+            this.$el.find('.inputPass').hide();
+            this.$el.find('.passForm').show();
             
             if (this.model.has('pass') && this.model.get('pass') === false) {
                 this.$el.find('.passwordOnce').show();
@@ -1117,7 +1145,8 @@
                         }
                         if(self.model.has('pass')) {
                             var $setPass = $('<div class="inputPass">\n\
-                                <a href="/" class="showPassForm zocial guest">'+self.ui.passwordLabel+'</a>\n\
+                                <span class="glyphicon glyphicon-lock"></span> \n\
+                                <a href="/" class="showPassForm">'+self.ui.passwordLabel+'</a>\n\
                                 <form style="display: none">\n\
                                     <span class="passwordOnce form-group">\n\
                                         <label>Password: </label>\n\
@@ -1164,8 +1193,8 @@
             "click .showPassForm": "showPassForm",
             'blur input[name="pass"]': "showPassAgainBlur",
             'keyup input[name="pass"]': "showPassAgainKeyup",
-            'keyup input[name="pass_again"]': "changePassword",
-            'blur input[name="pass_again"]': "changePassword",
+            'keyup input[name="pass_again"]': "debounceChangePassword",
+            'blur input[name="pass_again"]': "debounceChangePassword",
             'blur input[name="displayName"]': "editDisplayName",
             "keyup .editEmail": "editEmailKeyup",
             "blur .editEmail": "editEmail",
@@ -1220,6 +1249,9 @@
             this.$el.find('.passwordOnce').hide();
             this.$el.find('.passwordAgain input').focus();
         },
+        debounceChangePassword: _.debounce(function(){
+            this.changePassword.apply(this, arguments);
+        }, 100),
         changePassword: function(e) {
             if((this.$el.find('input[name="pass_again"]').val() == '' && e.keyCode == 13) || e.keyCode == 27) {
                 this.resetPassForm();
