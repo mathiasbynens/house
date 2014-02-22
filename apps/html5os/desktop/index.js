@@ -105,7 +105,7 @@
                                                     
                                                     require(['/desktop/app.js'], function(DesktopApp) {
                                                         window.app = new DesktopApp({el: $('body')[0]});
-
+                                                        app.accountProfile = accountProfile;
                                                         app.on('initialized', function(){
                                                             app.render();
                                                             app.bindNav(nav);

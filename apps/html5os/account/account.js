@@ -177,14 +177,13 @@
             }
             if(this.isUser()) {
                 this.getView().getUserModel(function(user){
-                    console.log(options)
                     var $e = user.getWelcomeView(options).render().$el;
                     $e.show();
                     $el.html($e);
                 });
             } else {
                 return auth.prompt($el, options, function(){
-                    self.welcome($el);
+                    self.welcome($el, options, callback);
                 });
             }
         }

@@ -100,7 +100,7 @@
                 window.FilesBackbone = FilesBackbone;
                 this.$filesList = $('<div id="files-list" class="import"></div>');
                 self.filesCollection = new window.FilesBackbone.Collection();
-                self.filesList = new window.FilesBackbone.List({collection: self.filesCollection});
+                self.filesList = self.filesCollection.getView();
             
                 require(['/wallpaper/backbone-wallpaper.js'], function(WallpaperBackbone){
                     window.WallpaperBackbone = WallpaperBackbone;

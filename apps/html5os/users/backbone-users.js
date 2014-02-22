@@ -582,15 +582,25 @@
                         
                         var $setPass = $('<div class="inputPass">\n\
                             <a href="/" class="showPassForm zocial guest">Set Password</a>\n\
-                            <form style="display: none">\n\
-                                <span class="passwordOnce form-group">\n\
-                                    <label>Password: </label>\n\
-                                    <input class="form-control" type="password" name="pass" tabindex=1 />\n\
-                                </span>\n\
-                                <span class="passwordAgain form-group" style="display: none">\n\
-                                    <label>Your password again: </label>\n\
-                                    <input type="password" name="pass_again" class="form-control" tabindex=2 />\n\
-                                </span>\n\
+                            <form style="display: none" class="form-horizontal">\n\
+                                <div class="currentPassword form-group">\n\
+                                    <label for="inputCurr" class="col-xs-4 control-label">Current password: </label>\n\
+                                    <div class="col-xs-8">\n\
+                                        <input id="inputCurr" class="form-control" class="form-control" type="password" name="curr" tabindex=1 />\n\
+                                    </div>\n\
+                                </div>\n\
+                                <div class="passwordOnce form-group">\n\
+                                    <label for="inputPass" class="col-xs-4 control-label">New password: </label>\n\
+                                    <div class="col-xs-8">\n\
+                                        <input id="inputPass" class="form-control" class="form-control" type="password" name="pass" tabindex=2 />\n\
+                                    </div>\n\
+                                </div>\n\
+                                <div class="passwordAgain form-group" style="display: none">\n\
+                                    <label for="inputPassAgain" class="col-xs-4 control-label">Confirm password: </label>\n\
+                                    <div class="col-xs-8">\n\
+                                        <input id="inputPassAgain" type="password" name="pass_again" class="form-control" tabindex=3 />\n\
+                                    </div>\n\
+                                </div>\n\
                             </form></div>');
                         
                         self.$el.find('.avatar').append('<br /><a class="editAvatar" title="Upload avatar" href="#">upload avatar</a><br />');
@@ -645,8 +655,11 @@
                         $msg.append(' <a class="editEmail" title="Edit email address" href="#">edit email</a>');
                     }
                     
-                    if(account.isOwner(self.model.id)) {
-                        self.$el.append('<a class="editPass" title="Edit user password" href="#">change password</a><br />');
+                    // if(account.isOwner(self.model.id)) {
+                        // self.$el.append('<a class="editPass" title="Edit user password" href="#">change password</a><br />');
+                    // }
+                    if(isa && $setPass) {
+                        self.$el.append($setPass);
                     }
                     
                     
@@ -698,8 +711,18 @@
             "click .editAvatar": "editAvatar",
             "click .sendMsg": "sendMsg",
             "click .removeGroup": "removeGroup",
-            "click .addGroup": "addGroup"
+            "click .addGroup": "addGroup",
+            "click .showPassForm": "showPassForm",
+            'blur input[name="curr"]': "currBlur",
+            'keyup input[name="curr"]': "currKeyup",
+            'blur input[name="pass"]': "showPassAgainBlur",
+            'keyup input[name="pass"]': "showPassAgainKeyup",
+            'keyup input[name="pass_again"]': "debounceChangePassword",
+            'blur input[name="pass_again"]': "debounceChangePassword",
         },
+        debounceChangePassword: _.debounce(function(){
+            this.changePassword.apply(this, arguments);
+        }, 100),
         removeGroup: function(e) {
             var self = this;
             if(confirm("Are you sure that you want to remove this group?")) {
@@ -761,33 +784,33 @@
                 }
             });
         },
-        editPass: function() {
-            var self = this;
-            var txt = prompt("Enter your current, soon to be old password");
-            if(true || txt) {
-                var newPass = prompt("Enter a new password");
-                var newPassCheck = prompt("And prove that you didn't forget it already");
-                if(newPass && newPassCheck && newPass == newPassCheck) {
-                    this.model.set({'oldPass': txt, 'pass': newPass}, {silent: true});
-                    var saveModel = this.model.save(null, {
-                        silent: false ,
-                        wait: true
-                    });
-                    if(saveModel) {
-                        saveModel.done(function() {
-                            self.render();
-                            alert('Password changed.');
-                        });
-                        saveModel.fail(function(s, typeStr, respStr) {
-                            alert('Your password was incorrect');
-                        });
-                    }
-                } else {
-                    alert("That didn't take long!");
-                }
-            }
-            return false;
-        },
+        // editPass: function() {
+        //     var self = this;
+        //     var txt = prompt("Enter your current, soon to be old password");
+        //     if(true || txt) {
+        //         var newPass = prompt("Enter a new password");
+        //         var newPassCheck = prompt("And prove that you didn't forget it already");
+        //         if(newPass && newPassCheck && newPass == newPassCheck) {
+        //             this.model.set({'oldPass': txt, 'pass': newPass}, {silent: true});
+        //             var saveModel = this.model.save(null, {
+        //                 silent: false ,
+        //                 wait: true
+        //             });
+        //             if(saveModel) {
+        //                 saveModel.done(function() {
+        //                     self.render();
+        //                     alert('Password changed.');
+        //                 });
+        //                 saveModel.fail(function(s, typeStr, respStr) {
+        //                     alert('Your password was incorrect');
+        //                 });
+        //             }
+        //         } else {
+        //             alert("That didn't take long!");
+        //         }
+        //     }
+        //     return false;
+        // },
         editEmail: function() {
             var self = this;
             var txt = prompt("Enter your new email address", this.model.get('email'));
@@ -900,8 +923,120 @@
             }
             return false;
         },
+        currBlur: function(e) {
+            if(this.$el.find('input[name="curr"]').val() == '') {
+                this.resetPassForm();
+            } else {
+                this.$el.find('.passwordOnce').show();
+                this.$el.find('.currentPassword').hide();
+                this.$el.find('input[name="pass"]').focus();
+            }
+        },
+        currKeyup: function(e) {
+            if(e.keyCode == 13) {
+                if(this.$el.find('input[name="curr"]').val() == '') {
+                    this.resetPassForm();
+                } else {
+                    this.$el.find('.passwordOnce').show();
+                    this.$el.find('.currentPassword').hide();
+                }
+                // this.$el.find('input[name="pass"]').focus();
+            } else if(e.keyCode == 27) {
+                this.resetPassForm();
+            }
+            return false;
+        },
+        showPassAgainBlur: function(e) {
+            if(this.$el.find('input[name="pass"]').val() == '') {
+                this.resetPassForm();
+            } else {
+                this.showPassAgain(e);
+            }
+        },
+        showPassAgainKeyup: function(e) {
+            if(e.keyCode == 13) {
+                if(this.$el.find('input[name="pass"]').val() == '') {
+                    this.resetPassForm();
+                }
+                this.showPassAgain(e);
+            } else if(e.keyCode == 27) {
+                this.resetPassForm();
+            }
+            return false;
+        },
+        resetPassForm: function() {
+            this.$el.find('.inputPass input').val('');
+            this.$el.find('.inputPass .showPassForm').show();
+            this.$el.find('.inputPass form').hide();
+        },
+        showPassForm: function(e) {
+            var $e = $(e.target);
+            $e.siblings().show();
+            $e.hide();
+            
+            if (this.model.has('pass') && this.model.get('pass') === false) {
+                this.$el.find('.passwordOnce').show();
+                this.$el.find('.currentPassword').hide();
+                this.$el.find('input[name="pass"]').focus();
+            } else {
+                this.$el.find('.passwordOnce').hide();
+                this.$el.find('.currentPassword').show();
+                this.$el.find('input[name="curr"]').focus();
+            }
+            
+            this.$el.find('.passwordAgain').hide();
+            return false;
+        },
+        showPassAgain: function() {
+            this.$el.find('.passwordAgain').show();
+            this.$el.find('.passwordOnce').hide();
+            this.$el.find('.passwordAgain input').focus();
+        },
+        changePassword: function(e) {
+            if((this.$el.find('input[name="pass_again"]').val() == '' && e.keyCode == 13) || e.keyCode == 27) {
+                this.resetPassForm();
+                return false;
+            }
+            if(!e.keyCode || e.keyCode == 13) {
+                var self = this;
+                var oldPass = this.$el.find('input[name="curr"]').val();
+                var newPass = this.$el.find('input[name="pass"]').val();
+                var newPassCheck = this.$el.find('input[name="pass_again"]').val();
+                if(!newPassCheck) {
+                    return false;
+                }
+                var setAttrs = {
+                    'oldPass': '',
+                    'pass': newPass
+                };
+                if(oldPass && oldPass !== '') {
+                    setAttrs.oldPass = oldPass;
+                }
+                if(newPass && newPassCheck && newPass == newPassCheck) {
+                    this.model.set(setAttrs, {silent: true});
+                    var saveModel = this.model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    if(saveModel) {
+                        saveModel.done(function() {
+                            alert('Password changed.');
+                            delete self.model.attributes.pass;
+                            self.render();
+                        });
+                        saveModel.fail(function(s, typeStr, respStr) {
+                            alert('Your password was incorrect');
+                            self.resetPassForm();
+                        });
+                    }
+                } else {
+                    alert("Passwords mismatch!");
+                    self.resetPassForm();
+                }
+            }
+        },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
         }
     });
     
@@ -910,7 +1045,6 @@
         className: "welcomeUser",
         initialize: function() {
             var self = this;
-            console.log(this.options)
             if(this.options.list) {
                 this.list = this.options.list;
             }
@@ -950,7 +1084,6 @@
             var self = this;
             //this.$el.addClass(this.klasses.dialog);
             var closeBtn = '';
-                console.log(this.options)
             if(this.options.modal) {
                 closeBtn = '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>';
             }
@@ -1027,13 +1160,13 @@
             this.$el.show();
         },
         events: {
-            "keyup .editDisplayName": "submit",
+            'keyup .input[name="displayName"]': "submit",
             "click .showPassForm": "showPassForm",
             'blur input[name="pass"]': "showPassAgainBlur",
             'keyup input[name="pass"]': "showPassAgainKeyup",
             'keyup input[name="pass_again"]': "changePassword",
             'blur input[name="pass_again"]': "changePassword",
-            "blur .editDisplayName": "editDisplayName",
+            'blur input[name="displayName"]': "editDisplayName",
             "keyup .editEmail": "editEmailKeyup",
             "blur .editEmail": "editEmail",
             "click .editAvatar": "editAvatar",
@@ -1443,7 +1576,7 @@
             }
         },
         throttleTitle: _.debounce(function(){
-            this.refreshTitle.call(this, arguments);
+            this.refreshTitle.apply(this, arguments);
         }, 300),
         refreshTitle: function(e) {
             var titleStr = this.$inputTitle.val().trim();
