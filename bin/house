@@ -107,10 +107,9 @@ var start = function() {
     house.start();
 }
 var ver = function() {
-    console.log('house version: ');
 
     var packageJson = require(__dirname+'/../package.json');
-    console.log(packageJson.version);
+    console.log('house version: '+packageJson.version);
 }
 
 if(argv.hasOwnProperty('help')) {
