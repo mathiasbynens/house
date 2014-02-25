@@ -122,6 +122,13 @@ nav > .navbar-form {
     a, .btn-link {
         color: @dropdown-link-active-color;
     }
+    .dropdown-menu a {
+        // background-color: darken(@dropdown-bg, 0%);
+        color: @dropdown-link-color;
+        &:hover {
+            color: @dropdown-link-active-color;
+        }
+    }
 }
 .panel.selected {
     border: 1px solid darken(@dropdown-link-active-bg, 0%);

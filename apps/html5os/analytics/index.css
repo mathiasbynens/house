@@ -1220,6 +1220,10 @@ ul li.row {
     height: 45px;
     border-bottom: 1px inset #DBD5D5;
 }
+ul.actions li.row { 
+    height: auto;
+    border-bottom: 1px inset #DBD5D5;
+}
 ul li[selected].row {
     height: auto;
 }

@@ -705,7 +705,7 @@
             this.$span.append(this.$host);
             this.$span.append(this.$ua);
             this.$span.append(this.$geo);
-            this.$span.append('<span class="actionCount"></span> actions');
+            this.$span.append('<span class="actionCount" title="actions"></span>');
             this.$span.append(this.$dur);
             this.$span.append('<span class="referer"></span>');
             this.$span.append(this.$at);
@@ -764,21 +764,22 @@
             
             if (this.model.has("user")) {
                 this.$name.attr("data-owner-id", this.model.get("user"));
-                var owner = this.model.getOwner(function(owner) {
-                    if (owner) {
-                        if(!self.ownerNameView) {
-                            self.$name.html("");
-                            self.ownerNameView = owner.getNewAvatarNameView();
-                            self.ownerNameView.on("goToProfile", function(user) {
-                                self.trigger("goToProfile", user);
-                            });
-                            self.$name.append(self.ownerNameView.render().$el);
-                        }
-                        self.ownerNameView.render();
-                    } else {
-                        self.$name.html(self.model.get("name"));
-                    }
-                });
+                self.$name.html(self.model.get("name"));
+                // var owner = this.model.getOwner(function(owner) {
+                //     if (owner) {
+                //         if(!self.ownerNameView) {
+                //             self.$name.html("");
+                //             self.ownerNameView = owner.getNewAvatarNameView();
+                //             self.ownerNameView.on("goToProfile", function(user) {
+                //                 self.trigger("goToProfile", user);
+                //             });
+                //             self.$name.append(self.ownerNameView.render().$el);
+                //         }
+                //         self.ownerNameView.render();
+                //     } else {
+                //         self.$name.html(self.model.get("name"));
+                //     }
+                // });
             } else {
                 self.$name.html(self.model.get("name"));
             }
@@ -795,7 +796,7 @@
                 //this.$span.append('<span class="sid">' + this.model.get("sid") + "</span>");
             }
             if (this.model.has("c")) {
-                this.$span.find('.actionCount').html(this.model.get("c"));
+                this.$span.find('.actionCount').html(this.model.get("c").toLocaleString());
             }
             if (this.model.has("d")) {
                 if (window.clock) {

@@ -695,6 +695,9 @@
             }
         }
     });
+    require(['/files/filesize.min.js'], function(filesize){
+        window.filesize = filesize;
+    });
     var RowView = Backbone.View.extend({
         tagName: "li",
         className: "row",
@@ -706,12 +709,26 @@
             this.model.bind("destroy", this.remove, this);
             this.$el.attr("data-id", this.model.get("id"));
             this.$el.attr("data-session_id", this.model.get("s"));
+            this.$bandwidth = $('<span class="bandwidth"></span>');
         },
         render: function() {
             this.$el.html("");
             //console.log(this.model.attributes)
             var $name = $('<strong class="name">' + this.model.get("a") + "</strong>");
             this.$el.append($name);
+            if(this.model.has('b')) {
+                var bandwidth = this.model.get('b');
+                this.$bandwidth.attr('title', 'in: '+bandwidth.i+', out: '+bandwidth.o);
+                var t = bandwidth.i+bandwidth.o;
+                
+                if(filesize) {
+                    this.$bandwidth.html(' '+filesize(t, {unix: true}));
+                } else {
+                    this.$bandwidth.html(' '+t);
+                }
+                
+            }
+            this.$el.append(this.$bandwidth);
             if (this.model.has("user")) {
                 $name.attr("data-owner-id", this.model.get("user"));
                 var owner = this.model.getOwner(function(owner) {
