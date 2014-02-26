@@ -1452,8 +1452,13 @@ var ListView = Backbone.View.extend({
         this.setPageSize(this.pageSize);
         
         this.collection.bind("add", function(doc) {
-            var view = self.getDocLayoutView(doc);
-            self.appendRow(view);
+            
+            // TODO check this works well.. we dont want to render the list items unless the list is visible
+            if(self.$el.is(':visible')) {
+                var view = self.getDocLayoutView(doc);
+                self.appendRow(view);
+            }
+            
             self.renderPagination();
             doc.on('remove', function() {
                 

@@ -868,7 +868,9 @@
             //this.$dueAtTimeInput = $('<input name="dueAt-time" type="time" />');
             // this.$a = $('<a href="#" class="list-group-item"></a>');
             
-            this.selectTodoListView = new todoListsCollection.getSelectView({todo: this.model});
+            if(window.todoListsCollection) {
+                this.selectTodoListView = new todoListsCollection.getSelectView({todo: this.model});
+            }
             this.$header = $('<h4 class="list-group-item-heading row">\n\
             <span class="doneCheck col-xs-1"></span>\n\
             <span class="titleInput col-xs-7"></span>\n\

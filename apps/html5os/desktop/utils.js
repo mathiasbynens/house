@@ -8,6 +8,10 @@
     
     var utils = {};
     
+    utils.slugStr = function(str) {
+        return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
+    }
+    
     utils.getNewModal = function(opts) {
         return new this.ModalView(opts);
     }

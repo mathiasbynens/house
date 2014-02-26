@@ -678,7 +678,6 @@
         },
         preventDefault: function(e) {
             e.preventDefault();
-            return false;
         },
         clickEl: function(e) {
             this.trigger('selected');

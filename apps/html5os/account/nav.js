@@ -13,7 +13,7 @@
             "": "root"
         },
         gohome: function(root) {
-            this.navigate('', {trigger: true, replace: true});
+            this.navigate('', {trigger: true, replace: false});
             if(root) {
                 this.root();
             }
@@ -134,14 +134,14 @@
             var row;
             if(!doc.hasOwnProperty('row')) {
                 if(!doc.id) {
-                    doc.id = doc.get('title');
+                    doc.id = utils.slugStr(doc.get('title'));
                 }
                 var $row = $('#nav-'+doc.id);
                 if($row.length === 0) {
                     $row = $('<li id="nav-'+doc.id+'"></li>');
                     this.$menu.append($row);
                 } else {
-                    $row.html('');
+                    // $row.html('');
                 }
                 row = doc.getRow({list: this, el: $row});
             } else {
@@ -238,14 +238,20 @@
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             this.$e = $('<a href="#"></a>');
+            if(this.$el.find('a').length) {
+                this.$e = this.$el.find('a'); 
+            }
+            console.log(this.$e.html())
         },
         render: function() {
             this.setElement(this.$el);
-            this.$e.html('');
+            // this.$e.html('');
             this.$el.append(this.$e);
             
             if(this.model.has('a')) {
-                this.$e.append(this.model.get('a')+' ');
+                if(this.$e.html() !== this.model.get('a')+' ') {
+                    this.$e.append(this.model.get('a')+' ');
+                }
                 if(this.model.has('title')) {
                     this.$e.attr('title', this.model.get('title'));
                 }

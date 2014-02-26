@@ -7,19 +7,25 @@
         initialize: function() {
             var self = this;
             this.$app = $('<div class="app"></div>');
+            if(this.$el.find('.app').length) {
+                this.$app = this.$el.find('.app');
+            }
             self.editForms = {};
-            require(['/tags/tags.js'], function(ModelBackbone){
-                    window.TagsBackbone = ModelBackbone;
-                    window.tagsCollection = new ModelBackbone.Collection(); // collection
-                require(['/posts/backbone-posts.js'], function(ModelBackbone){
+            require(['/tags/tags.js'], function(ModelBackbone) {
+                window.TagsBackbone = ModelBackbone;
+                window.tagsCollection = new ModelBackbone.Collection(); // collection
+                require(['/posts/backbone-posts.js'], function(ModelBackbone) {
                     window.PostsBackbone = ModelBackbone;
                     window.postsCollection = new ModelBackbone.Collection(); // collection
-                    require(['/files/backbone-files.js'], function(FilesBackbone){
+                    require(['/files/backbone-files.js'], function(FilesBackbone) {
                         window.FilesBackbone = FilesBackbone;
                         window.filesCollection = new FilesBackbone.Collection(); // collection
-                
+
                         self.$postList = $('<div class="post-list"></div>');
-                        self.$postViewer = $('<div class="post-viewer"></div>');
+                        self.$postViewer = $('<div class="post-viewer"><div class="fullView container"></div></div>');
+                        if(self.$el.find('.post-viewer').length) {
+                            self.$postViewer = self.$el.find('.post-viewer');
+                        }
                         window.postsCollection.pageSize = pageSize;
                         // self.listView = new ModelBackbone.List({el: self.$postList, collection: window.postsCollection});
                         var filterFunc = function(model, filterObj) {
@@ -39,14 +45,25 @@
                                 'fieldName': 'title'
                             },
                             filters: {
-                                'drafts': {txt: 'Drafts', glyphicon: 'edit', filter: filterFunc, load: {"groups": null}},
+                                'drafts': {
+                                    txt: 'Drafts',
+                                    glyphicon: 'edit',
+                                    filter: filterFunc,
+                                    load: {
+                                        "groups": null
+                                    }
+                                },
                             },
                             tags: {
                                 'fieldName': 'tags'
                             },
-                            sorts: [
-                                {name: 'Published At', field: 'at', type: 'date', glyphicon: 'time', default: -1},
-                            ],
+                            sorts: [{
+                                name: 'Published At',
+                                field: 'at',
+                                type: 'date',
+                                glyphicon: 'time',
+                                default: -1
+                            }, ],
                             layouts: {
                                 "table": {
                                     title: 'Table',
@@ -64,38 +81,39 @@
                         self.listView.on('select', function(row) {
                             // self.router.navigate(row.model.getNavigatePath(), {trigger: true});
                         });
-                        self.listView.on('goToAuthor', function(user){
-                            self.router.navigate('by/'+user.get('name'), {trigger: true});
+                        self.listView.on('goToAuthor', function(user) {
+                            self.router.navigate('by/' + user.get('name'), {
+                                trigger: true
+                            });
                         });
-                        self.listView.on('goToTagName', function(tagName){
-                            self.router.navigate('tag/'+tagName, {trigger: true});
+                        self.listView.on('goToTagName', function(tagName) {
+                            self.router.navigate('tag/' + tagName, {
+                                trigger: true
+                            });
                         });
-                        
+
                         window.postsCollection.on('goToNavigatePath', function(model) {
-                            self.router.navigate(model.getNavigatePath(), {trigger: true});
+                            self.router.navigate(model.getNavigatePath(), {
+                                trigger: true
+                            });
                         });
                         window.postsCollection.on('editModel', function(model) {
-                            self.router.navigate(model.getNavigatePath()+'/edit', {trigger: true});
+                            self.router.navigate(model.getNavigatePath() + '/edit', {
+                                trigger: true
+                            });
                         });
-                        
-                        var loadCollections = function() {
-                            window.tagsCollection.load(null, function(){
-                                window.postsCollection.load(null, function(){
-                                    self.initialized = true;
-                                    self.trigger('initialized');
-                                });
-                            });
-                        }
+
                         if(window.account) {
-                            window.account.on('loggedIn', function(loginView){
-                                loadCollections();
+                            window.account.on('loggedIn', function(loginView) {
+                                self.loadCollections();
                             });
                         }
-                        loadCollections();
+                        self.initialized = true;
+                        self.trigger('initialized');
                     });
                 });
             });
-            
+
             /*require(['../desktop/jquery.idle-timer.js'], function() {
                 var idleTimer = $(document).idleTimer(4200);
                 $(document).bind("idle.idleTimer", function(e){
@@ -106,41 +124,51 @@
                 });
             });*/
         },
+        loadCollections: function() {
+            var self = this;
+            window.tagsCollection.load(null, function() {
+                window.postsCollection.load(null, function() {
+                    if(!self.initialized) {
+                        self.initialized = true;
+                        self.trigger('initialized');
+                    }
+                });
+            });
+        },
         render: function() {
             var self = this;
             // this.$el.html('');
             if(!this.initialized) {
-                this.on('initialized', function(){
+                this.on('initialized', function() {
                     self.render();
                 });
                 return this;
             }
-            this.$app.append(self.listView.render().$el);
+            // this.$app.append(self.listView.render().$el);
             this.$app.append(this.$postViewer);
             this.$el.append(this.$app);
             this.setElement(this.$el);
             return this;
         },
-        events: {
-        },
+        events: {},
         carouselDoc: function(doc) {
             var self = this;
             $('head [property="fb:page_id"]').remove();
             var baseHref = $('head base[href]').attr('href');
             var hostName = window.location.host || window.location.hostname;
-            var hostOrigin = window.location.protocol+'//'+hostName;
-            var baseUrl = hostOrigin+baseHref;
+            var hostOrigin = window.location.protocol + '//' + hostName;
+            var baseUrl = hostOrigin + baseHref;
             // var baseUrl = baseHref;
             // if(baseHref.indexOf('http') !== 0) {
             //     baseUrl = window.location.protocol+'//'+hostName+baseHref;
             // }
-            var apiFilePath = hostOrigin+'/api/files/';
-            
-            $('head meta[property="og:url"]').attr('content', baseUrl+doc.getNavigatePath());
-            $('head [rel="canonical"]').attr('href', baseUrl+doc.getNavigatePath());
-            $('head [name="twitter:url"]').attr('content', baseUrl+doc.getNavigatePath());
+            var apiFilePath = hostOrigin + '/api/files/';
+
+            $('head meta[property="og:url"]').attr('content', baseUrl + doc.getNavigatePath());
+            $('head [rel="canonical"]').attr('href', baseUrl + doc.getNavigatePath());
+            $('head [name="twitter:url"]').attr('content', baseUrl + doc.getNavigatePath());
             $('head [name="twitter:domain"]').attr('content', hostName);
-            
+
             $('head [property="og:type"]').attr('content', 'article');
             $('head [name="twitter:card"]').attr('content', 'photo');
             if(doc.has('title')) {
@@ -150,44 +178,44 @@
             }
             if(doc.has('msg')) {
                 var msgText = doc.get('msg');
-                msgText = $('<span>'+msgText+'</span>').text();
+                msgText = $('<span>' + msgText + '</span>').text();
                 if(msgText.length > 300) {
-                    msgText = msgText.substr(0,295);
+                    msgText = msgText.substr(0, 295);
                     var si = msgText.lastIndexOf(' ');
-                    msgText = msgText.substr(0,si)+'...';
+                    msgText = msgText.substr(0, si) + '...';
                 }
                 $('head [property="og:description"]').attr('content', msgText);
-                $('head meta[name="twitter:description"]').attr('content', msgText.substr(0,130));
+                $('head meta[name="twitter:description"]').attr('content', msgText.substr(0, 130));
             }
             if(doc.has('audio')) {
                 var media = doc.get('audio');
                 $('head [property="og:audio"]').remove();
-                var $ogVideo = $('<meta property="og:audio" content="'+apiFilePath+encodeURIComponent(media.filename)+'">');
+                var $ogVideo = $('<meta property="og:audio" content="' + apiFilePath + encodeURIComponent(media.filename) + '">');
                 //$('head').append($ogVideo); // tmp commented out
                 //$('head [property="og:type"]').attr('content', 'audio');
             }
             if(doc.has('youtube')) {
                 var youtube = doc.get('youtube');
                 if(youtube.id) {
-                    var ythumb = 'http://i.ytimg.com/vi/'+youtube.id+'/hqdefault.jpg';
+                    var ythumb = 'http://i.ytimg.com/vi/' + youtube.id + '/hqdefault.jpg';
                     // console.log('update og tag');
                     $('head [property="og:image"]').attr('content', ythumb);
                     $('head [name="twitter:image"]').attr('content', ythumb);
-                    
+
                     $('head [property="og:video"]').remove();
-                    var $ogVideo = $('<meta property="og:video" content="http://www.youtube.com/v/'+youtube.id+'">');
+                    var $ogVideo = $('<meta property="og:video" content="http://www.youtube.com/v/' + youtube.id + '">');
                     //$('head').append($ogVideo);
                 }
                 //$('head [property="og:type"]').attr('content', 'video');
             }
             if(doc.has('avatar')) {
                 var image = doc.get('avatar');
-                var ogImage = apiFilePath+encodeURIComponent(image.filename);
+                var ogImage = apiFilePath + encodeURIComponent(image.filename);
                 // console.log('update og:image with post avatar');
                 $('head [property="og:image"]').attr('content', ogImage);
                 $('head [name="twitter:image"]').attr('content', ogImage);
             }
-            
+
             if(doc.get('wistia')) {
                 var w = doc.get('wistia');
                 if(w.thumbnail && w.thumbnail.url) {
@@ -200,31 +228,35 @@
                     $('head [name="twitter:image"]').attr('content', ogImage);
                 }
             }
-            
+
             if(window.config && config.fb) {
                 if(config.fb.page_id) {
                     $('head meta[property="fb:page_id"]').remove();
-                    $('head').append('<meta property="fb:page_id" content="'+config.fb.page_id+'" />');
+                    $('head').append('<meta property="fb:page_id" content="' + config.fb.page_id + '" />');
                 }
                 if(config.fb.app_id) {
                     $('head meta[property="fb:app_id"]').remove();
-                    $('head').append('<meta property="fb:app_id" content="'+config.fb.app_id+'" />');
+                    $('head').append('<meta property="fb:app_id" content="' + config.fb.app_id + '" />');
                 }
                 if(config.fb.admins) {
                     $('head meta[property="fb:admins"]').remove();
                     var adminsArr = config.fb.admins.split(',');
                     for(var i in adminsArr) {
                         var admin_id = adminsArr[i].trim();
-                        $('head').append('<meta property="fb:admins" content="'+admin_id+'" />');
+                        $('head').append('<meta property="fb:admins" content="' + admin_id + '" />');
                     }
                 }
             }
             if(!$('head meta[property="fb:app_id"]').attr('content')) {
                 $('head meta[property="fb:app_id"]').remove();
             }
-            var $el = doc.getFullView({list: self.listView}).render().$el;
-            self.$postViewer.append($el);
-            $el.siblings().remove();
+            // console.log(self.$postViewer.find('.fullView'))
+            var $el = doc.getFullView({
+                list: self.listView,
+                el: self.$postViewer.find('.fullView')
+            }).render().$el;
+            // self.$postViewer.append($el);
+            // $el.siblings().remove();
             $('body')[0].scrollTop = 0;
         },
         editDoc: function(doc) {
@@ -239,8 +271,11 @@
                         collection: window.postsCollection
                     });
                     self.newForm.on("saved", function(doc) {
-                        self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
-                        
+                        self.router.navigate(doc.getNavigatePath(), {
+                            replace: true,
+                            trigger: true
+                        });
+
                         // clear newform
                         self.newForm.remove();
                         delete self.newForm;
@@ -268,7 +303,10 @@
                         self.router.setTitle(doc.get('title'));
                     }
                     self.editForms[doc.id].on("saved", function(doc) {
-                        self.router.navigate(doc.getNavigatePath(), {replace: true, trigger: true});
+                        self.router.navigate(doc.getNavigatePath(), {
+                            replace: true,
+                            trigger: true
+                        });
                     });
                     self.editForms[doc.id].on("title", function(title) {
                         self.router.setTitle(title);
@@ -295,10 +333,10 @@
             window.postsCollection.getOrFetchSeq(seq, callback);
         },
         userIs: function(userId) {
-            return (this.user && this.user.id == userId);
+            return(this.user && this.user.id == userId);
         },
         userIsAdmin: function() {
-            return (this.user && this.user.has('groups') && this.user.get('groups').indexOf('admin') !== -1);
+            return(this.user && this.user.has('groups') && this.user.get('groups').indexOf('admin') !== -1);
         },
         bindAuth: function(auth) {
             var self = this;
@@ -316,29 +354,49 @@
             // });
             this.bindRouter(nav.router);
             // nav.col.add({title:"Posts", navigate:""});
-            nav.col.add({title:"Drafts", navigate:"drafts", glyphicon: "edit", renderCondition: "isAdmin"});
-            nav.col.add({title:"New post", navigate:"new", glyphicon: "pencil", renderCondition: "isAdmin"});
-            nav.col.add({id: 'rss', title:'Subscribe via RSS', a:'<img src="/news/rss.ico" height="16" width="16" class="rss">', href:"/api/posts?_format=rss"});
+            nav.col.add({
+                title: "Drafts",
+                navigate: "drafts",
+                glyphicon: "edit",
+                renderCondition: "isAdmin"
+            });
+            nav.col.add({
+                title: "New post",
+                navigate: "new",
+                glyphicon: "pencil",
+                renderCondition: "isAdmin"
+            });
+            nav.col.add({
+                id: 'rss',
+                title: 'Subscribe via RSS',
+                a: '<img src="/news/rss.ico" height="16" width="16" class="rss">',
+                href: "/api/posts?_format=rss"
+            });
         },
         bindRouter: function(router) {
             var self = this;
             self.router = router;
-            router.on('title', function(title){
+            router.on('title', function(title) {
                 var $e = $('.pageTitle');
                 $e.attr('href', window.location);
                 $e.html(title);
             });
-            router.on('reset', function(){
+            router.on('reset', function() {
                 window.onbeforeunload = null;
                 $('body').attr('class', '');
                 self.nav.unselect();
             });
-            router.on('root', function(){
+            router.on('root', function() {
                 router.reset();
+                self.loadCollections();
+                
                 self.listView.resetViewControls();
+                self.$app.append(self.listView.render().$el);
                 self.listView.filter();
                 self.listView.$el.show().siblings().hide();
                 
+                $('#navbar-header-form').show();
+
                 if(self.listView.selectedPost) {
                     // console.log(self.listView.selectedPost.$el);
                     $('body').scrollTo(self.listView.selectedPost.$el);
@@ -346,83 +404,105 @@
                     $('body')[0].scrollTop = 0;
                 }
                 router.setTitle('Posts');
-                
+
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
             });
-            router.route(':slug/edit', 'editSlug', function(slug){
+            router.route(':slug/edit', 'editSlug', function(slug) {
                 router.reset();
+                $('#navbar-header-form').hide();
                 $('#header').addClass('hideTitle');
-                self.findPostBySlug(slug, function(doc){
+                self.findPostBySlug(slug, function(doc) {
                     if(doc) {
                         self.editDoc(doc);
                     } else {
                         if(self.userIsAdmin()) {
-                            router.navigate('new', {replace: true, trigger: true});
+                            router.navigate('new', {
+                                replace: true,
+                                trigger: true
+                            });
                         } else {
-                            router.navigate('', {replace: true, trigger: true});
+                            router.navigate('', {
+                                replace: true,
+                                trigger: true
+                            });
                         }
                     }
                     router.trigger('loadingComplete');
                 });
             });
-            router.route(':slug', 'postSlug', function(slug){
+            router.route(':slug', 'postSlug', function(slug) {
                 router.reset();
+                $('#navbar-header-form').hide();
                 self.$postViewer.siblings().hide();
                 self.$postViewer.show();
-                self.findPostBySlug(slug, function(doc){
+                self.findPostBySlug(slug, function(doc) {
                     if(doc) {
                         self.carouselDoc(doc);
                     } else {
                         if(self.userIsAdmin()) {
-                            router.navigate('new', {replace: true, trigger: true});
+                            router.navigate('new', {
+                                replace: true,
+                                trigger: true
+                            });
                         } else {
-                            router.navigate('', {replace: true, trigger: true});
+                            router.navigate('', {
+                                replace: true,
+                                trigger: true
+                            });
                         }
                     }
                     router.trigger('loadingComplete');
                 });
             });
-            router.route('seq/:num', 'seqNum', function(num){
+            router.route('seq/:num', 'seqNum', function(num) {
                 router.reset();
                 num = parseInt(num, 10);
-                self.findPostBySeq(num, function(doc){
+                self.findPostBySeq(num, function(doc) {
                     if(doc) {
-                        router.navigate('posts/'+doc.getNavigatePath(), {replace: true, trigger: true});
+                        router.navigate('posts/' + doc.getNavigatePath(), {
+                            replace: true,
+                            trigger: true
+                        });
                     } else {
-                        router.navigate('posts/', {replace: true, trigger: true});
+                        router.navigate('posts/', {
+                            replace: true,
+                            trigger: true
+                        });
                     }
                     router.trigger('loadingComplete');
                 });
             });
-            router.route('by/:userName', 'userPosts', function(name){
+            router.route('by/:userName', 'userPosts', function(name) {
                 router.reset();
-                router.setTitle('Posts by '+name);
+                router.setTitle('Posts by ' + name);
                 self.nav.selectByNavigate('');
-                
-                usersCollection.getOrFetchName(name, function(user){
+
+                usersCollection.getOrFetchName(name, function(user) {
                     if(user) {
                         console.log(user);
                         self.listView.filter(function(model) {
-                          if (user.id !== model.get('owner').id) return false;
-                          return true;
-                        }, {owner: user.id}, {});
+                            if(user.id !== model.get('owner').id) return false;
+                            return true;
+                        }, {
+                            owner: user.id
+                        }, {});
                         self.listView.$el.siblings().hide();
                         self.listView.$el.show();
                         router.trigger('loadingComplete');
                     }
                 });
             });
-            router.route('tag/:tagName', 'tagPosts', function(tagName){
+            router.route('tag/:tagName', 'tagPosts', function(tagName) {
                 router.reset();
-                router.setTitle('Posts tagged '+tagName);
+                router.setTitle('Posts tagged ' + tagName);
                 self.nav.selectByNavigate('');
                 $('body')[0].scrollTop = 0;
                 if(self.listView.tagsView && self.listView.tagsView.tagSelectView) {
                     self.listView.tagsView.tagSelectView.selectTagByName(tagName);
                 }
                 // TODO trigger for callback 
-                
+
                 // self.listView.filter(function(model) {
                 //     if(model.has('tags') && model.get('tags').indexOf(tagName) !== -1) {
                 //         return true;
@@ -434,40 +514,52 @@
                 self.listView.$el.show();
                 router.trigger('loadingComplete');
             });
-            router.route('id/:id/edit', 'editPost', function(id){
+            router.route('id/:id/edit', 'editPost', function(id) {
                 router.reset();
                 $('#header').addClass('hideTitle');
-                self.findPostById(id, function(doc){
+                self.findPostById(id, function(doc) {
                     if(doc) {
                         self.editDoc(doc);
                     } else {
                         if(self.userIsAdmin()) {
-                            router.navigate('new', {replace: true, trigger: true});
+                            router.navigate('new', {
+                                replace: true,
+                                trigger: true
+                            });
                         } else {
-                            router.navigate('', {replace: true, trigger: true});
+                            router.navigate('', {
+                                replace: true,
+                                trigger: true
+                            });
                         }
                     }
                     router.trigger('loadingComplete');
                 });
             });
-            router.route('id/:id', 'post', function(id){
+            router.route('id/:id', 'post', function(id) {
                 router.reset();
                 self.$postViewer.siblings().hide();
                 self.$postViewer.show();
-                self.findPostById(id, function(doc){
+                self.findPostById(id, function(doc) {
                     if(doc) {
                         if(doc.has('slug')) {
-                            router.navigate(doc.get('slug'), {trigger: false, replace: true});
+                            router.navigate(doc.get('slug'), {
+                                trigger: false,
+                                replace: true
+                            });
                         }
                         self.carouselDoc(doc);
                     } else {
                         // console.log(id);
-                        router.navigate('', {replace: true, trigger: true});
+                        router.navigate('', {
+                            replace: true,
+                            trigger: true
+                        });
                     }
                     router.trigger('loadingComplete');
                 });
             });
-            router.route('drafts', 'drafts', function(){
+            router.route('drafts', 'drafts', function() {
                 router.reset();
                 self.listView.filterView.filterBy('drafts');
                 self.listView.$el.show().siblings().hide();
@@ -475,7 +567,7 @@
                 self.nav.selectByNavigate('drafts');
                 router.trigger('loadingComplete');
             });
-            router.route('new', 'new', function(){
+            router.route('new', 'new', function() {
                 router.reset();
                 $('#header').addClass('hideTitle');
                 self.editDoc();
@@ -484,12 +576,12 @@
             });
         }
     });
-    
-    
+
+
     if(define) {
-        define(function () {
+        define(function() {
             return PostsView;
         });
     }
-    
+
 })();

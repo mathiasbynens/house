@@ -693,6 +693,7 @@
           "click .entry-title a": "goToDetail",
           "click .date a": "goToDetail",
           "click a.readMore": "goToDetail",
+          "click img.thumbnail": "goToDetail",
           "click .avatar": "goToDetail",
           "click .author a": "clickAuthor",
           "click .tags-links a": "clickTag"
@@ -908,63 +909,109 @@
             }
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
-            this.tagListView = this.model.getTagsList();
+            
+            this.$avatarImg = $('<img class="avatar" src>');
+            this.$msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
+            this.$entryMeta = $('<div class="entry-meta col-md-8 col-md-offset-2"></div>');
+            this.$at = $('<span class="date glyphicon glyphicon-time"></span>');
+            this.$author = $('<span class="author vcard glyphicon glyphicon-user"></span>');
+            this.$tags = $('<span class="listOfTags"></span>');
+            this.$actions = $('<span class="actions"></span>');
+            this.$youtube = $('<span class="youtube col-md-8 col-md-offset-2"></span>');
+            
+            if(this.$el.find('.headerMedia').length) {
+                this.$headerMedia = this.$el.find('.headerMedia');
+                if(this.$headerMedia.find('img').length) {
+                    this.$avatarImg = this.$headerMedia.find('img');
+                }
+            } else {
+                this.$headerMedia = $('<div class="headerMedia"></div>');
+            }
+            if(this.$el.find('.entry-header').length) {
+                this.$entryHeader = this.$el.find('.entry-header');
+            } else {
+                this.$entryHeader = $('<div class="entry-header col-md-8 col-md-offset-2"><h1 class="entry-title"></h1></div>');
+            }
+            if(this.$el.find('.msg').length) {
+                this.$msg = this.$el.find('.msg');
+            }
+            if(this.$el.find('.entry-meta').length) {
+                this.$entryMeta = this.$el.find('.entry-meta');
+                if(this.$entryMeta.find('.date').length) {
+                    this.$at = this.$entryMeta.find('.date');
+                }
+                if(this.$entryMeta.find('.author').length) {
+                    this.$author = this.$entryMeta.find('.author');
+                }
+                if(this.$entryMeta.find('.listOfTags').length) {
+                    this.$tags = this.$entryMeta.find('.listOfTags');
+                }
+            }
+            if(this.$el.find('.youtube').length) {
+                this.$youtube = this.$el.find('.youtube');
+            }
+            if(this.$el.find('.actions').length) {
+                this.$actions = this.$el.find('.actions');
+            }
+            this.tagListView = this.model.getTagsList({el: this.$tags});
             this.tagListView.on('selectedTagName', function(tagName) {
                 if(self.list) {
                     self.list.trigger('goToTagName', tagName);
                 }
             });
-            this.actions = new ActionsView({id: this.id, model: this.model});
+            
+            this.actions = new ActionsView({id: this.id, model: this.model, el: this.$actions});
         },
         render: function() {
             var self = this;
-            this.$el.html('');
+            this.setElement(this.$el);
+            // this.$el.html('');
             if(this.model.get('avatar')) {
                 var avatarImage = this.model.get('avatar');
-                var $avatarImg = $('<img class="avatar" src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
-                this.$el.append($avatarImg);
+                // console.log(this.$avatarImg.attr('src'))
+                if(this.$avatarImg.attr('src').indexOf('/api/files/'+encodeURIComponent(avatarImage.filename)) === -1) {
+                    this.$avatarImg.attr('src', '/api/files/'+encodeURIComponent(avatarImage.filename));
+                    this.$headerMedia.append(this.$avatarImg);
+                }
+                this.$el.append(this.$headerMedia);
+            } else {
+                console.log('remove headerMedia')
+                console.log(this.$headerMedia);
+                // this.$headerMedia.remove();
+                this.$el.find('.headerMedia').remove();
             }
-            
-            var $byline = $('<div class="entry-meta col-md-8 col-md-offset-2"></div>');
+            this.$el.append(this.$entryHeader);
             var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
-            var $at = $('<span class="date glyphicon glyphicon-time"></span>');
-            $at.append($permalink);
-            $byline.append($at);
+            this.$at.html($permalink);
+            this.$entryMeta.append(this.$at);
+            this.$entryMeta.append(this.$author);
+            this.$entryMeta.append(this.tagListView.render().$el);
             if(this.model.has('title')) {
-                this.$el.append('<div class="entry-header col-md-8 col-md-offset-2"><h1 class="entry-title"><a href="'+this.model.getNavigatePath()+'">'+this.model.get('title')+'</a></h1></div>');
+                // this.$el.append('<div class="entry-header col-md-8 col-md-offset-2"><h1 class="entry-title"><a href="'+this.model.getNavigatePath()+'">'+this.model.get('title')+'</a></h1></div>');
+                this.$entryHeader.find('.entry-title').html('<a href="'+this.model.getNavigatePath()+'">'+this.model.get('title')+'</a>');
                 $permalink.attr('title', 'Permalink to '+this.model.get('title'));
             }
             if(this.model.has('at')) {
                 if(window.clock) {
                     var m = clock.moment(this.model.get('at'));
                     $permalink.find('time').attr('datetime', m.format("YYYY-MM-DDTHH:mm:ssZZ"));
-                    $at.attr('title', m.format('LLLL'));
+                    this.$at.attr('title', m.format('LLLL'));
                     $permalink.find('time').html(m.calendar());
                 } else {
                     $permalink.find('time').html(this.model.get('at'));
                 }
             }
-            // if(this.model.has('tags')) {
-            //     var $tags = $('<span class="tags-links glyphicon glyphicon-tag"></span>');
-            //     var tags = this.model.get('tags');
-            //     for(var t in tags) {
-            //         var tag = tags[t];
-            //         $tags.append('<a href="tag/'+tag+'" data-tag="'+tag+'" rel="tag">'+tag+'</a>');
-            //         if(tags.length > 1 && t < tags.length-1) {
-            //             $tags.append(', ');
-            //         }
-            //     }
-            //     $byline.append($tags);
-            // }
             if(this.model.has('owner')) {
-                $byline.append('<span class="author vcard glyphicon glyphicon-user"><a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a></span>');
-                this.model.getOwner(function(owner){
-                    self.author = owner;
-                    if(owner) {
-                    }
-                });
+                var htmlStr = '<a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a>';
+                if(this.$author.html() !== htmlStr) {
+                    this.$author.html('<a class="url fn n" href="by/'+this.model.get('owner').name+'" title="View all posts by '+this.model.get('owner').name+'" rel="author">'+this.model.get('owner').name+'</a>');
+                }
+                // this.model.getOwner(function(owner){
+                //     self.author = owner;
+                //     if(owner) {
+                //     }
+                // });
             }
-            $byline.append(this.tagListView.render().$el);
             
             var isJsCacher = function() {
                 return (!navigator || (navigator.userAgent && navigator.userAgent.indexOf('HouseJs HTML Cacher') !== -1));
@@ -986,21 +1033,32 @@
                         self.wistiaEmbed = Wistia.embed(wistia.id, wistiaOpts);
                     });
                 }
-            } else if(this.model.has('youtube')) {
+            } else if(this.model.has('youtube') && this.model.get('youtube') && this.model.get('youtube').id) {
                 var yt = this.model.get('youtube');
                 if(yt.id) {
                     var ytid = yt.id;
-                    this.$el.append('<span class="youtube col-md-8 col-md-offset-2"><div id="ytapiplayer-'+ytid+'"><iframe width="760" height="430" src="//www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div></span>');
+                    var ytStr = '<div id="ytapiplayer-'+ytid+'"><iframe width="760" height="430" src="//www.youtube.com/embed/'+ytid+'?rel=0" frameborder="0" allowfullscreen></iframe></div>';
+                    if(this.$youtube.html() !== ytStr) {
+                        this.$youtube.html(ytStr);
+                    }
+                    this.$el.append(this.$youtube);
                 }
                 //this.$el.find('.youtube').fitVids();
+            } else {
+                // console.log(this.$youtube.html())
+                // this.$youtube.remove();
+                this.$el.find('.youtube').remove();
             }
             if(this.model.has('msg')) {
-                var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
                 var msgStr = this.model.get('msg');
-                $msg.html(msgStr);
-                this.$el.append($msg);
+                if(this.$msg.html() !== msgStr) {
+                    this.$msg.html(msgStr);
+                }
+                this.$el.append(this.$msg);
             }
-            this.$el.append($byline);
+            
+            this.$el.append(this.$entryMeta);
+            
             if(this.model.has('tweet')) {
                 var tweet = this.model.get('tweet');
                 
@@ -1013,7 +1071,7 @@
                 this.$el.append(this.actions.render().$el);
             }
             this.trigger('resize');
-            this.setElement(this.$el);
+            
             return this;
         },
         renderActions: function() {
@@ -1790,7 +1848,12 @@
                 if(this.model.has('owner')) {
                     this.model.getOwner(function(owner){
                         if(owner) {
-                            self.$owner.html(owner.getNewAvatarNameView().render().$el);
+                            if(window.account && (account.isAdmin() || !account.isOwner(owner.id))) {
+                                self.$owner.html('<a href="#" title="Take Ownership" class="takeOwner"></a>');
+                                self.$owner.find('a').html(owner.getNewAvatarNameView().render().$el);
+                            } else {
+                                self.$owner.html(owner.getNewAvatarNameView().render().$el);
+                            }
                         }
                     });
                 } else {
@@ -1936,6 +1999,24 @@
             'click [data-wysihtml5-command="insertImage"]': "insertImageHtml",
             'click [data-wysihtml5-dialog="publishedAt"] [data-wysihtml5-dialog-action="save"]': "toggleAtInput",
             "click .atBtn": "toggleAtInput",
+            "click .takeOwner": "clickTakeOwner"
+        },
+        clickTakeOwner: function(e) {
+            var self = this;
+            if(confirm("Are you sure that you want to take ownership of this post?")) {
+                // {id: account.get('user'), name: account.get('name')}
+                self.model.set({owner: null}, {silent: true});
+                var saveModel = self.model.save(null, {
+                    silent: false ,
+                    wait: true
+                });
+                if(saveModel) {
+                    saveModel.done(function() {
+                        self.render();
+                    });
+                }
+            }
+            return false;
         },
         // msgChange: function(e) {
         //     console.log($(e.currentTarget));
