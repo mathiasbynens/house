@@ -918,6 +918,7 @@
             this.$tags = $('<span class="listOfTags"></span>');
             this.$actions = $('<span class="actions"></span>');
             this.$youtube = $('<span class="youtube col-md-8 col-md-offset-2"></span>');
+            this.$tweet = $('<div class="tweet col-md-8 col-md-offset-2"></div>');
             
             if(this.$el.find('.headerMedia').length) {
                 this.$headerMedia = this.$el.find('.headerMedia');
@@ -949,6 +950,9 @@
             }
             if(this.$el.find('.youtube').length) {
                 this.$youtube = this.$el.find('.youtube');
+            }
+            if(this.$el.find('.tweet').length) {
+                this.$tweet = this.$el.find('.tweet');
             }
             if(this.$el.find('.actions').length) {
                 this.$actions = this.$el.find('.actions');
@@ -1059,13 +1063,12 @@
             
             this.$el.append(this.$entryMeta);
             
-            if(this.model.has('tweet')) {
-                var tweet = this.model.get('tweet');
-                
-                if(tweet.id) {
-                    this.tweet = new TweetView({tweetId: tweet.id});
-                    this.$el.append(this.tweet.render().$el);
-                }
+            var tweet = this.model.get('tweet');
+            if(tweet && tweet.id) {
+                this.tweet = new TweetView({tweetId: tweet.id, el: this.$tweet});
+                this.$el.append(this.tweet.render().$el);
+            } else {
+                this.$el.find('.tweet').remove();
             }
             if(window.account && (account.isAdmin() || account.isOwner(this.model.get('owner').id))) {
                 this.$el.append(this.actions.render().$el);
@@ -2352,7 +2355,7 @@
                 }
             }
             require(['//platform.twitter.com/widgets.js'], function() {
-                $.getJSON('//api.twitter.com/1/statuses/oembed.json?id='+self.tweetId+'&align=center&omit_script=true&callback=?', function(data) {
+                $.getJSON('https://api.twitter.com/1/statuses/oembed.json?id='+self.tweetId+'&align=center&omit_script=true&callback=?', function(data) {
                     //console.log(data);
                     data.html = data.html.replace('blockquote ', 'blockquote data-cards="hidden"');
                     self.data = data;

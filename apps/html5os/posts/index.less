@@ -251,7 +251,6 @@ h1.entry-title {
 }
 .houseList img.avatar, .fullView img.avatar {
     width: 100%;
-    margin-top: -50px;
 }
 table.houseList {
     tr {
@@ -1093,5 +1092,17 @@ header.navbar {
 @media (min-width: 768px) {
     .navbar-form .form-group {
         width: 200px;
+    }
+}
+
+.fullView {
+    position: relative;
+    .actions {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+    }
+    .tweet iframe {
+        width: 100%;
     }
 }
