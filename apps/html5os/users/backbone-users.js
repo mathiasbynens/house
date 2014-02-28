@@ -119,7 +119,11 @@
             } else if(window.config && window.config.usersUrl) {
                 return window.config.usersUrl;
             } else {
-                return "https://"+window.location.hostname+"/api/users";
+                var hostPath = window.location.hostname;
+                if(window.location.port) {
+                    hostPath = hostPath + ':' + window.location.port;
+                }
+                return "https://"+hostPath+"/api/users";
             }
         },
         sortField: 'id-',
@@ -870,6 +874,10 @@
                 if(saveModel) {
                     saveModel.done(function() {
                         self.render();
+                        if(account) {
+                            account.renderAll();
+                            account.profile.render()
+                        }
                     });
                     saveModel.fail(function(s, typeStr, respStr) {
                         alert('That username is unavailable.');
@@ -891,6 +899,10 @@
                 if(saveModel) {
                     saveModel.done(function() {
                         self.render();
+                        if(account) {
+                            account.renderAll();
+                            account.profile.render()
+                        }
                     });
                 }
             }
@@ -939,8 +951,12 @@
                         });
                         if(saveModel) {
                             saveModel.done(function() {
-                                self.render();
                                 self.uploadFrame.remove();
+                                self.render();
+                                if(account) {
+                                    account.renderAll();
+                                    account.profile.render()
+                                }
                             });
                         }
                     }

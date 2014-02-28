@@ -370,9 +370,9 @@
             this.ui = {
                 emailLabel: "Email",
                 connectLabel: "",
-                footerLabel: "* we'll never spam you or your friends",
+                footerLabel: "",
                 joinTitle: "Welcome",
-                joinMsg: "Become a member:"
+                joinMsg: ""
             }
             this.klasses = {
                 "dialog": "dialog",
@@ -553,11 +553,19 @@
             return false;
         },
         resetPass: function() {
+            var self = this;
             if(confirm("Would you like to reset your password?")) {
                 this.model.set({
                     resetPass: true
+                }, {silent: true}).save(null, {
+                    silent: true
+                }).done(function(s, typeStr, respStr) {
+                     alert("Please check your email for a message from us with steps to reset your password.");
+                    // self.$el.find(".msg").html("Please check your email for a message from us with steps to reset your password.");
+                    self.hideLoading();
+                    self.resetForm();
                 });
-                this.$el.find(".msg").html("Please check your email for a message from us with steps to reset your password.");
+                self.showLoading();
             }
             return false;
         },
@@ -1318,6 +1326,7 @@
                                 alert(err);
                             } else if (loginStatus) {
                                 window.account = self.loginStatus = loginStatus;
+                                window.account.profile = self;
                                 loginStatus.getView({el: $('#accountMenu')})
                                 .on("goToProfile", function(username) {
                                     self.router.navigate('user/'+username, {trigger: true});
@@ -1329,11 +1338,7 @@
                                     self.trigger('loggedIn', loginStatus);
                                 })
                                 
-                                var userAvatar = loginStatus.view.getUserModel(function(userModel){
-                                    if(userModel) {
-                                        $('#accountNav .dropdown-toggle').html(userModel.getNewAvatarNameView().render().$el);
-                                    }
-                                });
+                                self.render();
                                 
                                 if (loginStatus && loginStatus.has("user")) {} else {}
                                 self.trigger('init');
@@ -1355,6 +1360,11 @@
         },
         render: function() {
             var self = this;
+            var userAvatar = window.account.view.getUserModel(function(userModel){
+                if(userModel) {
+                    $('#accountNav .dropdown-toggle').html(userModel.getNewAvatarNameView().render().$el);
+                }
+            });
             //this.$el.append(this.$profile);
             return this;
         },

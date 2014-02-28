@@ -561,6 +561,7 @@
             });
             router.route('drafts', 'drafts', function() {
                 router.reset();
+                $('#navbar-header-form').hide();
                 self.listView.filterView.filterBy('drafts');
                 self.listView.$el.show().siblings().hide();
                 router.setTitle('Draft posts');
@@ -570,6 +571,7 @@
             router.route('new', 'new', function() {
                 router.reset();
                 $('#header').addClass('hideTitle');
+                $('#navbar-header-form').hide();
                 self.editDoc();
                 router.trigger('loadingComplete');
                 self.nav.selectByNavigate('new');
