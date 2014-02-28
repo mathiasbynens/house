@@ -1230,6 +1230,14 @@ ul li[selected].row {
 ul li[selected].row .userAgent .string {
     display: inline;
 }
+.row .bandwidth, .row .connections {
+    font-style: italic;
+}
+.row .bandwidth {
+    padding: 0 4px;
+}
+.row .connections {
+}
 .row strong {
     font-size: 1em;
     line-height: 45px;

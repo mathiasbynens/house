@@ -710,6 +710,7 @@
             this.$el.attr("data-id", this.model.get("id"));
             this.$el.attr("data-session_id", this.model.get("s"));
             this.$bandwidth = $('<span class="bandwidth"></span>');
+            this.$connections = $('<span class="connections" title="number of connections"></span>');
         },
         render: function() {
             this.$el.html("");
@@ -718,17 +719,26 @@
             this.$el.append($name);
             if(this.model.has('b')) {
                 var bandwidth = this.model.get('b');
-                this.$bandwidth.attr('title', 'in: '+bandwidth.i+', out: '+bandwidth.o);
-                var t = bandwidth.i+bandwidth.o;
                 
-                if(filesize) {
-                    this.$bandwidth.html(' '+filesize(t, {unix: true}));
+                if(bandwidth.hasOwnProperty('i') || bandwidth.hasOwnProperty('o')) {
+                    this.$bandwidth.attr('title', 'in: '+bandwidth.i+', out: '+bandwidth.o);
+                    var t = bandwidth.i+bandwidth.o;
+                    
+                    if(filesize) {
+                        this.$bandwidth.html(' '+filesize(t, {unix: true}));
+                    } else {
+                        this.$bandwidth.html(' '+t);
+                    }
                 } else {
-                    this.$bandwidth.html(' '+t);
+                    console.log(bandwidth)
+                    this.$bandwidth.html(' '+bandwidth);
                 }
-                
             }
             this.$el.append(this.$bandwidth);
+            if(this.model.has('c')) {
+                this.$connections.html(' /'+this.model.get('c'));
+                this.$el.append(this.$connections);
+            }
             if (this.model.has("user")) {
                 $name.attr("data-owner-id", this.model.get("user"));
                 var owner = this.model.getOwner(function(owner) {
