@@ -9,6 +9,7 @@
     var utils = {};
     
     utils.slugStr = function(str) {
+        if(!str) return '';
         return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
     }
     

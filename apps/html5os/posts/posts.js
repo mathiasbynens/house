@@ -38,6 +38,7 @@
                                 return r;
                             }
                         }
+                        self.subscribeEmailView = account.getEmailSubscribeView();
                         var listOpts = {
                             className: 'houseCollection posts table-responsive',
                             headerEl: $('#navbar-header-form'),
@@ -104,8 +105,9 @@
                         });
 
                         if(window.account) {
-                            window.account.on('loggedIn', function(loginView) {
+                            window.account.profile.on('loggedIn', function(loginView) {
                                 self.loadCollections();
+                                self.render();
                             });
                         }
                         self.initialized = true;
@@ -143,6 +145,24 @@
                     self.render();
                 });
                 return this;
+            }
+            
+            if(account.get('email')) {
+                $('.subscribeEmail').remove();
+            } else {
+                console.log(this.subscribeEmailView)
+                if(this.subscribeEmailView) {
+                    if($('.subscribeEmail').length > 0) {
+                        this.subscribeEmailView.setElement($('.subscribeEmail')[0]);
+                    }
+                    $('#siteNav').after(this.subscribeEmailView.render().$el);
+                    this.subscribeEmailView.on('saved', function(){
+                        alert('Thank you for subscribing!');
+                        self.subscribeEmailView.remove();
+                    });
+                } else {
+                    $('.subscribeEmail').remove();
+                }
             }
             // this.$app.append(self.listView.render().$el);
             this.$app.append(this.$postViewer);

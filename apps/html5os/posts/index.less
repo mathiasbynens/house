@@ -167,11 +167,31 @@ form.post {
 .wysihtml5-toolbar .commands li:hover {
     color: black;
 }
+.form {
+    .post {
+        .avatar {
+            position: relative;
+            display: block;
+            .detachImage {
+                position: absolute;
+                right: 0;
+                bottom: 0;
+                display: none;
+            }
+            &:hover .detachImage {
+                display: block;
+            }
+        }
+    }
+}
 .form .post .by {
     position: absolute;
     z-index: 2;
     top: auto;
     left: 85px;
+    height: 30px;
+    width: 124px;
+    overflow: hidden;
     padding: 5px;
     color: @gray-light;
     .userAvatarName {

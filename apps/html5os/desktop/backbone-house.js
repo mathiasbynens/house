@@ -270,6 +270,11 @@ Backbone.House.Model = Backbone.Model.extend({
             this.views[i].render();
         }
     },
+    removeViews: function() {
+        for (var i in this.views) {
+            this.views[i].$el.remove();
+        }
+    },
     getTagsList: function(opts) {
         opts = opts || {};
         opts.model = this;
@@ -1467,7 +1472,8 @@ var ListView = Backbone.View.extend({
                     self.searchResults = _.without(self.searchResults, doc);
                 }
                 
-                view.$el.remove();
+                // view.$el.remove();
+                doc.removeViews();
                 return false;
             });
         });
@@ -1519,7 +1525,7 @@ var ListView = Backbone.View.extend({
         if(this.options.search) {
             this.searchView = new ListSearch({el: this.$search, list: this, search: this.options.search});
             this.searchView.on('search', function(query) {
-                console.log(query);
+                // console.log(query);
                 var filterFunc = self.getCombinedFilterFunc();
                 var filterObj = self.getCombinedFilterObj();
                 var loadObj = self.getCombinedLoadObj();
@@ -1576,7 +1582,7 @@ var ListView = Backbone.View.extend({
             loadObj[this.tagsView.fieldName] = this.tagsView.tagSelectView.selectedTag.get('name');
         }
         if(this.searchView && this.searchView.selectedQuery) {
-            loadObj[this.searchView.fieldName] = "/"+this.searchView.selectedQuery+"/";
+            loadObj[this.searchView.fieldName] = "/"+this.searchView.selectedQuery+"/i";
         }
         console.log(loadObj);
         return loadObj;

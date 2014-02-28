@@ -27,21 +27,6 @@
                                                                         $('body').removeClass('loading');
                                                                     });
                                                                     
-                                                                    var subscribeEmailView = account.getEmailSubscribeView();
-                                                                    console.log(subscribeEmailView)
-                                                                    if(subscribeEmailView) {
-                                                                        if($('.subscribeEmail').length > 0) {
-                                                                            subscribeEmailView.setElement($('.subscribeEmail')[0]);
-                                                                        }
-                                                                        $('#siteNav').after(subscribeEmailView.render().$el);
-                                                                        subscribeEmailView.on('saved', function(){
-                                                                            alert('Thank you for subscribing!');
-                                                                            subscribeEmailView.remove();
-                                                                        });
-                                                                    } else {
-                                                                        $('.subscribeEmail').remove();
-                                                                    }
-                                                                    
                                                                     require(['/posts/posts.js'], function(Posts) {
                                                                         window.posts = new Posts({el: $('body')});
                                                                         // posts.bindUser(accountProfile.loginStatus.getView().userModel);

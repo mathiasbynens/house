@@ -1065,7 +1065,7 @@
             
             var tweet = this.model.get('tweet');
             if(tweet && tweet.id) {
-                this.tweet = new TweetView({tweetId: tweet.id, el: this.$tweet});
+                this.tweet = new TweetView({tweetId: tweet.id, el: this.$tweet, className: 'tweet col-md-8 col-md-offset-2'});
                 this.$el.append(this.tweet.render().$el);
             } else {
                 this.$el.find('.tweet').remove();
@@ -1712,10 +1712,10 @@
             this.$form = $('<form class="post container"><div class="col-md-8 col-md-offset-2 fieldset"></div><div sytle="display:none;" class="controls col-md-8 col-md-offset-2"></div></form>');
             
             this.$fieldset = this.$form.find('.fieldset');
-            this.$fieldset.append(this.$inputTitle);
             this.$fieldset.append('<span class="avatar"><span class="embed"></span></span>');
             this.$fieldset.append('<span class="audio"><span class="embed"></span></span>');
             this.$fieldset.append('<span class="video"><span class="embed"></span></span>');
+            this.$fieldset.append(this.$inputTitle);
             this.$fieldset.append(this.$affix);
             this.$publishButton = $('<div class="btn-group publish">\n\
       <button type="button" class="btn btn-link btn-sm save">Save Draft</button>\n\
@@ -1808,7 +1808,8 @@
                 if(this.model.get('avatar')) {
                     var avatarImage = this.model.get('avatar');
                     var $avatarImg = $('<img src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
-                    this.$form.find('.avatar').append('<button class="detachImage" class="form-control">Detach Image</button>');
+                    this.$form.find('.avatar .detachImage').remove();
+                    this.$form.find('.avatar').append('<button class="detachImage btn btn-link" class="form-control">Detach Image</button>');
                     this.$form.find('.avatar .embed').html($avatarImg);
                 } else {
                     this.$form.find('.avatar .detachImage').remove();
@@ -1817,7 +1818,7 @@
                 if(this.model.get('audio')) {
                     var media = this.model.get('audio');
                     var $mediaEmbed = $('<audio controls preload="none" src="/api/files/'+encodeURIComponent(media.filename)+'" />');
-                    this.$form.find('.audio').append('<button class="detachAudio" class="form-control">Detach Audio</button>');
+                    this.$form.find('.audio').append('<button class="detachAudio btn btn-link" class="form-control">Detach Audio</button>');
                     this.$form.find('.audio .embed').html($mediaEmbed);
                 } else {
                     this.$form.find('.audio .detachAudio').remove();
@@ -1826,7 +1827,7 @@
                 if(this.model.get('video')) {
                     var media = this.model.get('video');
                     var $mediaEmbed = $('<video controls preload="none" src="/api/files/'+encodeURIComponent(media.filename)+'" />');
-                    this.$form.find('.video').append('<button class="detachVideo" class="form-control">Detach Video</button>');
+                    this.$form.find('.video').append('<button class="detachVideo btn btn-link" class="form-control">Detach Video</button>');
                     this.$form.find('.video .embed').html($mediaEmbed);
                 } else {
                     this.$form.find('.video .detachVideo').remove();
@@ -1875,10 +1876,12 @@
                 stylesheets.push($(e).attr('href'));
             });
             
+            // TODO calculate this better
+            var topPos = self.$form.find('.avatar').outerHeight(true) + 127;
             // Affix the toolbar
             this.$affix.affix({
                 offset: {
-                    top: 127
+                    top: topPos
                     , bottom: function () {
                         return (this.bottom = self.$el.find('.controls').outerHeight(true)+88)
                     }
@@ -1907,11 +1910,9 @@
                 l = lines[i];
               linecount += Math.ceil( l.length / cols ); // take into account long lines
             }
-            console.log(linecount + 1)
             $('#'+this.wsyi_id+'-textarea')[0].rows = linecount + 1;
             var lineHeight = $('#'+this.wsyi_id+'-textarea').css('line-height');
             lineHeight = lineHeight.substr(0, lineHeight.length - 2) - 4;
-            console.log(linecount)
             if(linecount < 60) {
                 linecount = 60;
             }
