@@ -3,6 +3,24 @@ exports = module.exports.config = {
     version: .101,
     webPort: 8000,
     webPortSecure: 8443,
+    site: {
+        url: "http://localhost:8000/",
+        title: "House.js"
+    },
+    // ssl: {
+    //     crt: '',
+    //     key: '',
+    //     ca: ''
+    // },
+    // email: {
+    //     user: 'user@mail.com',
+    //     pass: '',
+    //     smtp: 'smtp.mail.com',
+    //     ssl: true
+    // },
+    requireSsl: false,
+    requireWww: false,
+    allowWww: true,
     filters: [
         {parser:{}},
         {session:{houseGuest:{
@@ -14,8 +32,9 @@ exports = module.exports.config = {
         {router:{simpleRoute:{routes:[
                 {api: {api:{rest:{}}}},
         ]}}},
-        {static:{paper:{
-                publicFolder: "web"
+        {static:{send:{
+                publicFolder: "web",
+                otherwise: "index.html"
         }}},
         {backDoor:{}}
     ],

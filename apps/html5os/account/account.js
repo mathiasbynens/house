@@ -124,6 +124,7 @@
             if(window.config && window.config.authUrl) {
                 return window.config.authUrl;
             } else {
+                return '/api/auth';
                 var hostPath = window.location.hostname;
                 if(window.location.port) {
                     hostPath = hostPath + ':' + window.location.port;
@@ -298,7 +299,12 @@
             if(window.config && window.config.authUrl) {
                 return window.config.authUrl;
             } else {
-                return "https://"+window.location.hostname+"/api/auth";
+                return '/api/auth';
+                var hostPath = window.location.hostname;
+                if(window.location.port) {
+                    hostPath = hostPath + ':' + window.location.port;
+                }
+                return "https://"+hostPath+"/api/auth";
             }
         },
         initialize: function() {
@@ -1317,6 +1323,7 @@
                     window.usersCollection = new UsersBackbone.Collection();
                     if(navigator.userAgent.indexOf('HouseJs HTML Cacher') !== -1) {
                         window.account = self.loginStatus = new auth.Model();
+                        window.account.profile = self;
                         //self.$profile.append(self.loginStatus.getView().render().$el);
                         self.loginStatus.getView({el: $('#accountMenu')}).render();
                         self.trigger('init');
@@ -1353,7 +1360,7 @@
                 loadUsers();
             }, function (err) {
                 window.config = {
-                    "authUrl": "https://"+window.location.hostname+"/api/auth"
+                    "authUrl": '/api/auth', //"https://"+window.location.hostname+"/api/auth"
                 };
                 loadUsers();
             });

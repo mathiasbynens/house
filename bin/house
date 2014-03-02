@@ -102,7 +102,11 @@ var start = function() {
 
     var house = new housejs(config);
 
-    house.useApps(process.cwd()+'/apps');
+    if(fs.existsSync(process.cwd()+'/apps')) {
+        house.useApps(process.cwd()+'/apps');
+    } else {
+        house.useApps(__dirname+'/../apps');
+    }
 
     house.start();
 }
