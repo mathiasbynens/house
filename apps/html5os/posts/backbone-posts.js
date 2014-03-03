@@ -13,7 +13,7 @@
             if(attr.tags) {
                 for(var t in attr.tags) {
                     if(attr.tags[t].id) {
-                        if(!tagsCollection.get(attr.tags[t].id)) {
+                        if(tagsCollection && !tagsCollection.get(attr.tags[t].id)) {
                             tagsCollection.add(attr.tags[t]);
                         }
                     }

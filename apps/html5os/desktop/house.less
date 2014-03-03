@@ -31,9 +31,20 @@ body.loading {
 }
 body.loading #loading {
     display: block;
+    opacity: 1;
 }
 body #loading {
-    display: none;
+    position: absolute;
+    top: 58px;
+    z-index: 999;
+    left: 0;
+    right: 0;
+    .progress {
+        height: 4px;
+    }
+    // display: none;
+    opacity: 0;
+    transition: opacity 0.5s;
 }
 body > .app { padding-top: 50px; }
 img {
@@ -46,14 +57,30 @@ img {
 }
 #accountMenu img.avatar {
     margin: 0px 0px 0px 12px;
+    display: none;
 }
 #accountNav .dropdown-toggle .userAvatarName .name {
     display: none;
+}
+@media (max-width: @screen-xs-max) {
+    #accountNav .dropdown-toggle .userAvatarName .name {
+        display: inline;
+    }
+    #accountNav .dropdown-toggle img.avatar, #accountMenu img.avatar {
+        float: right;
+    }
 }
 .btn-group img.avatar {
     max-height: 26px;
     max-width: 26px;
 }
+
+.welcomeUser {
+    .inputPass {
+        margin: 8px 4px;
+    }
+}
+
 .houseCollection .search, .houseCollection .filter, .houseCollection .layout, .houseCollection .pages {
     float: left;
 }
