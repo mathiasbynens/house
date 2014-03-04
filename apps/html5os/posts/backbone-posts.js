@@ -7,13 +7,14 @@
             this.RowView = RowView;
             this.AvatarView = AvatarView;
             this.FullView = FullView;
+            this.AView = AView;
             options = options || {};
             options.ownerFieldName = 'owner';
             
             if(attr.tags) {
                 for(var t in attr.tags) {
                     if(attr.tags[t].id) {
-                        if(tagsCollection && !tagsCollection.get(attr.tags[t].id)) {
+                        if(window.tagsCollection && !tagsCollection.get(attr.tags[t].id)) {
                             tagsCollection.add(attr.tags[t]);
                         }
                     }
@@ -578,6 +579,38 @@
         }
     });
 
+    var AView = Backbone.View.extend({
+        tagName: "span",
+        className: "post",
+        initialize: function(options) {
+            if(options.list) {
+                this.list = options.list;
+            }
+            
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
+        },
+        render: function() {
+            this.$el.html('');
+            if(this.model.has('title')) {
+                this.$el.append('<a target="_blank" href="/posts/'+this.model.getNavigatePath()+'" class="title">'+this.model.get('title')+'</a>');
+            }
+            this.$el.attr('data-id', this.model.get("_id"));
+            //this.$el.append(this.actions.render().$el);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click a": "clickA"
+        },
+        clickA: function(e) {
+            window.location = $(e.target).attr('href');
+            return false;
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
 
     var RowView = Backbone.View.extend({
         tagName: "div",
@@ -2402,6 +2435,7 @@
                 Row: RowView,
                 Avatar: AvatarView,
                 Full: FullView,
+                AView: AView,
                 Form: FormView
             }
         });

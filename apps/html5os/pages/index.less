@@ -857,3 +857,22 @@ a[title]:hover:after {
     padding-right: 5%;
   }
 }
+
+.posts-widget {
+    .houseList .post {
+        clear: both;
+        display: block;
+        padding-bottom: 8px;
+    }
+    .houseList .post::before {
+        content: '•';
+    display: inline;
+    padding: 0px 16px;
+    }
+    img.avatar {
+        display: none;
+    }
+    .msg, .byline {
+        display: none;
+    }
+}

@@ -693,6 +693,7 @@
                 var doFeedbackView = false;
                 var doMapView = false;
                 var doGalleryView = false;
+                var doPostsView = false;
                 var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
                     this.$el.append('<div class="sectionHtml">'+this.model.get('html')+'</div>');
@@ -700,6 +701,7 @@
                     this.$el.find('.sectionHtml').html(html);
                 }
                 var sectionHtml = this.$el.find('.sectionHtml');
+                
                 var fstropen = '[[feedback';
                 var iof = html.indexOf(fstropen);
                 var iofend = html.indexOf(']]', iof);
@@ -717,6 +719,26 @@
                     
                     this.$el.find('.sectionHtml').html(html);
                     doFeedbackView = true;
+                }
+                
+                // POSTS 
+                var postsStrOpen = '[[posts';
+                var postsStrOpeni = html.indexOf(postsStrOpen);
+                var postsStrOpeniend = html.indexOf(']]', postsStrOpeni);
+                if(postsStrOpeni !== -1) {
+                    //console.log('feedback form in section')
+                    var postOpts = {};
+                    var htmlOpts = html.substring(postsStrOpeni+postsStrOpen.length+1, postsStrOpeniend);
+                    htmlOpts = htmlOpts.split('|');
+                    for(var i in htmlOpts){
+                        var option = htmlOpts[i].split('=');
+                        postOpts[option[0]] = option[1];
+                    }
+                    html = html.substr(0, postsStrOpeni+postsStrOpen.length) + html.substr(postsStrOpeniend);
+                    html = html.replace(postsStrOpen+']]', '<span class="posts-widget container"></span>');
+                    
+                    this.$el.find('.sectionHtml').html(html);
+                    doPostsView = true;
                 }
                 
                 // GALLERY
@@ -897,6 +919,24 @@
                         }
                     }
                 }
+                
+                if(doPostsView) {
+                    // postOpts
+                    require(['/posts/backbone-posts.js'], function(PostsBackbone){
+                        window.PostsBackbone = PostsBackbone;
+                        if(!window.postsCollection) {
+                            window.postsCollection = new PostsBackbone.Collection(); // collection
+                        }
+                        postOpts.pagination = false;
+                        postOpts.pageSize = postOpts.limit || 3;
+                        postOpts.mason = false;
+                        delete postOpts.limit;
+                        self.listView = postsCollection.getView(postOpts);
+                        self.listView.setLayout('a');
+                        self.$el.find('.sectionHtml .posts-widget').append(self.listView.render().$el);
+                    });
+                }
+                
                 if(doMapView) {
                     if(mapOpts.align) {
                         var pullStr = 'pull-'+mapOpts.align;

@@ -185,6 +185,16 @@ Backbone.House.Model = Backbone.Model.extend({
         }
         return this.avatar;
     },
+    getViewByName: function(name, options) {
+        options = options || {};
+        options.model = this;
+        if (!this.avatar) {
+            var viewName = name[0].toUpperCase() + name.substr(1) + 'View';
+            var view = this[name] = new this[viewName](options);
+            this.views[name] = view;
+        }
+        return this[name];
+    },
     has: function(attr) {
         if(attr.indexOf('.') !== -1) {
             var attri = attr.indexOf('.');
@@ -1451,9 +1461,18 @@ var ListView = Backbone.View.extend({
         this.$header.append(this.$sort);
         this.$header.append(this.$layout);
         this.$header.append(this.$selection);
-        this.$header.append(this.$pager);
         
-        this.pageSize = this.collection.pageSize;
+        if(!this.options.hasOwnProperty('pagination') || this.options.pagination) {
+            this.$header.append(this.$pager);
+        }
+        
+        this.pageSize = 0;
+        if(this.collection.hasOwnProperty('pageSize'))  {
+            this.pageSize = this.collection.pageSize;
+        }
+        if(this.options.hasOwnProperty('pageSize'))  {
+            this.pageSize = this.options.pageSize;
+        }
         this.setPageSize(this.pageSize);
         
         this.collection.bind("add", function(doc) {
@@ -1545,6 +1564,9 @@ var ListView = Backbone.View.extend({
         }
     },
     requireMasonAndInit: function(callback) {
+        if(this.options.mason === false) {
+            return false;
+        }
         var self = this;
         if(self.mason) {
             self.mason.destroy();
@@ -1658,6 +1680,7 @@ var ListView = Backbone.View.extend({
                 this.$wrap = this.$ul = $('<ul class="houseList list-unstyled"></ul>');
                 self.removeMason();
             } else {
+                this.$wrap = this.$ul = $('<div class="houseList" style="position: relative;"></div>');
                 self.removeMason();
             }
         //}
@@ -1839,6 +1862,8 @@ var ListView = Backbone.View.extend({
             view = doc.getTableRowView(viewOpts);
         } else if (this.layout === 'avatar') {
             view = doc.getAvatarView(viewOpts);
+        } else {
+            view = doc.getViewByName(this.layout, viewOpts);
         }
         return view;
     },
