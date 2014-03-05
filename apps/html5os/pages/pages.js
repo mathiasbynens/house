@@ -81,12 +81,13 @@
                     });
                     brandView.render();
                     
-                    var sections = page.get('sections');
-                    sections = _.sortBy(sections, 'rank');
-                    for(var i in sections) {
-                        var section = sections[i];
-                        self.nav.col.add({title:section.name, navigate:section.id, id:section.id});
-                    }
+                    page.getSectionsView().collection.each(function(section,i){
+                        var navItem = new self.nav.col.model({title:section.get('name'), navigate: section.get('id'), id: section.id});
+                        self.nav.col.add(navItem);
+                        section.on('change', function(){
+                            navItem.set({title:section.get('name'), navigate: section.get('id'), id: section.id});
+                        });
+                    });
                     var $fEl = self.$el.find('#home');
                     var featureListView;
                     if($fEl.length > 0) {

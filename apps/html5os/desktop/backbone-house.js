@@ -1636,22 +1636,26 @@ var ListView = Backbone.View.extend({
         }
     },
     unbindScroll: function() {
-        $(window).off('scroll', this.windowScrollP);
+        if(this.windowScrollP) {
+            $(window).off('scroll', this.windowScrollP);
+        }
     },
     bindScroll: function() {
         var self = this;
         // TODO when fixed, select element instead of window.
-        this.windowScroll = function(){
-            var self = this;
-            if(self.$el.is(":visible")) {
-              if(!self.loading && $(window).scrollTop() + 333 >= $(document).height() - $(window).height()){
-                self.loading = true;
-                self.loadMore();
-              }
+        if(!this.options.hasOwnProperty('pagination') || this.options.pagination) {
+            this.windowScroll = function(){
+                var self = this;
+                if(self.$el.is(":visible")) {
+                  if(!self.loading && $(window).scrollTop() + 333 >= $(document).height() - $(window).height()){
+                    self.loading = true;
+                    self.loadMore();
+                  }
+                }
             }
+            this.windowScrollP = $.proxy(this.windowScroll,this);
+            $(window).on('scroll', this.windowScrollP);
         }
-        this.windowScrollP = $.proxy(this.windowScroll,this);
-        $(window).on('scroll', this.windowScrollP);
     },
     initLayout: function(layout) {
         this.setLayout(layout, false);
@@ -1881,7 +1885,10 @@ var ListView = Backbone.View.extend({
     renderPagination: function() {
         this.paginationView.render();
     },
-    renderPage: function(pageNum) {
+    renderPage: _.debounce(function(p) {
+        this.doRenderPage(p);
+    }, 333, true),
+    doRenderPage: function(pageNum) {
         if(typeof pageNum !== 'number') {
             pageNum = parseInt(pageNum, 10);
         }
@@ -1954,6 +1961,11 @@ var ListView = Backbone.View.extend({
         // this.$el.html('');
         // this.$el.append(this.$ul);
         // this.$ul.html('');
+        //this.collection.sort({silent:true});
+        // this.collection.each(function(doc) {
+        //     var view = self.getDocLayoutView(doc);
+        //     self.appendRow(view);
+        // });
         this.setLayout(this.layout, true);
         
         if(this.searchView) {
@@ -1974,12 +1986,6 @@ var ListView = Backbone.View.extend({
         if(this.selectionView) {
             this.selectionView.render();
         }
-        
-        //this.collection.sort({silent:true});
-        this.collection.each(function(doc) {
-            var view = self.getDocLayoutView(doc);
-            self.appendRow(view);
-        });
         this.renderPagination();
         
         if(this.options.headerEl) {

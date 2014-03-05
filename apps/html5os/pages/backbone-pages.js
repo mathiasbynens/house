@@ -932,7 +932,7 @@
                         postOpts.mason = false;
                         delete postOpts.limit;
                         self.listView = postsCollection.getView(postOpts);
-                        self.listView.setLayout('a');
+                        self.listView.initLayout('a');
                         self.$el.find('.sectionHtml .posts-widget').append(self.listView.render().$el);
                     });
                 }
@@ -989,7 +989,7 @@ output=embed"></iframe>*/
             if(window.account && (account.isAdmin()) && this.$el.find('.actions').length == 0) {
                 this.$actions = $('<ul class="actions container"></ul>');
                 var btnClass = ' btn btn-default';
-                this.$actions.append('<li><button class="edit'+btnClass+'">Edit</button></li><li><button class="moveUp'+btnClass+'" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove'+btnClass+'">Remove</button></li><li><button class="new'+btnClass+'">New</button></li>');
+                this.$actions.append('<li><button class="edit'+btnClass+'"><span class="glyphicon glyphicon-edit"></span> Edit</button></li><li><button class="moveUp'+btnClass+'" title="rank ' + this.model.get("rank") + '"><span class="glyphicon glyphicon-arrow-up"></span> Move Up</button></li><li><button class="remove'+btnClass+'"><span class="glyphicon glyphicon-trash"></span> Delete</button></li><li><button class="new'+btnClass+'"><span class="glyphicon glyphicon-plus"></span> New</button></li>');
                 this.$el.append(this.$actions);
             }
             
@@ -2010,19 +2010,30 @@ output=embed"></iframe>*/
             }
             this.wsyi_id = 'wysihtml5-'+this.cid;
             this.$htmlToolbar = $('<div class="wysihtml5-toolbar" id="'+this.wsyi_id+'-toolbar"><header><ul class="commands">\
-                  <li data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command"></li>\
-                  <li data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command"></li>\
-                  <li data-wysihtml5-command="insertUnorderedList" title="Insert an unordered list" class="command"></li>\
-                  <li data-wysihtml5-command="insertOrderedList" title="Insert an ordered list" class="command"></li>\
-                  <li data-wysihtml5-command="createLink" title="Insert a link" class="command"></li>\
-                  <li data-wysihtml5-command="insertImage" title="Insert an image" class="command"></li>\
-                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2" title="Insert headline 2" class="command"></li>\
-                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h3" title="Insert headline 3" class="command"></li>\
-                  <li data-wysihtml5-command="insertSpeech" title="Insert speech" class="command"></li>\
-                  <li data-wysihtml5-action="change_view" title="Show HTML" class="action"></li></ul></header>\
-              <div data-wysihtml5-dialog="createLink" style="display: none;"><label>Link:<input data-wysihtml5-dialog-field="href" value="http://"></label><a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a></div>\
+                  <li data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command"><span class="glyphicon glyphicon-bold"></span></li>\
+                  <li data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command"><span class="glyphicon glyphicon-italic"></span></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="blockquote" title="Insert blockquote" class="command"><b>&ldquo;</b></span></li>\
+                  <li data-wysihtml5-command="insertUnorderedList" title="Insert a bulleted list" class="command"><span class="glyphicon glyphicon-th-list"></span></li>\
+                  <li data-wysihtml5-command="insertOrderedList" title="Insert a numbered list" class="command"><span class="glyphicon glyphicon-list"></span></li>\
+                  <li data-wysihtml5-command="createLink" title="Insert a link" class="command"><span class="glyphicon glyphicon-link"></span></li>\
+                  <li data-wysihtml5-command="insertImage" title="Insert an image" class="command"><span class="glyphicon glyphicon-picture"></span></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1" title="Insert headline 1" class="command"><span class="glyphicon glyphicon-header"></span></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2" title="Insert headline 2" class="command"><b>H2</b></span></li>\
+                  <li data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h3" title="Insert headline 3" class="command"><b>H3</b></span></li>\
+                  <li data-wysihtml5-command="insertSpeech" title="Insert speech" class="command"><span class="glyphicon glyphicon-record"></span></li>\
+                  <li data-wysihtml5-action="change_view" title="Show HTML" class="action"><span class="glyphicon glyphicon-wrench"></span></li>\
+                  <li data-wysihtml5-action="cleanup_html" title="Cleanup HTML" class="cleanup" title="Cleanup Code" style="display: none;"><span class="glyphicon glyphicon-text-width"></span></li>\
+                  </ul></header>\
+              <div data-wysihtml5-dialog="createLink" style="display: none;" class="input-group"><span class="input-group-btn"><label class="control-label">URL:</label></span><input class="form-control" data-wysihtml5-dialog-field="href" value="http://"><span class="input-group-btn"><a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></span></div>\
+              <div data-wysihtml5-dialog="pageLink" style="display: none;" class="input-group"><span class="input-group-btn"><label class="control-label">Section ID:</label></span><input class="form-control" value=""><span class="input-group-btn"><a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></span></div>\
               <div data-wysihtml5-dialog="insertImage" style="display: none;">\
-                </div></div>');
+            </div></div>');
+            
+             var siteUrl = window.location.origin;
+             if($('base[href]').length > 0) {
+                 siteUrl = siteUrl + $('base[href]').attr('href');
+             }
+             this.$htmlToolbar.find('div[data-wysihtml5-dialog="pageLink"] label').html(siteUrl);
              
             this.$inputName = $('<input type="text" name="name" placeholder="Name of your section" autocomplete="off" />');
             this.$inputTitle = $('<input type="text" name="title" placeholder="Sub title of the section" autocomplete="off" />');
@@ -2034,9 +2045,8 @@ output=embed"></iframe>*/
             this.$form.find('fieldset').append(this.$inputTitle);
             this.$el.append(this.$htmlToolbar);
             this.$form.find('fieldset').append(this.$inputHtml).append(this.$ace);
-            this.$form.find('.controls').append('<input type="submit" value="Save" class="btn btn-primary" />');
-            this.$form.find('.controls').append(' <button class="cancel btn btn-default">cancel</button>');
-            this.$form.find('.controls').append(' <button class="cleanup btn btn-default" style="display: none">cleanup</button>');
+            this.$form.find('.controls').append('<input type="submit" value="Save" class="btn btn-primary btn-sm" />');
+            this.$form.find('.controls').append(' <button class="cancel btn btn-link btn-sm">cancel</button>');
             this.$cleanup = this.$form.find('.controls button.cleanup');
         },
         render: function() {
@@ -2055,6 +2065,7 @@ output=embed"></iframe>*/
                     this.$inputHtml.val(this.model.get('html'));
                 }
             }
+            this.$htmlToolbar.find('div[data-wysihtml5-dialog="pageLink"] input').val(this.model.id);
             this.setElement(this.$el);
             return this;
         },
@@ -2087,6 +2098,7 @@ output=embed"></iframe>*/
                                     self.editor.aceVisible = true;
                                     self.$ace.show();
                                     self.$cleanup.show();
+                                    self.$htmlToolbar.find('.cleanup').show();
                                     if(!self.hasOwnProperty('aceEditor')) {
                                         self.$ace.css({zIndex:11111,opacity:1,background:"white"});
                                         self.$ace.offset(self.$inputHtml.offset()).width(self.$inputHtml.outerWidth()).height(self.$inputHtml.outerHeight());
@@ -2122,6 +2134,7 @@ output=embed"></iframe>*/
                         } else {
                             self.editor.aceVisible = false;
                             self.$cleanup.hide();
+                            self.$htmlToolbar.find('.cleanup').hide();
                             self.editor.textarea.setValue(self.aceEditor.getValue());
                             self.aceEditor.setValue("");
                             self.$ace.hide();
@@ -2137,8 +2150,45 @@ output=embed"></iframe>*/
             "submit form": "submit",
             'click [type="submit"]': "submit",
             'click .cancel': "cancel",
-            'click .cleanup': "cleanup",
-            'click [data-wysihtml5-command="insertImage"]': "attachImage"
+            "click .cleanup": "cleanup",
+            'click [data-wysihtml5-command="insertImage"]': "attachImage",
+            'click [data-wysihtml5-dialog="pageLink"] [data-wysihtml5-dialog-action="save"]': "savePageLink",
+            'click [data-wysihtml5-dialog="pageLink"] [data-wysihtml5-dialog-action="cancel"]': "cancelPageLink",
+            'focus input[name="name"]': "focusName",
+            'blur input[name="name"]': "blurName"
+        },
+        savePageLink: function() {
+            var self = this;
+            var id = this.$htmlToolbar.find('div[data-wysihtml5-dialog="pageLink"] input').val();
+            var oldId = this.model.id;
+            this.model.set({id: id}, {silent: true});
+            this.model.id = oldId;
+            var saveModel = this.model.save({id: id}, {
+                silent: false ,
+                wait: true
+            });
+            if(saveModel) {
+                saveModel.done(function() {
+                    self.model.id = id;
+                    self.$htmlToolbar.find('div[data-wysihtml5-dialog="pageLink"]').hide();
+                    
+                    self.trigger("saved", self.model);
+                });
+            }
+        },
+        cancelPageLink: function() {
+            this.$htmlToolbar.find('div[data-wysihtml5-dialog="pageLink"]').hide();
+        },
+        focusName: function() {
+            this.$htmlToolbar.find('div[data-wysihtml5-dialog="pageLink"]').show();
+        },
+        blurName: function() {
+            var self = this;
+            setTimeout(function(){
+                if(!self.$htmlToolbar.find('div[data-wysihtml5-dialog="pageLink"] input').is(":focus")) {
+                    self.$htmlToolbar.find('div[data-wysihtml5-dialog="pageLink"]').hide();
+                }
+            },100); // enough time to catch the click to the slug input
         },
         attachImage: function() {
             this.wysiImagePicker.uploadFrame.pickFiles();
