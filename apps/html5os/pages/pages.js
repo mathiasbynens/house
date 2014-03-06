@@ -81,13 +81,14 @@
                     });
                     brandView.render();
                     
-                    page.getSectionsView().collection.each(function(section,i){
+                    page.sectionsCollection.each(function(section,i){
                         var navItem = new self.nav.col.model({title:section.get('name'), navigate: section.get('id'), id: section.id});
                         self.nav.col.add(navItem);
                         section.on('change', function(){
                             navItem.set({title:section.get('name'), navigate: section.get('id'), id: section.id});
                         });
                     });
+                    
                     var $fEl = self.$el.find('#home');
                     var featureListView;
                     if($fEl.length > 0) {
@@ -133,6 +134,7 @@
                         listenToSection();
                         self.$el.find('.marketing').prepend(sectionListView.render().$el);
                     }
+                    
                     var routerStartPath = $('base[href]').attr('href') || "/pages/";
                     self.nav.startRouter(routerStartPath);
                     

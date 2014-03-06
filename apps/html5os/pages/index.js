@@ -4,7 +4,8 @@
         require([ "/desktop/jquery.js" ], function() {
             $(document).ready(function() {
                 require([ "/desktop/jquery.scrollTo.min.js" ], function() {
-                    require(['/pages/bootstrap.js'], function(){
+                    require(['/pages/bootstrap-init.js'], function(bootstrap){
+                        bootstrap.init();
                         require([ "/desktop/underscore.js" ], function() {
                             require([ "/desktop/backbone.js" ], function() {
                                 require([ "/desktop/backbone-house.js" ], function() {

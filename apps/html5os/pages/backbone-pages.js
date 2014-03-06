@@ -696,7 +696,7 @@
                 var doPostsView = false;
                 var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
-                    this.$el.append('<div class="sectionHtml">'+this.model.get('html')+'</div>');
+                    this.$el.append('<div class="sectionHtml container">'+this.model.get('html')+'</div>');
                 } else {
                     this.$el.find('.sectionHtml').html(html);
                 }
@@ -1382,6 +1382,7 @@ output=embed"></iframe>*/
             }
             if(this.model.has('desc')) {
                 this.$el.attr('title', this.model.get('desc'));
+                $('.pageDesc').html(this.model.get('desc')); // in our footer
             }
             if(this.model.has('logo')) {
                 var logoImage = this.model.get('logo');
