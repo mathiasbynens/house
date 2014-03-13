@@ -205,9 +205,9 @@
             this.options.list.collapseMenu();
             this.select();
             if (this.model.has("navigate")) {
-                nav.router.navigate(this.model.get("navigate"), true);
+                nav.router.navigate(this.model.get("navigate"), {trigger: true});
             } else if (this.model.has("href")) {
-                nav.router.navigate(this.model.get("href"), true); //window.location = this.model.get("href");
+                nav.router.navigate(this.model.get("href"), {trigger: true}); //window.location = this.model.get("href");
             } else {
                 this.options.list.trigger("selected", this);
             }

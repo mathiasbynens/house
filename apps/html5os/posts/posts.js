@@ -183,6 +183,13 @@
             //     baseUrl = window.location.protocol+'//'+hostName+baseHref;
             // }
             var apiFilePath = hostOrigin + '/api/files/';
+            var hadImg = false;
+            
+            var setImageTag = function(thumb) {
+                $('head [property="og:image"]').attr('content', thumb);
+                $('head [name="twitter:image"]').attr('content', thumb);
+                hadImg = true;
+            }
 
             $('head meta[property="og:url"]').attr('content', baseUrl + doc.getNavigatePath());
             $('head [rel="canonical"]').attr('href', baseUrl + doc.getNavigatePath());
@@ -219,8 +226,7 @@
                 if(youtube.id) {
                     var ythumb = 'http://i.ytimg.com/vi/' + youtube.id + '/hqdefault.jpg';
                     // console.log('update og tag');
-                    $('head [property="og:image"]').attr('content', ythumb);
-                    $('head [name="twitter:image"]').attr('content', ythumb);
+                    setImageTag(ythumb);
 
                     $('head [property="og:video"]').remove();
                     var $ogVideo = $('<meta property="og:video" content="http://www.youtube.com/v/' + youtube.id + '">');
@@ -232,8 +238,7 @@
                 var image = doc.get('avatar');
                 var ogImage = apiFilePath + encodeURIComponent(image.filename);
                 // console.log('update og:image with post avatar');
-                $('head [property="og:image"]').attr('content', ogImage);
-                $('head [name="twitter:image"]').attr('content', ogImage);
+                setImageTag(ogImage);
             }
 
             if(doc.get('wistia')) {
@@ -244,8 +249,22 @@
                     if(queryPos !== -1) {
                         ogImage = ogImage.substr(0, queryPos); // strip query
                     }
-                    $('head [property="og:image"]').attr('content', ogImage);
-                    $('head [name="twitter:image"]').attr('content', ogImage);
+                    setImageTag(ogImage);
+                }
+            }
+            
+            if(!hadImg) {
+                // search the post body for yt embed
+                if(doc.has('msg')) {
+                    var msgText = doc.get('msg');
+                    //     src="//www.youtube.com/embed/rVhfkQTc0qo" 
+                    var reg = RegExp(/ src="\/\/www\.youtube\.com\/embed\/(.*)" /);
+                    var matches = reg.exec(msgText);
+                    if(matches.length > 1) {
+                        var ytid = matches[1];
+                        var ythumb = 'http://i.ytimg.com/vi/' + ytid + '/hqdefault.jpg';
+                        setImageTag(ythumb);
+                    }
                 }
             }
 

@@ -1,4 +1,12 @@
 (function() {
+    var navOffsetHeight = 100;
+    var offsetEl = $('body > .navbar-fixed-top');
+    if(offsetEl.length === 0) {
+        offsetEl = $('body > .navbar-affix');
+    }
+    if(offsetEl.length > 0) {
+        navOffsetHeight = offsetEl.outerHeight();
+    }
     var PagesView = Backbone.View.extend({
         tag: 'body',
         initialize: function() {
@@ -217,7 +225,7 @@
                 // $.scrollTo($(elStr),1300,options);
                 
                 $('html, body').stop().animate({ 
-                    scrollTop: $(elStr).offset().top
+                    scrollTop: $(elStr).offset().top - navOffsetHeight
                 }, 300);
                 
                 if(nav.model.has("navigate")) {
@@ -293,12 +301,13 @@
                     router.trigger('loadingComplete');
                 });
                 self.nav.selectByNavigate(sectionId);
-                var options = {};
-                options.offset = -100;
+                // var options = {};
+                // options.offset = -100;
                 setTimeout(function(){
                     // $.scrollTo($('#'+sectionId),1300, options);
+                    console.log(navOffsetHeight)
                     $('html, body').stop().animate({ 
-                        scrollTop: $('#'+sectionId).offset().top - 100
+                        scrollTop: $('#'+sectionId).offset().top - navOffsetHeight
                     }, 300);
                 },100);
             });
