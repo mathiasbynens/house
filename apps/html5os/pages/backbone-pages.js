@@ -2120,6 +2120,9 @@ output=embed"></iframe>*/
             $('#'+this.wsyi_id+'-textarea').css('height', $('#'+this.wsyi_id+'-textarea').outerHeight());
             $('#'+this.wsyi_id+'-textarea').css('width', $('#'+this.wsyi_id+'-textarea').outerWidth());
             
+            $('#'+this.wsyi_id+'-textarea').css('background-color', $('body').css('background-color'));
+            $('#'+this.wsyi_id+'-textarea').css('color', $('body').css('color'));
+            
             require([ "/pages/wysihtml-parser_rules.js" ], function() {
                 require([ "/pages/wysihtml5-0.4.0pre.min.js" ], function() {
                     self.editor = new wysihtml5.Editor(self.wsyi_id+"-textarea", { // id of textarea element
@@ -2128,7 +2131,7 @@ output=embed"></iframe>*/
                       parserRules:  wysihtml5ParserRules // defined in parser rules set 
                     });
                     self.editor.aceVisible = false;
-                    console.log(self.editor.ace);
+                    // console.log(self.editor.ace);
                     self.editor.on("external_change_view", function(view){
                         if(view === "textarea") {
                             require(['/fs/js-beautify/beautify-html.js'], function(html_beautify){
@@ -2178,6 +2181,22 @@ output=embed"></iframe>*/
                             self.aceEditor.setValue("");
                             self.$ace.hide();
                         }    
+                    });
+                    var isCtrl = false;
+                    $('.wysihtml5-sandbox').contents().find('body').on("keyup",function(e) {
+                        if(e.keyCode == 17) isCtrl=false;
+                    });
+                    $('.wysihtml5-sandbox').contents().find('body').on("keydown",function(e) {
+                        if(e.keyCode == 17) isCtrl=true;
+                        if(e.keyCode == 83 && isCtrl == true) {
+                            self.submit();
+                            e.stopPropagation();
+                            e.preventDefault();
+                        } else if(e.keyCode === 27) {
+                            self.cancel();
+                            e.stopPropagation();
+                            e.preventDefault();
+                        }
                     });
                     self.wysiImagePicker = new WysiImagePicker({el: self.$htmlToolbar.find('[data-wysihtml5-dialog="insertImage"]')[0], editor: self.editor});
                     self.wysiImagePicker.render();

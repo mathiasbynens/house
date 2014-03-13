@@ -1,3 +1,4 @@
+@import "zocial.less";
 @icon-font-path: '/desktop/libs/bootstrap/fonts/';
 
 /* GLOBAL STYLES
@@ -215,7 +216,6 @@ footer {
     height: 100%;
     width: 100%;
     display: block;
-    background: transparent;
     border: 0;
     resize: none;
     white-space: pre;
@@ -328,27 +328,6 @@ img.pull-left, img.pull-right {
 
 .authentication p {
     margin: 1em 20px;
-}
-.connect {
-    display: none;
-    width: 90%;
-    margin: 0 auto 18px;
-}
-.connectTwitter, .connectFacebook {
-    width: 48%;
-    padding: 4px;
-    background: #dddddd; /* Old browsers */
-    background: -moz-linear-gradient(top,  #dddddd 0%, #4070a0 8%, #39335b 100%); /* FF3.6+ */
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#dddddd), color-stop(8%,#4070a0), color-stop(100%,#39335b)); /* Chrome,Safari4+ */
-    background: -webkit-linear-gradient(top,  #dddddd 0%,#4070a0 8%,#39335b 100%); /* Chrome10+,Safari5.1+ */
-    background: -o-linear-gradient(top,  #dddddd 0%,#4070a0 8%,#39335b 100%); /* Opera 11.10+ */
-    background: -ms-linear-gradient(top,  #dddddd 0%,#4070a0 8%,#39335b 100%); /* IE10+ */
-    background: linear-gradient(to bottom,  #dddddd 0%,#4070a0 8%,#39335b 100%); /* W3C */
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#dddddd', endColorstr='#39335b',GradientType=0 ); /* IE6-9 */
-    
-}
-.connectFacebook {
-    float: right;
 }
 form#houseAuth {
     width: 90%;

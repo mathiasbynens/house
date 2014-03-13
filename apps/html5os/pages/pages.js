@@ -56,7 +56,10 @@
             return false;
         },
         gotoTop: function() {
-            $.scrollTo($('#home'),900);
+            // $.scrollTo($('#home'),900);
+            $('html, body').stop().animate({ 
+                scrollTop: $('#home').offset().top
+            }, 300);
             return false;
         },
         start: function(pagePath, callback) {
@@ -211,7 +214,12 @@
                 var options = {};
                 options.offset = -100; //if($(window).width()>700) 
                 var elStr = 'h3#'+sub.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
-                $.scrollTo($(elStr),1300,options);
+                // $.scrollTo($(elStr),1300,options);
+                
+                $('html, body').stop().animate({ 
+                    scrollTop: $(elStr).offset().top
+                }, 300);
+                
                 if(nav.model.has("navigate")) {
                     self.nav.router.navigate(nav.model.get("navigate"), {replace: true, trigger: false});
                 }
@@ -256,7 +264,10 @@
                 self.nav.selectByNavigate('');
                 router.trigger('loadingComplete');
                 if($(document).scrollTop()>200) {
-                    $.scrollTo($('#home'),1000);
+                    // $.scrollTo($('#home'),1000);
+                    $('html, body').stop().animate({ 
+                        scrollTop: $('#home').offset().top
+                    }, 300);
                 }
             });
             router.route(':section/edit', 'editSection', function(sectionId){
@@ -285,7 +296,10 @@
                 var options = {};
                 options.offset = -100;
                 setTimeout(function(){
-                    $.scrollTo($('#'+sectionId),1300, options);
+                    // $.scrollTo($('#'+sectionId),1300, options);
+                    $('html, body').stop().animate({ 
+                        scrollTop: $('#'+sectionId).offset().top - 100
+                    }, 300);
                 },100);
             });
             router.route('new', 'new', function(){
