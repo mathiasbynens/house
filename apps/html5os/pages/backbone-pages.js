@@ -67,12 +67,17 @@
             return this.brandview;
         },
         getSectionsView: function(opts) {
-            return this.sectionsCollection.getView(opts);
+            var sv = this.sectionsCollection.getView(opts);
+            this.views['sections'] = sv;
+            return sv;
         },
         getFeaturesView: function(opts) {
-            return this.featuresCollection.getView(opts);
+            var fv = this.featuresCollection.getView(opts);
+            this.views['features'] = fv;
+            return fv
         },
         renderViews: function() {
+            
             for(var i in this.views) {
                 this.views[i].render();
             }
@@ -132,14 +137,18 @@
                     socketOpts.secure = false;
                 }
                 var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
+                if (socket.socket.connected) {
+                    console.log('already connected and now joining ' + self.collectionName);
+                    socket.emit('join', self.collectionName);
+                }
                 socket.on('connect', function(data) {
-                    //console.log('connected and now joining '+self.collectionName);
+                    console.log('connected and now joining '+self.collectionName);
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
                     if(_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
-                        return;s
+                        return;
                     }
                     var model = self.get(doc.id);
                     if(!model) {
@@ -147,18 +156,47 @@
                         self.add(model);
                     } else {
                         model.set(doc, {silent:true});
+                        
+                        if(doc.features) {
+                            for(var i in doc.features) {
+                                var featureId = doc.features[i].id;
+                                var featureModel = model.featuresCollection.get(featureId);
+                                if(!featureModel) {
+                                    var featureModel = new Feature(doc.features[i]);
+                                    model.featuresCollection.add(featureModel);
+                                } else {
+                                    featureModel.set(doc.features[i], {silent:true});
+                                }
+                            }
+                        }
+                        
+                        if(doc.sections) {
+                            for(var i in doc.sections) {
+                                var sectionId = doc.sections[i].id;
+                                var sectionModel = model.sectionsCollection.get(sectionId);
+                                if(!sectionModel) {
+                                    var sectionModel = new Section(doc.sections[i]);
+                                    model.sectionsCollection.add(sectionModel);
+                                } else {
+                                    sectionModel.set(doc.sections[i], {silent:true});
+                                }
+                            }
+                        }
+                        
                         model.renderViews();
                     }
                 }
-                socket.on('insertedPosts', function(doc) {
+                socket.on('insertedPages', function(doc) {
                     insertOrUpdateDoc(doc);
                     self.count++;
                     self.trigger('count', self.count);
                 });
-                socket.on('updatedPosts', function(doc) {
+                socket.on('updatedPages', function(doc) {
+                    console.log('updated pages doc')
+                    console.log(doc);
                     insertOrUpdateDoc(doc);
                 });
-                socket.on('deletedPosts', function(id) {
+                socket.on('deletedPages', function(id) {
                     self.remove(id);
                     self.count--;
                     self.trigger('count', self.count);
@@ -543,7 +581,7 @@
         initialize: function() {
             var self = this;
             self.loading = false;
-            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> posts</div>');
+            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> pages</div>');
             var $ul = this.$ul = $('<ul class="images"></ul>');
             this.collection.on('add', function(doc) {
                 var view;
