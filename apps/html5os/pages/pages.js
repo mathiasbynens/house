@@ -119,8 +119,8 @@
                         sectionListView.on('addToNavSubs', function(section, subItems){
                             var n = self.nav.col.get(section.id);
                             if(n) {
-                                n.set({sub: subItems});
-                                n.trigger('change');
+                                n.set({sub: subItems}, {silent: false});
+                                // n.trigger('change');
                             }
                         });
                         sectionListView.on('addToNavSub', function(section, subItem){
@@ -158,9 +158,9 @@
                         if(!h) {
                             h = 'home';
                         }
-                        if(h.substr(0,1) !== '#') {
-                            h = '#'+h;
-                        }
+                        // if(h.substr(0,1) !== '#') {
+                            // h = '#'+h;
+                        // }
                         $(e).attr('href', h);
                     });
                     $('.navbar').scrollspy();

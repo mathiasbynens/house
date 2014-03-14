@@ -356,8 +356,11 @@ form#houseAuth input[type="submit"] {
 .authentication h4 {
     font-size: 124%;
 }
-.navRow.dropdown:hover ul.dropdown-menu {
-    display: block;
+
+@media (min-width: @screen-xs-min) {
+    .navRow.dropdown:hover ul.dropdown-menu {
+        display: block;
+    }
 }
 
 .nav>li>a {

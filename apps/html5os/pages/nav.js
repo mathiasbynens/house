@@ -144,11 +144,16 @@
     var NavRow = Backbone.View.extend({
         tagName: "li",
         className: "navRow",
+        initialize: function() {
+            this.model.bind("change", this.render, this);
+            this.model.bind("destroy", this.remove, this);
+        },
         render: function() {
             this.$el.attr('data-id', this.model.id);
             var href = this.model.get('navigate') || '';
             var $e = this.$el.find('> a');
             var routerStartPath = $('base[href]').attr('href') || "/pages/";
+            console.log(routerStartPath+href)
             if($e.length > 0) {
             } else {
                 $e = $('<a href="'+routerStartPath+href+'" class="'+href+'"><span></span></a>'); // hash for scrollspy
@@ -172,6 +177,7 @@
                     $e.find('span').append(' <b class="caret"></b>');
                 }
                 $e.attr('data-toggle', 'dropdown');
+                $e.attr('data-target', '#'+href);
                 $e.addClass('dropdown-toggle');
                 var $ul = this.$el.find('ul.dropdown-menu');
                 if($ul.length === 0) {
@@ -189,10 +195,6 @@
             this.setElement(this.$el);
             return this;
         },
-        initialize: function() {
-            this.model.bind("change", this.render, this);
-            this.model.bind("destroy", this.remove, this);
-        },
         events: {
             click: "userSelect",
             "click ul li": "userSelectSub",
@@ -201,19 +203,25 @@
         touchstartstopprop: function(e) {
             e.stopPropagation();
         },
-        userSelect: function() {
-            this.options.list.collapseMenu();
-            this.select();
-            if (this.model.has("navigate")) {
-                nav.router.navigate(this.model.get("navigate"), {trigger: true});
-            } else if (this.model.has("href")) {
-                nav.router.navigate(this.model.get("href"), {trigger: true}); //window.location = this.model.get("href");
+        userSelect: function(e) {
+            var $et = $(e.currentTarget);
+            if($et.hasClass('dropdown') && ($et.hasClass('open') || !$et.find('.dropdown-menu').is(':visible'))) {
+                // default behavior
             } else {
-                this.options.list.trigger("selected", this);
+                this.options.list.collapseMenu();
+                this.select();
+                if (this.model.has("navigate")) {
+                    nav.router.navigate(this.model.get("navigate"), {trigger: true});
+                } else if (this.model.has("href")) {
+                    nav.router.navigate(this.model.get("href"), {trigger: true}); //window.location = this.model.get("href");
+                } else {
+                    this.options.list.trigger("selected", this);
+                }
+                return false;
             }
-            return false;
         },
         userSelectSub: function(e) {
+            this.options.list.collapseMenu();
             this.select();
             this.options.list.trigger("selectedSub", this, $(e.target).text());
             return false;
