@@ -44,14 +44,14 @@
     routes.push({"posts": {"static": {
         "send": {
             "publicFolder": __dirname + "/posts"
-            , "cachedHtml": process.cwd() + "/cache"
+            , "cachedHtml": process.cwd() + "/cache/posts"
             , "otherwise": 'index.html'
         }
     }}});
     routes.push({"urls": {"static": {
         "send": {
             "publicFolder": __dirname + "/urls"
-            , "cachedHtml": process.cwd() + "/cache"
+            , "cachedHtml": process.cwd() + "/cache/urls"
             , "otherwise": 'index.html'
         }
     }}});
