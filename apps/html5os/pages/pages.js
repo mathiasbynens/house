@@ -144,7 +144,8 @@
                         });
                     }
                     if($sEl.length > 0) {
-                        sectionListView = page.getSectionsView({el: $sEl[0]});
+                        self.options.sectionViewOpts.el = $sEl[0];
+                        sectionListView = page.getSectionsView(self.options.sectionViewOpts);
                         listenToSection();
                         sectionListView.render();
                     } else {

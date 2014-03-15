@@ -31,7 +31,7 @@
         },
         render: function() {
             var self = this;
-            this.$el.append('<div style="clear: both;overflow: auto;"><span class="focusFormCol col-xs-1"><button class="focusForm form-control btn btn-primary" title="New Todo">+</button></span>\n\
+            this.$el.append('<div style="clear: both;overflow: auto;"><span class="focusFormCol col-xs-1"><button class="focusForm btn btn-primary" title="New Todo">+</button></span>\n\
             <span class="col-xs-7"></span>\n\
             <span class="col-xs-4"></span></div>');
             this.$el.append(self.todosView.render().$el);
@@ -111,17 +111,9 @@
                             window.FilesBackbone = FilesBackbone;
                             window.filesCollection = new FilesBackbone.Collection(); // collection
                             
-                            var loadCollections = function() {
-                                window.todosCollection.load(null, function(){
-                                    window.todoListsCollection.load(null, function(){
-                                        self.initialized = true;
-                                        self.trigger('initialized');
-                                    });
-                                });
-                            }
                             if(window.account) {
                                 window.account.on('loggedIn', function(loginView){
-                                    loadCollections();
+                                    self.loadCollections();
                                 });
                             }
                             
@@ -129,17 +121,38 @@
                                 console.log(window.todosCollection.view.cid)
                                 self.allTodosView = new AllTodosView({app: self});
                                 self.allTodoListsView = new AllTodoListsView({app: self});
-                                loadCollections();
+                                // self.loadCollections();
                             } else {
                                 window.todosCollection.on('initialized', function() {
                                     console.log(window.todosCollection.view.cid)
                                     self.allTodosView = new AllTodosView({app: self});
                                     self.allTodoListsView = new AllTodoListsView({app: self});
-                                    loadCollections();
+                                    // self.loadCollections();
                                 });
+                            }
+                            if(!self.initialized) {
+                                self.initialized = true;
+                                self.trigger('initialized');
                             }
                         });
                     });
+                });
+            });
+        },
+        loadCollections: function(callback) {
+            var self = this;
+            window.todosCollection.load(null, function(){
+                self.router.trigger('loadingProgress', 30);
+                window.todoListsCollection.load(null, function(){
+                    self.router.trigger('loadingProgress', 30);
+                    
+                    if(!self.initialized) {
+                        self.initialized = true;
+                        self.trigger('initialized');
+                    }
+                    if(callback) {
+                        callback();
+                    }
                 });
             });
         },
@@ -189,16 +202,16 @@
             nav.list.on('home', function(){
                 nav.router.navigate('', true);
             });
-            this.bindRouter(nav.router);
             nav.col.add({title: "Todo Lists", navigate: "lists"});
             nav.col.add({title: "All Todos", navigate: ""});
+            this.bindRouter(nav.router);
             if(window.account && (account.isUser() || account.isAdmin())) {
             }
         },
         bindRouter: function(router) {
             var self = this;
             var routerReset = function() {
-                $('body').attr('class', '');
+                // $('body').attr('class', '');
                 router.reset();
             }
             self.router = router;
@@ -231,13 +244,16 @@
             
             router.on('root', function(){
                 routerReset();
+                router.trigger('loadingProgress', 30);
+                self.loadCollections(function(){
+                    router.trigger('loadingComplete');
+                });
                 self.allTodosView.todosView.deselectAll();
                 self.allTodosView.$el.show();
                 self.allTodosView.$el.siblings().hide();
                 self.allTodosView.resetFilters();
                 router.setTitle('To Do');
                 self.nav.selectByNavigate('');
-                router.trigger('loadingComplete');
             });
             
             router.route('id/:id', 'todoById', function(id){

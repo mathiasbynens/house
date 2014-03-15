@@ -34,10 +34,10 @@
         getList: function(callback) {
             if(this.has('list')) {
                 var listDoc = this.get('list');
-                console.log(listDoc);
+                // console.log(listDoc);
                 if(listDoc && listDoc.id) {
                     window.todoListsCollection.getOrFetch(listDoc.id, function(todoList){
-                        console.log(todoList);
+                        // console.log(todoList);
                         if(todoList) {
                             callback(todoList)
                         } else {
@@ -873,8 +873,8 @@
             }
             this.$header = $('<h4 class="list-group-item-heading row">\n\
             <span class="doneCheck col-xs-1"></span>\n\
-            <span class="titleInput col-xs-7"></span>\n\
-            <span class="moreInfo col-xs-4"></span>\n\
+            <span class="titleInput col-xs-8"></span>\n\
+            <span class="moreInfo col-xs-3"></span>\n\
             </h4>');
             this.$text = $('<p class="list-group-item-text row">\n\
             <span class="listColor col-xs-1">&nbsp;</span>\n\
@@ -914,7 +914,7 @@
             
             if(this.model.has('list')) {
                 var list = this.model.get('list');
-                console.log(list);
+                // console.log(list);
                 if(list) {
                     this.$listRef.attr('data-id', list.id);
                     this.$listRef.text(list.name);
@@ -924,7 +924,7 @@
                     this.model.getList(function(list){
                         
                         list.on('change', function(){
-                            console.log('`````````````````listchanged');
+                            // console.log('`````````````````listchanged');
                             self.render();
                         });
                         
@@ -932,7 +932,7 @@
                         self.$listRef.html($listA);
                         
                         if(list.has('color')) {
-                            console.log(list.get('color'))
+                            // console.log(list.get('color'))
                             self.$el.find('.listColor').css('background-color', list.get('color'));
                         }
                     });

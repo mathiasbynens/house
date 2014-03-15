@@ -27,8 +27,11 @@
                         window.ImagesBackbone = ImagesBackbone;
                         require(['/urls/backbone-urls.js'], function(UrlsBackbone) {
                             window.UrlsBackbone = UrlsBackbone;
-                            self.initialized = true;
-                            self.trigger('initialized');
+                            require(['/todos/todos.js'], function(TodosBackbone) {
+                                window.TodosBackbone = TodosBackbone;
+                                self.initialized = true;
+                                self.trigger('initialized');
+                            });
                         });
                     });
                 });
@@ -86,6 +89,26 @@
             
             return this;
         },
+        renderTopTodos:function() {
+            if (!this.topTodosCollection) {
+                this.topTodosCollection = new TodosBackbone.Collection();
+            }
+            if (!this.topTodosCollection.view) {
+                this.topTodosCollection.sortField = 'views-';
+                this.topTodosCollection.pageSize = 12;
+                console.log(this.topTodosCollection.getView({rowOptions: {className: "avatar col-xs-1"}}))
+                this.topTodosCollection.getView({rowOptions: {className: "avatar col-xs-1"}}).setLayout('avatar', false);
+                this.topTodosCollection.view.on('selected', function(urlAvatarView){
+                    console.log(urlAvatarView)
+                });
+                this.topTodosCollection.load(null, function() {
+                    //self.topUrlsCollection.sort();
+                });
+            }
+            this.$el.append(this.topTodosCollection.getView().render().$el.addClass('todosWidget'));
+            
+            return this;
+        },
         renderTopUrls: function() {
             if (!this.topUrlsCollection) {
                 this.topUrlsCollection = new UrlsBackbone.Collection();
@@ -133,6 +156,7 @@
                 router.setTitle('Desktop');
                 self.nav.selectByNavigate('');
                 self.renderTopUrls();
+                self.renderTopTodos();
                 router.trigger('loadingComplete');
             });
         },
