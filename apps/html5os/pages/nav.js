@@ -151,18 +151,24 @@
         render: function() {
             this.$el.attr('data-id', this.model.id);
             var href = this.model.get('navigate') || '';
+            
             var $e = this.$el.find('> a');
             var routerStartPath = $('base[href]').attr('href') || "/pages/";
-            console.log(routerStartPath+href)
+            // console.log(routerStartPath+href)
             if($e.length > 0) {
             } else {
                 $e = $('<a href="'+routerStartPath+href+'" class="'+href+'"><span></span></a>'); // hash for scrollspy
                 var $elSpan = $('');
                 this.$el.html($e);
             }
+            if(href) {
+                $e.attr('data-target', '#'+href);
+            } else {
+                $e.attr('data-target', '#home');
+            }
             if (this.model.has("title")) {
                 $e.find('span').html(this.model.get("title"))
-                    .attr('data-hover', this.model.get("title"));
+                    // .attr('data-hover', this.model.get("title"));
             }
             if (this.model.has("el")) {
                 $e.html(this.model.get("el"));
@@ -177,11 +183,12 @@
                     $e.find('span').append(' <b class="caret"></b>');
                 }
                 $e.attr('data-toggle', 'dropdown');
-                $e.attr('data-target', '#'+href);
+                $e.attr('data-parent', '.navRow[data-id='+this.model.id+']'); // used to find the parent element
+                $e.attr('role', 'button');
                 $e.addClass('dropdown-toggle');
                 var $ul = this.$el.find('ul.dropdown-menu');
                 if($ul.length === 0) {
-                    $ul = $('<ul class="dropdown-menu"></ul>');
+                    $ul = $('<ul class="dropdown-menu" role="menu"></ul>');
                 } else {
                     $ul.html('');
                 }
@@ -196,7 +203,7 @@
             return this;
         },
         events: {
-            click: "userSelect",
+            "click > a": "userSelect",
             "click ul li": "userSelectSub",
             "touchstart input": "touchstartstopprop"
         },
@@ -204,9 +211,7 @@
             e.stopPropagation();
         },
         userSelect: function(e) {
-            var $et = $(e.currentTarget);
-            if($et.hasClass('dropdown') && ($et.hasClass('open') || !$et.find('.dropdown-menu').is(':visible'))) {
-                // default behavior
+            if(this.$el.hasClass('dropdown') && (this.$el.hasClass('open') || !this.$el.find('.dropdown-menu').is(':visible'))) {
             } else {
                 this.options.list.collapseMenu();
                 this.select();
@@ -224,7 +229,8 @@
             this.options.list.collapseMenu();
             this.select();
             this.options.list.trigger("selectedSub", this, $(e.target).text());
-            return false;
+            e.preventDefault();
+            // return false;
         },
         select: function() {
             this.$el.siblings().removeAttr("selected");
@@ -234,7 +240,7 @@
             return false;
         },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
         }
     });
     var NavBackButton = Backbone.View.extend({

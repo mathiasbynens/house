@@ -1777,13 +1777,16 @@ output=embed"></iframe>*/
             
             $('#navigation a').each(function(i,e){
                 var h = $(e).attr('href');
-                if(h === '#home') {
+                if(h === '#home' || h === 'home') {
                     h = '';
                 }
                 if(h.substr(0,1) === '#') {
-                    h = '/'+h.substr(1);
+                    h = h.substr(1);
                 }
-                urls.push(window.location.protocol + '//' + window.location.hostname + h);
+                if(h.substr(0,1) === '/') {
+                    h = h.substr(1);
+                }
+                urls.push(window.location.protocol + '//' + window.location.hostname + '/' + h);
             });
             
             var publishPage = function(page, callback) {

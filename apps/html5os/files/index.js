@@ -2,7 +2,8 @@
     var index = {};
     index.init = function(callback) {
         require(['/desktop/jquery.js'], function() {
-            require(['/pages/bootstrap.js'], function() {
+            require(['/pages/bootstrap-init.js'], function(bootstrap){
+                bootstrap.init();
                 $(document).ready(function() {
                     require(['/desktop/underscore.js'], function() {
                         require(['/desktop/backbone.js'], function() {

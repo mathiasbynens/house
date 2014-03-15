@@ -45,7 +45,7 @@
         },
         events: {
             "click .toTop a": "gotoTop",
-            "click a": "clickA"
+            "click .sectionHtml a": "clickA"
         },
         clickA: function(e) {
             var href = $(e.currentTarget).attr('href');
@@ -158,12 +158,12 @@
                         if(!h) {
                             h = 'home';
                         }
-                        // if(h.substr(0,1) !== '#') {
+                        // if(h.substr(0,1) !== '#') { // was only doing this for scrollspy
                             // h = '#'+h;
                         // }
                         $(e).attr('href', h);
                     });
-                    $('.navbar').scrollspy();
+                    // $('.navbar').scrollspy();
                     $('[data-spy="scroll"]').each(function () {
                         var $spy = $(this).scrollspy('refresh');
                     });
@@ -305,7 +305,6 @@
                 // options.offset = -100;
                 setTimeout(function(){
                     // $.scrollTo($('#'+sectionId),1300, options);
-                    console.log(navOffsetHeight)
                     $('html, body').stop().animate({ 
                         scrollTop: $('#'+sectionId).offset().top - navOffsetHeight
                     }, 300);
