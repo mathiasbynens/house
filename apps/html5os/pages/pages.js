@@ -11,6 +11,13 @@
         tag: 'body',
         initialize: function() {
             var self = this;
+            this.options.sectionViewOpts = {};
+            if(this.options.hasOwnProperty('sectionClassName')) {
+                this.options.sectionViewOpts.sectionClassName = this.options.sectionClassName;
+            }
+            if(this.options.hasOwnProperty('headingClassName')) {
+                this.options.sectionViewOpts.headingClassName = this.options.headingClassName;
+            }
             require(['/msgs/msgs.js'], function(MsgsBackbone){
                 window.MsgsBackbone = MsgsBackbone;
                 window.msgsCollection = new MsgsBackbone.Collection(); // collection
@@ -141,7 +148,7 @@
                         listenToSection();
                         sectionListView.render();
                     } else {
-                        sectionListView = page.getSectionsView();
+                        sectionListView = page.getSectionsView(self.options.sectionViewOpts);
                         listenToSection();
                         self.$el.find('.marketing').prepend(sectionListView.render().$el);
                     }

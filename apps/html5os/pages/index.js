@@ -29,7 +29,7 @@
                                                             
                                                             var startPages = function() {
                                                                 require([ "/pages/pages.js" ], function(Pages) {
-                                                                    var pages = new Pages({el:$("body")});
+                                                                    var pages = new Pages({el:$("body"), sectionClassName: 'container', headingClassName: 'container'});
                                                                     pages.bindUser(accountProfile.loginStatus.getView().userModel);
                                                                     pages.on("initialized", function() {
                                                                         pages.bindNav(nav);

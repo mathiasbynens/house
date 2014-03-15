@@ -371,10 +371,17 @@
         events: {},
         appendModel: function(m) {
             var el = this.$el.find('#'+m.id)[0];
-            var row = m.getView({
+            var viewOpts = {
                 list: this,
                 el: el
-            });
+            };
+            if(this.options.hasOwnProperty('sectionClassName')) {
+                viewOpts.sectionClassName = this.options.sectionClassName;
+            }
+            if(this.options.hasOwnProperty('headingClassName')) {
+                viewOpts.headingClassName = this.options.headingClassName;
+            }
+            var row = m.getView(viewOpts);
             var rowEl = row.render().$el;
             
             var rank = row.model.get('rank');
@@ -712,6 +719,12 @@
                     self.render();
                 });
             }
+            if(!this.options.hasOwnProperty('sectionClassName')) {
+                this.options.sectionClassName = 'container';
+            }
+            if(!this.options.hasOwnProperty('headingClassName')) {
+                this.options.headingClassName = 'container';
+            }
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
         },
@@ -722,7 +735,7 @@
                 desc = '<span class="muted">'+this.model.get('title')+'</span>';
             }
             if(this.$el.find('h2').length == 0) {
-                this.$el.prepend('<h2 class="featurette-heading container">'+this.model.get('name')+desc+'</h2>');
+                this.$el.prepend('<h2 class="featurette-heading '+this.options.headingClassName+'">'+this.model.get('name')+desc+'</h2>');
             } else {
                 this.$el.find('h2').html(this.model.get('name')+desc);
             }
@@ -734,7 +747,7 @@
                 var doPostsView = false;
                 var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
-                    this.$el.append('<div class="sectionHtml container">'+this.model.get('html')+'</div>');
+                    this.$el.append('<div class="sectionHtml '+this.options.sectionClassName+'">'+this.model.get('html')+'</div>');
                 } else {
                     this.$el.find('.sectionHtml').html(html);
                 }
