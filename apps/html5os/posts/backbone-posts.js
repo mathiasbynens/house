@@ -623,6 +623,12 @@
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             //this.actions = new ActionsView({id: this.id, model: this.model});
+            
+            this.$headerStyle = $('<style id="postRowHeaderStyle'+this.model.id+'"></style>');
+            if(this.$el.find('style').length) {
+                this.$headerStyle = this.$el.find('style');
+            }
+            
             this.tagListView = this.model.getTagsList();
             this.tagListView.on('selectedTagName', function(tagName) {
                 if(self.list) {
@@ -633,6 +639,7 @@
         render: function() {
             var self = this;
             this.$el.html('');
+            this.$el.append(this.$headerStyle);
             var $byline = $('<div class="entry-meta col-md-8 col-md-offset-2"></div>');
             var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
             var $at = $('<span class="date"><span class="glyphicon glyphicon-time"></span> </span>');
@@ -650,6 +657,18 @@
                 this.$el.append('<div class="entry-header col-md-8 col-md-offset-2"><h1 class="entry-title"><a href="'+this.model.getNavigatePath()+'">'+this.model.get('title')+'</a></h1></div>');
                 $permalink.attr('title', 'Permalink to '+this.model.get('title'));
             }
+            
+            if(this.model.has('headerTitle')) {
+                this.$el.find('.entry-header').addClass('headerTitle');
+                if(this.model.has('headerTitle.color')) {
+                    var color = this.model.get('headerTitle.color');
+                    
+                    this.$headerStyle.html('.post.row[data-id="'+this.model.id+'"] .entry-title a { color: '+color+'; }');
+                }
+            } else {
+                this.$el.find('.entry-header').removeClass('headerTitle');
+            }
+            
             if(this.model.has('at')) {
                 if(window.clock) {
                     var m = clock.moment(this.model.get('at'));
@@ -934,7 +953,7 @@
     
     var FullView = Backbone.View.extend({
         tagName: "div",
-        className: "fullView container",
+        className: "fullView",
         initialize: function(options) {
             var self = this;
             if(options.list) {
@@ -943,6 +962,7 @@
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             
+            this.$headerStyle = $('<style id="postHeaderStyle'+this.model.id+'"></style>');
             this.$avatarImg = $('<img class="avatar" src>');
             this.$msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
             this.$entryMeta = $('<div class="entry-meta col-md-8 col-md-offset-2"></div>');
@@ -953,6 +973,9 @@
             this.$youtube = $('<span class="youtube col-md-8 col-md-offset-2"></span>');
             this.$tweet = $('<div class="tweet col-md-8 col-md-offset-2"></div>');
             
+            if(this.$el.find('style').length) {
+                this.$headerStyle = this.$el.find('style');
+            }
             if(this.$el.find('.headerMedia').length) {
                 this.$headerMedia = this.$el.find('.headerMedia');
                 if(this.$headerMedia.find('img').length) {
@@ -1002,6 +1025,8 @@
         render: function() {
             var self = this;
             this.setElement(this.$el);
+            this.$el.attr('data-id', this.model.id);
+            this.$el.append(this.$headerStyle);
             // this.$el.html('');
             if(this.model.get('avatar')) {
                 var avatarImage = this.model.get('avatar');
@@ -1012,12 +1037,24 @@
                 }
                 this.$el.append(this.$headerMedia);
             } else {
-                console.log('remove headerMedia')
-                console.log(this.$headerMedia);
+                // console.log('remove headerMedia')
+                // console.log(this.$headerMedia);
                 // this.$headerMedia.remove();
                 this.$el.find('.headerMedia').remove();
             }
             this.$el.append(this.$entryHeader);
+            
+            if(this.model.has('headerTitle')) {
+                this.$entryHeader.addClass('headerTitle');
+                if(this.model.has('headerTitle.color')) {
+                    var color = this.model.get('headerTitle.color');
+                    
+                    this.$headerStyle.html('.fullView[data-id="'+this.model.id+'"] .entry-title a { color: '+color+'; }');
+                }
+            } else {
+                this.$entryHeader.removeClass('headerTitle');
+            }
+            
             var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
             this.$at.html($permalink);
             this.$entryMeta.append(this.$at);
@@ -1499,6 +1536,45 @@
         },
     });
     
+    var HeaderTitleView = Backbone.View.extend({
+        tagName: "div",
+        className: "headerTitle form-group",
+        initialize: function() {
+            this.$label = $('<label class="col-lg-4 control-label">Text Color:</label><div class="col-lg-8"></div>');
+            this.$inputColor = $('<input type="color" value="#000000" name="headerColor" id="headerColorInput">');
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$label);
+            this.$el.find('div').append(this.$inputColor);
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v && v.color) {
+                this.$inputColor.val(v.color);
+            } else {
+                var htColor = this.$inputColor.val();
+                var ht = {};
+                if(this.model.has('headerTitle')) {
+                    ht = _.clone(this.model.get('headerTitle'));
+                }
+                if(!ht.color || ht.color !== htColor) {
+                    ht.color = htColor;
+                }
+                // y.id = ytid;
+                return ht;
+            }
+        },
+        events: {
+            'blur input[type="color"]': "blurInputColor"
+        },
+        blurInputColor: function(e) {
+            // this.$inputColor.val(this.$input.val());
+            // // TODO this.trigger('changed');
+        }
+    });
+    
     var YoutubeView = Backbone.View.extend({
         tagName: "div",
         className: "youtube form-group",
@@ -1561,7 +1637,7 @@
                 }
             }
             var opts = {
-                className: 'actions col-md-4 col-md-offset-8',
+                className: 'actions container',
                 model: this.model, 
                 actionOptions: {
                     fav: {fieldName: 'fav'},
@@ -1575,6 +1651,14 @@
                     glyphicon: 'picture',
                     action: function(model) {
                         self.attachImage();
+                        return false;
+                    }
+                },
+                "attachTitle": {
+                    title: "Header Title",
+                    glyphicon: 'font',
+                    action: function(model) {
+                        self.headerTitle();
                         return false;
                     }
                 },
@@ -1734,6 +1818,7 @@
             this.$msgToolbar.find('[data-wysihtml5-dialog="publishedAt"]').append(this.$inputAtDate).append(this.$inputAtTime).append('<span class="input-group-btn"><a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a></span>');
             
             // this.inputTagsView = new TagsInputView({model: this.model});
+            this.headerTitleView = new HeaderTitleView({model: this.model});
             this.youtubeView = new YoutubeView({model: this.model});
             this.wistiaView = new WistiaMediaView({model: this.model, label: 'Wistia Video ID'});
             this.wistiaAudioView = new WistiaMediaView({model: this.model, label: 'Wistia Audio ID'});
@@ -1838,6 +1923,11 @@
                     this.tweetInputView.val(tweet.id);
                 }
                 
+                if(this.model.has('headerTitle')) {
+                    var headerTitle = this.model.get('headerTitle');
+                    this.headerTitleView.val(headerTitle);
+                }
+                
                 if(this.model.get('avatar')) {
                     var avatarImage = this.model.get('avatar');
                     var $avatarImg = $('<img src="/api/files/'+encodeURIComponent(avatarImage.filename)+'" />');
@@ -1905,7 +1995,7 @@
             var self = this;
             var stylesheets = [];
             $('link[rel="stylesheet"]').each(function(i,e){
-                console.log(e);
+                // console.log(e);
                 stylesheets.push($(e).attr('href'));
             });
             
@@ -1961,28 +2051,63 @@
                     });
                     self.editor.aceVisible = false;
                     // console.log(self.editor.ace);
-                    self.editor.on("change", function(){
+                    // self.editor.on("change", function(){
                         // console.log(arguments)
-                    });
+                    // });
                     self.editor.on("external_change_view", function(view){
                         if(view === "textarea") {
                             require(['/fs/js-beautify/beautify-html.js'], function(html_beautify){
-                            window.html_beautify = html_beautify.html_beautify;
-                            require([ "/fs/ace/ace.js" ], function() {
-                                self.editor.aceVisible = true;
-                                self.$ace.show();
-                                self.$msgToolbar.find('.cleanup').show();
-                                if(!self.hasOwnProperty('aceEditor')) {
-                                    self.$ace.css({zIndex:11111,opacity:1,background:"white"});
-                                    self.$ace.offset(self.$inputMsg.offset()).width(self.$inputMsg.outerWidth()).height(self.$inputMsg.outerHeight());
-                                    self.$ace.html("");
-                                    self.aceEditor = ace.edit("ace-editor");
-                                    self.aceEditor.setTheme("ace/theme/chrome");
-                                    self.aceEditor.getSession().setMode("ace/mode/html");
-                                }
-                                self.aceEditor.setValue(self.editor.textarea.getValue());
-                                self.aceEditor.clearSelection();
-                            });
+                                window.html_beautify = html_beautify.html_beautify;
+                                require([ "/fs/ace/ace.js" ], function() {
+                                    self.editor.aceVisible = true;
+                                    self.$ace.show();
+                                    self.$msgToolbar.find('.cleanup').show();
+                                    if(!self.hasOwnProperty('aceEditor')) {
+                                        self.$ace.css({zIndex:11111,opacity:1,background:"white"});
+                                        self.$ace.offset(self.$inputMsg.offset()).width(self.$inputMsg.outerWidth()).height(self.$inputMsg.outerHeight());
+                                        self.$ace.html("");
+                                        self.aceEditor = ace.edit("ace-editor");
+                                        self.aceEditor.setTheme("ace/theme/chrome");
+                                        self.aceEditor.getSession().setMode("ace/mode/html");
+                                        
+                                        self.aceEditor.commands.addCommand({
+                                            name: 'save',
+                                            bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+                                            exec: function(editor) {
+                                                console.log('save')
+                                                //console.log(editor.getValue());
+                                                self.submit(true);
+                                                return true;
+                                            },
+                                            readOnly: false
+                                        });
+                                        self.aceEditor.commands.addCommand({
+                                            name: 'esc',
+                                            bindKey: {win: 'esc',  mac: 'esc'},
+                                            exec: function(editor) {
+                                                console.log('esc!')
+                                                self.editor.toolbar.execAction('change_view');
+                                                return true;
+                                            },
+                                            readOnly: false
+                                        });
+                                        
+                                        self.aceEditor.getSession().on('change', function(e) {
+                                            // e.type, etc
+                                            // console.log(e.type);
+                                            // console.log(self.aceEditor.dirty);
+                                            if(self.aceEditor.getValue() !== self.model.get('msg')) {
+                                                self.markAsDirty();
+                                            } else {
+                                                self.markAsDirty(false);
+                                            }
+                                            // TODO autosaving
+                                        });
+                                        
+                                    }
+                                    self.aceEditor.setValue(self.editor.textarea.getValue());
+                                    self.aceEditor.clearSelection();
+                                });
                             });
                         } else {
                             self.editor.aceVisible = false;
@@ -1990,21 +2115,44 @@
                             self.editor.textarea.setValue(self.aceEditor.getValue());
                             self.aceEditor.setValue("");
                             self.$ace.hide();
-                        }    
+                        }
+                        self.checkDirty();
                     });
-                    $('.wysihtml5-sandbox').contents().find('body').on("keydown",function() {
-                        if(self.model.get('msg') !== self.editor.textarea.getValue()) {
-                            // dirty and needs saving
-                            self.markAsDirty();
-                        } else {
-                            self.markAsDirty(false);
+                    
+                    var isCtrl = false;
+                    $('.wysihtml5-sandbox').contents().find('body').on("keyup",function(e) {
+                        if(e.keyCode == 17) isCtrl=false;
+                    });
+                    $('.wysihtml5-sandbox').contents().find('body').on("keydown",function(e) {
+                        
+                        self.checkDirty();
+                        
+                        if(e.keyCode == 17) isCtrl=true;
+                        if(e.keyCode == 83 && isCtrl == true) {
+                            self.submit(true);
+                            e.stopPropagation();
+                            e.preventDefault();
+                        } else if(e.keyCode === 27) {
+                            // self.cancel();
+                            // e.stopPropagation();
+                            // e.preventDefault();
                         }
                     });
+                    
                     self.wysiImagePicker = new WysiImagePicker({el: self.$msgToolbar.find('[data-wysihtml5-dialog="insertImage"]')[0], editor: self.editor});
                     self.wysiImagePicker.render();
                 });
             });
             //$(this.editor.composer.iframe.contentDocument).find('head').append($('head style').clone());
+        },
+        checkDirty: function() {
+            // mark as dirty
+            if(this.model.get('msg') !== this.editor.textarea.getValue()) {
+                // dirty and needs saving
+                this.markAsDirty();
+            } else {
+                this.markAsDirty(false);
+            }
         },
         markAsDirty: function(isDirty) {
             if(isDirty === false) {
@@ -2111,6 +2259,9 @@
             this.aceEditor.gotoLine(firstRow);
             this.aceEditor.moveCursorToPosition(p);
             return false;
+        },
+        headerTitle: function() {
+            utils.appendLightBox(this.headerTitleView.render().$el, 'Header Title', ' ');
         },
         attachImage: function() {
             this.uploadAvatarFrame.pickFiles();
@@ -2226,8 +2377,7 @@
             //this.render();
             //this.focus();
         },
-        submit: function() {
-            console.log('submit')
+        submit: function(dontTrigger) {
             var self = this;
             var setDoc = {};
             if(self.editor.aceVisible) {
@@ -2239,6 +2389,7 @@
             var slug = this.$inputSlug.val();
             // var tags = this.inputTagsView.val();
             var groups = this.$publishButton.hasClass('public') ? ['public'] : null;
+            var headerTitle = this.headerTitleView.val();
             var youtube = this.youtubeView.val();
             var wistia = this.wistiaView.val();
             var wistiaAudio = this.wistiaAudioView.val();
@@ -2248,8 +2399,8 @@
             var atTime = this.$inputAtTime.val();
             
             if(atDate && atTime) {
-                console.log(atDate)
-                console.log(atTime)
+                // console.log(atDate)
+                // console.log(atTime)
                 var formDate = moment(atDate+' '+atTime, "YYYY-MM-DD HH:mm");
                 var at = new Date(this.model.get('at'));
                 if(formDate && at.getTime() !== formDate.toDate().getTime()) {
@@ -2283,6 +2434,9 @@
             if(youtube && !_.isEqual(youtube, this.model.get('youtube'))) {
                 setDoc.youtube = youtube;
             }
+            if(headerTitle && !_.isEqual(headerTitle, this.model.get('headerTitle'))) {
+                setDoc.headerTitle = headerTitle;
+            }
             if(tweet && !_.isEqual(tweet, this.model.get('tweet'))) {
                 setDoc.tweet = tweet;
             }
@@ -2296,10 +2450,16 @@
             if(saveModel) {
                 saveModel.done(function() {
                     self.collection.add(self.model);
-                    self.trigger("saved", self.model);
+                    self.markAsDirty(false);
+                    if(dontTrigger !== true) {
+                        self.trigger("saved", self.model);
+                    }
                 });
             } else {
-                self.trigger("saved", self.model);
+                self.markAsDirty(false);
+                if(dontTrigger !== true) {
+                    self.trigger("saved", self.model);
+                }
             }
             return false;
         },

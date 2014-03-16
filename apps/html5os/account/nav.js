@@ -13,9 +13,11 @@
             "": "root"
         },
         gohome: function(root) {
-            this.navigate('', {trigger: true, replace: false});
             if(root) {
+                this.navigate('', {trigger: false, replace: false});
                 this.root();
+            } else {
+                this.navigate('', {trigger: true, replace: false});
             }
         },
         reset: function() {

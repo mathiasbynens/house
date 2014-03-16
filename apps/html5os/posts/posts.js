@@ -22,7 +22,7 @@
                         window.filesCollection = new FilesBackbone.Collection(); // collection
 
                         self.$postList = $('<div class="post-list"></div>');
-                        self.$postViewer = $('<div class="post-viewer"><div class="fullView container"></div></div>');
+                        self.$postViewer = $('<div class="post-viewer"><div class="fullView"></div></div>');
                         if(self.$el.find('.post-viewer').length) {
                             self.$postViewer = self.$el.find('.post-viewer');
                         }
@@ -126,13 +126,16 @@
                 });
             });*/
         },
-        loadCollections: function() {
+        loadCollections: function(callback) {
             var self = this;
             window.tagsCollection.load(null, function() {
                 window.postsCollection.load(null, function() {
                     if(!self.initialized) {
                         self.initialized = true;
                         self.trigger('initialized');
+                    }
+                    if(callback) {
+                        callback();
                     }
                 });
             });
@@ -260,7 +263,7 @@
                     //     src="//www.youtube.com/embed/rVhfkQTc0qo" 
                     var reg = RegExp(/ src="\/\/www\.youtube\.com\/embed\/(.*)" /);
                     var matches = reg.exec(msgText);
-                    if(matches.length > 1) {
+                    if(matches && matches.length > 1) {
                         var ytid = matches[1];
                         var ythumb = 'http://i.ytimg.com/vi/' + ytid + '/hqdefault.jpg';
                         setImageTag(ythumb);
@@ -426,14 +429,12 @@
                 self.nav.unselect();
             });
             router.on('root', function() {
-                router.reset();
+                // router.reset();
                 self.loadCollections();
-                
                 self.listView.resetViewControls();
                 self.$app.append(self.listView.render().$el);
                 self.listView.filter();
                 self.listView.$el.show().siblings().hide();
-                
                 $('#navbar-header-form').show();
 
                 if(self.listView.selectedPost) {

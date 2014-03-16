@@ -268,7 +268,13 @@ var wysihtml5ParserRules = {
         "s": {
             "rename_tag": "span"
         },
-        "li": {},
+        "li": {
+            "check_attributes": {
+                "data-placement": true,
+                "data-toggle": true,
+                "title": true,
+            }
+        },
         "td": {
             "check_attributes": {
                 "rowspan": "numbers",
