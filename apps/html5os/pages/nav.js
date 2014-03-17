@@ -64,7 +64,7 @@
         },
         getRow: function(options) {
             if (!this.hasOwnProperty("row")) {
-                options.el = $('[data-id="'+this.id+'"]')[0];
+                options.el = $('.navRow[data-id="'+this.id+'"]');
                 options.model = this;
                 this.row = new NavRow(options);
             }
