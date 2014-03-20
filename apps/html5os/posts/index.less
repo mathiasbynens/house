@@ -282,13 +282,6 @@ h1.entry-title {
     width: 100%;
 }
 
-.fullView {
-    .caption {
-        position: absolute;
-        right: 32px;
-    }
-}
-
 table.houseList {
     tr {
         position: relative;
@@ -1141,5 +1134,21 @@ header.navbar {
     }
     .tweet iframe {
         width: 100%;
+    }
+    .caption {
+        position: absolute;
+        right: 32px;
+        padding-top: 12px;
+    }
+}
+
+@media only screen and (max-width: 767px) {
+    .post-viewer h1.entry-title, h1.entry-title {
+        line-height: 18px;
+        margin-top: 0px;
+        margin-bottom: 0px;
+        a {
+            font-size: 20px;
+        }
     }
 }

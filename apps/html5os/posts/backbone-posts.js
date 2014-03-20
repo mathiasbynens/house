@@ -1065,6 +1065,8 @@
                 var color = hc.color || '#000';
                 this.$entryHeaderCaption.html(hc.html+'<style>.fullView[data-id="'+this.model.id+'"] .caption, .fullView[data-id="'+this.model.id+'"] .caption a { color: '+color+'; }</style>');
                 this.$entryHeader.append(this.$entryHeaderCaption);
+            } else {
+                this.$entryHeaderCaption.html('');
             }
             
             var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
@@ -1646,7 +1648,7 @@
                 console.log(html);
                 var ht = {};
                 if(this.model.has('headerCaption')) {
-                    ht = _.clone(this.model.get('headerTitle'));
+                    ht = _.clone(this.model.get('headerCaption'));
                 }
                 if(!ht.color || ht.color !== htColor) {
                     ht.color = htColor;
