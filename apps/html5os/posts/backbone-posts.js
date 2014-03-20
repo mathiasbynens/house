@@ -989,6 +989,11 @@
             } else {
                 this.$entryHeader = $('<div class="entry-header col-md-8 col-md-offset-2"><h1 class="entry-title"></h1></div>');
             }
+            if(this.$entryHeader.find('.caption').length) {
+                this.$entryHeaderCaption = this.$el.find('.caption');
+            } else {
+                this.$entryHeaderCaption = $('<span class="caption"></span>');
+            }
             if(this.$el.find('.msg').length) {
                 this.$msg = this.$el.find('.msg');
             }
@@ -1053,6 +1058,13 @@
                 }
             } else {
                 this.$entryHeader.removeClass('headerTitle');
+            }
+            
+            if(this.model.has('headerCaption')) {
+                var hc = this.model.get('headerCaption');
+                var color = hc.color || '#000';
+                this.$entryHeaderCaption.html(hc.html+'<style>.fullView[data-id="'+this.model.id+'"] .caption, .fullView[data-id="'+this.model.id+'"] .caption a { color: '+color+'; }</style>');
+                this.$entryHeader.append(this.$entryHeaderCaption);
             }
             
             var $permalink = $('<a href="'+this.model.getNavigatePath()+'" title="Permalink" rel="bookmark"><time class="entry-date" datetime="2013-09-17T09:36:07+00:00"></time></a>');
@@ -1542,18 +1554,22 @@
         initialize: function() {
             this.$label = $('<label class="col-lg-4 control-label">Text Color:</label><div class="col-lg-8"></div>');
             this.$inputColor = $('<input type="color" value="#000000" name="headerColor" id="headerColorInput">');
+            this.$resetDefault = $('<button class="reset btn btn-link" title="Reset default text color">default</button>');
         },
         render: function() {
             var self = this;
             this.$el.append(this.$label);
-            this.$el.find('div').append(this.$inputColor);
+            this.$el.find('div').append(this.$inputColor).append(this.$resetDefault);
             this.setElement(this.$el);
             return this;
         },
         val: function(v) {
             if(v && v.color) {
                 this.$inputColor.val(v.color);
+            } else if(v === null) {
+                this.isNull = true;
             } else {
+                if(this.isNull) return null;
                 var htColor = this.$inputColor.val();
                 var ht = {};
                 if(this.model.has('headerTitle')) {
@@ -1567,11 +1583,97 @@
             }
         },
         events: {
-            'blur input[type="color"]': "blurInputColor"
+            'blur input[type="color"]': "blurInputColor",
+            'change input[type="color"]': "blurInputColor",
+            'click button.reset': "clickReset"
+        },
+        clickReset: function() {
+            this.isNull = true;
+            this.$inputColor.val(null);
         },
         blurInputColor: function(e) {
             // this.$inputColor.val(this.$input.val());
             // // TODO this.trigger('changed');
+            delete this.isNull;
+        }
+    });
+    
+    var HeaderCaptionView = Backbone.View.extend({
+        tagName: "div",
+        className: "headerCaption form-group",
+        initialize: function() {
+            this.$label = $('<label class="col-lg-4 control-label">Caption Color:</label><div class="col-lg-8"></div>');
+            this.$inputColor = $('<input type="color" value="#000000" name="headerCaptionColor" id="headerCaptionColorInput">');
+            // this.$resetDefault = $('<button class="reset btn btn-link" title="Reset default text color">default</button>');
+            this.wsyi_id = 'wysihtml5-'+this.cid;
+            this.$toolbar = $('<div class="wysihtml5-toolbar" id="'+this.wsyi_id+'-toolbar"><header><ul class="commands">\
+      <li data-wysihtml5-command="bold" title="Make text bold (CTRL + B)" class="command"><span class="glyphicon glyphicon-bold"></span></li>\
+      <li data-wysihtml5-command="italic" title="Make text italic (CTRL + I)" class="command"><span class="glyphicon glyphicon-italic"></span></li>\
+      <li data-wysihtml5-command="createLink" title="Insert a link" class="command"><span class="glyphicon glyphicon-link"></span></li>\
+      <li data-wysihtml5-action="change_view" title="Show HTML" class="action"><span class="glyphicon glyphicon-wrench"></span></li>\
+      </ul></header>\
+  <div data-wysihtml5-dialog="createLink" style="display: none;" class="input-group"><span class="input-group-btn"><label class="control-label">URL:</label></span><input class="form-control" data-wysihtml5-dialog-field="href" value="http://"><span class="input-group-btn"><a data-wysihtml5-dialog-action="save" class="btn btn-primary">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel" class="btn btn-default">Cancel</a></span></div>\
+</div>');
+            this.$inputCaption = $('<textarea id="'+this.wsyi_id+'-textarea" name="caption" placeholder="Header caption" cols="88"></textarea>');
+        },
+        render: function() {
+            var self = this;
+            this.$el.html('');
+            this.$el.append(this.$label).append(this.$inputColor);
+            this.$el.append(this.$toolbar);
+            this.$el.append(this.$inputCaption);
+            this.$inputCaption.show();
+            // if(!this.editor) {
+            //     this.wysi();
+            // }
+            this.setElement(this.$el);
+            return this;
+        },
+        val: function(v) {
+            if(v) {
+                if(v.color) {
+                    this.$inputColor.val(v.color);
+                }
+                if(v.html) {
+                    this.$inputCaption.val(v.html);
+                }
+            } else if(v === null) {
+                this.isNull = true;
+            } else {
+                if(this.isNull) return null;
+                var htColor = this.$inputColor.val();
+                var html = this.$inputCaption.val();
+                console.log(html);
+                var ht = {};
+                if(this.model.has('headerCaption')) {
+                    ht = _.clone(this.model.get('headerTitle'));
+                }
+                if(!ht.color || ht.color !== htColor) {
+                    ht.color = htColor;
+                }
+                if(!ht.html || ht.html !== html) {
+                    ht.html = html;
+                }
+                // y.id = ytid;
+                return ht;
+            }
+        },
+        wysi: function() {
+            var self = this;
+            self.editor = new wysihtml5.Editor(self.wsyi_id+"-textarea", { // id of textarea element
+              toolbar:      self.wsyi_id+"-toolbar", // id of toolbar element
+            //   stylesheets: stylesheets, // ['/pages/css/bootstrap.min.css', '/pages/index.css'],
+              parserRules:  wysihtml5ParserRules // defined in parser rules set 
+            });
+        },
+        events: {
+            'blur input[type="color"]': "blurInputColor",
+            'change input[type="color"]': "blurInputColor",
+        },
+        blurInputColor: function(e) {
+            // this.$inputColor.val(this.$input.val());
+            // // TODO this.trigger('changed');
+            delete this.isNull;
         }
     });
     
@@ -1659,6 +1761,14 @@
                     glyphicon: 'font',
                     action: function(model) {
                         self.headerTitle();
+                        return false;
+                    }
+                },
+                "attachCaption": {
+                    title: "Header Caption",
+                    glyphicon: 'font',
+                    action: function(model) {
+                        self.headerCaption();
                         return false;
                     }
                 },
@@ -1819,6 +1929,7 @@
             
             // this.inputTagsView = new TagsInputView({model: this.model});
             this.headerTitleView = new HeaderTitleView({model: this.model});
+            this.headerCaptionView = new HeaderCaptionView({model: this.model});
             this.youtubeView = new YoutubeView({model: this.model});
             this.wistiaView = new WistiaMediaView({model: this.model, label: 'Wistia Video ID'});
             this.wistiaAudioView = new WistiaMediaView({model: this.model, label: 'Wistia Audio ID'});
@@ -1926,6 +2037,11 @@
                 if(this.model.has('headerTitle')) {
                     var headerTitle = this.model.get('headerTitle');
                     this.headerTitleView.val(headerTitle);
+                } else {
+                    this.headerTitleView.val(null);
+                }
+                if(this.model.has('headerCaption')) {
+                    this.headerCaptionView.val(this.model.get('headerCaption'));
                 }
                 
                 if(this.model.get('avatar')) {
@@ -2263,6 +2379,10 @@
         headerTitle: function() {
             utils.appendLightBox(this.headerTitleView.render().$el, 'Header Title', ' ');
         },
+        headerCaption: function() {
+            utils.appendLightBox(this.headerCaptionView.render().$el, 'Header Caption', ' ');
+            this.headerCaptionView.wysi();
+        },
         attachImage: function() {
             this.uploadAvatarFrame.pickFiles();
             this.uploadAvatarFrame.$el.show();
@@ -2390,6 +2510,7 @@
             // var tags = this.inputTagsView.val();
             var groups = this.$publishButton.hasClass('public') ? ['public'] : null;
             var headerTitle = this.headerTitleView.val();
+            var headerCaption = this.headerCaptionView.val();
             var youtube = this.youtubeView.val();
             var wistia = this.wistiaView.val();
             var wistiaAudio = this.wistiaAudioView.val();
@@ -2434,8 +2555,11 @@
             if(youtube && !_.isEqual(youtube, this.model.get('youtube'))) {
                 setDoc.youtube = youtube;
             }
-            if(headerTitle && !_.isEqual(headerTitle, this.model.get('headerTitle'))) {
+            if(!_.isEqual(headerTitle, this.model.get('headerTitle'))) {
                 setDoc.headerTitle = headerTitle;
+            }
+            if(!_.isEqual(headerCaption, this.model.get('headerCaption'))) {
+                setDoc.headerCaption = headerCaption;
             }
             if(tweet && !_.isEqual(tweet, this.model.get('tweet'))) {
                 setDoc.tweet = tweet;

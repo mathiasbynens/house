@@ -274,6 +274,7 @@
                 //self.nav.unselect();
             });
             router.on('root', function(){
+                $('body').removeClass('modal-open');
                 if(self.pageSelected) {
                     router.setTitle(self.pageSelected.getTitleTxt());
                 }
