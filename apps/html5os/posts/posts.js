@@ -439,7 +439,10 @@
 
                 if(self.listView.selectedPost) {
                     // console.log(self.listView.selectedPost.$el);
-                    $('body').scrollTo(self.listView.selectedPost.$el);
+                    // $('body').scrollTo(self.listView.selectedPost.$el);
+                    $('html, body').stop().animate({ 
+                        scrollTop: self.listView.selectedPost.$el.offset().top
+                    }, 300);
                 } else {
                     $('body')[0].scrollTop = 0;
                 }

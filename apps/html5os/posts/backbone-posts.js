@@ -714,7 +714,9 @@
             if(this.model.has('msg')) {
                 var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
                 var msgStr = this.model.get('msg');
-                var msgStrTxt = nl2br($('<span>'+br2nl(msgStr)+'</span>').text());
+                var msgTxt = $('<span>'+br2nl(msgStr)+'</span>').text();
+                msgTxt = msgTxt.replace(/\n\n\s*\n/g, '\n\n'); // limit to two newlines
+                var msgStrTxt = nl2br(msgTxt);
                 var trimLen = 555;
                 if(msgStrTxt.length > trimLen) {
                     msgStr = msgStrTxt.substr(0, trimLen);
@@ -1134,7 +1136,7 @@
                 this.$el.find('#ytapiplayer-'+ytid).fitVids();
             } else {
                 // console.log(this.$youtube.html())
-                // this.$youtube.remove();
+                this.$youtube.remove();
                 // this.$el.find('.youtube').remove();
             }
             if(this.model.has('msg')) {
