@@ -2,7 +2,7 @@
     var index = {};
     index.init = function(callback) {
         require(['/desktop/jquery.js'], function(){
-            require([ "/desktop/jquery.scrollTo.min.js" ], function() {
+            require([ "/desktop/jquery.fitvids.js" ], function() {
                 require(['/pages/bootstrap.js'], function(){
                     $(document).ready(function() {
                         require(['/posts/wysihtml-parser_rules.js'], function(){
