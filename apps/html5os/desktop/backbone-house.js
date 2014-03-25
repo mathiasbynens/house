@@ -135,9 +135,9 @@ Backbone.Model.prototype.pushAll = function(key, value, options) {
     return this;
 }
 Backbone.House.Model = Backbone.Model.extend({
-    views: {},
     initialize: function(attrs, options) {
         this.options = options || {};
+        this.views = {};
         this.options.ownerFieldName = this.options.ownerFieldName || 'owner';
         this.options.userFieldName = this.options.userFieldName || 'user';
         if(!this.attributes.at && this.id) {
@@ -188,7 +188,7 @@ Backbone.House.Model = Backbone.Model.extend({
     getViewByName: function(name, options) {
         options = options || {};
         options.model = this;
-        if (!this.avatar) {
+        if (!this.hasOwnProperty(viewName)) {
             var viewName = name[0].toUpperCase() + name.substr(1) + 'View';
             var view = this[name] = new this[viewName](options);
             this.views[name] = view;
