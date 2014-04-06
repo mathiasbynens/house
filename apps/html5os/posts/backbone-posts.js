@@ -44,48 +44,10 @@
         url: '/api/posts',
         sortField: 'at-',
         getOrFetchSlug: function(slug, callback) {
-            var self = this;
-            var doc;
-            doc = _.first(this.where({slug:slug}));
-            if(doc) {
-                callback(doc);
-            } else {
-                var options = { "slug": slug };
-                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                        if(response) {
-                            doc = _.first(self.where({slug:slug}));
-                            callback(doc);
-                        } else {
-                            callback(false);
-                        }
-                    },
-                    error: function(collection, response){
-                        callback(false);
-                    }
-                });
-            }
+            this.getOrFetchByField('slug', slug, callback);
         },
         getOrFetchSeq: function(seq, callback) {
-            var self = this;
-            var doc;
-            doc = _.first(this.where({seq:seq}));
-            if(doc) {
-                callback(doc);
-            } else {
-                var options = { "seq": seq };
-                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                        if(response) {
-                            doc = _.first(self.where({seq:seq}));
-                            callback(doc);
-                        } else {
-                            callback(false);
-                        }
-                    },
-                    error: function(collection, response){
-                        callback(false);
-                    }
-                });
-            }
+            this.getOrFetchByField('seq', seq, callback);
         },
         getSelectView: function(options) {
             var self = this;

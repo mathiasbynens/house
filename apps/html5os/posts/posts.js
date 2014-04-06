@@ -29,12 +29,12 @@
                         window.postsCollection.pageSize = pageSize;
                         // self.listView = new ModelBackbone.List({el: self.$postList, collection: window.postsCollection});
                         var filterFunc = function(model, filterObj) {
-                            console.log(model);
-                            console.log(filterObj);
+                            // console.log(model);
+                            // console.log(filterObj);
                             var filterId = filterObj.filter;
                             if(filterId === 'drafts') {
                                 var r = model.has('groups') ? model.get('groups').length === 0 : true;
-                                console.log(r)
+                                // console.log(r)
                                 return r;
                             }
                         }
