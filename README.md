@@ -1,5 +1,6 @@
 house.js
 ========
+[![NPM](https://nodei.co/npm/house.png?downloads=true)](https://nodei.co/npm/house/)
 Read the [annotated source](http://comster.github.com/house/docs/lib/house/house.js.html).  Clone the [github repo](https://github.com/comster/house).
 
 Objective
