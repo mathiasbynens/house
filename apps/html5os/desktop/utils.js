@@ -162,6 +162,7 @@
                 //self.remove();
                 $('body').removeClass('modal-open');
                 self.$el.remove();
+                self.trigger('removed');
             });
             
             if(options && options.title) {
