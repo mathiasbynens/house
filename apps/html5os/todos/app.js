@@ -8,14 +8,7 @@
             var self = this;
             this.$todoNav = $('<div class="todoNav"><span class="focusFormCol"><button class="focusForm btn btn-primary" title="New Todo"><span class="glyphicon glyphicon-pencil"></span> New</button><div id="navbar-header-form"></div></span></div>');
             var filterFunc = function(model, filterObj) {
-                // console.log(model);
-                // console.log(filterObj);
                 var filterId = filterObj.filter;
-                // console.log(filterId);
-                // console.log(model.get('done'))
-                // console.log(typeof model.get('done'))
-                // console.log((model.get('done')))
-                
                 // Check for list filter
                 if(app.allTodosView.filteredByTodoList) {
                     var todoList = app.allTodosView.filteredByTodoList;
@@ -24,10 +17,8 @@
                         return false;
                     }
                 }
-                
                 if(filterId === 'todo') {
                     var r = model.get('done') ? false : true;
-                    // console.log(r)
                     return r;
                 } else if (filterId === 'done') {
                     var r = model.get('done') ? true : false;
@@ -137,12 +128,13 @@
             return this;
         },
         filterByTodoList: function(todoList) {
+            var self = this;
             // this.todosView.filterByTodoList(todoList);
             this.$el.addClass('filteredByList');
             this.filteredByTodoList = todoList;
             this.todosView.filter(function(model){
                 if(model.get('list.id') == todoList.id) {
-                    return true;
+                    return self.todosView.filterView.getFilterFunc()(model, self.todosView.getCombinedFilterObj());
                 }
                 return false;
             });
@@ -327,9 +319,9 @@
             }
             self.router = router;
             router.on('title', function(title){
-                var $e = $('#header h1');
+                var $e = $('.pageTitle');
                 $e.html(title);
-                $e.attr('class', '');
+                // $e.attr('class', '');
                 var eh = $e.height();
                 var eph = $e.offsetParent().height();
                 if(eh > eph) {

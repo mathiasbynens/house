@@ -1,6 +1,14 @@
 body > .app {
     padding-top: 0;
 }
+
+
+.navbar-form {
+    margin-right: 0px;
+}
+.navbar-toggle {
+    margin-right: 0px;
+}
 button.focusForm {
 }
 .allTodos {
@@ -48,16 +56,15 @@ button.focusForm {
         height: 67px;
         .focusForm {
             float: left;
-            width: 18%;
+            width: 86px;
         }
         .search .form-control {
-            width: 200px;
+            width: 126px;
             display: inline;
         }
     }
 }
 #navbar-header-form {
-    width: 82%;
     float: left;
     display: block;
     .tags, .selection, .pages {
@@ -79,7 +86,9 @@ button.focusForm {
             display: inline;
         }
         .listInfo, .due {
-            margin-left: 16px;
+            display: inline-block;
+            overflow: hidden;
+            max-width: 253px;
         }
         .listColor {
             position: absolute;

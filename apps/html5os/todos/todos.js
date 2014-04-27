@@ -37,6 +37,9 @@
                 var listDoc = this.get('list');
                 // console.log(listDoc);
                 if(listDoc && listDoc.id) {
+                    if(!window.todoListsCollection) {
+                        window.todoListsCollection = new Collection();
+                    }
                     window.todoListsCollection.getOrFetch(listDoc.id, function(todoList){
                         // console.log(todoList);
                         if(todoList) {
@@ -141,6 +144,9 @@
                 } else if(diff < 2000 * 60 * 60 * 24) {
                     this.$dueAtInput.removeClass('label-default').removeClass('label-danger').addClass('label-warning');
                 }
+                this.$dueAtInput.show();
+            } else {
+                this.$dueAtInput.hide();
             }
             
             if(this.model.has('list')) {
@@ -154,15 +160,19 @@
                     // improve the list data from src
                     this.model.getList(function(list){
                         
-                        list.on('change', function(){
-                            self.render();
-                        });
-                        
-                        var $listA = '<a href="'+list.getNavigatePath()+'">'+list.get('name')+'</a>';
-                        self.$listRef.html($listA);
-                        
-                        if(list.has('color')) {
-                            self.$el.find('.listColor').css('background-color', list.get('color'));
+                        if(list) {
+                            list.on('change', function(){
+                                self.render();
+                            });
+                            
+                            var $listA = '<a href="'+list.getNavigatePath()+'">'+list.get('name')+'</a>';
+                            self.$listRef.html($listA);
+                            
+                            if(list.has('color')) {
+                                self.$el.find('.listColor').css('background-color', list.get('color'));
+                            }
+                        } else {
+                            
                         }
                     });
                 } else {
@@ -331,8 +341,8 @@
         tagName: "div",
         className: "todo-form",
         initialize: function() {
-            console.log(this.options);
-            console.log(this.model);
+            // console.log(this.options);
+            // console.log(this.model);
             var self = this;
             // if(this.model && this.model.id) {
             //     this.$el.attr('data-id', this.model.id);

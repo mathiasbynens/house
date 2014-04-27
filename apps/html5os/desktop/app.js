@@ -90,22 +90,58 @@
             return this;
         },
         renderTopTodos:function() {
-            if (!this.topTodosCollection) {
-                this.topTodosCollection = new TodosBackbone.Collection();
+            if (!window.todosCollection) {
+                window.todosCollection = new TodosBackbone.Collection();
             }
-            if (!this.topTodosCollection.view) {
-                this.topTodosCollection.sortField = 'views-';
-                this.topTodosCollection.pageSize = 12;
-                console.log(this.topTodosCollection.getView({rowOptions: {className: "avatar col-xs-1"}}))
-                this.topTodosCollection.getView({rowOptions: {className: "avatar col-xs-1"}}).setLayout('avatar', false);
-                this.topTodosCollection.view.on('selected', function(urlAvatarView){
-                    console.log(urlAvatarView)
+            if (!window.todosCollection.view) {
+                window.todosCollection.sortField = 'dueAt-';
+                window.todosCollection.pageSize = 6;
+                
+                var filterFunc = function(model, filterObj) {
+                    var filterId = filterObj.filter;
+                    // Check for list filter
+                    if(filterId === 'todo') {
+                        var r = model.get('done') ? false : true;
+                        return r;
+                    } else if (filterId === 'done') {
+                        var r = model.get('done') ? true : false;
+                        return r;
+                    } else {
+                        return true;
+                    }
+                }
+                
+                // console.log(window.todosCollection.getView({rowOptions: {className: "avatar col-xs-2"}}))
+                this.todosView = window.todosCollection.getView({rowOptions: {className: "avatar col-xs-2"},
+                    filters: {
+                        'todo': {
+                            txt: 'Todos',
+                            glyphicon: 'unchecked',
+                            filter: filterFunc,
+                            load: {
+                                "done": 0
+                            }
+                        },
+                        'done': {
+                            txt: 'Done',
+                            glyphicon: 'check',
+                            filter: filterFunc,
+                            load: {
+                                "done": 1
+                            }
+                        }
+                    },
                 });
-                this.topTodosCollection.load(null, function() {
+                this.todosView.filterView.filterBy('todo');
+                // this.todosView.setLayout('avatar', false);
+                this.todosView.on('clickTodoTitle', function(urlAvatarView){
+                    var ref = window.open('/todos/'+urlAvatarView.model.getNavigatePath(), '_blank');
+                });
+                window.todosCollection.load(null, function() {
                     //self.topUrlsCollection.sort();
                 });
             }
-            this.$el.append(this.topTodosCollection.getView().render().$el.addClass('todosWidget'));
+            this.$el.append(window.todosCollection.getView().render().$el.addClass('todosWidget'));
             
             return this;
         },
@@ -115,8 +151,8 @@
             }
             if (!this.topUrlsCollection.view) {
                 this.topUrlsCollection.sortField = 'views-';
-                this.topUrlsCollection.pageSize = 12;
-                this.topUrlsCollection.getView({rowOptions: {className: "avatar col-xs-1"}}).setLayout('avatar', false);
+                this.topUrlsCollection.pageSize = 6;
+                this.topUrlsCollection.getView({rowOptions: {className: "avatar col-xs-2"}}).setLayout('avatar', false);
                 this.topUrlsCollection.view.on('selected', function(urlAvatarView){
                     console.log(urlAvatarView)
                 });
