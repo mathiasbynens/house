@@ -2,6 +2,7 @@
     
     var Model = Backbone.House.Model.extend({
         collectionName: "todos",
+        // url: '/api/todos',
         initialize: function(attr, options) {
             this.TableRowView = RowView;
             this.RowView = RowView;
@@ -48,805 +49,21 @@
                     callback();
                 }
             }
+        },
+        getFormView: function() {
+            if(!this.formView) {
+                this.formView = new FormView({model: this});
+            }
+            return this.formView;
         }
     });
     
-    var Collection = Backbone.Collection.extend({
+    var Collection = Backbone.House.Collection.extend({
         model: Model,
         collectionName: 'todos',
         url: '/api/todos',
-        initialize: function() {
-            var self = this;
-            self.pageSize = 1000;
-            this.resetFilters();
-            require(['/desktop/socket.io.min.js'], function() {
-                var socketOpts = {};
-                if(window.location.protocol.indexOf('https') !== -1) {
-                    socketOpts.secure = true;
-                } else {
-                    socketOpts.secure = false;
-                }
-                var socket = self.io = io.connect('//'+window.location.host+'/socket.io/io', socketOpts);
-                if(socket.socket.connected) {
-                    //console.log('already connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
-                }
-                socket.on('connect', function(data) {
-                    //console.log('connected and now joining '+self.collectionName);
-                    socket.emit('join', self.collectionName);
-                });
-                var insertOrUpdateDoc = function(doc) {
-                    console.log(doc);
-                    if(_.isArray(doc)) {
-                        _.each(doc, insertOrUpdateDoc);
-                        return;
-                    }
-                    var model = self.get(doc.id);
-                    if(!model) {
-                        var model = new self.model(doc);
-                        self.add(model);
-                    } else {
-                        console.log(model);
-                        model.set(doc, {silent:true});
-                        model.renderViews();
-                    }
-                }
-                socket.on('insertedTodos', function(doc) {
-                    console.log('inserted todo');
-                    insertOrUpdateDoc(doc);
-                    self.count++;
-                    self.trigger('count', self.count);
-                });
-                socket.on('updatedTodos', function(doc) {
-                    insertOrUpdateDoc(doc);
-                });
-                socket.on('deletedTodos', function(id) {
-                    self.remove(id);
-                    self.count--;
-                    self.trigger('count', self.count);
-                });
-                
-                self.initialized = true;
-                self.trigger('initialized');
-            });
-        },
-        headCount: function(options, callback) {
-            if (!options) {
-                options = {};
-            }
-            var self = this;
-            var aj = $.ajax({
-                type: "HEAD",
-                url: self.url,
-                data: options,
-                complete: function(json) {
-                    callback(aj.getResponseHeader("X-Count"));
-                },
-                xhrFields: {
-                    withCredentials: true
-                }
-            });
-        },
-        refreshCount: function(options) {
-            var self = this;
-            self.headCount(options, function(count){
-                self.count = count;
-                self.trigger('count', count);
-            });
-        },
-        load: function(options, success) {
-            var self = this;
-            if(!options) {
-                options = {};
-            }
-            if(!options.limit) {
-                options.limit = self.pageSize;
-            }
-            if(!options.sort) {
-                options.sort = "at-";
-            }
-            if(!this.count) {
-                this.refreshCount(options);
-            }
-            this.applyFilters(options);
-            this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                    if(success) {
-                        success();
-                    }
-                },
-                error: function(collection, response){
-                }
-            });
-        },
-        getNextPage: function(callback) {
-            if(this.length < this.count) {
-                this.load({skip:this.length}, callback);
-            }
-        },
-        applyFilters: function(options) {
-            
-        },
-        updateFilter: function(filter) {
-            this.reset();
-            this.load();
-        },
-        comparator: function(doc) {
-            var d;
-            if(doc.get("dueAt")) {
-                d = new Date(doc.get("dueAt")).getTime();
-                return d * -1;
-            } else if(doc.get("at")) {
-                d = new Date(doc.get("at")).getTime();
-                return d * -1;
-            } else {
-                return 1;
-            }
-        },
-        resetFilters: function() {
-        },
-        getOrFetch: function(id, callback) {
-            var self = this;
-            var doc;
-            doc = this.get(id);
-            if(doc) {
-                callback(doc);
-            } else {
-                var options = { "_id": id };
-                this.fetch({data: options, update: true, remove: false, success: function(collection, response){
-                        if(response) {
-                            doc = self.get(id);
-                            callback(doc);
-                        } else {
-                            callback(false);
-                        }
-                    },
-                    error: function(collection, response){
-                        callback(false);
-                    }
-                });
-            }
-        },
-        getNewView: function(options) {
-            var self = this;
-            if (!options) options = {};
-            if(!options.collection) options.collection = this;
-            return new ListView(options);
-        },
-        getView: function(options) {
-            var self = this;
-            if (!options) options = {};
-            if (!this.hasOwnProperty("view")) {
-                this.view = this.getNewView(options);
-                this.view.on("selected", function(m) {
-                    self.trigger("selected", m);
-                });
-            }
-            return this.view;
-        },
-        getNewForm: function(options) {
-            var self = this;
-            if (!options) options = {};
-            if(!options.collection) options.collection = this;
-            return new FormView(options);
-        },
-        getForm: function(options) {
-            var self = this;
-            if (!options) options = {};
-            if (!this.hasOwnProperty("formView")) {
-                if(!options.collection) options.collection = this;
-                this.formView = new FormView(options);
-            }
-            return this.formView;
-        },
-        getSelectView: function(options) {
-            var self = this;
-            if (!options) options = {};
-            if (!this.hasOwnProperty("selectView")) {
-                options.collection = this;
-                this.selectView = new SelectListView(options);
-                this.selectView.on("selected", function(m) {
-                    self.trigger("selected", m);
-                });
-            }
-            return this.selectView;
-        }
     });
     
-    var ListView = Backbone.View.extend({
-        layout: 'row',
-        initialize: function() {
-            var self = this;
-            self.loading = false;
-            this.$filters = $('<div class="list-filters" data-filter="showTodo"><button class="showTodo btn btn-default">show todos</button> <button class="showAll btn btn-default">show all</button></div>');
-            this.$pager = $('<div class="list-pager">showing <span class="list-length"></span> of <span class="list-count"></span> todos</div>');
-            var $ul = this.$ul = $('<div class="todos list-group"></div>');
-            this.collection.on('add', function(doc) {
-                var view;
-                if(self.layout === 'row') {
-                    view = doc.getRow({list: self});
-                }
-                self.appendRow(view);
-                self.renderPager();
-                doc.on('remove', function(){
-                    view.$el.remove();
-                    return false;
-                });
-            });
-            this.collection.on('remove', function(doc, col, options) {
-                self.renderPager();
-            });
-            this.collection.on('count', function() {
-                self.renderPager();
-            });
-            this.collection.on('reset', function(){
-                self.render();
-            });
-            
-            this.filterShowTodo();
-        },
-        getFilterDefault: function() {
-            return {"done": 0};
-        },
-        filterByTodoList: function(todoList, callback) {
-            var self = this;
-            var filterO = this.getFilterDefault();
-            if(!todoList) {
-                delete self.todoList;
-                this.filter(filterO);
-                return;
-            }
-            filterO["list.id"] = todoList.id;
-            self.todoList = todoList.clone();
-            this.filter(filterO, function(){
-                if(callback) {
-                    callback();
-                }
-                //self.todoList = todoList;
-                console.log(self.todoList)
-            });
-        },
-        applyFilter: function(obj) {
-            if(!this.currentFilterO) {
-                this.currentFilterO = {};
-            }
-            for(var o in obj) {
-                this.currentFilterO[o] = obj[o];
-                if(_.isNull(obj[o])) {
-                    delete this.currentFilterO[o];
-                }
-            }
-            this.filter(this.currentFilterO);
-        },
-        filter: function(f, callback) {
-            var self = this;
-            for(var i in this.$ul[0].dataset) {
-                delete this.$ul[0].dataset[i];
-            }
-            if (f && typeof f == "function") {
-                this.currentFilter = f;
-                var flen = this.collection.filter(function(model) {
-                    if (f(model)) {
-                        self.getDocLayoutView(model).$el.show();
-                        return true;
-                    }
-                    self.getDocLayoutView(model).$el.hide();
-                    return false;
-                }).length;
-                this.filterLength = flen;
-                self.renderPager();
-                if(callback) {
-                    callback();
-                }
-            } else if(f) {
-                for(var i in f) {
-                    this.$ul.attr('data-filter-'+i.replace(/\./g,'-'), f[i]);
-                    if(i == 'list.id') {
-                        var todoList = todoListsCollection.get(f[i]);
-                        if(todoList) {
-                            //this.$ul.attr('data-todo-list-name')
-                        }
-                    }
-                }
-                this.currentFilterO = _.clone(f);
-                this.currentFilter = function(model) {
-                    var l = _.size(this.currentFilterO);
-                    for(var i in this.currentFilterO) {
-                      if(this.currentFilterO[i] instanceof RegExp) {
-                          if(this.currentFilterO[i].test(model.get(i))) {
-                              l--;
-                          }
-                      } else {
-                        if(i == 'list.id') {
-                            var list = model.get('list');
-                            if(list && list.id && list.id == this.currentFilterO[i]) {
-                                l--;
-                            }
-                        } else if (this.currentFilterO[i] === model.get(i)) {
-                            l--;
-                        }
-                      }
-                    }
-                    if(l === 0) {
-                        return true;
-                    }
-                    return false;
-                }
-                var flen = this.collection.filter(function(model) {
-                    if (self.currentFilter(model)) {
-                        self.getDocLayoutView(model).$el.show();
-                        return true;
-                    }
-                    self.getDocLayoutView(model).$el.hide();
-                    return false;
-                }).length;
-                delete this.collection.count;
-                this.filterLength = flen;
-                self.filterLoadOptions = _.clone(f);
-                var loadO = _.clone(f);
-                loadO.skip = 0; //flen;
-                this.collection.load(loadO, function(){
-                    self.filterLength = self.collection.filter(self.currentFilter).length
-                    self.renderPager();
-                    if(callback) {
-                        callback();
-                    }
-                });
-            } else {
-                self.$ul.children().show();
-                self.currentFilter = false;
-                self.filterLength = false;
-                self.filterLoadOptions = false;
-                delete this.collection.count;
-                this.collection.load({}, function(){
-                    self.renderPager();
-                    if(callback) {
-                        callback();
-                    }
-                });
-            }
-        },
-        deselectAll: function() {
-            this.$ul.children().removeClass('selected');
-            this.$ul.children().removeAttr('selected');
-        },
-        events: {
-          "click .list-pager": "loadMore",
-          "click .list-filters .showTodo": "filterShowTodo",
-          "click .list-filters .showAll": "filterShowAll"
-        },
-        loadMore: function() {
-            var self = this;
-            this.collection.getNextPage(function(){
-                self.loading = false;
-            });
-        },
-        filterShowTodo: function() {
-            var self = this;
-            this.$filters.attr('data-filter', 'showTodo');
-            this.applyFilter({"done": 0});
-        },
-        filterShowAll: function() {
-            var self = this;
-            this.$filters.attr('data-filter', 'showAll');
-            this.applyFilter({"done": null});
-        },
-        getDocLayoutView: function(doc) {
-            var view;
-            if(this.layout === 'row') {
-                view = doc.getRow({list: self});
-            } else if(this.layout === 'avatar') {
-                view = doc.getAvatar({list: self});
-            }
-            return view;
-        },
-        render: function() {
-            var self = this;
-            this.$el.html('');
-            this.$el.append(this.$ul);
-            this.$ul.html('');
-            //this.collection.sort({silent:true});
-            this.collection.each(function(doc){
-                var view = self.getDocLayoutView(doc);
-                self.appendRow(view);
-            });
-            this.$el.append(this.$filters);
-            this.$el.append(this.$pager);
-            this.renderPager();
-            this.trigger('resize');
-            this.setElement(this.$el);
-            return this;
-        },
-        renderPager: function() {
-            var len = this.collection.length;
-            var c = this.collection.count > len ? this.collection.count : len;
-            if(this.currentFilter) {
-                c = this.collection.count;
-                len = this.collection.filter(this.currentFilter).length;
-            } else {
-                
-            }
-            if(len > c) {
-                len = c;
-            }
-            this.$pager.find(".list-length").html(len);
-            this.$pager.find(".list-count").html(c);
-        },
-        appendRow: function(row) {
-            var rank = new Date(row.model.get('rank'));
-            rank = rank.getTime();
-            var rowEl = row.render().$el;
-            if(this.currentFilter && !this.currentFilter(row.model)) {
-                rowEl.hide();
-            }
-            rowEl.attr('data-sort-rank', rank);
-            var d = false;
-            var $lis = this.$ul.children();
-            var last = $lis.last();
-            var lastRank = parseInt(last.attr('data-sort-rank'), 10);
-            if(rank > lastRank) {
-                $lis.each(function(i,e){
-                    if(d) return;
-                    var r = parseInt($(e).attr('data-sort-rank'), 10);
-                    if(rank > r) {
-                        $(e).before(rowEl);
-                        d = true;
-                    }
-                });
-            }
-            if(!d) {
-                this.$ul.append(rowEl);
-            }
-        }
-    });
-    
-    var SelectListView = Backbone.View.extend({
-        tagName: "select",
-        className: "selectPost",
-        initialize: function() {
-            var self = this;
-        },
-        events: {
-        },
-        render: function() {
-            var self = this;
-            this.$el.html('');
-            this.$el.append('<option></option>');
-            //this.collection.sort({silent:true});
-            postsCollection.each(function(doc){
-                self.$el.append('<option value="'+doc.id+'">'+doc.get('title')+'</option>');
-            });
-            this.setElement(this.$el);
-            return this;
-        },
-        val: function(v) {
-            if(v) {
-                this.$el.val(v.id);
-            } else {
-                var post_id = this.$el.val();
-                if(post_id) {
-                    var post = postsCollection.get(post_id);
-                    var p = {
-                        id: post_id
-                    }
-                    p.title = post.title;
-                    if(post.has('slug')) {
-                        p.slug = post.get('slug');
-                    }
-                    if(post.has('seq')) {
-                        p.seq = post.get('seq');
-                    }
-                    if(post.has('youtube') && post.get('youtube').id) {
-                        p.youtube = post.get('youtube');
-                    }
-                    return p;
-                } else {
-                    return false;
-                }
-            }
-        }
-    });
-    
-    var ActionsView = Backbone.View.extend({
-        tagName: "span",
-        className: "actions",
-        render: function() {
-            var self = this;
-            this.$el.html('');
-            //self.$el.append(this.tagsView.render().$el);
-            //self.$el.append(this.groupsView.render().$el);
-            //self.$el.append(this.editView.render().$el);
-            self.$el.append(this.deleteView.render().$el);
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            this.actions = [];
-            //this.groupsView = new GroupsView({id: this.id, model: this.model});
-            //this.tagsView = new TagsView({id: this.id, model: this.model});
-            this.deleteView = new ActionDeleteView({id: this.id, model: this.model});
-            //this.editView = new ActionEditView({id: this.id, model: this.model});
-        }
-    });
-
-    var ActionFeedView = Backbone.View.extend({
-        tagName: "span",
-        className: "feed",
-        render: function() {
-            if(!this.model.has('feed')) {
-                this.$el.html('<button class="publish">publish to feed</button>');
-            } else {
-                var feed = this.model.get('feed');
-                this.$el.html('published at <a href="/feed/item/'+feed.id+'" target="_new">'+feed.at+'</a><button class="unpublish">remove from feed</button>');
-            }
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click .publish": "publish",
-          "click .unpublish": "unpublish",
-        },
-        publish: function() {
-            var self = this;
-            console.log(this.model);
-            this.model.set({"feed": 0},{silent: true});
-            var saveModel = this.model.save(null, {
-                silent: false,
-                wait: true
-            });
-            saveModel.done(function() {
-                self.render();
-            });
-            return false;
-        },
-        unpublish: function() {
-            var self = this;
-            console.log(this.model);
-            this.model.unset("feed", {silent: true});
-            var saveModel = this.model.save(null, {
-                silent: false,
-                wait: true
-            });
-            saveModel.done(function() {
-                self.render();
-            });
-            return false;
-        }
-    });
-
-    var ActionDeleteView = Backbone.View.extend({
-        tagName: "span",
-        className: "delete",
-        render: function() {
-            this.$el.html('<button class="btn btn-primary">x</button>');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click button": "select",
-        },
-        select: function() {
-            var self = this;
-            this.model.destroy({success: function(model, response) {
-            //   window.history.back(-1);
-            }, 
-            errorr: function(model, response) {
-                console.log(arguments);
-            },
-            wait: true});
-            return false;
-        }
-    });
-    
-    var ActionEditView = Backbone.View.extend({
-        tagName: "span",
-        className: "edit",
-        render: function() {
-            this.$el.html('<button>edit</button>');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click button": "select",
-        },
-        select: function() {
-            var self = this;
-            
-             this.model.collection.trigger('editModel', this.model);
-            
-            return false;
-        }
-    });
-    
-    var TagsView = Backbone.View.extend({
-        tagName: "span",
-        className: "tags",
-        render: function() {
-            this.$el.html('');
-            var tags = this.model.get("tags");
-            if(tags) {
-                for(var i in tags) {
-                    var tagName = tags[i];
-                    if(!_.isString(tagName)) {
-                        var $btn = $('<button class="tag">'+tagName+'</button>');
-                        $btn.attr('data-tag', JSON.stringify(tagName));
-                        this.$el.append($btn);
-                    } else {
-                        this.$el.append('<button class="tag">'+tagName+'</button>');
-                    }
-                }
-            }
-            this.$el.append('<button class="newTag">+ tag</button>');
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-        },
-        events: {
-          "click .newTag": "newTag",
-          "click .tag": "removeTag"
-        },
-        removeTag: function(e) {
-            var self = this;
-            if(confirm("Are you sure that you want to remove this tag?")) {
-                var tags = this.model.get("tags");
-                var $tag = $(e.target);
-                var tagName = '';
-                if($tag.attr('data-tag')) {
-                    tagName = JSON.parse($tag.attr('data-tag'));
-                } else {
-                    tagName = e.target.innerHTML;
-                }
-                this.model.pull({"tags": tagName}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function() {
-                    self.render();
-                });
-            }
-        },
-        newTag: function() {
-            var self = this;
-            var tagName = prompt("Enter tags, separated, by commas.");
-            if(tagName) {
-                tagName = tagName.split(',');
-                for(var i in tagName) {
-                    var tag = tagName[i];
-                    tagName[i] = tag.trim(); // trim extra white space
-                }
-                if(tagName) {
-                    if(!this.model.has("tags")) {
-                        this.model.set({'tags': tagName}, {silent: true});
-                        var saveModel = this.model.save(null, {
-                            silent: false,
-                            wait: true
-                        });
-                        saveModel.done(function() {
-                            console.log('tags saved');
-                        });
-                    } else {
-                        this.model.pushAll({"tags": tagName}, {silent: true});
-                        var saveModel = this.model.save(null, {
-                            silent: false,
-                            wait: true
-                        });
-                        saveModel.done(function() {
-                            self.render();
-                        });
-                    }
-                }
-            }
-        }
-    });
-
-    var GroupsView = Backbone.View.extend({
-        tagName: "span",
-        className: "groups",
-        initialize: function() {
-        },
-        render: function() {
-            this.$el.html('');
-            var groups = this.model.get("groups");
-            if(groups) {
-                for(var i in groups) {
-                    var groupName = groups[i];
-                    this.$el.append('<button class="group">'+groupName+'</button>');
-                }
-                if(groups.indexOf('public') === -1) {
-                    this.$el.append('<button class="publicGroup">+ public</button>');
-                }
-                if(groups && groups.length > 0) {
-                    this.$el.append('<button class="privateGroup">+ private</button>');
-                }
-            }
-            this.$el.append('<button class="newGroup">+ group</button>');
-            this.$el.removeAttr('id');
-            this.setElement(this.$el);
-            return this;
-        },
-        events: {
-          "click .newGroup": "newGroup",
-          "click .group": "removeGroup",
-          "click .publicGroup": "publicGroup",
-          "click .privateGroup": "privateGroup"
-        },
-        privateGroup: function() {
-            var self = this;
-            if(confirm("Are you sure that you want to make this private?")) {
-                this.model.set({"groups": []}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function() {
-                    self.render();
-                });
-            }
-        },
-        publicGroup: function() {
-            var self = this;
-            if(confirm("Are you sure that you want to make this public?")) {
-                this.model.push({"groups": "public"}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function() {
-                    self.render();
-                });
-            }
-        },
-        removeGroup: function(e) {
-            var self = this;
-            if(confirm("Are you sure that you want to remove this group?")) {
-                var groups = this.model.get("groups");
-                var name = e.target.innerHTML;
-                this.model.pull({"groups": name}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function() {
-                    self.render();
-                });
-            }
-        },
-        newGroup: function() {
-            var self = this;
-            var groupName = prompt("Enter groups, separated, by commas.");
-            if(groupName) {
-                groupName = groupName.split(',');
-                
-                for(var i in groupName) {
-                    var g = groupName[i];
-                    groupName[i] = g.trim(); // trim extra white space
-                }
-                if(groupName) {
-                    if(!this.model.get("groups")) {
-                        this.model.set({'groups': groupName}, {silent: true});
-                    } else {
-                        this.model.pushAll({"groups": groupName}, {silent: true});
-                    }
-                    var saveModel = this.model.save(null, {
-                        silent: false,
-                        wait: true
-                    });
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                }
-            }
-        }
-    });
-
 
     var RowView = Backbone.View.extend({
         tagName: "a",
@@ -857,44 +74,44 @@
             }
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
-            this.actions = new ActionsView({model: this.model});
-            this.$check = $('<input class="check form-control" type="checkbox" />');
-            this.$title = $('<div class="title"></div>');
+            
+            this.$check = $('<a class="check glyphicon" href="#"></a>');
+            this.$title = $('<a class="title" href="#"></a>');
             this.$listRef = $('<span class="listRef"></span>');
             
             this.$titleInput = $('<input type="text" name="title" class="form-control" />');
             this.$dueAtInput = $('<span class="due"><span class="dueAt"></span></span>');
-            this.$dueAtDateInput = $('<input name="dueAt-date" type="date" title="Due At" />');
             //this.$dueAtTimeInput = $('<input name="dueAt-time" type="time" />');
-            // this.$a = $('<a href="#" class="list-group-item"></a>');
             
-            if(window.todoListsCollection) {
-                this.selectTodoListView = new todoListsCollection.getSelectView({todo: this.model});
-            }
+            // if(window.todoListsCollection) {
+            //     this.selectTodoListView = todoListsCollection.getSelectView({todo: this.model});
+            // }
             this.$header = $('<h4 class="list-group-item-heading row">\n\
-            <span class="doneCheck col-xs-1"></span>\n\
-            <span class="titleInput col-xs-8"></span>\n\
-            <span class="moreInfo col-xs-3"></span>\n\
-            </h4>');
+    <span class="doneCheck"></span>\n\
+    <span class="titleInput"></span>\n\
+    <span class="listColor">&nbsp;</span>\n\
+    <span class="listInfo"></span>\n\
+</h4>');
             this.$text = $('<p class="list-group-item-text row">\n\
-            <span class="listColor col-xs-1">&nbsp;</span>\n\
-            <span class="listInfo col-xs-11"></span>\n\
-            </p>');
+    <span class="moreInfo"></span>\n\
+</p>');
             
             this.$header.find('.doneCheck').append(this.$check);
             this.$header.find('.titleInput').append(this.$title);
-            this.$header.find('.titleInput').append(this.$titleInput);
-            this.$header.find('.moreInfo').append(this.$dueAtInput);
-            this.$header.find('.moreInfo').append(this.$dueAtDateInput);
+            // this.$header.find('.titleInput').append(this.$titleInput);
+            this.$header.append(this.$dueAtInput);
+            // this.$text.find('.moreInfo').append(this.$dueAtDateInput);
         },
         render: function() {
             var self = this;
             // this.$el.append(this.$a);
             // console.log('render todo row');
             if(this.model.get('done')) {
-                this.$check.attr('checked', 'checked');
+                // this.$check.attr('checked', 'checked');
+                this.$check.addClass('glyphicon-check').removeClass('glyphicon-unchecked');
             } else {
-                this.$check.removeAttr('checked');
+                // this.$check.removeAttr('checked');
+                this.$check.removeClass('glyphicon-check').addClass('glyphicon-unchecked');
             }
             this.$el.append(this.$header);
             this.$el.append(this.$text);
@@ -906,10 +123,24 @@
             
             if(this.model.has('dueAt')) {
                 var m = moment(this.model.get('dueAt'));
-                this.$dueAtDateInput.val(m.format('YYYY-MM-DD'));
+                // this.$dueAtDateInput.val(m.format('YYYY-MM-DD'));
                 //this.$dueAtTimeInput.val(m.format('HH:mm'));
-                this.$dueAtInput.find('.dueAt').html(m.calendar());
+                this.$dueAtInput.addClass('label').addClass('label-default');
+                // this.$dueAtInput.find('.dueAt').html(m.calendar());
+                var diff = m.diff(moment());
+                if(diff < 0) {
+                    this.$dueAtInput.find('.dueAt').html(m.fromNow());
+                } else {
+                    this.$dueAtInput.find('.dueAt').html(m.fromNow(true));
+                }
+                this.$dueAtInput.attr('title', m.format('YYYY-MM-DD'));
                 this.$dueAtInput.attr('data-at', m);
+                
+                if(diff < 0) {
+                    this.$dueAtInput.removeClass('label-default').removeClass('label-warning').addClass('label-danger');
+                } else if(diff < 2000 * 60 * 60 * 24) {
+                    this.$dueAtInput.removeClass('label-default').removeClass('label-danger').addClass('label-warning');
+                }
             }
             
             if(this.model.has('list')) {
@@ -918,13 +149,12 @@
                 if(list) {
                     this.$listRef.attr('data-id', list.id);
                     this.$listRef.text(list.name);
-                    this.selectTodoListView.val(this.model.get('list'));
-                    
+                    // this.selectTodoListView.val(this.model.get('list'));
+                    this.$header.find('.listInfo').addClass('label label-default');
                     // improve the list data from src
                     this.model.getList(function(list){
                         
                         list.on('change', function(){
-                            // console.log('`````````````````listchanged');
                             self.render();
                         });
                         
@@ -932,27 +162,25 @@
                         self.$listRef.html($listA);
                         
                         if(list.has('color')) {
-                            // console.log(list.get('color'))
                             self.$el.find('.listColor').css('background-color', list.get('color'));
                         }
                     });
                 } else {
                     this.$listRef.removeAttr('data-id');
                     this.$listRef.text('');
-                    this.selectTodoListView.val('');
+                    this.$header.find('.listInfo').removeClass('label label-default');
+                    // this.selectTodoListView.val('');
                 }
             } else {
                 this.$listRef.removeAttr('data-id');
                 this.$listRef.text('');
-                this.selectTodoListView.val('');
+                this.$header.find('.listInfo').removeClass('label label-default');
+                // this.selectTodoListView.val('');
             }
             
             // this.$el.append(this.$check);
-            this.$text.find('.listInfo').html(this.$listRef);
-            this.$text.find('.listInfo').append(this.selectTodoListView.render().$el);
-            // this.$header.append(this.$edit);
-            
-            this.$dueAtDateInput.before(this.actions.render().$el);
+            this.$header.find('.listInfo').html(this.$listRef);
+            // this.$text.find('.listInfo').append(this.selectTodoListView.render().$el);
             
             this.$el.attr('data-id', this.model.id);
             this.setElement(this.$el);
@@ -969,34 +197,27 @@
             return (this.$el.hasClass('selected'));
         },
         events: {
-          "click input[type=checkbox]" : "toggleDone",
+        //   "click input[type=checkbox]" : "toggleDone",
+          "click .check" : "toggleDone",
+          "click a.title": "clickTitle",
           "click": "select",
           "click .listRef a": "selectTodoList",
-          "blur input[name=title]": "saveTitle",
-          "keypress input[name=title]": "saveOnEnter",
-          "click .due": "setDueDate",
-          "change input[name=dueAt-date]": "changeDueDate",
-          "change select.todoListSelect": "changeTodoList"
+        //   "change input[name=dueAt-date]": "changeDueDate",
+        //   "change select.todoListSelect": "changeTodoList"
         },
         select: function(e) {
-            var deselectSiblings = function(el) {
-                el.siblings().removeClass('selected');
-                el.siblings().removeAttr('selected');
-            }
-            deselectSiblings(this.$el);
-            var deselect = false;
-            if(this.isSelected()) {
-                deselect = true;
-            }
-            this.$el.addClass("selected").addClass("active").siblings().removeClass("active");
+            this.$el.toggleClass("selected").toggleClass("active"); //.siblings().removeClass("active");
             this.$el.attr("selected", true);
             if(this.hasOwnProperty('list')) {
                 this.list.trigger('select', this);
             }
-            if(deselect === false) {
-                this.$titleInput.focus();
-            }
             this.trigger('select');
+        },
+        clickTitle: function(e) {
+            if(this.hasOwnProperty('list')) {
+                this.list.trigger('clickTodoTitle', this);
+            }
+            return false;
         },
         selectTodoList: function(e) {
             var self = this;
@@ -1010,31 +231,8 @@
         },
         toggleDone: function(e) {
             this.model.toggle();
-            e.stopPropagation();
-        },
-        saveTitle: function() {
-            var self = this;
-            var t = this.$titleInput.val();
-            if(t && t != this.model.get('title')) {
-                this.model.set({'title': this.$titleInput.val()}, {silent: true});
-                var saveModel = this.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                if(saveModel) {
-                    saveModel.done(function() {
-                        self.render();
-                    });
-                }
-            }
-        },
-        saveOnEnter: function(e) {
-            if (e.keyCode == 13) {
-                this.saveTitle();
-            }
-        },
-        setDueDate: function() {
-            
+            // e.stopPropagation();
+            return false;
         },
         changeDueDate: function() {
             var self = this;
@@ -1131,85 +329,92 @@
     
     var FormView = Backbone.View.extend({
         tagName: "div",
-        className: "form",
+        className: "todo-form",
         initialize: function() {
             console.log(this.options);
+            console.log(this.model);
             var self = this;
-            if(this.model && this.model.id) {
-                this.$el.attr('data-id', this.model.id);
-            } else {
-                if(!this.model) {
-                    this.model = new Model({}, {
-                        collection: this.collection
-                    });
-                } else {
+            // if(this.model && this.model.id) {
+            //     this.$el.attr('data-id', this.model.id);
+            // } else {
+            //     if(!this.model) {
+            //         this.model = new Model({}, {
+            //             collection: this.collection
+            //         });
+            //     } else {
+            //     }
+            // }
+            
+            var formOpts = {
+                collection: window.todosCollection,
+                model: this.model,
+                submit: 'Save',
+                cancel: 'Cancel',
+                delete: true
+            };
+            // formOpts.beforeSubmit = function(form){
+            //     if(self.filteredByTodoList) {
+            //         var todoList = self.filteredByTodoList;
+            //         var setDoc = {};
+            //         setDoc.list = {
+            //             id: todoList.id,
+            //             name: todoList.get('name')
+            //         }
+            //         form.model.set(setDoc, {silent: true});
+            //     }
+            // };
+            formOpts.fields = {
+                "title": {
+                    validateType: 'string',
+                    autocomplete: "off",
+                    placeholder: "next todo item",
+                    className: "form-control"
+                },
+                "desc": {
+                    validateType: 'string',
+                    tagName: 'textarea',
+                    placeholder: "details",
+                    className: "form-control"
+                },
+                "dueAt": {
+                    validateType: 'date',
+                    // tagName: 'textarea',
+                    // placeholder: "details",
+                    className: "form-control",
+                    label: "Due Date"
                 }
             }
-            
-            this.$form = $('<form class="todo"><div class="input-group"><input type="text" name="title" placeholder="The next thing to do..." autocomplete="off" class="form-control" /><span class="input-group-btn"><button class="btn btn-default" type="button">Save</button></span></div></form>');
-            this.$inputTitle = this.$form.find('input');
+            self.todosFormView = new window.todosCollection.getFormView(formOpts);
+            self.todosFormView.on('saved', function(todo){
+                self.trigger('saved', todo);
+            });
+            self.todosFormView.on('cancelled', function(todo){
+                self.trigger('saved', todo);
+            });
+            self.todosFormView.on('deleted', function(todo){
+                self.trigger('saved', todo);
+            });
         },
         render: function() {
             var self = this;
-            if(this.$el.find('form').length === 0) {
-                this.$el.append(this.$form);
-            }
-            if(this.model) {
-                if(this.model.has('title')) {
-                    this.$inputTitle.val(this.model.get('title'));
-                } else {
-                    this.$inputTitle.val('');
-                }
-            } else {
-                this.$inputTitle.val('');
-            }
+            
+            this.$el.append(self.todosFormView.render().$el);
+            
             this.setElement(this.$el);
             return this;
         },
         events: {
-            "submit form": "submit"
+            // "submit form": "submit"
         },
-        submit: function() {
-            var self = this;
-            var setDoc = {};
-            var title = this.$inputTitle.val();
-            if(title !== '' && title !== this.model.get('title')) {
-                setDoc.title = title;
-            } else {
-                //alert('Enter something you need to do.');
-                self.focus();
-                return false;
-            }
-            //console.log('setDoc')
-            //console.log(setDoc)
-            if(self.collection.view.todoList) {
-                var todoList =self.collection.view.todoList;
-                setDoc.list = {
-                    id: todoList.id,
-                    name: todoList.get('name')
-                }
-            }
-            this.model.set(setDoc, {silent: true});
-            var saveModel = this.model.save(null, {
-                silent: false,
-                wait: true
-            });
-            if(saveModel) {
-                saveModel.done(function() {
-                    self.collection.add(self.model);
-                    self.trigger("saved", self.model);
-                });
-            } else {
-                self.trigger("saved", self.model);
-            }
-            return false;
-        },
-        clear: function() {
-            this.$inputTitle.val('');
-        },
-        focus: function() {
-            this.$inputTitle.focus();
-        },
+        // submit: function() {
+        //     var self = this;
+        // },
+        // clear: function() {
+        //     this.$inputTitle.val('');
+        // },
+        // focus: function() {
+        //     this.$inputTitle.focus();
+        // },
         remove: function() {
             this.$el.remove();
         }

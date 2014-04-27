@@ -60,12 +60,12 @@
             if(window.navigator.standalone) {
                 var history = nav.router.localStorageNavigationHistory();
                 if(history) {
-                    nav.router.navigate(history.pop(), true);
+                    nav.router.navigate(history.pop(), {trigger: true});
                 } else {
-                    nav.router.navigate('', true);
+                    nav.router.navigate('', {trigger: true});
                 }
             } else {
-                nav.router.navigate('', true);
+                nav.router.navigate('', {trigger: true});
             }
         } else {
         }

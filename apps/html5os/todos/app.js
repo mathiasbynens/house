@@ -1,56 +1,165 @@
 (function() {
-    var pageSize = 24;
+    var pageSize = 0;
     
     var AllTodosView = Backbone.View.extend({
         tag: 'span',
         className: 'allTodos',
         initialize: function(options) {
             var self = this;
-            self.todosView = window.todosCollection.getView();
+            this.$todoNav = $('<div class="todoNav"><span class="focusFormCol"><button class="focusForm btn btn-primary" title="New Todo"><span class="glyphicon glyphicon-pencil"></span> New</button><div id="navbar-header-form"></div></span></div>');
+            var filterFunc = function(model, filterObj) {
+                // console.log(model);
+                // console.log(filterObj);
+                var filterId = filterObj.filter;
+                // console.log(filterId);
+                // console.log(model.get('done'))
+                // console.log(typeof model.get('done'))
+                // console.log((model.get('done')))
+                
+                // Check for list filter
+                if(app.allTodosView.filteredByTodoList) {
+                    var todoList = app.allTodosView.filteredByTodoList;
+                    
+                    if(model.get('list.id') !== todoList.id) {
+                        return false;
+                    }
+                }
+                
+                if(filterId === 'todo') {
+                    var r = model.get('done') ? false : true;
+                    // console.log(r)
+                    return r;
+                } else if (filterId === 'done') {
+                    var r = model.get('done') ? true : false;
+                    return r;
+                } else {
+                    return true;
+                }
+            }
+            self.todosView = window.todosCollection.getView({
+                headerEl: this.$todoNav.find('#navbar-header-form'),
+                selection: true, mason: false,
+                search: {
+                    'fieldName': 'title'
+                },
+                filters: {
+                    'todo': {
+                        txt: 'Todos',
+                        glyphicon: 'unchecked',
+                        filter: filterFunc,
+                        load: {
+                            "done": 0
+                        }
+                    },
+                    'done': {
+                        txt: 'Done',
+                        glyphicon: 'check',
+                        filter: filterFunc,
+                        load: {
+                            "done": 1
+                        }
+                    }
+                },
+                tags: {
+                    'fieldName': 'tags'
+                },
+                sorts: [{
+                    name: 'Created At',
+                    field: 'at',
+                    type: 'date',
+                    glyphicon: 'time',
+                    default: -1
+                }, {
+                    name: 'Due At',
+                    field: 'dueAt',
+                    type: 'date',
+                    glyphicon: 'calendar',
+                    // default: -1
+                }],
+            });
             self.todosView.on('select', function(row) {
-                options.app.router.navigate(row.model.getNavigatePath(), true);
+                // options.app.router.navigate(row.model.getNavigatePath(), true);
+            });
+            self.todosView.on('clickTodoTitle', function(todoView) {
+                options.app.router.navigate(todoView.model.getNavigatePath(), {trigger: true});
             });
             self.todosView.on('selectTodoList', function(model){
                 options.app.router.navigate(model.getNavigatePath(), true);
             });
             
             self.getNewFormView();
+            
         },
         getNewFormView: function() {
             var self = this;
-            self.todosFormView = new window.todosCollection.getForm({collection: window.todosCollection});
+            var formOpts = {
+                collection: window.todosCollection,
+                submit: false,
+                className: 'house-form todo'
+            };
+            formOpts.beforeSubmit = function(form){
+                if(self.filteredByTodoList) {
+                    var todoList = self.filteredByTodoList;
+                    var setDoc = {};
+                    setDoc.list = {
+                        id: todoList.id,
+                        name: todoList.get('name')
+                    }
+                    form.model.set(setDoc, {silent: true});
+                }
+            };
+            formOpts.fields = {
+                "title": {
+                    validateType: 'string',
+                    autocomplete: "off",
+                    placeholder: "next todo item",
+                    className: "form-control"
+                },
+            }
+            self.todosFormView = new window.todosCollection.getFormView(formOpts);
             self.todosFormView.on('saved', function(todo){
+                console.log(todo)
                 self.todosFormView.render().$el.remove();
                 self.getNewFormView();
-                self.todosFormView.focus();
+                self.todosFormView.focus('title');
                 setTimeout(function(){
-                    $('body').scrollTo($(todo.getRow().$el[0]));
+                    // $('body').scrollTo($(todo.getRow().$el[0]));
+                    $('body').scrollTo($(document).height());
                 },100);
             });
             this.$el.find('.todos').after(self.todosFormView.render().$el);
         },
         render: function() {
             var self = this;
-            this.$el.append('<div style="clear: both;overflow: auto;"><span class="focusFormCol col-xs-1"><button class="focusForm btn btn-primary" title="New Todo">+</button></span>\n\
-            <span class="col-xs-7"></span>\n\
-            <span class="col-xs-4"></span></div>');
+            this.$el.append(this.$todoNav);
             this.$el.append(self.todosView.render().$el);
             this.$el.find('.todos').after(self.todosFormView.render().$el);
             return this;
         },
         filterByTodoList: function(todoList) {
-            this.todosView.filterByTodoList(todoList);
-            //this.todosView.filter({"list.id": todoList.id}, function(){            });
+            // this.todosView.filterByTodoList(todoList);
+            this.$el.addClass('filteredByList');
+            this.filteredByTodoList = todoList;
+            this.todosView.filter(function(model){
+                if(model.get('list.id') == todoList.id) {
+                    return true;
+                }
+                return false;
+            });
+            
         },
         resetFilters: function(todoList) {
-            this.todosView.filterByTodoList(false);
-            //this.todosView.filter(false);
+            // this.todosView.filterByTodoList(false);
+            this.$el.removeClass('filteredByList');
+            this.todosView.filter(function(){
+                return true;
+            });
         },
         events: {
             "click .focusForm": "focusForm"
         },
         focusForm: function() {
-            this.todosFormView.focus();
+            this.todosFormView.focus('title');
             return false;
         }
     });
@@ -61,12 +170,12 @@
         initialize: function() {
             var self = this;
             
-            self.todoListsView = new window.todoListsCollection.getView({collection: window.todoListsCollection});
+            self.todoListsView = window.todoListsCollection.getView({});
             self.todoListsView.on('selectName', function(row) {
                 self.options.app.router.navigate(row.model.getNavigatePath(), true);
             });
             
-            self.todoListsFormView = new window.todoListsCollection.getForm({collection: window.todoListsCollection});
+            self.todoListsFormView = window.todoListsCollection.getFormView();
             self.todoListsFormView.on('saved', function(){
                 self.getNewFormView();
                 self.todoListsFormView.focus();
@@ -74,7 +183,7 @@
         },
         getNewFormView: function() {
             var self = this;
-            self.todoListsFormView = new window.todoListsCollection.getForm({collection: window.todoListsCollection});
+            self.todoListsFormView = window.todoListsCollection.getFormView();
             self.todoListsFormView.on('saved', function(){
                 self.getNewFormView();
                 self.todoListsFormView.focus();
@@ -101,13 +210,15 @@
                 require(['/todos/todoLists.js'], function(TodoListsBackbone){
                     window.TodoListsBackbone = TodoListsBackbone;
                     window.todoListsCollection = new TodoListsBackbone.Collection(); // collection
+                    window.todoListsCollection.pageSize = 0;
                     require(['/todos/todos.js'], function(ModelBackbone){
                         window.TodosBackbone = ModelBackbone;
                         window.todosCollection = new ModelBackbone.Collection(); // collection
-                        window.todosCollection.getView()
-                        console.log(window.todosCollection.view.cid)
+                        window.todosCollection.pageSize = 0;
+                        // window.todosCollection.getView()
+                        // console.log(window.todosCollection.view.cid)
                         require(['/files/backbone-files.js'], function(FilesBackbone){
-                            console.log(window.todosCollection.view.cid)
+                            // console.log(window.todosCollection.view.cid)
                             window.FilesBackbone = FilesBackbone;
                             window.filesCollection = new FilesBackbone.Collection(); // collection
                             
@@ -118,13 +229,13 @@
                             }
                             
                             if(window.todosCollection.initialized) {
-                                console.log(window.todosCollection.view.cid)
+                                // console.log(window.todosCollection.view.cid)
                                 self.allTodosView = new AllTodosView({app: self});
                                 self.allTodoListsView = new AllTodoListsView({app: self});
                                 // self.loadCollections();
                             } else {
                                 window.todosCollection.on('initialized', function() {
-                                    console.log(window.todosCollection.view.cid)
+                                    // console.log(window.todosCollection.view.cid)
                                     self.allTodosView = new AllTodosView({app: self});
                                     self.allTodoListsView = new AllTodoListsView({app: self});
                                     // self.loadCollections();
@@ -202,8 +313,8 @@
             nav.list.on('home', function(){
                 nav.router.navigate('', true);
             });
-            nav.col.add({title: "Todo Lists", navigate: "lists"});
-            nav.col.add({title: "All Todos", navigate: ""});
+            nav.col.add({title: "Lists", navigate: "lists", glyphicon: 'list'});
+            // nav.col.add({title: "All Todos", navigate: ""});
             this.bindRouter(nav.router);
             if(window.account && (account.isUser() || account.isAdmin())) {
             }
@@ -248,10 +359,14 @@
                 self.loadCollections(function(){
                     router.trigger('loadingComplete');
                 });
-                self.allTodosView.todosView.deselectAll();
+                if(self.allTodosView.todosView.selectionView) {
+                    self.allTodosView.todosView.selectionView.listDeselect();
+                }
                 self.allTodosView.$el.show();
                 self.allTodosView.$el.siblings().hide();
                 self.allTodosView.resetFilters();
+                delete self.allTodosView.filteredByTodoList;
+                self.allTodosView.todosView.filterView.filterBy('todo');
                 router.setTitle('To Do');
                 self.nav.selectByNavigate('');
             });
@@ -264,9 +379,15 @@
                         router.setTitle(doc.get('title').substring(0,20));
                         self.allTodosView.$el.show();
                         self.allTodosView.$el.siblings().hide();
-                        if(!doc.getRow().isSelected()) {
-                            doc.getRow().select();
-                        }
+                        var formView = doc.getFormView();
+                        formView.on('saved', function(){
+                            box.remove();
+                            self.router.back();
+                        });
+                        var box = utils.appendLightBox(formView.render().$el, false, false, {closeBtn: false, backdrop: 'static'});
+                        box.on('removed', function(){
+                            self.router.back();
+                        });
                     }
                     router.trigger('loadingComplete');
                 });
@@ -275,7 +396,7 @@
             
             router.route('list/id/:id', 'todoList', function(id){
                 routerReset();
-                self.allTodosView.todosView.deselectAll();
+                self.allTodosView.todosView.selectionView.listDeselect();
                 self.allTodosView.$el.show();
                 self.allTodosView.$el.siblings().hide();
                 self.findTodoListById(id, function(doc){
@@ -289,7 +410,9 @@
             });
             router.route('list/:slug', 'todoListSlug', function(slug){
                 routerReset();
-                self.allTodosView.todosView.deselectAll();
+                if(self.allTodosView.todosView.selectionView) {
+                    self.allTodosView.todosView.selectionView.listDeselect();
+                }
                 self.allTodosView.$el.show();
                 self.allTodosView.$el.siblings().hide();
                 self.findTodoListBySlug(slug, function(doc){
@@ -304,7 +427,7 @@
             
             router.route('lists', 'lists', function(id){
                 routerReset();
-                self.allTodoListsView.$el.show();
+                self.allTodoListsView.render().$el.show();
                 self.allTodoListsView.$el.siblings().hide();
                 router.setTitle('Lists');
                 router.trigger('loadingComplete');

@@ -5,6 +5,14 @@ button.focusForm {
 }
 .allTodos {
     position: relative;
+    .house-form.todo {
+        padding: 16px 0px;
+    }
+    &.filteredByList {
+        .listInfo {
+            display: none;
+        }
+    }
 }
 .list-filters {
     position: absolute;
@@ -12,7 +20,7 @@ button.focusForm {
     right: 0;
 }
 .focusFormCol, .list-filters {
-    padding: 16px;
+    padding: 0px 0px 16px 0px;
 }
 .list-pager {
     display: none;
@@ -33,17 +41,67 @@ button.focusForm {
         display: block;
     }
 }
+
+.todoNav {
+    .focusFormCol {
+        display: block;
+        height: 67px;
+        .focusForm {
+            float: left;
+            width: 18%;
+        }
+        .search .form-control {
+            width: 200px;
+            display: inline;
+        }
+    }
+}
+#navbar-header-form {
+    width: 82%;
+    float: left;
+    display: block;
+    .tags, .selection, .pages {
+        display: none;
+    }
+}
 .todos {
+    .houseCollectionHeader {
+        float: left;
+        display: block;
+    }
     &[data-filter-list-id] {
         .list-group-item-text {
             display: none;
         }
     }
     .todo {
-        .check {
+        a {
+            display: inline;
+        }
+        .listInfo, .due {
+            margin-left: 16px;
+        }
+        .listColor {
+            position: absolute;
+            left: 0;
+            width: 44px;
+            z-index: 1;
+            top: 0;
+            bottom: 0;
+        }
+        .doneCheck {
+            position: absolute;
+            left: 0;
+            z-index: 2;
+            top: 8px;
+            bottom: 0;
+            .check {
+                font-size: 28px;
+                margin: 8px;
+                opacity: 0.5;
+            }
         }
         .title {
-            padding: 8px 12px;
         }
         .edit {
             display: none;
@@ -55,6 +113,7 @@ button.focusForm {
             display: none;
         }
         .list-group-item-text {
+            padding-left: 50px;
             clear: both;
             .listRef {
                 padding: 4px;
@@ -73,26 +132,32 @@ button.focusForm {
             min-width: 20px;
             min-height: 20px;
         }
+        .list-group-item-heading {
+            padding-left: 50px;
+        }
         &.selected {
-            .list-group-item-heading {
-                
+            &, a.title, a.check {
+                color: white;
             }
             .list-group-item-text {
                 .listRef {
                 }
             }
-            input[type="date"], input[type="text"], .todoListSelect, .actions {
-                display: inline;
-            }
-            .listRef, .title, .due {
-                display: none;
-            }
-            input, select {
-                background: transparent;
-                border: 0;
-            }
+            // input[type="date"], input[type="text"], .todoListSelect, .actions {
+            //     display: inline;
+            // }
+            // .listRef, .title, .due {
+            //     display: none;
+            // }
+            // input, select {
+            //     background: transparent;
+            //     border: 0;
+            // }
         }
     }
+}
+.allTodos .house-form input[name="title"] {
+    width: 100%;
 }
 .todoLists {
     a {
