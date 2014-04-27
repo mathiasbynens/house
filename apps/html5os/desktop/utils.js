@@ -122,14 +122,19 @@
         }
     });
     
-    utils.appendLightBox = function(el, title, footer) {
-        var opts = {
-            container: el
+    utils.appendLightBox = function(el, title, footer, opts) {
+        if(!opts) {
+            opts = {
+            }
         }
-        if(title) {
+        if(typeof arguments[arguments.length-1] == 'object')  {
+            opts = arguments[arguments.length-1];
+        }
+        opts.container = el;
+        if(title && !opts.title) {
             opts.title = title;
         }
-        if(footer) {
+        if(footer && !opts.footer) {
             opts.footer = footer;
         }
         var lightBox = new this.LightboxView(opts);
@@ -165,10 +170,13 @@
                 self.trigger('removed');
             });
             
+            if(!options.closeBtn) {
+                this.$modalDialog.find('button.close').remove();
+            }
             if(options && options.title) {
                 this.$modalDialog.find('.modal-title').html(options.title);
             } else {
-                this.$modalDialog.find('.modal-title').remove();
+                this.$modalDialog.find('.modal-header').remove();
             }
             if(options && options.container) {
                 this.$modalDialog.find('.modal-body').append(options.container);
@@ -180,6 +188,9 @@
             }
             var modalOpts = {};
             modalOpts.backdrop = 'static';
+            if(options && options.backdrop) {
+                modalOpts.backdrop = options.backdrop;
+            }
             this.$el.modal(modalOpts);
         },
         render: function() {
