@@ -103,6 +103,9 @@ div.urlsList {
     overflow: hidden;
     background: rgba(41, 41, 41, 0.85);
 }
+.todosWidget a {
+    color: white;
+}
 .todosWidget .due, .todosWidget .listInfo {
     display: none !important;
 }

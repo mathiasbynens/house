@@ -6,7 +6,7 @@
         className: 'allTodos',
         initialize: function(options) {
             var self = this;
-            this.$todoNav = $('<div class="todoNav"><span class="focusFormCol"><button class="focusForm btn btn-primary" title="New Todo"><span class="glyphicon glyphicon-pencil"></span> New</button><div id="navbar-header-form"></div></span></div>');
+            this.$todoNav = $('<div class="todoNav"><span class="focusFormCol"><button class="focusForm btn btn-primary" title="New Todo"><span class="glyphicon glyphicon-pencil"></span></button><div id="navbar-header-form"></div></span></div>');
             var filterFunc = function(model, filterObj) {
                 var filterId = filterObj.filter;
                 // Check for list filter

@@ -1,30 +1,11 @@
 CACHE MANIFEST
-# ver 0.3
+# ver 0.4
 
 CACHE:
 /todos/
-/todos/login
-/todos/todo
-/todos/lists
-/todos/nolist
-/images/startup-splash.png
-/js/require.js
-/js/jquery.js
-/js/underscore.js
-/js/backbone.js
-/js/backboneJeffshouse.js
-/js/jquery.ui.min.js
-/js/jquery.touchfix.js
-/js/jquery.hotkeys.js
-/js/iscroll.js
-/js/jeffshouse.js
-/js/jeffshouseAuth.js
-/js/model/todos.js
-/css/common.css
-/todos/todos.css
-/todos/todos.js
-/todos/Icon@2x.png
-/todos/favicon.ico
+/desktop/libs/bootstrap/less/bootstrap.less.css/desktop/libs/bootstrap/theme/readable.less.css/desktop/house.less.css/todos/index.less.css
+/require.js?/todos/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/files/backbone-files.js/js/config.js/desktop/jquery.scrollTo.min.js/pages/bootstrap.js/clock/clock.js/clock/moment.js/todos/todos.js/todos/todoLists.js/todos/app.js
+/desktop/libs/bootstrap/fonts/glyphicons-halflings-regular.woff
 
 NETWORK:
 /
