@@ -635,8 +635,8 @@
             var self = this;
             var name = this.model.get('name');
             this.$el.html('');
-            //this.$el.html('<button>'+accountMenuStr+'</button><menu class="mainMenu">'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
             var accountMenuStr = this.ui.accountMenuLabel;
+            //this.$el.html('<button>'+accountMenuStr+'</button><menu class="mainMenu">'+loginbtn+'</menu>'); // ⊙ ✱ ⎎ ⎈ ⍟ ⊙ 𝆗 ⎎ ⏣⎈
             
             if (this.model.get('user')) {
                 this.$el.prepend(this.userMenu);
@@ -691,29 +691,6 @@
             "click .login": "login",
             "click .profile": "goToProfile",
             "click .feedback": "feedback",
-            "click menu.mainMenu": "clickMenu",
-            "click button": "toggleMenu"
-        },
-        clickMenu: function(e) {
-            if(e.target.className == 'mainMenu') {
-                this.toggleMenu();
-            } else {
-                
-            }
-        },
-        toggleMenu: function() {
-            var v = this.$el.find('menu.mainMenu').css('visibility');
-            if(v == 'visible') {
-                this.hideMenu();
-            } else {
-                this.showMenu();
-            }
-        },
-        showMenu: function() {
-            this.$el.find('menu').css('visibility', 'visible');
-        },
-        hideMenu: function() {
-            this.$el.find('menu').css('visibility', 'hidden');
         },
         goToProfile: function(e) {
             this.trigger("goToProfile", this.model.get("name"));
@@ -1457,16 +1434,20 @@
             router.route("join", "join", function() {
                 self.navigateToJoin();
                 //self.router.navigate('join/', {trigger: true});
+                router.trigger('loadingComplete');
             });
             router.route("join/*path", "joinPath", function(path) {
                 self.navigateToJoin(path);
+                router.trigger('loadingComplete');
             });
             router.route("me", "profile", function() {
                 self.router.navigate('me/', {trigger: true, replace: true});
+                router.trigger('loadingComplete');
             });
             router.route("me/*path", "profile", function(path) {
                 router.reset();
                 router.setTitle("Me");
+                router.trigger('loadingComplete');
             });
             router.route("user/*path", "user", function(path) {
                 router.reset();
@@ -1474,6 +1455,7 @@
                 
                 usersCollection.getOrFetchName(path, function(user){
                     self.navToUser(user);
+                    router.trigger('loadingComplete');
                 });
             });
             router.on('reset', function() {

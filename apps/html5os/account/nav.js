@@ -120,6 +120,11 @@
         goHome: function() {
             $('body')[0].scrollTop = 0;
             nav.router.gohome(true);
+            // if($('.navbar-collapse.collapse:visible').length > 0) {
+            if(this.$menu.parent().is(':visible')) {
+                this.$menu.parent().collapse('hide');
+                // $('.navbar-collapse.collapse').collapse('hide');
+            }
             return false;
         },
         titleClick: function(e) {
@@ -127,10 +132,15 @@
             return false;
         },
         toggleMenu: function() {
+            this.$menu.parent().collapse('toggle');
         },
         hideMenu: function() {
+            if(this.$menu.parent().is(':visible')) {
+                this.$menu.parent().collapse('hide');
+            }
         },
         showMenu: function() {
+            this.$menu.parent().collapse('hide').collapse('show');
         },
         appendDoc: function(doc) {
             var row;

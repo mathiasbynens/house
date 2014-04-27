@@ -170,12 +170,13 @@
                 self.trigger('removed');
             });
             
-            if(!options.closeBtn) {
+            if(options.closeBtn === false) {
                 this.$modalDialog.find('button.close').remove();
             }
             if(options && options.title) {
                 this.$modalDialog.find('.modal-title').html(options.title);
             } else {
+                this.$modalDialog.find('.modal-body').prepend(this.$modalDialog.find('button.close'));
                 this.$modalDialog.find('.modal-header').remove();
             }
             if(options && options.container) {

@@ -139,9 +139,6 @@ Backbone.House.Model = Backbone.Model.extend({
     //     Backbone.House.Model.apply(this, arguments);
     // },
     initialize: function(attrs, options) {
-        if(!this.collection) {
-            return console.error('collection required');
-        }
         this.options = options || {};
         this.views = {};
         this.options.ownerFieldName = this.options.ownerFieldName || 'owner';
@@ -995,7 +992,7 @@ var ListFilters = Backbone.View.extend({
                 // var filterFunc = this.options.filters[f].filter;
                 this.selectedFilter = f;
                 var filterFunc = function(m, v) {
-                    if(self.options.list.tagsView.getTagFilterFunc()(m,v)) {
+                    if(!self.options.list.tagsView || self.options.list.tagsView.getTagFilterFunc()(m,v)) {
                         if(self.getFilterFunc()(m,v)) {
                             return true;
                         }
@@ -1643,7 +1640,7 @@ var ListView = Backbone.View.extend({
             loadObj = this.filterView.options.filters[this.filterView.selectedFilter].load;
             // console.log(loadObj);
         }
-        if(this.tagsView && this.tagsView.tagSelectView.selectedTag) {
+        if(this.tagsView && this.tagsView.tagSelectView && this.tagsView.tagSelectView.selectedTag) {
             loadObj[this.tagsView.fieldName] = this.tagsView.tagSelectView.selectedTag.get('name');
         }
         if(this.searchView && this.searchView.selectedQuery) {
@@ -1657,7 +1654,7 @@ var ListView = Backbone.View.extend({
         if(this.filterView && this.filterView.selectedFilter) {
             filterObj.filter = this.filterView.selectedFilter;
         }
-        if(this.tagsView && this.tagsView.tagSelectView.selectedTag) {
+        if(this.tagsView && this.tagsView.tagSelectView && this.tagsView.tagSelectView.selectedTag) {
             filterObj.tag = this.tagsView.tagSelectView.selectedTag.get('name');
         }
         if(this.searchView && this.searchView.selectedQuery) {
@@ -1777,7 +1774,6 @@ var ListView = Backbone.View.extend({
         }
     },
     filter: function(f, id, load) {
-        console.log(arguments)
         var self = this;
         if(load) {
             this.searchLoad = load;
@@ -2233,8 +2229,16 @@ var FormView = Backbone.View.extend({
                     
                 }
             } else if(field.validateType && field.validateType === 'date') {
-                var formDate = moment(valDirty+' 00:00', "YYYY-MM-DD HH:mm");
-                valClean = formDate.toDate();
+                if(valDirty) {
+                    var formDate = moment(valDirty+' 00:00', "YYYY-MM-DD HH:mm");
+                    valClean = formDate.toDate();
+                } else {
+                    if(this.model.has(fieldName)) {
+                        valClean = null; // will remove the field
+                    } else {
+                        valClean = undefined;
+                    }
+                }
             } else if(field.validateType && field.validateType === 'float') {
                 valClean = parseFloat(valDirty);
             } else if(field.validateType && field.validateType === 'int') {
