@@ -1,0 +1,65 @@
+ {
+     _id: MongoObject(),
+     at: new Date(),
+     title: "Questions I have",
+     qs: [
+         {
+            id: "q1",
+            rank: 0,
+            type: 'yes,no',
+            title: 'are you human?',
+            desc: ''
+         },
+         {
+            id: "q1a",
+            rank: 2,
+            type: 'text',
+            condition: {
+                'q1': true
+            }
+            title: 'What is 2+2 human?',
+         },
+         {
+            id: "q1b",
+            rank: 2,
+            type: 'text',
+            title: 'What is 2^6 bot?',
+         },
+         {
+            id: "q2",
+            rank: 1,
+            type: 'yes,no',
+            condition: {
+                'q1': false
+            }
+            title: 'can you read this fine?',
+         },
+         {
+            id: "q3",
+            rank: 2,
+            type: 'text',
+            title: 'are you human?',
+         },
+         {
+            id: "q4",
+            rank: 3,
+            type: 'choiceRadio',
+            choices: {
+                a: {
+                    name: "Yellow"
+                },
+                b: {
+                    name: "Green"
+                },
+                c: {
+                    name: "Blue"
+                },
+                // d: {
+                //     name: "Custom",
+                //     custom: true
+                // }
+            },
+            title: 'What is your favorite color?',
+         }
+    ]
+ }

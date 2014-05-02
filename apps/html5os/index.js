@@ -18,6 +18,7 @@
                     'news',
                     'pages',
                     //'posts',
+                    'polls',
                     'todos',
                     'tags',
                     //'urls',
