@@ -191,6 +191,7 @@ var wysihtml5ParserRules = {
             "check_attributes": {
                 "width": "numbers",
                 "alt": "alt",
+                "id": "alt",
                 "src": "href",
                 "height": "numbers"
             }

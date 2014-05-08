@@ -23,8 +23,8 @@
                                                         nav.router.on('loadingComplete', function() {
                                                             $('body').removeClass('loading');
                                                         });
-                                                        require(['/users/users.js'], function(Users) {
-                                                            window.app = new Users({el: $('body')});
+                                                        require(['/users/users.js'], function(App) {
+                                                            window.app = new App({el: $('body')});
                                                             //app.bindUser(accountProfile.loginStatus.getView().userModel);
                                                             app.on('initialized', function() {
                                                                 app.render();

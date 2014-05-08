@@ -253,7 +253,6 @@
             if(this.$el.find('a').length) {
                 this.$e = this.$el.find('a'); 
             }
-            console.log(this.$e.html())
         },
         render: function() {
             this.setElement(this.$el);
@@ -262,13 +261,13 @@
             
             if(this.model.has('a')) {
                 if(this.$e.html() !== this.model.get('a')+' ') {
-                    this.$e.append(this.model.get('a')+' ');
+                    this.$e.html(this.model.get('a')+' ');
                 }
                 if(this.model.has('title')) {
                     this.$e.attr('title', this.model.get('title'));
                 }
             } else if(this.model.has('title')) {
-                this.$e.append(this.model.get('title')+' ');
+                this.$e.html(this.model.get('title')+' ');
                 if(this.model.has('navigate')) {
                     this.$e.attr('href', this.model.get('navigate'));
                 } else if(this.model.has('href')) {
@@ -297,7 +296,11 @@
                 
             } else {
                 if(this.model.has('glyphicon')) {
-                    this.$e.append('<span class="glyphicon glyphicon-'+this.model.get('glyphicon')+'"></span> ');
+                    if(!this.hasOwnProperty('$glyphicon')) {
+                        this.$glyphicon = $('<span class="glyphicon glyphicon-'+this.model.get('glyphicon')+'"></span>');
+                    }
+                    this.$e.append(this.$glyphicon);
+                    this.$glyphicon.css('class', 'glyphicon glyphicon-'+this.model.get('glyphicon'));
                 }
             }
             if(this.model.has('el')) {
