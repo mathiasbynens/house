@@ -195,6 +195,12 @@ Backbone.House.Model = Backbone.Model.extend({
         }
         return this.avatar;
     },
+    getFormView: function() {
+        if(!this.formView && this.FormView) {
+            this.formView = new this.FormView({model: this});
+        }
+        return this.formView;
+    },
     getViewByName: function(name, options) {
         options = options || {};
         options.model = this;
@@ -931,8 +937,10 @@ var ListFilters = Backbone.View.extend({
         if(this.options.filters) {
             for(var id in this.options.filters) {
                 var li = this.options.filters[id];
-                var className = li.glyphicon ? 'glyphicon glyphicon-'+li.glyphicon : '';
-                lis = lis + '<li data-filter="'+id+'"><a href="#"><span class="'+className+'"></span> '+li.txt+'</a></li>';
+                if(li.txt) {
+                    var className = li.glyphicon ? 'glyphicon glyphicon-'+li.glyphicon : '';
+                    lis = lis + '<li data-filter="'+id+'"><a href="#"><span class="'+className+'"></span> '+li.txt+'</a></li>';
+                }
             }
         }
         // <li data-filter="image"><a href="#" class="glyphicon glyphicon-picture"> Image</a></li>\
@@ -974,16 +982,36 @@ var ListFilters = Backbone.View.extend({
         if(f === 'none') {
             // this.trigger('unfilter');
             this.reset();
-            
-            if(self.options.list.tagsView && self.options.list.tagsView.tagSelectView.selectedTag) {
+            if(this.options.filters && this.options.filters[f]) { // user override 'none' filter
+                this.selectedFilter = f;
+                var filterFunc = function(m, v) {
+                    if(!self.options.list.tagsView || self.options.list.tagsView.getTagFilterFunc()(m,v)) {
+                        if(self.getFilterFunc()(m,v)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
                 var filterObj = {};
-                // filterObj.filter = f;
-                filterObj.tag = self.options.list.tagsView.tagSelectView.selectedTag.get('name');
-                var loadObj = {};
-                loadObj[self.options.list.tagsView.fieldName] = self.options.list.tagsView.tagSelectView.selectedTag.get('name');
-                this.options.list.filter(self.options.list.tagsView.getTagFilterFunc(), filterObj, loadObj);
+                var loadObj = this.options.filters[f].load;
+                filterObj.filter = f;
+                if(self.options.list.tagsView && self.options.list.tagsView.tagSelectView && self.options.list.tagsView.tagSelectView.selectedTag) {
+                    filterObj.tag = self.options.list.tagsView.tagSelectView.selectedTag.get('name');
+                    loadObj[self.options.list.tagsView.fieldName] = self.options.list.tagsView.tagSelectView.selectedTag.get('name');
+                }
+                this.options.list.filter(filterFunc, filterObj, loadObj);
             } else {
-                this.options.list.filter(false);
+                
+                if(self.options.list.tagsView && self.options.list.tagsView.tagSelectView.selectedTag) {
+                    var filterObj = {};
+                    // filterObj.filter = f;
+                    filterObj.tag = self.options.list.tagsView.tagSelectView.selectedTag.get('name');
+                    var loadObj = {};
+                    loadObj[self.options.list.tagsView.fieldName] = self.options.list.tagsView.tagSelectView.selectedTag.get('name');
+                    this.options.list.filter(self.options.list.tagsView.getTagFilterFunc(), filterObj, loadObj);
+                } else {
+                    this.options.list.filter(false);
+                }
             }
             this.trigger('unfiltered');
         } else {
@@ -1958,7 +1986,6 @@ var ListView = Backbone.View.extend({
                 e = col.length;
             }
             col.slice(s, e).forEach(function(doc, i, c) {
-                //console.log(arguments)
                 var view = self.getDocLayoutView(doc);
                 self.appendRow(view);
                 // self.renderPagination();
@@ -1996,8 +2023,11 @@ var ListView = Backbone.View.extend({
             returnSlice();
         }
     },
-    render: function() {
+    render: function(renderPage) {
         var self = this;
+        if(_.isUndefined(renderPage)) {
+            renderPage = false;
+        }
         // this.$el.html('');
         // this.$el.append(this.$ul);
         // this.$ul.html('');
@@ -2006,7 +2036,7 @@ var ListView = Backbone.View.extend({
         //     var view = self.getDocLayoutView(doc);
         //     self.appendRow(view);
         // });
-        this.setLayout(this.layout, true);
+        this.setLayout(this.layout, renderPage);
         
         if(this.searchView) {
             this.searchView.render();
@@ -2093,14 +2123,23 @@ var ListView = Backbone.View.extend({
         return rankFieldValue * -1;
     },
     appendRow: function(row) {
-        //console.log(row.model)
         var self = this;
         var rank = this.getModelSortRank(row.model);
         var rowEl = row.render().$el;
         if (this.currentFilter && this.currentFilterId && !this.currentFilter(row.model, this.currentFilterId)) {
             rowEl.hide();
         } else {
-            rowEl.css('display', 'block');
+            if (this.layout === 'row') {
+                // rowEl.css('display', 'table-row');
+                // rowEl.show();
+                rowEl.css('display', 'block');
+            } else if (this.layout === 'table') {
+                rowEl.css('display', 'table-row');
+            } else if (this.layout === 'avatar') {
+                rowEl.css('display', 'block');
+            } else {
+                rowEl.show();
+            }
         }
         rowEl.attr('data-sort-rank', rank);
         var d = false;
@@ -2204,6 +2243,8 @@ var FormView = Backbone.View.extend({
             
             if(field.validateFunc) {
                 valClean = field.validateFunc(valDirty);
+            } else if(field.hasOwnProperty('fieldView')) {
+                valClean = field.fieldView.validateVal();
             } else if(field.validateType && field.validateType === 'string') {
                 if(typeof valDirty === 'string') {
                     if(valDirty === '') {
@@ -2243,11 +2284,14 @@ var FormView = Backbone.View.extend({
                 valClean = parseFloat(valDirty);
             } else if(field.validateType && field.validateType === 'int') {
                 valClean = parseInt(valDirty, 10);
+            } else if(field.validateType && field.validateType === 'color') {
+                valClean = valDirty;
             } else {
                 valClean = valDirty;
             }
-            
-            if(valClean !== this.model.get(fieldName)) {
+            if(_.isObject(valClean) && !_.isEqual(valClean, this.model.get(fieldName))) {
+                setDoc[fieldName] = valClean;
+            } else if(valClean !== this.model.get(fieldName)) {
                 setDoc[fieldName] = valClean;
             }
         }
@@ -2334,8 +2378,12 @@ var FormView = Backbone.View.extend({
             var tagName = field.tagName || 'input';
             var tagType = field.tagType || 'text';
             if(!this.$fields.hasOwnProperty(fieldName)) {
-                if(field.hasOwnProperty('validateType') && field.validateType === 'date') {
+                if(field.hasOwnProperty('fieldView')) {
+                    this.$fields[fieldName] = field.fieldView.render().$el;
+                } else if(field.hasOwnProperty('validateType') && field.validateType === 'date') {
                     this.$fields[fieldName] = $('<'+tagName+' name="'+fieldName+'" type="date" id="f'+this.model.cid+fieldName+'"></'+tagName+'>');
+                } else if(field.hasOwnProperty('validateType') && field.validateType === 'color') {
+                    this.$fields[fieldName] = $('<'+tagName+' name="'+fieldName+'" type="color" id="f'+this.model.cid+fieldName+'"></'+tagName+'>');
                 } else {
                     this.$fields[fieldName] = $('<'+tagName+' name="'+fieldName+'" id="f'+this.model.cid+fieldName+'"></'+tagName+'>');
                     if(tagName === 'input' || tagType !== 'text') {
@@ -2372,6 +2420,8 @@ var FormView = Backbone.View.extend({
                     //this.$dueAtTimeInput.val(m.format('HH:mm')); // m.calendar()
                     
                     this.$fields[fieldName].attr('data-'+fieldName, m);
+                } else if(field.hasOwnProperty('fieldView')) {
+                    field.fieldView.val(this.model.get(fieldName));
                 } else {
                     this.$fields[fieldName].val(this.model.get(fieldName));
                 }
@@ -2434,26 +2484,50 @@ var SelectListView = Backbone.View.extend({
         this.setElement(this.$el);
         return this;
     },
+    validateVal: function() {
+        var self = this;
+        var doc_id = this.$el.val();
+        console.log(doc);
+        var doc = this.collection.get(doc_id);
+        var valObj = {
+            id: doc_id
+        };
+        
+        if(doc) {
+            valObj[self.options.titleField] = doc.get(self.options.titleField);
+        } else {
+            valObj = null;
+        }
+        
+        // if(this.options.objFields) {
+        //     for(var f in this.options.objFields) {
+        //     }
+        // }
+        
+        return valObj;
+    },
     val: function(v) {
-        if(v) {
+        if(v && v.id) {
+            // this.valueObj = v;
             this.$el.val(v.id);
         } else {
+            // return this.valueObj;
             var doc_id = this.$el.val();
             if(doc_id) {
                 var doc = this.collection.get(doc_id);
                 var p = {
                     id: doc_id
                 }
-                p.title = doc.title;
-                if(post.has('slug')) {
-                    p.slug = post.get('slug');
-                }
-                if(post.has('seq')) {
-                    p.seq = post.get('seq');
-                }
-                if(post.has('youtube') && post.get('youtube').id) {
-                    p.youtube = post.get('youtube');
-                }
+                // p.title = doc.title;
+                // if(post.has('slug')) {
+                //     p.slug = post.get('slug');
+                // }
+                // if(post.has('seq')) {
+                //     p.seq = post.get('seq');
+                // }
+                // if(post.has('youtube') && post.get('youtube').id) {
+                //     p.youtube = post.get('youtube');
+                // }
                 return p;
             } else {
                 return false;

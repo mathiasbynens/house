@@ -357,7 +357,6 @@
             // this.deleteView = new utils.ModelActionDelete(this.actionOptions);
             this.moreActionsView = new utils.MoreActionsView(this.actionOptions);
             if(this.actionOptions.tags) {
-                // console.log('tags')
                 var tagFieldName = this.actionOptions.tags.fieldName || 'tags';
                 utils.initTags(function(){
                     
@@ -680,7 +679,7 @@
                         delete this.value;
                     }
                 } else {
-                    delete this.value;
+                    // delete this.value;
                 }
             } else {
                 delete this.value;
@@ -785,6 +784,10 @@
                 this.model = options.model;
             }
             var moreLis = '';
+            var collectionFriendlyName = this.model.collection.collectionName.substring(0, this.model.collection.collectionName.length-1);
+            if(options.collectionFriendlyName) {
+               collectionFriendlyName = options.collectionFriendlyName;
+            }
             if(options.more) {
                 for(var m in options.more) {
                     var more = options.more[m];
@@ -797,7 +800,7 @@
   </button>\n\
   <ul class="dropdown-menu pull-right" role="menu">\n\
   '+moreLis+'\n\
-    <li><a class="delete" href="#"><span class="glyphicon glyphicon-trash"></span> Delete '+this.model.collection.collectionName.substring(0, this.model.collection.collectionName.length-1)+'</a></li>\n\
+    <li><a class="delete" href="#"><span class="glyphicon glyphicon-trash"></span> Delete '+collectionFriendlyName+'</a></li>\n\
   </ul>\n\
 </div>');
         },
