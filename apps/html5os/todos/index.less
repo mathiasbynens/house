@@ -16,10 +16,10 @@ button.focusForm {
     .house-form.todo {
         padding: 16px 0px;
     }
-    &.filteredByList {
-        .listInfo {
-            display: none;
-        }
+}
+.filteredByList {
+    .listInfo {
+        display: none !important;
     }
 }
 .list-filters {
@@ -55,11 +55,19 @@ button.focusForm {
     top: 0;
     margin: 0 auto;
     text-align: center;
-    left: 50px;
-    right: 50px;
+    left: 100px;
+    right: 100px;
+    @media (max-width: @screen-xs-max) {
+        & {
+            left: 50px;
+            right: 50px;
+            overflow: hidden;
+            line-height: 30px;
+        }
+    }
 }
 
-.todoNav {
+.todoNav, .todoListNav {
     .focusFormCol {
         display: block;
         height: 67px;
@@ -73,7 +81,7 @@ button.focusForm {
         }
     }
 }
-#navbar-header-form {
+.navbar-header-form {
     float: left;
     display: block;
     .tags, .selection, .pages {
@@ -117,6 +125,10 @@ button.focusForm {
                 font-size: 28px;
                 margin: 8px;
                 opacity: 0.5;
+            }
+            .check.inverse {
+                opacity: 1;
+                color: white;
             }
         }
         .title {
@@ -179,24 +191,36 @@ button.focusForm {
 }
 .todoLists {
     a {
-        .center {
-            input {
-                display: none;
-            }
-        }
     }
     a.selected {
-        .center {
-            input {
-                display: inline;
-            }
-            .name {
-                display: none;
+    }
+    .list-group-item {
+        .listColor {
+            position: absolute;
+            left: 0;
+            width: 44px;
+            z-index: 1;
+            top: 0;
+            bottom: 0;
+        }
+        .name {
+            padding-left: 50px;
+        }
+        .progress {
+            display: none;
+        }
+        .actions {
+            display: inline-block;
+            height: 24px;
+        }
+        &.selected {
+            &, .name a, .btn, .btn-link, .btn-link:hover, .btn-link:focus {
+                color: white;
             }
         }
     }
-    .right {
-        text-align: right;
+    a.list-group-item.active, a.list-group-item.active:hover, a.list-group-item.active:focus {
+        z-index: initial;
     }
 }
 option {

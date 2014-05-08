@@ -6,7 +6,7 @@
         className: 'allTodos',
         initialize: function(options) {
             var self = this;
-            this.$todoNav = $('<div class="todoNav"><span class="focusFormCol"><button class="focusForm btn btn-primary" title="New Todo"><span class="glyphicon glyphicon-pencil"></span></button><div id="navbar-header-form"></div></span></div>');
+            this.$todoNav = $('<div class="todoNav"><span class="focusFormCol"><button class="focusForm btn btn-primary" title="New Todo"><span class="glyphicon glyphicon-pencil"></span></button><div class="navbar-header-form"></div></span></div>');
             var filterFunc = function(model, filterObj) {
                 var filterId = filterObj.filter;
                 // Check for list filter
@@ -17,7 +17,9 @@
                         return false;
                     }
                 }
-                if(filterId === 'todo') {
+                if(filterId === 'none') {
+                    return true;
+                } else if(filterId === 'todo') {
                     var r = model.get('done') ? false : true;
                     return r;
                 } else if (filterId === 'done') {
@@ -28,7 +30,7 @@
                 }
             }
             self.todosView = window.todosCollection.getView({
-                headerEl: this.$todoNav.find('#navbar-header-form'),
+                headerEl: this.$todoNav.find('.navbar-header-form'),
                 selection: true, mason: false,
                 search: {
                     'fieldName': 'title'
@@ -49,11 +51,14 @@
                         load: {
                             "done": 1
                         }
+                    },
+                    'none': {
+                        filter: filterFunc,
                     }
                 },
-                tags: {
-                    'fieldName': 'tags'
-                },
+                // tags: {
+                //     'fieldName': 'tags'
+                // },
                 sorts: [{
                     name: 'Created At',
                     field: 'at',
@@ -79,7 +84,6 @@
             });
             
             self.getNewFormView();
-            
         },
         getNewFormView: function() {
             var self = this;
@@ -123,7 +127,7 @@
         render: function() {
             var self = this;
             this.$el.append(this.$todoNav);
-            this.$el.append(self.todosView.render().$el);
+            this.$el.append(self.todosView.render(false).$el);
             this.$el.find('.todos').after(self.todosFormView.render().$el);
             return this;
         },
@@ -133,7 +137,10 @@
             this.$el.addClass('filteredByList');
             this.filteredByTodoList = todoList;
             this.todosView.filter(function(model){
+                // console.log(todoList.id)
+                // console.log(model.get('title'))
                 if(model.get('list.id') == todoList.id) {
+                    // console.log(true)
                     return self.todosView.filterView.getFilterFunc()(model, self.todosView.getCombinedFilterObj());
                 }
                 return false;
@@ -161,34 +168,110 @@
         className: 'allTodoLists',
         initialize: function() {
             var self = this;
-            
-            self.todoListsView = window.todoListsCollection.getView({});
+            this.$todoListNav = $('<div class="todoListNav"><span class="focusFormCol"><button class="focusForm btn btn-primary" title="New List"><span class="glyphicon glyphicon-pencil"></span></button><div class="navbar-header-form"></div></span></div>');
+            self.todoListsView = window.todoListsCollection.getView({
+                headerEl: this.$todoListNav.find('.navbar-header-form'),
+                selection: true,
+                mason: false,
+                search: {
+                    'fieldName': 'name'
+                },
+                // filters: {
+                //     'todo': {
+                //         txt: 'Todos',
+                //         glyphicon: 'unchecked',
+                //         filter: filterFunc,
+                //         load: {
+                //             "done": 0
+                //         }
+                //     },
+                //     'done': {
+                //         txt: 'Done',
+                //         glyphicon: 'check',
+                //         filter: filterFunc,
+                //         load: {
+                //             "done": 1
+                //         }
+                //     }
+                // },
+                // tags: {
+                //     'fieldName': 'tags'
+                // },
+                sorts: [{
+                    name: 'Created At',
+                    field: 'at',
+                    type: 'date',
+                    glyphicon: 'time',
+                    default: -1
+                }, {
+                    name: 'Name',
+                    field: 'name',
+                    type: 'text',
+                    glyphicon: 'sort-by-alphabet',
+                    // default: -1
+                }],
+            });
             self.todoListsView.on('selectName', function(row) {
-                self.options.app.router.navigate(row.model.getNavigatePath(), true);
+                self.options.app.router.navigate(row.model.getNavigatePath(), {trigger: true});
             });
-            
-            self.todoListsFormView = window.todoListsCollection.getFormView();
-            self.todoListsFormView.on('saved', function(){
-                self.getNewFormView();
-                self.todoListsFormView.focus();
+            self.todoListsView.collection.on('goToNavigatePath', function(model) {
+                // self.options.app.router.navigate(model.getNavigatePath(), {trigger: true});
+                self.options.app.router.navigate(model.getNavigatePathEdit(), {trigger: true});
             });
+            self.getNewFormView();
         },
         getNewFormView: function() {
             var self = this;
-            self.todoListsFormView = window.todoListsCollection.getFormView();
-            self.todoListsFormView.on('saved', function(){
+            var formOpts = {
+                collection: window.todoListsCollection,
+                submit: false,
+                className: 'house-form todoList'
+            };
+            // formOpts.beforeSubmit = function(form){
+            //     if(self.filteredByTodoList) {
+            //         var todoList = self.filteredByTodoList;
+            //         var setDoc = {};
+            //         setDoc.list = {
+            //             id: todoList.id,
+            //             name: todoList.get('name')
+            //         }
+            //         form.model.set(setDoc, {silent: true});
+            //     }
+            // };
+            formOpts.fields = {
+                "name": {
+                    validateType: 'string',
+                    autocomplete: "off",
+                    placeholder: "list name",
+                    className: "form-control"
+                },
+            }
+            self.formView = new window.todosCollection.getFormView(formOpts);
+            self.formView.on('saved', function(todo){
+                // console.log(todo)
+                self.formView.render().$el.remove();
                 self.getNewFormView();
-                self.todoListsFormView.focus();
+                self.formView.focus('title');
+                setTimeout(function(){
+                    // $('body').scrollTo($(todo.getRow().$el[0]));
+                    $('body').scrollTo($(document).height());
+                },100);
             });
-            self.$el.prepend(self.todoListsFormView.render().$el);
+            // this.$el.find('.todos').after(self.formView.render().$el);
         },
         render: function() {
             var self = this;
-            this.$el.append(self.todoListsFormView.render().$el);
-            this.$el.append(self.todoListsView.render().$el);
+            this.$el.append(this.$todoListNav);
+            this.$el.append(self.todoListsView.render(false).$el);
+            this.$el.append(self.formView.render().$el);
             return this;
         },
         events: {
+            "click .focusForm": "focusForm"
+        },
+        focusForm: function() {
+            this.formView.focus('name');
+            return false;
         }
     });
 
@@ -216,27 +299,25 @@
                             
                             if(window.account) {
                                 window.account.on('loggedIn', function(loginView){
-                                    self.loadCollections();
-                                });
-                            }
-                            
-                            if(window.todosCollection.initialized) {
-                                // console.log(window.todosCollection.view.cid)
-                                self.allTodosView = new AllTodosView({app: self});
-                                self.allTodoListsView = new AllTodoListsView({app: self});
-                                // self.loadCollections();
-                            } else {
-                                window.todosCollection.on('initialized', function() {
-                                    // console.log(window.todosCollection.view.cid)
-                                    self.allTodosView = new AllTodosView({app: self});
-                                    self.allTodoListsView = new AllTodoListsView({app: self});
                                     // self.loadCollections();
                                 });
                             }
-                            if(!self.initialized) {
-                                self.initialized = true;
-                                self.trigger('initialized');
+                            
+                            var initComplete = function() {
+                                self.allTodosView = new AllTodosView({app: self});
+                                // self.allTodosView.todosView.filterView.filterBy('todo');
+                                self.allTodoListsView = new AllTodoListsView({app: self});
+                                if(!self.initialized) {
+                                   self.initialized = true;
+                                    self.trigger('initialized');
+                                }
                             }
+                            // self.loadCollections(function(){
+                            window.todoListsCollection.load(null, function(){
+                                self.router.trigger('loadingProgress', 30);
+                                initComplete();
+                            });
+                            // });
                         });
                     });
                 });
@@ -244,15 +325,15 @@
         },
         loadCollections: function(callback) {
             var self = this;
-            window.todosCollection.load(null, function(){
+            window.todoListsCollection.load(null, function(){
                 self.router.trigger('loadingProgress', 30);
-                window.todoListsCollection.load(null, function(){
+                window.todosCollection.load(null, function(){
                     self.router.trigger('loadingProgress', 30);
                     
-                    if(!self.initialized) {
-                        self.initialized = true;
-                        self.trigger('initialized');
-                    }
+                    // if(!self.initialized) {
+                    //     self.initialized = true;
+                    //     self.trigger('initialized');
+                    // }
                     if(callback) {
                         callback();
                     }
@@ -347,10 +428,8 @@
             
             router.on('root', function(){
                 routerReset();
+                // self.loadCollections(function(){
                 router.trigger('loadingProgress', 30);
-                self.loadCollections(function(){
-                    router.trigger('loadingComplete');
-                });
                 if(self.allTodosView.todosView.selectionView) {
                     self.allTodosView.todosView.selectionView.listDeselect();
                 }
@@ -361,6 +440,8 @@
                 self.allTodosView.todosView.filterView.filterBy('todo');
                 router.setTitle('To Do');
                 self.nav.selectByNavigate('');
+                router.trigger('loadingComplete');
+                // });
             });
             
             router.route('id/:id', 'todoById', function(id){
@@ -400,6 +481,29 @@
                 });
                 self.nav.selectByNavigate('lists');
             });
+            router.route('list/:slug/edit', 'todoListSlugEdit', function(slug){
+                routerReset();
+                // self.allTodosView.$el.show();
+                // self.allTodosView.$el.siblings().hide();
+                self.findTodoListBySlug(slug, function(doc){
+                    if(doc) {
+                        router.setTitle(doc.get('name')+' edit');
+                        // self.allTodosView.filterByTodoList(doc);
+                        var formView = doc.getFormView();
+                        formView.on('saved', function(){
+                            box.remove();
+                            self.router.back();
+                        });
+                        var box = utils.appendLightBox(formView.render().$el, false, false, {closeBtn: false, backdrop: 'static'});
+                        formView.focus('name');
+                        box.on('removed', function(){
+                            self.router.back();
+                        });
+                    }
+                    router.trigger('loadingComplete');
+                });
+                self.nav.selectByNavigate('lists');
+            });
             router.route('list/:slug', 'todoListSlug', function(slug){
                 routerReset();
                 if(self.allTodosView.todosView.selectionView) {
@@ -419,11 +523,15 @@
             
             router.route('lists', 'lists', function(id){
                 routerReset();
-                self.allTodoListsView.render().$el.show();
-                self.allTodoListsView.$el.siblings().hide();
                 router.setTitle('Lists');
-                router.trigger('loadingComplete');
                 self.nav.selectByNavigate('lists');
+                    router.trigger('loadingComplete');
+                // window.todoListsCollection.load(null, function(){
+                    // self.router.trigger('loadingProgress', 30);
+                    self.allTodoListsView.render().$el.show();
+                    self.allTodoListsView.$el.siblings().hide();
+                    self.allTodoListsView.todoListsView.doRenderPage(1);
+                // });
             });
             router.route('nolist', 'nolist', function(){
                 routerReset();
@@ -432,7 +540,6 @@
             });
         }
     });
-    
     
     if(define) {
         define(function () {

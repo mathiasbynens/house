@@ -3,7 +3,8 @@
     index.init = function(callback) {
         require(['/desktop/jquery.js'], function() {
             $(document).ready(function() {
-                require(['/pages/bootstrap.js'], function() {
+                require(['/pages/bootstrap-init.js'], function(bootstrap){
+                    bootstrap.init();
                     require(['/desktop/underscore.js'], function() {
                         require(['/desktop/backbone.js'], function() {
                             require(['/desktop/backbone-house.js'], function() {
@@ -13,13 +14,11 @@
                                         window.clock = new Clock();
                                         clock.on('init', function() {
                                             require(['/account/account.js'], function(accountProfile) {
-                                                accountProfile.updateUi({
-                                                    "accountMenuLabel": "≡"
-                                                });
                                                 accountProfile.auth(function() {
                                                     accountProfile.setElement($('#siteMenu')).render();
                                                     account.getView().onNavInit(function(nav) {
                                                         index.nav = nav;
+                                                        accountProfile.bindRouter(nav.router);
                                                         nav.router.on('loading', function() {
                                                             $('#loading .progress-bar').css('width', '1%');
                                                             $('body').addClass('loading');
@@ -48,10 +47,9 @@
                                                         require(['/todos/app.js'], function(App) {
                                                             window.app = new App();
                                                             window.app.bindUser(accountProfile.loginStatus.getView().userModel);
+                                                            window.app.bindNav(nav);
                                                             window.app.on('initialized', function() {
-                                                                window.app.bindNav(nav);
                                                                 $('body').append(window.app.render().$el);
-                                                                accountProfile.bindRouter(nav.router);
                                                                 nav.startRouter('/todos/');
                                                                 if(callback) callback(window.app);
                                                             });

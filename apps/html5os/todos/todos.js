@@ -8,6 +8,7 @@
             this.RowView = RowView;
             this.AvatarView = RowView;
             this.FullView = RowView;
+            this.FormView = FormView;
             options = options || {};
             options.ownerFieldName = 'owner';
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
@@ -53,12 +54,6 @@
                 }
             }
         },
-        getFormView: function() {
-            if(!this.formView) {
-                this.formView = new FormView({model: this});
-            }
-            return this.formView;
-        }
     });
     
     var Collection = Backbone.House.Collection.extend({
@@ -170,6 +165,9 @@
                             
                             if(list.has('color')) {
                                 self.$el.find('.listColor').css('background-color', list.get('color'));
+                                self.$check.addClass('inverse');
+                            } else {
+                                self.$check.removeClass('inverse');
                             }
                         } else {
                             
@@ -306,36 +304,67 @@
         return (str + "").replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, "$1" + "<br />");
     };
     
-    var SelectGroupsView = Backbone.View.extend({
-        tagName: "select",
-        className: "groups",
-        initialize: function() {
-            this.$options = $('<option value="public">public</option><option value="private">private</option>');
-        },
-        render: function() {
-            var self = this;
-            this.$el.attr('name', 'groups');
-            this.$el.append(this.$options);
-            if(this.model && this.model.has('groups') && this.model.get('groups').indexOf('public') !== -1) {
-                this.$el.val('public');
-                this.$options.find('option[value="public"]').attr('selected','selected');
-            } else {
-                this.$el.val('private');
-                this.$options.find('option[value="private"]').attr('selected','selected');
-            }
-            this.setElement(this.$el);
-            return this;
-        },
-        val: function() {
-            var groups = [];
-            if(this.$el.val() == 'public') {
-                groups = ['public'];
-            }
-            return groups;
-        },
-        events: {
-        },
-    });
+    // var TodoListSelectListView = window.todoListsCollection.get
+    
+    // Backbone.House.SelectListFieldView.extend({
+    //     initialize: function(options) {
+    //         var self = this;
+    //         this.options.titleField = this.options.titleField || 'title';
+    //         this.collection = window.todoListsCollection
+    //     },
+    //     val: function(v) {
+    //         alert(v);
+    //         return v;
+    //     }
+    // });
+    
+    // var TodoListSelectListView = Backbone.View.extend({
+    //     tagName: "select",
+    //     className: "select",
+    //     initialize: function(options) {
+    //         var self = this;
+    //         this.options.titleField = this.options.titleField || 'title';
+    //     },
+    //     events: {
+    //     },
+    //     render: function() {
+    //         var self = this;
+    //         this.$el.html('');
+    //         this.$el.append('<option></option>');
+    //         //this.collection.sort({silent:true});
+    //         this.collection.each(function(doc){
+    //             self.$el.append('<option value="'+doc.id+'">'+doc.get(self.options.titleField)+'</option>');
+    //         });
+    //         this.setElement(this.$el);
+    //         return this;
+    //     },
+    //     val: function(v) {
+    //         if(v) {
+    //             this.$el.val(v.id);
+    //         } else {
+    //             var doc_id = this.$el.val();
+    //             if(doc_id) {
+    //                 var doc = this.collection.get(doc_id);
+    //                 var p = {
+    //                     id: doc_id
+    //                 }
+    //                 p.title = doc.title;
+    //                 if(post.has('slug')) {
+    //                     p.slug = post.get('slug');
+    //                 }
+    //                 if(post.has('seq')) {
+    //                     p.seq = post.get('seq');
+    //                 }
+    //                 if(post.has('youtube') && post.get('youtube').id) {
+    //                     p.youtube = post.get('youtube');
+    //                 }
+    //                 return p;
+    //             } else {
+    //                 return false;
+    //             }
+    //         }
+    //     }
+    // });
     
     var FormView = Backbone.View.extend({
         tagName: "div",
@@ -354,6 +383,8 @@
             //     } else {
             //     }
             // }
+            
+            var todoListSelectView = window.todoListsCollection.getNewSelectList({titleField: 'name'});
             
             var formOpts = {
                 collection: window.todosCollection,
@@ -392,6 +423,10 @@
                     // placeholder: "details",
                     className: "form-control",
                     label: "Due Date"
+                },
+                "list": {
+                    fieldView: todoListSelectView, //TodoListSelectListView,
+                    className: "form-control",
                 }
             }
             self.todosFormView = new window.todosCollection.getFormView(formOpts);

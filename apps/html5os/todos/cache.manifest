@@ -1,13 +1,12 @@
 CACHE MANIFEST
-# ver 0.4
+# ver 0.1
 
 CACHE:
 /todos/
 /desktop/libs/bootstrap/less/bootstrap.less.css/desktop/libs/bootstrap/theme/readable.less.css/desktop/house.less.css/todos/index.less.css
-/require.js?/todos/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/files/backbone-files.js/js/config.js/desktop/jquery.scrollTo.min.js/pages/bootstrap.js/clock/clock.js/clock/moment.js/todos/todos.js/todos/todoLists.js/todos/app.js
+/require.js?/todos/index.js/desktop/socket.io.min.js/desktop/underscore.js/desktop/backbone.js/desktop/backbone-house.js/desktop/utils.js/account/account.js/files/backbone-files.js/js/config.js/desktop/jquery.scrollTo.min.js/pages/bootstrap-init.js/clock/clock.js/clock/moment.js/todos/todos.js/todos/todoLists.js/todos/app.js
 /desktop/libs/bootstrap/fonts/glyphicons-halflings-regular.woff
 
 NETWORK:
 /
 *
-//www.jeffshouse.com
