@@ -2026,7 +2026,7 @@ var ListView = Backbone.View.extend({
     render: function(renderPage) {
         var self = this;
         if(_.isUndefined(renderPage)) {
-            renderPage = false;
+            renderPage = true;
         }
         // this.$el.html('');
         // this.$el.append(this.$ul);
