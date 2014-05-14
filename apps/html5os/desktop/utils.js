@@ -202,8 +202,11 @@
         },
         events: {
         },
-        remove: function(){
+        hide: function() {
             this.$el.modal('hide');
+        },
+        remove: function(){
+            this.hide();
             //this.$el.remove();
         }
     });
@@ -820,7 +823,13 @@
             "click li.moreAction a": "clickLiA"
         },
         clickDelete: function(e) {
-            this.$options.find('.delete').addClass('deleteConfirm').removeClass('delete').html(' Confirm');
+            var self = this;
+            self.deleteHtml = this.$options.find('.delete').html();
+            this.$options.find('.delete').addClass('deleteConfirm').removeClass('delete').html('<span class="glyphicon glyphicon-trash"></span> Confirm');
+            setTimeout(function(){
+                self.$options.find('.delete').removeClass('deleteConfirm').addClass('delete');
+                self.$options.find('.delete').html(self.deleteHtml);
+            }, 10000);
             return false;
         },
         clickDeleteConfirmed: function(e) {
@@ -833,6 +842,8 @@
                 },
                 wait: true});
             // }
+            // return false;
+            e.preventDefault();
         },
         clickLiA: function(e) {
             var $et = $(e.currentTarget);

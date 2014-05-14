@@ -138,15 +138,32 @@ Backbone.House.Model = Backbone.Model.extend({
     // constructor: function() {
     //     Backbone.House.Model.apply(this, arguments);
     // },
+    views: {}, // singleton instances of each view type
+    viewTypes: {}, // Backbone Views that represent this kind of model
     initialize: function(attrs, options) {
         this.options = options || {};
-        this.views = {};
         this.options.ownerFieldName = this.options.ownerFieldName || 'owner';
         this.options.userFieldName = this.options.userFieldName || 'user';
         if(!this.attributes.at && this.id) {
             var timestamp = this.id.toString().substring(0,8)
             var date = new Date( parseInt( timestamp, 16 ) * 1000 )
             this.attributes.at = date;
+        }
+        
+        if(this.FullView) {
+            this.addViewType(this.FullView, 'full');
+        }
+        if(this.AvatarView) {
+            this.addViewType(this.AvatarView, 'avatar');
+        }
+        if(this.RowView) {
+            this.addViewType(this.RowView, 'row');
+        }
+        if(this.TableRowView) {
+            this.addViewType(this.TableRowView, 'tableRow');
+        }
+        if(this.FormView) {
+            this.addViewType(this.FormViewllView, 'form');
         }
     },
     url: function() {
@@ -177,40 +194,39 @@ Backbone.House.Model = Backbone.Model.extend({
             var user = window.usersCollection.getOrFetch(user.id, callback);
         }
     },
-    getFullView: function(options) {
-        options = options || {};
-        options.model = this;
-        if (!this.full) {
-            var view = this.full = new this.FullView(options);
-            this.views.full = view;
+    addViewType: function(view, name) {
+        var self = this;
+        var nameCap = name[0].toUpperCase()+name.substr(1);
+        this.viewTypes[nameCap] = this[nameCap] = view;
+        this["get"+nameCap+"View"] = function(options) {
+            options = options || {};
+            options.model = self;
+            if (!self[name]) {
+                var view = self[name] = new self[nameCap](options);
+                this.views[name] = view;
+            }
+            return self[name];
         }
-        return this.full;
-    },
-    getAvatarView: function(options) {
-        options = options || {};
-        options.model = this;
-        if (!this.avatar) {
-            var view = this.avatar = new this.AvatarView(options);
-            this.views.avatar = view;
-        }
-        return this.avatar;
-    },
-    getFormView: function() {
-        if(!this.formView && this.FormView) {
-            this.formView = new this.FormView({model: this});
-        }
-        return this.formView;
     },
     getViewByName: function(name, options) {
         options = options || {};
         options.model = this;
-        if (!this.hasOwnProperty(viewName)) {
-            var viewName = name[0].toUpperCase() + name.substr(1) + 'View';
+        var viewName = name[0].toUpperCase() + name.substr(1); // + 'View';
+        if (!this.hasOwnProperty(name)) {
             var view = this[name] = new this[viewName](options);
             this.views[name] = view;
         }
         return this[name];
     },
+    // getFullView: function(options) {
+    //     options = options || {};
+    //     options.model = this;
+    //     if (!this.full) {
+    //         var view = this.full = new this.FullView(options);
+    //         this.views.full = view;
+    //     }
+    //     return this.full;
+    // },
     has: function(attr) {
         if(attr.indexOf('.') !== -1) {
             var attri = attr.indexOf('.');
@@ -273,24 +289,6 @@ Backbone.House.Model = Backbone.Model.extend({
     getRow: function(options) {
         return this.getRowView(options);
     },
-    getRowView: function(options) {
-        options = options || {};
-        options.model = this;
-        if (!this.row) {
-            var view = this.row = new this.RowView(options);
-            this.views.row = view;
-        }
-        return this.row;
-    },
-    getTableRowView: function(options) {
-        options = options || {};
-        options.model = this;
-        if (!this.trow) {
-            var view = this.trow = new this.TableRowView(options);
-            this.views.trow = view;
-        }
-        return this.trow;
-    },
     renderViews: function() {
         for (var i in this.views) {
             this.views[i].render();
@@ -309,11 +307,24 @@ Backbone.House.Model = Backbone.Model.extend({
         }
         return this.tagsListView;
     },
-    getNavigatePath: function() {
-        return 'id/' + this.id;
+    getNavigatePath: function(postfix) {
+        if(this.has('slug')) {
+            var slug = this.get('slug');
+            if(postfix) {
+                return slug + '/' + postfix;
+            } else {
+                return slug;
+            }
+        } else {
+            if(postfix) {
+                return 'id/' + this.id + '/' + postfix;
+            } else {
+                return 'id/' + this.id;
+            }
+        }
     },
-    getNavigateUrl: function() {
-        var path = $('base[href]').attr('href')+this.getNavigatePath();
+    getNavigateUrl: function(postfix) {
+        var path = $('base[href]').attr('href')+this.getNavigatePath(postfix);
         return window.location.protocol+'//'+window.location.hostname+path;
     },
     getSharePath: function() {
@@ -345,63 +356,73 @@ Backbone.House.Model = Backbone.Model.extend({
 Backbone.House.Collection = Backbone.Collection.extend({
     initialize: function(models, options) {
         var self = this;
-        self.pageSize = 25;
+        this.options = options || {};
+        if(_.isUndefined(this.pageSize)) {
+            self.pageSize = 25;
+        }
         this.resetFilters();
-        require(['/desktop/socket.io.min.js'], function() {
-            var socketOpts = {};
-            if (window.location.protocol.indexOf('https') !== -1) {
-                socketOpts.secure = true;
-            } else {
-                socketOpts.secure = false;
-            }
-            var socket = self.io = io.connect('//' + window.location.host + '/socket.io/io', socketOpts);
-            if (socket.socket.connected) {
-                console.log('already connected and now joining ' + self.collectionName);
-                socket.emit('join', self.collectionName);
-            }
-            socket.on('connect', function(data) {
-                console.log('connected and now joining ' + self.collectionName);
-                socket.emit('join', self.collectionName);
-            });
-            var insertOrUpdateDoc = function(doc) {
-                // console.log(doc);
-                if (_.isArray(doc)) {
-                    _.each(doc, insertOrUpdateDoc);
-                    return;
-                    s
-                }
-                var model = self.get(doc.id);
-                if (!model) {
-                    var model = new self.model(doc);
-                    self.add(model);
+        
+        this.collectionFriendlyName = this.collectionFriendlyName || this.collectionName;
+        if(this.socket !== false) {
+            require(['/desktop/socket.io.min.js'], function() {
+                var socketOpts = {};
+                if (window.location.protocol.indexOf('https') !== -1) {
+                    socketOpts.secure = true;
                 } else {
-                    // console.log('update model with doc')
-                    model.set(doc, {
-                        silent: true
-                    });
-                    model.renderViews();
+                    socketOpts.secure = false;
                 }
-            }
-            var collectionNameCap = self.collectionName[0].toUpperCase()+self.collectionName.substr(1);
-            socket.on('inserted'+collectionNameCap, function(doc) {
-                // console.log('inserted '+collectionNameCap);
-                insertOrUpdateDoc(doc);
-                self.count++;
-                self.trigger('count', self.count);
+                var socket = self.io = io.connect('//' + window.location.host + '/socket.io/io', socketOpts);
+                if (socket.socket.connected) {
+                    console.log('already connected and now joining ' + self.collectionName);
+                    socket.emit('join', self.collectionName);
+                }
+                socket.on('connect', function(data) {
+                    console.log('connected and now joining ' + self.collectionName);
+                    socket.emit('join', self.collectionName);
+                });
+                var insertOrUpdateDoc = function(doc) {
+                    // console.log(doc);
+                    if (_.isArray(doc)) {
+                        _.each(doc, insertOrUpdateDoc);
+                        return;
+                        s
+                    }
+                    var model = self.get(doc.id);
+                    if (!model) {
+                        var model = new self.model(doc);
+                        self.add(model);
+                    } else {
+                        // console.log('update model with doc')
+                        model.set(doc, {
+                            silent: true
+                        });
+                        model.renderViews();
+                    }
+                }
+                if(!self.collectionName) {
+                    throw new Error("collection name required");
+                }
+                var collectionNameCap = self.collectionName[0].toUpperCase()+self.collectionName.substr(1);
+                socket.on('inserted'+collectionNameCap, function(doc) {
+                    // console.log('inserted '+collectionNameCap);
+                    insertOrUpdateDoc(doc);
+                    self.count++;
+                    self.trigger('count', self.count);
+                });
+                socket.on('updated'+collectionNameCap, function(doc) {
+                    insertOrUpdateDoc(doc);
+                });
+                socket.on('deleted'+collectionNameCap, function(id) {
+                    // console.log(arguments)
+                    self.remove(id);
+                    self.count--;
+                    self.trigger('count', self.count);
+                });
+        
+                self.initialized = true;
+                self.trigger('initialized');
             });
-            socket.on('updated'+collectionNameCap, function(doc) {
-                insertOrUpdateDoc(doc);
-            });
-            socket.on('deleted'+collectionNameCap, function(id) {
-                // console.log(arguments)
-                self.remove(id);
-                self.count--;
-                self.trigger('count', self.count);
-            });
-    
-            self.initialized = true;
-            self.trigger('initialized');
-        });
+        }
     },
     url: function(){
         return apiPathPrefix+'/'+this.collectionName;
@@ -614,32 +635,24 @@ Backbone.House.Collection = Backbone.Collection.extend({
             });
         }
     },
-    newModel: function(url, options, callback) {
+    getNewModel: function(doc) {
+        if(!doc) {
+            doc = {};
+        }
+        return new this.model(doc, {
+            collection: this
+        });
+    },
+    saveNewModel: function(doc, callback) {
         var self = this;
         var setDoc = {};
         if(!callback && typeof options == 'function') {
             callback = options;
             options = null;
         }
-        var model = new this.Model({}, {
-            collection: self
-        });
-        if (!url) {
-            alert('URL required!');
-            return false;
-        }
-        setDoc.url = url;
-    
-        if(options) {
-            for(var o in options) {
-                setDoc[o] = options[o];
-            }
-        }
-        /*if(this.$public.is(':checked')) {
-            setDoc.groups = ['public'];
-        }*/
-    
-        model.set(setDoc, {
+        var model = this.getNewModel();
+        
+        model.set(doc, {
             silent: true
         });
         var saveModel = model.save(null, {
@@ -658,12 +671,18 @@ Backbone.House.Collection = Backbone.Collection.extend({
             });
         }
     },
+    getNewListView: function(options) {
+        var self = this;
+        if (!options) options = {};
+        if(!options.collection) options.collection = this;
+        return new ListView(options);
+    },
     getView: function(options) {
         var self = this;
         if (!options) options = {};
         if (!this.hasOwnProperty("view")) {
             options.collection = this;
-            this.view = new ListView(options);
+            this.view = this.getNewListView(options);
             this.view.on("selected", function(view) {
                 self.trigger("selected", view.model);
             });
@@ -676,14 +695,11 @@ Backbone.House.Collection = Backbone.Collection.extend({
         if(!options.collection) options.collection = this;
         return new FormView(options);
     },
+    getNewFormView: function(options) {
+        return this.getNewForm(options);
+    },
     getFormView: function(options) {
-        var self = this;
-        if (!options) options = {};
-        if (!this.hasOwnProperty("formView")) {
-            if(!options.collection) options.collection = this;
-            this.formView = new FormView(options);
-        }
-        return this.formView;
+        return this.getNewForm(options);
     },
     getNewSelectList: function(options) {
         var self = this;
@@ -709,7 +725,7 @@ var ListSearch = Backbone.View.extend({
     initialize: function(options) {
         var self = this;
         self.fieldName = options.search.fieldName || 'title';
-        this.options.placeholder = options.search.placeholder || 'Search '+this.options.list.collection.collectionName;
+        this.options.placeholder = options.search.placeholder || 'Search '+this.options.list.collection.collectionFriendlyName;
         this.$input = $('<input type="text" class="form-control" placeholder="'+this.options.placeholder+'" data-loading-text="loading">');
     },
     reset: function() {
@@ -759,6 +775,10 @@ var ListSearch = Backbone.View.extend({
         this.selectedQuery = this.$input.val().trim();
         this.trigger('search', this.$input.val().trim());
         return false;
+    },
+    query: function(query) {
+        this.selectedQuery = query;
+        this.trigger('search', query);
     },
     getSearchFilterFunc: function() {
         var self = this;
@@ -1057,7 +1077,7 @@ var ListPagination = Backbone.View.extend({
         this.$pageWrap = $('<span class="paginationWrap"><ul class="pagination"><li class="previous"><a href="#">«</a></li><li><a href="#">1</a></li><li class="next"><a href="#">»</a></li></ul></span>');
         this.$pageSizeWrap = $('<span class="pageSizeWrap">\
     <div class="btn-group pageSizes" data-toggle="buttons">\
-        <button title="Page Size" type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="pageSize"></span> <span class="ofText">of</span> <span class="collectionSize"></span> <span class="collectionName">'+this.options.list.collection.collectionName+'</span></button>\
+        <button title="Page Size" type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"><span class="pageSize"></span> <span class="ofText">of</span> <span class="collectionSize"></span> <span class="collectionName">'+this.options.list.collection.collectionFriendlyName+'</span></button>\
         <ul class="dropdown-menu" role="menu">\
             <li data-size="10"><a href="#" class="">10 per page</a></li>\
             <li data-size="25"><a href="#" class="">25 per page</a></li>\
@@ -1317,7 +1337,7 @@ var ListLayout = Backbone.View.extend({
         this.renderActiveLayout();
         if(layout === 'row') {
             this.trigger('layout', layout);
-        } else if(layout === 'table') {
+        } else if(layout === 'table' || this.layout === 'tableRow') {
             this.trigger('layout', layout);
         } else if(layout === 'avatar') {
             this.trigger('layout', layout);
@@ -1502,8 +1522,13 @@ var ListView = Backbone.View.extend({
     initialize: function(options) {
         var self = this;
         this.options = options;
+        this.loadOnRenderPage = true;
+        if(options.hasOwnProperty('loadOnRenderPage')) {
+            this.loadOnRenderPage = options.loadOnRenderPage;
+        }
         if (!this.collection) {
             // this.collection = new Collection();
+            throw new Error('Collection required!');
         }
         this.$el.addClass(this.collection.collectionName);
         // console.log(options);
@@ -1740,7 +1765,7 @@ var ListView = Backbone.View.extend({
                 this.$wrap.remove();
             }
             // console.log(this.layout)
-            if (this.layout == 'table') {
+            if (this.layout == 'table' || this.layout === 'tableRow') {
                 this.$wrap = $('<table class="houseList table table-striped table-hover"></table>');
                 this.$ul = $('<tbody></tbody>');
                 this.$wrap.append(this.$ul);
@@ -1829,20 +1854,24 @@ var ListView = Backbone.View.extend({
             this.collection.headCount(headCountOpts, function(count) {
                 self.searchCount = count;
                 self.trigger('count', count);
-                self.collection.load(self.searchLoad, function(){
-                    // self.searchResults = self.collection.filter(function(model) {
-                    //     // console.log(id)
-                    //     if (f(model, id)) {
-                    //         //self.getDocLayoutView(model).$el.show();
-                    //         return true;
-                    //     }
-                    //     //self.getDocLayoutView(model).$el.hide();
-                    //     return false;
-                    // });
-                    self.getCollectionFiltered();
-                    self.renderPage(1);
-                    self.renderPagination();
-                });
+                if(count > 0) {
+                    self.collection.load(self.searchLoad, function(){
+                        // self.searchResults = self.collection.filter(function(model) {
+                        //     // console.log(id)
+                        //     if (f(model, id)) {
+                        //         //self.getDocLayoutView(model).$el.show();
+                        //         return true;
+                        //     }
+                        //     //self.getDocLayoutView(model).$el.hide();
+                        //     return false;
+                        // });
+                        self.getCollectionFiltered();
+                        self.renderPage(1);
+                        self.renderPagination();
+                    });
+                } else {
+                    
+                }
             });
             
         } else {
@@ -1855,6 +1884,9 @@ var ListView = Backbone.View.extend({
     },
     search: function(q, callback) {
         var searchField = 'title';
+        if(this.options.search && this.options.search.fieldName) {
+            searchField = this.options.search.fieldName;
+        }
         var self = this;
         this.searchQ = q;
         // console.log(q);
@@ -1930,7 +1962,7 @@ var ListView = Backbone.View.extend({
         }
         if (this.layout === 'row') {
             view = doc.getRow(viewOpts);
-        } else if (this.layout === 'table') {
+        } else if (this.layout === 'table' || this.layout === 'tableRow') {
             view = doc.getTableRowView(viewOpts);
         } else if (this.layout === 'avatar') {
             view = doc.getAvatarView(viewOpts);
@@ -2000,7 +2032,7 @@ var ListView = Backbone.View.extend({
                 self.mason.layout();
             }
         }
-        if (col.length <= s + this.pageSize) {
+        if (col.length <= s + this.pageSize && this.loadOnRenderPage) {
             if(col.load) {
                 col.load({
                     skip: s
@@ -2133,7 +2165,7 @@ var ListView = Backbone.View.extend({
                 // rowEl.css('display', 'table-row');
                 // rowEl.show();
                 rowEl.css('display', 'block');
-            } else if (this.layout === 'table') {
+            } else if (this.layout === 'table' || this.layout === 'tableRow') {
                 rowEl.css('display', 'table-row');
             } else if (this.layout === 'avatar') {
                 rowEl.css('display', 'block');
@@ -2335,7 +2367,23 @@ var FormView = Backbone.View.extend({
         "submit": "submitForm",
         "click .cancel": "clickCancel",
         "click .delete": "clickDelete",
-        "click .submit": "clickSubmit"
+        "click .submit": "clickSubmit",
+        "keyup input": "debouncedKeyUp",
+    },
+    debouncedKeyUp: _.debounce(function(e) {
+        this.keyUp(e);
+    }, 500),
+    keyUp: function(e) {
+        if (e.keyCode == 27) {
+            this.clear();
+        }
+        // console.log($(e.currentTarget).attr('name'))
+        // console.log($(e.currentTarget).val())
+        //console.log(e.keyCode)
+        var cbObj = {};
+        cbObj[$(e.currentTarget).attr('name')] = $(e.currentTarget).val();
+        this.trigger('keyUp', cbObj);
+        return false;
     },
     clickCancel: function(e) {
         this.clear();
@@ -2460,6 +2508,8 @@ var FormView = Backbone.View.extend({
         if(fieldName) {
             var $field = this.$fieldset.find('[name="'+fieldName+'"]');
             $field.focus();
+        } else {
+            this.$fieldset.find('input').first().focus();
         }
     }
 });

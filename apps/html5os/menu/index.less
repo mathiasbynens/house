@@ -1,0 +1,113 @@
+body {
+    
+}
+.houseCollectionHeader {
+    float: none;
+}
+
+.menuGroups, .menuGroup {
+    .houseCollectionHeader {
+        display: none;
+    }
+}
+.navbar-nav > li > a {
+    margin: 4px 6px;
+}
+.pageTitle {
+    margin: 0 0;
+}
+
+.menu-group-form {
+    .houseCollectionHeader {
+        display: none;
+    }
+    .images-list {
+        .menuGroupImage {
+            .actions {
+                list-style: none;
+                display: none;
+                position: absolute;
+                top: 0;
+                right: 0;
+                background: white;
+                margin: 0 0;
+                padding: 4px;
+                li {
+                    float: left;
+                }
+            }
+            &:hover {
+                .actions {
+                    display: block;
+                }
+            }
+        }
+    }
+}
+.menu-group-picker {
+    .groupRow:hover {
+        cursor: pointer;
+        
+        td {
+            background-color: @brand-primary;
+            color: white;
+        }
+    }
+    .groupRow .actions {
+        display: none;
+    }
+}
+
+.menuGroupGroup {
+    ul.actions {
+        list-style: none;
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        li {
+            float: left;
+        }
+    }
+    &:hover {
+        cursor: pointer;
+        ul.actions {
+            display: block;
+        }
+    }
+    
+    .groupGroup {
+        min-height: 200px;
+        background-color: @brand-primary;
+        color: white;
+        position: relative;
+        display: block;
+        overflow: hidden;
+        // padding: 2px 2px;
+        .bgImage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            img {
+                width: 100%;
+            }
+        }
+        h3 {
+            z-index: 2;
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+        }
+    }
+}
+
+.menuGroup.fullView {
+    .group {
+        .actions {
+            padding-top: 24px;
+        }
+    }
+}

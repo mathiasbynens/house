@@ -199,6 +199,7 @@
             
             this.ui = {
                 label: "Get Updates",
+                placeholder: "your email"
             }
             if(options) {
                 for(var i in options.ui) {
@@ -209,7 +210,7 @@
                                 <label>'+this.ui.label+'</label> <span class="glyphicon glyphicon-bullhorn"></span> \
                                 <div class="form-group">\
                                     <div class="input-group">\
-                                        <input type="email" class="form-control" name="email" placeholder="your email" data-loading-text="loading">\
+                                        <input type="email" class="form-control" name="email" placeholder="'+this.ui.placeholder+'" data-loading-text="loading">\
                                         <span class="input-group-btn">\
                                             <button class="go btn btn-default" type="button" data-loading-text="...">Subscribe</button>\
                                         </span>\

@@ -2073,7 +2073,7 @@
             this.$el.html('');
 
             if (this.model.has('ogImage')) {
-                console.log(self.model.get('ogImage'))
+                // console.log(self.model.get('ogImage'))
                 //self.$el.append('<img src="/api/files/'+self.model.get('ogImage').filename+'">');
                 if (!this.hasOwnProperty('ogImageView')) {
                     self.ogImageView = new ImagesBackbone.Model(self.model.get('ogImage')).getAvatar();

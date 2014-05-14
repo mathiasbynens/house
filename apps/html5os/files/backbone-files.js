@@ -19,10 +19,10 @@
     var Model = Backbone.House.Model.extend({
         collectionName: "files",
         initialize: function(attrs, options) {
-            this.TableRowView = FileRow;
-            this.RowView = FileRow;
-            this.AvatarView = FileAvatar;
-            this.FullView = FileFullView;
+            this.addViewType(FileFullView, 'full');
+            this.addViewType(FileRow, 'row');
+            this.addViewType(FileAvatar, 'avatar');
+            this.addViewType(FileRow, 'tableRow');
             options = options || {};
             options.ownerFieldName = 'metadata.owner';
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
