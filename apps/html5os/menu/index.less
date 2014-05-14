@@ -5,7 +5,7 @@ body {
     float: none;
 }
 
-.menuGroups, .menuGroup {
+.menuGroups, .menuGroup, .menu-item-picker {
     .houseCollectionHeader {
         display: none;
     }
@@ -57,33 +57,54 @@ body {
         display: none;
     }
 }
+.menu-item-picker {
+    .itemRow:hover {
+        cursor: pointer;
+        
+        td {
+            background-color: @brand-primary;
+            color: white;
+        }
+    }
+    .itemRow .actions {
+        display: none;
+    }
+}
 
-.menuGroupGroup {
+.menuGroupGroup, .menuGroupItem {
     ul.actions {
         list-style: none;
         display: none;
         position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
+        top: 1px;
+        right: 16px;
+        z-index: 3;
+        background: white;
+        padding: 0 0;
+        margin: 0 0;
         li {
             float: left;
         }
     }
-    &:hover {
-        cursor: pointer;
-        ul.actions {
-            display: block;
+    @media (min-width: @screen-xs-min) {
+        &:hover {
+            cursor: pointer;
+            ul.actions {
+                display: block;
+                top: auto;
+                bottom: 33px;
+            }
         }
     }
     
-    .groupGroup {
-        min-height: 200px;
+    .groupGroup, .groupItem {
+        height: 200px;
         background-color: @brand-primary;
         color: white;
         position: relative;
         display: block;
         overflow: hidden;
+        margin-bottom: 32px;
         // padding: 2px 2px;
         .bgImage {
             position: absolute;
@@ -97,9 +118,18 @@ body {
         h3 {
             z-index: 2;
             position: absolute;
-            top: 8px;
-            left: 8px;
-            right: 8px;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            margin: 0 0;
+        }
+    }
+    @media (max-width: @screen-xs-max) {
+        ul.actions {
+            display: block;
+        }
+        .groupGroup, .groupItem {
+            height: 100px;
         }
     }
 }
@@ -111,3 +141,12 @@ body {
         }
     }
 }
+
+@media (max-width: @screen-xs-max) {
+     .navbar-form {
+         margin: 5px 0;
+     }
+     .navbar-toggle {
+         margin-top: 3px;
+     }
+ }

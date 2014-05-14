@@ -15,12 +15,20 @@
                 this.menuItemSkuCollection = new MenuItemSkuCollection([], colOpts);
             }
             // this.menuItemReviewCollection = new MenuItemReviewCollection([], colOpts);
+            this.addViewType(TableRowView, 'tableRow');
             this.addViewType(MenuItemView, 'avatar');
             this.addViewType(MenuItemRowView, 'row');
             this.addViewType(MenuItemShareView, 'share');
+            this.addViewType(PickerView, 'picker');
         },
         getView: function(options) {
             return this.getRowView();
+        },
+        slugStr: function(str) {
+            return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
+        },
+        setSlug: function(slug) {
+            this.set('slug', this.slugStr(slug));
         },
     });
     var MenuItemImage = Backbone.House.Model.extend({
@@ -959,6 +967,178 @@
             this.$query.focus();
         }
     });
+    
+    var TableRowView = Backbone.View.extend({
+        tagName: "tr",
+        className: "itemRow",
+        initialize: function() {
+            this.model.bind('change', this.render, this);
+            this.model.bind('destroy', this.remove, this);
+            var opts = {
+                model: this.model, 
+                actionOptions: {
+                    collectionFriendlyName: 'item',
+                    fav: false,
+                    // fav: {fieldName: 'fav'},
+                    // tags: {fieldName: 'tags'},
+                    // groups: {fieldName: 'groups'},
+                    detail: true,
+                    // share: true,
+                }
+            }
+            this.actionsView = new utils.ModelActionsView(opts);
+            // this.actionsView.on('goToTagName', function(tagName){
+            //     app.collection.view.tagsView.tagSelectView.selectTagByName(tagName);
+            // });
+            
+            this.$tdName = $('<td class="name"></td>');
+            this.$tdGroupCount = $('<td class="groupCount"></td>');
+            this.$tdItemCount = $('<td class="itemCount"></td>');
+            // this.$tdAt = $('<td class="at"></td>');
+            this.$tdActions = $('<td class="actions"></td>');
+        },
+        render: function() {
+            this.$el.append(this.$tdName);
+            this.$el.append(this.$tdGroupCount);
+            this.$el.append(this.$tdItemCount);
+            // this.$el.append(this.$tdAt);
+            this.$el.append(this.$tdActions);
+            
+            if(this.model.has('name')) {
+                this.$tdName.html(this.model.get('name'));
+            }
+            
+            this.$tdActions.append(this.actionsView.render().$el);
+            
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+          "click": "clickSelect",
+          "touchstart input": "touchstartstopprop",
+          "click .byline a": "clickByline"
+        },
+        clickByline: function() {
+            this.model.collection.trigger('goToNavigatePath', this.model);
+            return false;
+        },
+        touchstartstopprop: function(e) {
+            e.stopPropagation();
+        },
+        select: function() {
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('selected', this);
+            }
+        },
+        deselect: function() {
+            this.$el.removeClass("selected");
+            this.$el.removeAttr('selected');
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('deselected', this);
+            }
+        },
+        clickSelect: function(e) {
+            var self = this;
+            var $et = $(e.target);
+            if($et.parents('.actions').length) {
+            } else {
+                var deselectSiblings = function(el) {
+                    el.siblings().removeClass('selected');
+                    el.siblings().removeAttr('selected');
+                }
+                if(this.$el.hasClass('selected')) {
+                    this.deselect();
+                } else {
+                    this.select();
+                }
+            }
+        },
+        remove: function() {
+            if(this.$el.hasClass('selected')) {
+                this.deselect();
+            }
+            this.$el.remove();
+        }
+    });
+    
+    var PickerView = Backbone.View.extend({
+        tagName: "div",
+        className: "menu-item-picker",
+        initialize: function() {
+            var self = this;
+            this.initNewFormView();
+        },
+        initNewFormView: function() {
+            var self = this;
+            this.pickerMenuItemsCollection = window.menuItemsCollection.clone();
+            if(this.menuItemsList) {
+                this.menuItemsList.remove();
+            }
+            this.menuItemsList = this.pickerMenuItemsCollection.getNewListView({
+                layout: 'tableRow',
+                search: {
+                    'fieldName': 'name'
+                },
+            });
+            this.menuItemsList.on('selected', function(view) {
+                self.trigger('picked', view.model);
+            });
+            var newModel = this.pickerMenuItemsCollection.getNewModel({});
+            // console.log(newModel)
+            var formOpts = {
+                collection: this.pickerMenuItemsCollection,
+                model: newModel,
+                submit: false,
+                cancel: false,
+                delete: false
+            };
+            formOpts.fields = {
+                "name": {
+                    validateType: 'string',
+                    autocomplete: "off",
+                    placeholder: "Item title",
+                    className: "form-control"
+                },
+            }
+            if(self.houseFormView) {
+                self.houseFormView.remove();
+            }
+            self.houseFormView = formOpts.collection.getNewFormView(formOpts);
+            self.houseFormView.on('keyUp', function(inputs){
+                var query = inputs.name;
+                self.menuItemsList.searchView.query(query);
+            });
+            self.houseFormView.on('saved', function(doc){
+                self.initNewFormView();
+                self.searchForItemName('');
+                self.trigger('picked', doc);
+            });
+        },
+        searchForItemName: function(q) {
+            var self = this;
+            this.menuItemsList.search(q);
+        },
+        render: function() {
+            var self = this;
+            
+            this.$el.append(self.houseFormView.render().$el);
+            this.$el.append(this.menuItemsList.render().$el);
+            
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+        },
+        focus: function() {
+            this.houseFormView.focus();
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+    
     var MenuItemSkuForm = Backbone.View.extend({
         tag: "div",
         className: "menuItemSkuForm",
@@ -1045,101 +1225,13 @@
             this.$title.focus();
         }
     });
-    var MenuItemReviewForm = Backbone.View.extend({
-        tagName: "div",
-        className: "menuItemReviewForm",
-        render: function() {
-            var menuItemTitle = this.options.menuItem.get('title');
-            var onOff = '<span class="toggle" style=""><label class="thumbUp"><input type="radio" name="toggle" value="good"><span>Like</span></label><label class="thumbDown"><input type="radio" name="toggle" value="bad"><span>Dislike</span></label></span>';
-            this.$el.html('<h4>Review '+menuItemTitle+'</h4><form id="menuItemReviewForm">' + onOff + '<span class="msgWrap"><textarea name="msg" placeholder="Tell us what you think about this"></textarea></span><span class="image"><button class="attachPhoto blue">Attach Photo</button></span><input type="submit" value="Submit Review" /></form>');
-            this.$el.find(".image").append(this.uploadInput.render().$el);
-            if(menu.user) {
-                var $reviewAsUser = menu.user.getAvatarNameView().render().$el.clone();
-                this.$el.find('h4').after($reviewAsUser);
-            }
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            var self = this;
-            this.uploadInput = new UploadInputView;
-            this.uploadInput.on("upload", function(data) {
-                if (data.file) {
-                    self.addImage(data);
-                }
-            });
-        },
-        events: {
-            "submit form": "submit",
-            "click button.attachPhoto": "attachPhoto"
-        },
-        attachPhoto: function() {
-            this.$el.find('input[type="file"]').show();
-            this.$el.find('input[type="file"]').click();
-            return false;
-        },
-        addImage: function(data) {
-            console.log(data);
-            var $previewImg = $('<img src="/api/files/' + data.file.filename + '" />');
-            var $img = this.$el.find(".image");
-            $img.append($previewImg);
-            $img.attr("data-id", data.file._id);
-            $img.attr("data-filename", data.file.filename);
-            this.$el.find('input[type="file"]').hide();
-        },
-        submit: function() {
-            var self = this;
-            var toggle = this.$el.find("input:checked").val();
-            console.log(toggle);
-            var msg = this.$el.find('[name="msg"]').val();
-            console.log(msg);
-            var $img = this.$el.find(".image");
-            console.log($img.attr("data-id"));
-            var newReview = {};
-            if (toggle) {
-                if (toggle == "bad") {
-                    newReview.vote = 0;
-                } else {
-                    newReview.vote = 1;
-                }
-            }
-            if ($img.attr("data-id") && $img.attr("data-filename")) {
-                newReview.image = {
-                    id: $img.attr("data-id"),
-                    filename: $img.attr("data-filename")
-                };
-            }
-            if (msg && msg !== "") {
-                newReview.msg = msg;
-            }
-            console.log(newReview);
-            if (newReview != {}) {
-                var m = new MenuItemReview({}, {
-                    collection: this.collection
-                });
-                m.set(newReview);
-                var s = m.save(null, {
-                    silent: true,
-                    wait: true
-                });
-                s.done(function() {
-                    self.trigger("saved", m);
-                    self.collection.add(m);
-                });
-            }
-            return false;
-        },
-        focus: function() {},
-        remove: function() {
-            $(this.el).remove();
-        }
-    });
     if (define) {
         define(function() {
             return {
                 Collection: MenuItemsCollection,
                 Model: MenuItem,
-                Form: MenuItemForm
+                Form: MenuItemForm,
+                Picker: PickerView
             };
         });
     }

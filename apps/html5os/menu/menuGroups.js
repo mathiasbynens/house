@@ -25,6 +25,7 @@
             this.addViewType(MenuGroupRowView, 'row');
             this.addViewType(FormView, 'form');
             this.addViewType(PickerView, 'picker');
+            this.addViewType(window.MenuItems.Picker, 'itemPicker');
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
         getView: function(options) {
@@ -33,7 +34,7 @@
         addGroup: function(menuGroup, callback) {
             var self = this;
             var maxRank = 0;
-            if(this.has("groups")) {
+            if(this.has("groups") && this.menuGroupGroupCollection.length > 0) {
                 maxRank = this.menuGroupGroupCollection.last().get("rank");
             }
             var doc = {
@@ -48,7 +49,7 @@
         addItem: function(menuItem, callback) {
             var self = this;
             var maxRank = 0;
-            if(this.has("items")) {
+            if(this.has("items") && this.menuGroupItemCollection.length > 0) {
                 maxRank = this.menuGroupItemCollection.last().get("rank");
             }
             var doc = {
@@ -77,7 +78,13 @@
             this.menuGroupImageCollection.saveNewModel(doc, function(model){
                 if(callback) callback(model);
             });
-        }
+        },
+        slugStr: function(str) {
+            return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
+        },
+        setSlug: function(slug) {
+            this.set('slug', this.slugStr(slug));
+        },
     });
 
     var MenuGroupImage = Backbone.House.Model.extend({
@@ -271,314 +278,6 @@
             });
         }
     });
-    var MenuGroupList = Backbone.View.extend({
-        tag: "span",
-        className: "menuGroups",
-        render: function() {
-            var self = this;
-            this.$ul = $("<ul></ul>");
-            this.$actions = $('<ul class="actions"></ul>');
-            this.$el.html("");
-            this.collection.each(function(m, i, c) {
-                self.appendModel(m);
-            });
-            if(app.userIsAdmin()) {
-                this.$actions.append('<li><button class="addGroup">Add Group</button></li><li><button class="addItem">Add Item</button></li><li><button class="editName">Edit Name</button></li><li class="uploadImage"><button class="attachImage">Attach Image</button></li>');
-                this.$actions.find(".uploadImage").append(this.uploadInput.render().$el);
-            }
-            this.$el.append(this.$ul);
-            this.$el.append(this.$actions);
-            this.setElement(this.$el);
-            return this;
-        },
-        events: {
-            "click .addGroup": "addGroup",
-            "click .addItem": "addItem",
-            "click .editName": "editName",
-            "click .attachImage": "attachImage",
-        },
-        attachImage: function() {
-            var self = this;
-            this.uploadInput.click();
-        },
-        addImageToCurrentMenuGroup: function(file) {
-            if(!file) {
-                return;
-            }
-            var self = this;
-            var imagesMaxRank = 0;
-            if(this.selectedMenu.has("images") && this.selectedMenu.menuGroupImageCollection.length > 0) {
-                imagesMaxRank = this.selectedMenu.menuGroupImageCollection.last().get("rank");
-            }
-            var image = {
-                _id: file._id,
-                filename: file.filename,
-                rank: imagesMaxRank + 1
-            };
-            var model = new MenuGroupImage({}, {
-                collection: this.selectedMenu.menuGroupImageCollection
-            });
-            model.set(image);
-            var saveModel = model.save(null, {
-                silent: true,
-                wait: true
-            });
-            saveModel.done(function() {
-                self.selectedMenu.menuGroupImageCollection.add(model);
-            });
-        },
-        addGroupToCurrentMenuGroup: function(menuGroup) {
-            var self = this;
-            var groupsLen = 0;
-            if(this.selectedMenu.has("groups")) {
-                groupsLen = this.selectedMenu.menuGroupGroupCollection.last().get("rank");
-            }
-            var groupO = {
-                _id: menuGroup.get("id"),
-                name: menuGroup.get("name"),
-                rank: groupsLen + 1
-            };
-            var m = new MenuGroupGroup({}, {
-                collection: this.selectedMenu.menuGroupGroupCollection
-            });
-            m.set(groupO);
-            var s = m.save(null, {
-                silent: true,
-                wait: true
-            });
-            s.done(function() {
-                self.selectedMenu.menuGroupGroupCollection.add(m);
-            });
-        },
-        addItemToCurrentMenuGroup: function(menuItem) {
-            var self = this;
-            var itemsLen = 0;
-            if(this.selectedMenu.has("items")) {
-                itemsLen = this.selectedMenu.menuGroupItemCollection.last().get("rank");
-            }
-            var itemO = {
-                _id: menuItem.get("id"),
-                name: menuItem.get("name"),
-                rank: itemsLen + 1
-            };
-            var m = new MenuGroupItem({}, {
-                collection: this.selectedMenu.menuGroupItemCollection
-            });
-            m.set(itemO);
-            var s = m.save(null, {
-                silent: true,
-                wait: true
-            });
-            s.done(function() {
-                self.selectedMenu.menuGroupItemCollection.add(m);
-            });
-        },
-        editName: function() {
-            var oldName = this.selectedMenu.get("name");
-            var newName = prompt("Edit the menu group name", oldName);
-            if(newName && newName != oldName) {
-                var savetx = this.selectedMenu.save({
-                    name: newName
-                }, {
-                    silent: false,
-                    wait: true
-                });
-                savetx.done(function(s, typeStr, respStr) {});
-            }
-        },
-        addGroup: function() {
-            var self = this;
-            var menuGroupPicker = new MenuGroupPicker({
-                collection: this.collection
-            });
-            menuGroupPicker.$light = utils.appendLightBox(menuGroupPicker.render().$el);
-            menuGroupPicker.on("selected", function(menuGroup) {
-                self.addGroupToCurrentMenuGroup(menuGroup);
-                menuGroupPicker.$light.remove();
-                $(".lightbox").remove();
-            });
-        },
-        addItem: function() {
-            var self = this;
-            var menuItemPicker = new MenuItemPicker({
-                collection: this.options.itemCollection
-            });
-            menuItemPicker.$light = utils.appendLightBox(menuItemPicker.render().$el);
-            menuItemPicker.on("selected", function(menuItem) {
-                self.addItemToCurrentMenuGroup(menuItem);
-                menuItemPicker.$light.remove();
-                $(".lightbox").remove();
-            });
-        },
-        hideAll: function() {
-            var self = this;
-            var doFx = false;
-            var $sel = this.$ul.children('.menuGroup[selected="selected"]');
-            if(doFx) {
-                self.$ul.children().removeClass("fadeOut");
-                $sel.addClass("fadeOut");
-            }
-            $sel.removeAttr("selected");
-            if(doFx) {
-                setTimeout(function() {
-                    self.$ul.children().removeClass("fadeOut");
-                }, 1e3);
-            }
-        },
-        appendModel: function(m) {
-            var self = this;
-            var v = m.getView({
-                list: this
-            });
-            var $el = v.render().$el;
-            v.on("selectedGroup", function(menuGroupGroup) {
-                var slug = menuGroupGroup.model.get("name").toLowerCase();
-                menu.router.navigate("menu/" + encodeURIComponent(slug), true);
-            });
-            v.on("selectedItem", function(menuGroupItem) {
-                var slug = menuGroupItem.model.get("id");
-                menu.router.navigate("menu/item/" + slug, true);
-            });
-            if(m.has("root")) {
-                $el.attr("selected", true);
-                this.selectedMenu = m;
-            }
-            this.$ul.append($el);
-        },
-        initialize: function() {
-            var self = this;
-            this.collection.on("add", function(m) {
-                self.appendModel(m);
-            });
-            this.collection.on("reset", function() {
-                if(!self.$ul) {
-                    self.$ul = $("<ul></ul>");
-                } else {
-                    self.$ul.html("");
-                }
-            });
-
-            this.uploadInput = new UploadInputView;
-            this.uploadInput.on("upload", function(data) {
-                if(data.file) {
-                    self.addImageToCurrentMenuGroup(data.file);
-                }
-            });
-        }
-    });
-    var MenuGroupImageList = Backbone.View.extend({
-        tag: "span",
-        className: "menuGroupImages",
-        render: function() {
-            var self = this;
-            this.$ul = $("<ul></ul>");
-            this.$actions = $('<ul class="actions"></ul>');
-            this.$el.html("");
-            this.$el.hide();
-            this.collection.each(function(m, i, c) {
-                self.appendModel(m);
-            });
-            this.$el.append(this.$ul);
-            this.$el.append(this.$actions);
-            this.setElement(this.$el);
-            return this;
-        },
-        events: {},
-        appendModel: function(m) {
-            this.$el.show();
-            var $el = m.getNewView({
-                list: this
-            }).render().$el;
-            this.$ul.append($el);
-        },
-        initialize: function() {
-            var self = this;
-            this.collection.on("add", function(m) {
-                self.appendModel(m);
-            });
-            this.collection.on("reset", function() {
-                if(!self.$ul) {
-                    self.$ul = $("<ul></ul>");
-                } else {
-                    self.$ul.html("");
-                }
-            });
-        }
-    });
-    var MenuGroupGroupList = Backbone.View.extend({
-        tag: "span",
-        className: "menuGroupGroups",
-        render: function() {
-            var self = this;
-            this.$ul = $("<ul></ul>");
-            this.$actions = $('<ul class="actions"></ul>');
-            this.$el.html("");
-            this.collection.each(function(m, i, c) {
-                self.appendModel(m);
-            });
-            this.$el.append(this.$ul);
-            this.$el.append(this.$actions);
-            this.setElement(this.$el);
-            return this;
-        },
-        events: {},
-        appendModel: function(m) {
-            var $el = m.getView({
-                list: this
-            }).render().$el;
-            this.$ul.append($el);
-        },
-        initialize: function() {
-            var self = this;
-            this.collection.on("add", function(m) {
-                self.appendModel(m);
-            });
-            this.collection.on("reset", function() {
-                if(!self.$ul) {
-                    self.$ul = $("<ul></ul>");
-                } else {
-                    self.$ul.html("");
-                }
-            });
-        }
-    });
-    var MenuGroupItemList = Backbone.View.extend({
-        tag: "span",
-        className: "menuGroupItems",
-        render: function() {
-            var self = this;
-            this.$ul = $("<ul></ul>");
-            this.$actions = $('<ul class="actions"></ul>');
-            this.$el.html("");
-            this.collection.each(function(m, i, c) {
-                self.appendModel(m);
-            });
-            this.$el.append(this.$ul);
-            this.$el.append(this.$actions);
-            this.setElement(this.$el);
-            return this;
-        },
-        events: {},
-        appendModel: function(m) {
-            var $el = m.getView({
-                list: this
-            }).render().$el;
-            this.$ul.append($el);
-        },
-        initialize: function() {
-            var self = this;
-            this.collection.on("add", function(m) {
-                self.appendModel(m);
-            });
-            this.collection.on("reset", function() {
-                if(!self.$ul) {
-                    self.$ul = $("<ul></ul>");
-                } else {
-                    self.$ul.html("");
-                }
-            });
-        }
-    });
     var TableRowView = Backbone.View.extend({
         tagName: "tr",
         className: "groupRow",
@@ -597,32 +296,6 @@
                     // share: true,
                 }
             }
-            // if(this.model.get('metadata').src) {
-            //     var src = this.model.get('metadata').src;
-            //     var modelName = src.substr(0, src.length-1);
-            //     opts.actionOptions.more = {
-            //         "deleteSrc": {
-            //             title: "Delete "+modelName,
-            //             glyphicon: 'trash',
-            //             action: function(model) {
-            //                 if(confirm("Are you sure that you want to delete the source "+modelName+"?")) {
-            //                     console.log(typeof model.url);
-            //                     console.log(model.url);
-            //                     model.url = model.url() + '/src';
-            //                     // model.url = model.url+'/src';
-            //                     // return;
-            //                     model.destroy({success: function(model, response) {
-            //                       console.log('deleted src');
-            //                     }, 
-            //                     error: function(model, response) {
-            //                         console.log(arguments);
-            //                     },
-            //                     wait: true});
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
             this.actionsView = new utils.ModelActionsView(opts);
             // this.actionsView.on('goToTagName', function(tagName){
             //     app.collection.view.tagsView.tagSelectView.selectTagByName(tagName);
@@ -633,20 +306,8 @@
             this.$tdItemCount = $('<td class="itemCount"></td>');
             // this.$tdAt = $('<td class="at"></td>');
             this.$tdActions = $('<td class="actions"></td>');
-            
-            // this.$panelHead = $('<div class="panel-heading"></div>');
-            // this.$panelBody = $('<div class="panel-body"></div>');
-            // this.$panelFoot = $('<div class="panel-footer"></div>');
-            // this.$checkbox = $('<input type="checkbox" name="select" />');
-            // this.$caption = $('<span class="caption"></span>');
-            // this.$byline = $('<span class="byline"></span>');
-            // this.$extraInfo = $('<div class="extraInfo"><h3>Metadata</h3></div>');
-            // this.$icon = $('<span class="contentIcon"></span>');
-            // this.$filename = $('<span class="filename"></span>');
         },
         render: function() {
-            // this.$el.html('');
-            // this.$el.append(this.$tdIcon);
             this.$el.append(this.$tdName);
             this.$el.append(this.$tdGroupCount);
             this.$el.append(this.$tdItemCount);
@@ -656,11 +317,6 @@
             if(this.model.has('name')) {
                 this.$tdName.html(this.model.get('name'));
             }
-            // this.$el.append(this.$checkbox);
-            // this.$caption.html('');
-            // this.$caption.append('<span class="contentType">'+this.model.get('contentType')+'</span>');
-            // this.$caption.append('<span class="contentLength">'+this.model.getLengthFormatted()+'</span>');
-            // this.$panelFoot.append(this.$caption);
             
             this.$tdActions.append(this.actionsView.render().$el);
             
@@ -731,7 +387,8 @@
                 self.trigger("selectedItem", menuGroupItem);
             });
             
-            this.$e = $('<span class="group"><div class="btn-group btn-group-justified actions">\
+            this.$e = $('<div class="group">\
+    <div class="btn-group btn-group-justified actions">\
             <div class="btn-group">\
                 <button type="button" class="btn btn-primary btn-lg editGroup">Edit</button>\
             </div>\
@@ -741,11 +398,14 @@
             <div class="btn-group">\
                 <button type="button" class="btn btn-primary btn-lg addGroup">+ Sub Menu</button>\
             </div>\
+    </div>\
 </div>');
-            this.$desc = $('<p class="desc"></p></span>');
+            this.$desc = $('<p class="desc text-muted"></p></span>');
 
             this.groupGroupsView = this.model.menuGroupGroupCollection.getView({
+                className: 'houseCollection groups row',
                 loadOnRenderPage: false,
+                selection: false, mason: false,
             });
         },
         render: function() {
@@ -768,8 +428,10 @@
             this.$el.append(this.$desc);
             this.$el.append(this.groupGroupsView.render().$el);
             // if(this.model.has("items")) {}
-            this.$e.append(this.model.menuGroupItemCollection.getView({
+            this.$el.append(this.model.menuGroupItemCollection.getView({
+                className: 'houseCollection items row',
                 loadOnRenderPage: false,
+                selection: false, mason: false,
             }).render().$el);
             this.$el.append(this.$e);
             if(this.model.has("desc")) {
@@ -906,7 +568,7 @@
     });
     var MenuGroupImageView = Backbone.View.extend({
         tagName: "div",
-        className: "menuGroupImage col-xs-4",
+        className: "menuGroupImage col-md-4",
         render: function() {
             var $e = $('<span class="groupImage"></span>');
             this.$el.html($e);
@@ -1018,6 +680,7 @@
             }
             this.$e = $('<span class="groupGroup"><h3></h3><span class="bgImage"></span></span>');
             this.$bgImage = $('<img>');
+            this.$actions = $('<ul class="actions"></ul>');
         },
         render: function() {
             this.$el.append(this.$e);
@@ -1040,8 +703,7 @@
                 // console.log(this.refModel.menuGroupImageCollection.first())
             }
             if(app.userIsAdmin()) {
-                this.$actions = $('<ul class="actions"></ul>');
-                this.$actions.append('<li><button class="moveUp btn btn-link glyphicon glyphicon-arrow-up" title="rank ' + this.model.get("rank") + '"></button></li><li><button class="remove btn btn-link glyphicon glyphicon-trash"></button></li>');
+                this.$actions.html('<li><button class="moveUp btn btn-link glyphicon glyphicon-arrow-up" title="rank ' + this.model.get("rank") + '"></button></li><li><button class="remove btn btn-link glyphicon glyphicon-trash"></button></li>');
                 this.$el.append(this.$actions);
             }
             this.$el.attr("data-id", this.model.get("id"));
@@ -1122,27 +784,8 @@
         }
     });
     var MenuGroupItemView = Backbone.View.extend({
-        tagName: "li",
-        className: "menuGroupItem",
-        render: function() {
-            var $e = $('<span class="groupItem"></span>');
-            this.$el.html($e);
-            if(this.model.has("title")) {
-                $e.append("<h3>" + this.model.get("title") + "</h3>");
-            }
-            if(this.refModel) {
-                this.$el.append(this.refModel.menuItemImageCollection.getViewMini().render().$el);
-                $e.append("<h3>" + this.refModel.get("title") + "</h3>");
-            }
-            if(app.userIsAdmin()) {
-                this.$actions = $('<ul class="actions"></ul>');
-                this.$actions.append('<li><button class="moveUp" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove">Remove</button></li>');
-                this.$el.append(this.$actions);
-            }
-            this.$el.attr("data-id", this.model.get("id"));
-            this.setElement(this.$el);
-            return this;
-        },
+        tagName: "div",
+        className: "menuGroupItem col-md-4",
         initialize: function() {
             var self = this;
             account.on("refreshUser", function(user) {
@@ -1151,8 +794,30 @@
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
             var myId = this.model.get("id");
-            var cc = this.options.list.collection.options.menuGroup.menuGroupView.options.list.options.itemCollection;
-            this.refModel = cc.get(myId);
+            // var cc = this.options.list.collection.options.menuGroup.menuGroupView.options.list.options.itemCollection;
+            // this.refModel = this.options.list.collection.options.menuGroup.collection.get(myId);
+            this.refModel = window.menuItemsCollection.get(myId);
+            
+            this.$e = $('<span class="groupItem"><h3></h3><span class="bgImage"></span></span>');
+            this.$bgImage = $('<img>');
+            this.$actions = $('<ul class="actions"></ul>');
+        },
+        render: function() {
+            this.$el.append(this.$e);
+            if(this.model.has("name")) {
+                this.$e.find('h3').html(this.model.get("name"));
+            }
+            if(this.refModel) {
+                this.$el.append(this.refModel.menuItemImageCollection.getViewMini().render().$el);
+                this.$e.find('h3').html(this.refModel.get("name"));
+            }
+            if(app.userIsAdmin()) {
+                this.$actions.html('<li><button class="moveUp btn btn-link glyphicon glyphicon-arrow-up" title="rank ' + this.model.get("rank") + '"></button></li><li><button class="remove btn btn-link glyphicon glyphicon-trash"></button></li>');
+                this.$el.append(this.$actions);
+            }
+            this.$el.attr("data-id", this.model.get("id"));
+            this.setElement(this.$el);
+            return this;
         },
         events: {
             "click": "select",
@@ -1174,9 +839,11 @@
                     if(higherRank == r) {
                         r++;
                     }
-                    var sm = swapModel.save({
+                    swapModel.set({
                         rank: r
-                    }, {
+                    }, {silent: true});
+                    var sm = swapModel.save(null, {
+                        silent: false,
                         wait: true
                     }).done(function(s, typeStr, respStr) {
                         self.render();
@@ -1186,9 +853,11 @@
                         self.options.list.render();
                     });
                     if(higherRank != self.model.get("rank")) {
-                        var s = self.model.save({
+                        self.model.set({
                             rank: higherRank
-                        }, {
+                        }, {silent: true});
+                        var s = self.model.save(null, {
+                            silent: false,
                             wait: true
                         }).done(function(s, typeStr, respStr) {
                             self.render();
@@ -1223,55 +892,21 @@
             this.$el.remove();
         }
     });
-    var MenuGroupPicker = Backbone.View.extend({
-        tag: "div",
-        className: "menuGroupPicker",
-        render: function() {
-            this.$el.html('<form><input type="text" name="query" placeholder="search group names" autocomplete="off" /><input type="submit" value="Search" /></form>');
-            this.$query = this.$el.find('input[name="query"]');
-            this.$el.append(this.menuGroupPickerList.render().$el);
-            this.$el.append(this.menuGroupForm.render().$el);
-            this.setElement(this.$el);
-            return this;
-        },
-        initialize: function() {
-            var self = this;
-            this.menuGroupPickerList = new MenuGroupPickerList({
-                collection: this.collection
-            });
-            this.menuGroupPickerList.on("selected", function(menuGroupView) {
-                self.trigger("selected", menuGroupView.model);
-            });
-            this.menuGroupForm = new MenuGroupForm({
-                collection: this.collection
-            });
-            this.menuGroupForm.on("saved", function(menuGroup) {
-                self.trigger("selected", menuGroup);
-            });
-        },
-        events: {
-            submit: "submit"
-        },
-        submit: function(el) {
-            var self = this;
-            return false;
-        },
-        clear: function() {
-            this.$query.val("");
-            this.render();
-            this.focus();
-        },
-        focus: function() {
-            this.$query.focus();
-        }
-    });
     
     var PickerView = Backbone.View.extend({
         tagName: "div",
         className: "menu-group-picker",
         initialize: function() {
             var self = this;
-            this.menuGroupsList = window.menuGroupsCollection.getNewListView({
+            this.initNewFormView();
+        },
+        initNewFormView: function() {
+            var self = this;
+            this.pickerMenuGroupsCollection = window.menuGroupsCollection.clone();
+            if(this.menuGroupsList) {
+                this.menuGroupsList.remove();
+            }
+            this.menuGroupsList = this.pickerMenuGroupsCollection.getNewListView({
                 layout: 'tableRow',
                 search: {
                     'fieldName': 'name'
@@ -1281,10 +916,10 @@
                 console.log(view);
                 self.trigger('picked', view.model);
             });
-            var newModel = window.menuGroupsCollection.getNewModel({});
-            console.log(newModel)
+            var newModel = this.pickerMenuGroupsCollection.getNewModel({});
+            // console.log(newModel)
             var formOpts = {
-                collection: window.menuGroupsCollection,
+                collection: this.pickerMenuGroupsCollection,
                 model: newModel,
                 submit: false,
                 cancel: false,
@@ -1298,12 +933,17 @@
                     className: "form-control"
                 },
             }
+            if(self.houseFormView) {
+                self.houseFormView.remove();
+            }
             self.houseFormView = formOpts.collection.getNewFormView(formOpts);
             self.houseFormView.on('keyUp', function(inputs){
                 var query = inputs.name;
                 self.menuGroupsList.searchView.query(query);
             });
             self.houseFormView.on('saved', function(doc){
+                self.initNewFormView();
+                self.searchForGroupName('');
                 self.trigger('picked', doc);
             });
         },
@@ -1378,6 +1018,7 @@
 
             this.groupImagesView = this.model.menuGroupImageCollection.getView({
                 // layout: 'row',
+                selection: false, mason: false,
                 loadOnRenderPage: false,
             });
             

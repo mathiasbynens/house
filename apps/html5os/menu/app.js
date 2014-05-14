@@ -326,9 +326,13 @@
                 
                 window.menuGroupsCollection.getOrFetch(id, function(doc){
                     if(doc) {
-                        self.boxFormView = doc.getFormView();
-                        self.box = utils.appendLightBox(self.boxFormView.render().$el, 'Add Item', false);
-                        self.boxFormView.on('saved', function(){
+                        var view = doc.getItemPickerView();
+                        self.box = utils.appendLightBox(view.render().$el, 'Add Item', false);
+                        view.on('picked', function(pickedMenuItem){
+                            self.box.remove();
+                            doc.addItem(pickedMenuItem);
+                        });
+                        view.on('saved', function(){
                             self.box.remove();
                             // self.router.back();
                         });
