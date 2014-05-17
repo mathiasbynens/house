@@ -9,6 +9,7 @@
                     'chat',
                     'checkins',
                     'clock',
+                    'configs',
                     'desktop',
                     'feed',
                     'files',
