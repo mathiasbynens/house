@@ -17,12 +17,15 @@ body {
     margin: 0 0;
 }
 
-.menu-group-form {
+.menu-group-form, .menu-item-form {
     .houseCollectionHeader {
         display: none;
     }
     .images-list {
-        .menuGroupImage {
+        .houseCollectionHeader {
+            display: none;
+        }
+        .menuGroupImage, .menuItemImage {
             .actions {
                 list-style: none;
                 display: none;
@@ -134,6 +137,10 @@ body {
     }
 }
 
+.bgImage {
+    .blur(2px);
+}
+
 .menuGroup.fullView {
     .group {
         .actions {
@@ -150,3 +157,69 @@ body {
          margin-top: 3px;
      }
  }
+ 
+ #swipeview-slider > div {
+    position:relative;
+	display:-webkit-box;
+	-webkit-box-orient:vertical;
+	-webkit-box-pack:center;
+	-webkit-box-align:center;
+	overflow:hidden;
+}
+ 
+#swipeview-slider > span {
+	-webkit-box-sizing:border-box;
+	display:block;
+	text-align:center;
+	font-size:12px;
+	padding:0 20px;
+}
+
+.carousel {
+    height: 320px;
+    -webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+-o-user-select: none;
+user-select: none;
+-webkit-text-size-adjust: none;
+-moz-text-size-adjust: none;
+-ms-text-size-adjust: none;
+-o-text-size-adjust: none;
+text-size-adjust: none;
+}
+@media (max-width: @screen-xs-max) {
+    .carousel {
+        height: 164px;
+    }
+}
+
+.purchaseItem .price {
+    font-size: 20px;
+    padding: 0px 12px;
+}
+
+.order-mini {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: fadeOut(@brand-primary, 12%);
+    padding: 8px 0px;
+    color: white;
+    button, button.btn-link {
+        color: white;
+    }
+}
+
+.orderItemSkuBill {
+    ul {
+        list-style: none;
+        margin: 0 0;
+        padding: 0 0;
+        li {
+            
+        }
+    }
+}

@@ -64,7 +64,7 @@
         addImage: function(menuImage, callback) {
             var self = this;
             var maxRank = 0;
-            if(this.has("images")) {
+            if(this.has("images") && this.menuGroupImageCollection.length > 0) {
                 maxRank = this.menuGroupImageCollection.last().get("rank");
             }
             var doc = {
@@ -154,18 +154,6 @@
         url: function() {
             return "/api/menuGroups/" + this.options.menuGroup.get("id") + "/images";
         },
-        // getView: function(options) {
-        //     var self = this;
-        //     if(!options) options = {};
-        //     if(!this.hasOwnProperty("row")) {
-        //         options.collection = this;
-        //         this.row = new MenuGroupImageList(options);
-        //         this.row.on("selected", function(m) {
-        //             self.trigger("selected", m);
-        //         });
-        //     }
-        //     return this.row;
-        // },
         getViewMini: function(options) {
             var self = this;
             if(!options) options = {};
@@ -178,9 +166,6 @@
             }
             return this.rowMini;
         },
-        // comparator: function(a) {
-        //     return a.get("rank");
-        // }
     });
     var MenuGroupGroupCollection = Backbone.House.Collection.extend({
         model: MenuGroupGroup,
@@ -192,21 +177,6 @@
             // console.log(this.options)
             return "/api/menuGroups/" + this.options.menuGroup.get("id") + "/groups";
         },
-        // getView: function(options) {
-        //     var self = this;
-        //     if(!options) options = {};
-        //     if(!this.hasOwnProperty("row")) {
-        //         options.collection = this;
-        //         this.row = new MenuGroupGroupList(options);
-        //         this.row.on("selected", function(m) {
-        //             self.trigger("selected", m);
-        //         });
-        //     }
-        //     return this.row;
-        // },
-        // comparator: function(a) {
-        //     return a.get("rank");
-        // }
     });
     var MenuGroupItemCollection = Backbone.House.Collection.extend({
         model: MenuGroupItem,
@@ -217,28 +187,6 @@
         url: function() {
             return "/api/menuGroups/" + this.options.menuGroup.get("id") + "/items";
         },
-        // getView: function(options) {
-        //     var self = this;
-        //     if(!options) options = {};
-        //     if(!this.hasOwnProperty("row")) {
-        //         options.collection = this;
-        //         this.row = new MenuGroupItemList(options);
-        //         this.row.on("selected", function(m) {
-        //             self.trigger("selected", m);
-        //         });
-        //     }
-        //     return this.row;
-        // },
-        // initialize: function(models, options) {
-        //     var self = this;
-        //     if(!options) {
-        //         options = models;
-        //     }
-        //     this.options = options;
-        // },
-        // comparator: function(a) {
-        //     return a.get("rank");
-        // }
     });
     
     var MenuGroupPickerList = Backbone.View.extend({
@@ -433,7 +381,9 @@
                 loadOnRenderPage: false,
                 selection: false, mason: false,
             }).render().$el);
-            this.$el.append(this.$e);
+            if(account.isAdmin()) {
+                this.$el.append(this.$e);
+            }
             if(this.model.has("desc")) {
                 this.$el.find('.desc').html(this.model.get("desc"));
             }
@@ -569,19 +519,6 @@
     var MenuGroupImageView = Backbone.View.extend({
         tagName: "div",
         className: "menuGroupImage col-md-4",
-        render: function() {
-            var $e = $('<span class="groupImage"></span>');
-            this.$el.html($e);
-            $e.append('<img src="/api/files/' + this.model.get("filename") + '" />');
-            if(app.userIsAdmin()) {
-                this.$actions = $('<ul class="actions"></ul>');
-                this.$actions.append('<li><button class="moveUp btn btn-link glyphicon glyphicon-arrow-up" title="rank ' + this.model.get("rank") + '"> </button></li><li><button class="remove btn btn-link glyphicon glyphicon-trash"></button></li>');
-                this.$el.append(this.$actions);
-            }
-            this.$el.attr("data-id", this.model.get("id"));
-            this.setElement(this.$el);
-            return this;
-        },
         initialize: function() {
             var self = this;
             account.on("refreshUser", function(user) {
@@ -589,6 +526,19 @@
             });
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
+            this.$actions = $('<ul class="actions"></ul>');
+        },
+        render: function() {
+            var $e = $('<span class="groupImage"></span>');
+            this.$el.html($e);
+            $e.append('<img src="/api/files/' + this.model.get("filename") + '" />');
+            if(app.userIsAdmin()) {
+                this.$actions.html('<li><button class="moveUp btn btn-link glyphicon glyphicon-arrow-up" title="rank ' + this.model.get("rank") + '"> </button></li><li><button class="remove btn btn-link glyphicon glyphicon-trash"></button></li>');
+                this.$el.append(this.$actions);
+            }
+            this.$el.attr("data-id", this.model.get("id"));
+            this.setElement(this.$el);
+            return this;
         },
         events: {
             click: "select",
@@ -797,6 +747,9 @@
             // var cc = this.options.list.collection.options.menuGroup.menuGroupView.options.list.options.itemCollection;
             // this.refModel = this.options.list.collection.options.menuGroup.collection.get(myId);
             this.refModel = window.menuItemsCollection.get(myId);
+            if(this.refModel) {
+                this.refModel.bind("change", this.render, this);
+            }
             
             this.$e = $('<span class="groupItem"><h3></h3><span class="bgImage"></span></span>');
             this.$bgImage = $('<img>');
@@ -808,8 +761,20 @@
                 this.$e.find('h3').html(this.model.get("name"));
             }
             if(this.refModel) {
-                this.$el.append(this.refModel.menuItemImageCollection.getViewMini().render().$el);
                 this.$e.find('h3').html(this.refModel.get("name"));
+                // this.$el.append(this.refModel.menuGroupImageCollection.getViewMini().render().$el);
+                var image = this.refModel.menuItemImageCollection.first();
+                if(image) {
+                    var filename = image.get('filename');
+                    if(image.has('sizes.medium')) {
+                        filename = image.get('sizes.medium').filename;
+                    }
+                    if(this.$bgImage.attr('src') !==  '/api/files/'+filename) {
+                        this.$bgImage.attr('src', '/api/files/'+filename);
+                    }
+                    this.$e.find('.bgImage').append(this.$bgImage);
+                }
+                // console.log(this.refModel.menuGroupImageCollection.first())
             }
             if(app.userIsAdmin()) {
                 this.$actions.html('<li><button class="moveUp btn btn-link glyphicon glyphicon-arrow-up" title="rank ' + this.model.get("rank") + '"></button></li><li><button class="remove btn btn-link glyphicon glyphicon-trash"></button></li>');
