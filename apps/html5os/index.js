@@ -38,7 +38,7 @@
             "static": {
                 "send": {
                     "publicFolder": __dirname + "/"+a
-                    //, "cachedHtml": process.cwd() + "/cache"
+                    , "cachedHtml": process.cwd() + "/cache/"+a
                     , "otherwise": 'index.html'
                 }
             }

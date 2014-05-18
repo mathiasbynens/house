@@ -352,7 +352,9 @@
             if(this.actionOptions.detail) {
                 this.infoView = new utils.ModelActionInfo(this.actionOptions);
             }
-            this.favView = new utils.ModelActionFav(this.actionOptions);
+            if(this.actionOptions.fav) {
+                this.favView = new utils.ModelActionFav(this.actionOptions);
+            }
             
             if(this.actionOptions.share) {
                 this.shareView = new utils.ModelActionShare(this.actionOptions);
@@ -390,7 +392,9 @@
             }
             // this.$el.html('');
             // this.$el.append(this.groupsView.render().$el);
-            this.$el.append(this.favView.render().$el);
+            if(this.favView) {
+                this.$el.append(this.favView.render().$el);
+            }
             if(this.taggingDropdown) {
                 this.$el.append(this.taggingDropdown.render().$el);
             }

@@ -27,9 +27,11 @@ Backbone.Model.prototype.pull = function(key, value, options) {
         val = attrs[attr];
         options.pulls[attr] = true;
         this.pulls[attr] = val;
-        var ni = now[attr].indexOf(val);
-        if(ni != -1) {
-            delete now[attr][ni];
+        if(now[attr]) {
+            var ni = now[attr].indexOf(val);
+            if(ni != -1) {
+                delete now[attr][ni];
+            }
         }
     }
     // Fire the `"change"` events.
@@ -163,7 +165,7 @@ Backbone.House.Model = Backbone.Model.extend({
             this.addViewType(this.TableRowView, 'tableRow');
         }
         if(this.FormView) {
-            this.addViewType(this.FormViewllView, 'form');
+            this.addViewType(this.FormView, 'form');
         }
     },
     url: function() {
@@ -198,6 +200,11 @@ Backbone.House.Model = Backbone.Model.extend({
         var self = this;
         var nameCap = name[0].toUpperCase()+name.substr(1);
         this.viewTypes[nameCap] = this[nameCap] = view;
+        this["getNew"+nameCap+"View"] = function(options) {
+            options = options || {};
+            options.model = self;
+            return new self[nameCap](options);
+        }
         this["get"+nameCap+"View"] = function(options) {
             options = options || {};
             options.model = self;
@@ -278,6 +285,9 @@ Backbone.House.Model = Backbone.Model.extend({
                     var attri = f.indexOf('.');
                     var attrFieldName = f.substr(0, attri);
                     var attrFieldSubName = f.substr(attri+1);
+                    if(!this.attributes.hasOwnProperty('attrFieldName')) {
+                        this.attributes[attrFieldName] = {};
+                    }
                     this.attributes[attrFieldName][attrFieldSubName] = _.clone(this.attributes[f]);
                     delete this.attributes[f];
                 }
@@ -644,14 +654,13 @@ Backbone.House.Collection = Backbone.Collection.extend({
         });
     },
     saveNewModel: function(doc, callback) {
+        console.log('1111111111');
         var self = this;
-        var setDoc = {};
         if(!callback && typeof options == 'function') {
             callback = options;
             options = null;
         }
         var model = this.getNewModel();
-        
         model.set(doc, {
             silent: true
         });
@@ -669,6 +678,10 @@ Backbone.House.Collection = Backbone.Collection.extend({
                     callback(model);
                 }
             });
+        } else {
+            if (callback) {
+                callback(model);
+            }
         }
     },
     getNewListView: function(options) {
@@ -699,6 +712,9 @@ Backbone.House.Collection = Backbone.Collection.extend({
         return this.getNewForm(options);
     },
     getFormView: function(options) {
+        if(!this.getNewForm) {
+            throw new Error('not an instance');
+        }
         return this.getNewForm(options);
     },
     getNewSelectList: function(options) {
@@ -1526,6 +1542,10 @@ var ListView = Backbone.View.extend({
         if(options.hasOwnProperty('loadOnRenderPage')) {
             this.loadOnRenderPage = options.loadOnRenderPage;
         }
+        this.renderOnLoad = true;
+        if(options.hasOwnProperty('renderOnLoad')) {
+            this.renderOnLoad = options.renderOnLoad;
+        }
         if (!this.collection) {
             // this.collection = new Collection();
             throw new Error('Collection required!');
@@ -1866,11 +1886,17 @@ var ListView = Backbone.View.extend({
                         //     return false;
                         // });
                         self.getCollectionFiltered();
-                        self.renderPage(1);
-                        self.renderPagination();
+                        if(self.renderOnLoad) {
+                            self.renderPage(1);
+                            self.renderPagination();
+                        }
                     });
                 } else {
-                    
+                    self.getCollectionFiltered();
+                    if(self.renderOnLoad) {
+                        self.renderPage(1);
+                        self.renderPagination()
+                    }
                 }
             });
             
@@ -1878,8 +1904,11 @@ var ListView = Backbone.View.extend({
             self.currentFilter = false;
             delete self.searchResults;
             self.getCollectionFiltered();
-            self.renderPage(1);
-            self.renderPagination();
+            
+            if(this.renderOnLoad) {
+                self.renderPage(1);
+                self.renderPagination();
+            }
         }
     },
     search: function(q, callback) {
@@ -1985,9 +2014,12 @@ var ListView = Backbone.View.extend({
     renderPagination: function() {
         this.paginationView.render();
     },
-    renderPage: _.debounce(function(p) {
+    // renderPage: _.debounce(function(p) {
+    //     this.doRenderPage(p);
+    // }, 33, true),
+    renderPage: function(p) {
         this.doRenderPage(p);
-    }, 333, true),
+    },
     doRenderPage: function(pageNum) {
         if(typeof pageNum !== 'number') {
             pageNum = parseInt(pageNum, 10);
@@ -2218,6 +2250,11 @@ var FormView = Backbone.View.extend({
         }
         
         this.$form = $('<form></form>');
+        
+        if(options.formClassName) {
+            this.$form.attr('class', options.formClassName);
+        }
+        
         this.$fieldset = $('<fieldset class="fieldset"></fieldset>');
         
         if(options.submit !== false) {
@@ -2254,16 +2291,31 @@ var FormView = Backbone.View.extend({
         }
         
         this.$fields = {}; // $ elements
+        this.$fieldsGroups = {}; // wrapper div
         this.$fieldLabels = {}; // $ elements
         
         if(!this.model) {
             this.model = new this.collection.model({}, {collection: this.collection});
         }
+        // console.log(this.model)
         if(!this.model.isNew()) {
             this.$form.attr('data-id', this.model.id)
         }
+        
+        for(var fieldName in this.fieldsetFields) {
+            var field = this.fieldsetFields[fieldName];
+            var objectFieldName = fieldName;
+            if(this.options.objectField) {
+                objectFieldName = this.options.objectField+'.'+fieldName;
+            }
+            if(field.hasOwnProperty('validateType') && field.validateType === 'list') {
+                field.fieldView = new StringListFieldView({model: this.model, fieldName: objectFieldName});
+            } else if(field.hasOwnProperty('objectFields') && field.objectFields) {
+                field.fieldView = new ObjectFieldsetFieldView({model: this.model, fieldName: objectFieldName, fields: field.objectFields});
+            }
+        };
     },
-    validateFieldset: function() {
+    validateFieldset: function(noSet) {
         var setDoc = {};
         var errors = {};
         var hasErrors = false;
@@ -2272,15 +2324,22 @@ var FormView = Backbone.View.extend({
             var $field = this.$fieldset.find('[name="'+fieldName+'"]');
             var valDirty = $field.val();
             var valClean = null;
+            var objectFieldName = fieldName;
+            if(this.options.objectField) {
+                objectFieldName = this.options.objectField+'.'+fieldName;
+            }
             
             if(field.validateFunc) {
                 valClean = field.validateFunc(valDirty);
             } else if(field.hasOwnProperty('fieldView')) {
                 valClean = field.fieldView.validateVal();
+                console.log(valClean)
+            } else if(field.validateType && field.validateType === 'list') {
+                valClean = field.fieldView.validateVal();
             } else if(field.validateType && field.validateType === 'string') {
                 if(typeof valDirty === 'string') {
                     if(valDirty === '') {
-                        if(this.model.has(fieldName)) {
+                        if(this.model.has(objectFieldName)) {
                             valClean = null; // will remove the field
                         } else {
                             valClean = undefined;
@@ -2290,6 +2349,12 @@ var FormView = Backbone.View.extend({
                     }
                 }
             } else if(field.validateType && field.validateType === 'boolean') {
+                $field = this.$fieldset.find('[name="'+fieldName+'"]:checked');
+                if($field.length > 0) {
+                    valDirty = $field.val();
+                } else {
+                    valDirty = null;
+                }
                 if(typeof valDirty === 'boolean') {
                     valClean = valDirty;
                 } else if(typeof valDirty === 'string') {
@@ -2306,29 +2371,45 @@ var FormView = Backbone.View.extend({
                     var formDate = moment(valDirty+' 00:00', "YYYY-MM-DD HH:mm");
                     valClean = formDate.toDate();
                 } else {
-                    if(this.model.has(fieldName)) {
+                    if(this.model.has(objectFieldName)) {
                         valClean = null; // will remove the field
                     } else {
                         valClean = undefined;
                     }
                 }
             } else if(field.validateType && field.validateType === 'float') {
-                valClean = parseFloat(valDirty);
-            } else if(field.validateType && field.validateType === 'int') {
+                if($field[0].valueAsNumber) {
+                    valClean = $field[0].valueAsNumber; // html5
+                } else if(typeof valDirty === 'string' && valDirty) {
+                    valClean = parseFloat(valDirty);
+                } else {
+                    valClean = null;
+                }
+            } else if(field.validateType && field.validateType === 'int' || field.validateType && field.validateType === 'number') {
                 valClean = parseInt(valDirty, 10);
             } else if(field.validateType && field.validateType === 'color') {
                 valClean = valDirty;
             } else {
                 valClean = valDirty;
             }
-            if(_.isObject(valClean) && !_.isEqual(valClean, this.model.get(fieldName))) {
-                setDoc[fieldName] = valClean;
-            } else if(valClean !== this.model.get(fieldName)) {
-                setDoc[fieldName] = valClean;
+            if (field.required && valClean === null) {
+                valClean = new Error('required');
+            }
+            if(valClean instanceof Error) {
+                errors[fieldName] = valClean;
+                hasErrors = true;
+            } else if(_.isObject(valClean) && !_.isEqual(valClean, this.model.get(objectFieldName))) {
+                setDoc[objectFieldName] = valClean;
+            } else if(valClean !== this.model.get(objectFieldName)) {
+                setDoc[objectFieldName] = valClean;
             }
         }
         if(_.size(setDoc) > 0) {
-            this.model.set(setDoc, {silent: true});
+            if(noSet) {
+                return setDoc;
+            } else {
+                this.model.set(setDoc, {silent: true});
+            }
         }
         if(hasErrors) {
             return errors;
@@ -2338,6 +2419,11 @@ var FormView = Backbone.View.extend({
     },
     saveModel: function() {
         var self = this;
+        // console.log(this.model)
+        // console.log(this.model.collection)
+        // console.log(this.model.collection.url)
+        // console.log(this.model.url)
+        // console.log(this.model.url())
         this.modelSave = this.model.save(null, {
             silent: false,
             wait: true
@@ -2413,12 +2499,28 @@ var FormView = Backbone.View.extend({
         var errors = this.validateFieldset();
         // TODO form validation failure
         if(errors) {
-            
+            this.renderErrors(errors);
         } else {
             this.saveModel();
         }
         
         return false;
+    },
+    renderErrors: function(errors) {
+        var self = this;
+        console.log(errors)
+        for(var fieldName in this.fieldsetFields) {
+            if(errors.hasOwnProperty(fieldName)) {
+                var error = errors[fieldName];
+                var errorMsg = error.message;
+                self.$fieldsGroups[fieldName].addClass('has-error');
+                self.$fieldsGroups[fieldName].find('.form-control-feedback').remove();
+                self.$fieldsGroups[fieldName].append('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+            } else {
+                self.$fieldsGroups[fieldName].removeClass('has-error');
+                self.$fieldsGroups[fieldName].find('.form-control-feedback').remove();
+            }
+        }
     },
     renderFieldset: function() {
         for(var fieldName in this.fieldsetFields) {
@@ -2426,8 +2528,22 @@ var FormView = Backbone.View.extend({
             var tagName = field.tagName || 'input';
             var tagType = field.tagType || 'text';
             if(!this.$fields.hasOwnProperty(fieldName)) {
+                this.$fieldsGroups[fieldName] = $('<div class="form-group"></div>');
                 if(field.hasOwnProperty('fieldView')) {
                     this.$fields[fieldName] = field.fieldView.render().$el;
+                } else if(field.hasOwnProperty('validateType') && field.validateType === 'list') {
+                    this.$fields[fieldName] = field.fieldView.render().$el;
+                } else if(field.hasOwnProperty('validateType') && field.validateType === 'boolean') {
+                    this.$fields[fieldName] = $('<div class="booleanRadio">\
+                    <div class="radio">\
+                        <label><input type="radio" name="'+fieldName+'" value="true" id="f'+this.model.cid+fieldName+'-true">Yes</label>\
+                    </div>\
+                    <div class="radio">\
+                        <label><input type="radio" name="'+fieldName+'" value="false" id="f'+this.model.cid+fieldName+'-false">No</label>\
+                    </div>\
+</div>');
+                } else if(field.hasOwnProperty('validateType') && field.validateType === 'float' || field.hasOwnProperty('validateType') && field.validateType === 'number' || field.hasOwnProperty('validateType') && field.validateType === 'int' || field.hasOwnProperty('validateType') && field.validateType === 'integer') {
+                    this.$fields[fieldName] = $('<'+tagName+' name="'+fieldName+'" type="number" id="f'+this.model.cid+fieldName+'"></'+tagName+'>');
                 } else if(field.hasOwnProperty('validateType') && field.validateType === 'date') {
                     this.$fields[fieldName] = $('<'+tagName+' name="'+fieldName+'" type="date" id="f'+this.model.cid+fieldName+'"></'+tagName+'>');
                 } else if(field.hasOwnProperty('validateType') && field.validateType === 'color') {
@@ -2456,25 +2572,51 @@ var FormView = Backbone.View.extend({
             if(field.placeholder) {
                 this.$fields[fieldName].attr('placeholder', field.placeholder);
             }
+            if(field.required) {
+                this.$fields[fieldName].attr('required', 'required');
+            }
             if(field.autocomplete) {
                 this.$fields[fieldName].attr('autocomplete', field.autocomplete);
             }
             
             // check for existing model value
-            if(this.model.has(fieldName)) {
-                if(field.hasOwnProperty('validateType') && field.validateType === 'date') {
+            if(this.model.has(fieldName) || (this.options.objectField && this.model.has(this.options.objectField+'.'+fieldName))) {
+                if(field.hasOwnProperty('validateType') && field.validateType === 'boolean') {
+                    if(this.options.objectField) {
+                        if(this.model.get(this.options.objectField+'.'+fieldName)) {
+                            this.$fields[fieldName].find('input[value="true"]').attr('checked', 'checked');
+                        } else {
+                            this.$fields[fieldName].find('input[value="false"]').attr('checked', 'checked');
+                        }
+                    } else {
+                        if(this.model.get(fieldName)) {
+                            this.$fields[fieldName].find('input[value="true"]').attr('checked', 'checked');
+                        } else {
+                            this.$fields[fieldName].find('input[value="false"]').attr('checked', 'checked');
+                        }
+                    }
+                } else if(field.hasOwnProperty('validateType') && field.validateType === 'date') {
                     var m = moment(this.model.get(fieldName));
                     this.$fields[fieldName].val(m.format('YYYY-MM-DD'));
                     //this.$dueAtTimeInput.val(m.format('HH:mm')); // m.calendar()
                     
                     this.$fields[fieldName].attr('data-'+fieldName, m);
                 } else if(field.hasOwnProperty('fieldView')) {
-                    field.fieldView.val(this.model.get(fieldName));
+                    if(this.options.objectField) {
+                        field.fieldView.val(this.model.get(this.options.objectField+'.'+fieldName));
+                    } else {
+                        field.fieldView.val(this.model.get(fieldName));
+                    }
                 } else {
-                    this.$fields[fieldName].val(this.model.get(fieldName));
+                    if(this.options.objectField) {
+                        this.$fields[fieldName].val(this.model.get(this.options.objectField+'.'+fieldName));
+                    } else {
+                        this.$fields[fieldName].val(this.model.get(fieldName));
+                    }
                 }
             }
-            this.$fieldset.append(this.$fields[fieldName]);
+            this.$fieldsGroups[fieldName].append(this.$fields[fieldName]);
+            this.$fieldset.append(this.$fieldsGroups[fieldName]);
         }
         this.$form.append(this.$fieldset);
     },
@@ -2511,6 +2653,158 @@ var FormView = Backbone.View.extend({
         } else {
             this.$fieldset.find('input').first().focus();
         }
+    }
+});
+
+var ObjectFieldsetFieldView = Backbone.View.extend({
+    tagName: "div",
+    className: "object-fieldset",
+    initialize: function(options) {
+        var self = this;
+        console.log(this.options)
+        console.log(options.fieldName)
+        var obj = this.model.get(options.fieldName);
+        console.log(obj)
+        var model = new Backbone.Model(obj);
+        console.log(model.attributes)
+        var formOpts = {
+            model: model,
+            fields: options.fields,
+            submit: false,
+            cancel: false
+        }
+        this.formView = new FormView(formOpts);
+    },
+    events: {
+    },
+    render: function() {
+        var self = this;
+        this.$el.append(this.formView.render().$el);
+        this.setElement(this.$el);
+        return this;
+    },
+    val: function(v) {
+        if(v) {
+            
+        } else {
+            var setDoc = this.formView.validateFieldset(true);
+            console.log(setDoc);
+            console.log(this.formView.model.attributes);
+            var origObj = this.model.get(this.options.fieldName)
+            for(var s in setDoc) {
+                origObj[s] = setDoc[s];
+            }
+            console.log(origObj);
+            return origObj;
+        }
+    },
+    validateVal: function() {
+        var self = this;
+        // var errors = this.formView.validateFieldset(true);
+        var setDoc = this.formView.validateFieldset(true);
+        var origObj = _.clone(this.model.get(this.options.fieldName));
+        if(!origObj) origObj = {};
+        for(var s in setDoc) {
+            origObj[s] = setDoc[s];
+        }
+        return origObj;
+        // throw new Error('test')
+        // TODO form validation failure
+        if(errors) {
+            this.formView.renderErrors(errors);
+            return errors;
+        } else {
+            // this.saveModel();
+            var obj = {};
+            for(var fieldName in this.fieldsetFields) {
+                var field = this.fieldsetFields[fieldName];
+                obj[fieldName] = field;
+            }
+        }
+        return self.model.get(self.options.fieldName);
+    }
+});
+
+var StringListFieldView = Backbone.View.extend({
+    tagName: "div",
+    className: "string-list",
+    initialize: function(options) {
+        var self = this;
+        self.$list = $('<div class="strings-list"><label></label><div class="list-of-strings" title="Click to remove"></div><button class="addString btn btn-primary">Add</button></div>');
+        console.log(self.options.fieldName)
+    },
+    events: {
+        "click .list-of-strings .list-str": "clickListItem",
+        "click .addString": "addString"
+    },
+    clickListItem: function(e) {
+        var self = this;
+        var $et = $(e.currentTarget);
+        var strName = $et.html();
+        if(confirm("Do you want to remove \""+strName+"\" from the list?")) {
+            var obj = {};
+            obj[self.options.fieldName] = strName;
+            // self.model.pull(obj, {silent: true});
+            
+            var existingArr = self.model.get(self.options.fieldName);
+            existingArr = _.without(existingArr, strName);
+            self.model.set(self.options.fieldName, existingArr, {silent: true});
+            
+            $et.remove();
+            if(self.doAutoSave) {
+                var saveModel = self.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function() {
+                    self.render();
+                });
+            }
+        }
+    },
+    addString: function(e) {
+        var self = this;
+        var stringName = prompt("");
+        if(stringName) {
+            var obj = {};
+            obj[self.options.fieldName] = stringName;
+            // self.model.push(obj, {silent: true});
+            
+            var existingArr = self.model.get(self.options.fieldName);
+            existingArr.push(stringName);
+            self.model.set(self.options.fieldName, existingArr, {silent: true});
+        }
+        // self.render();
+        self.appendString(stringName);
+        return false;
+    },
+    appendString: function(str) {
+        this.$list.find('.list-of-strings').append('<div class="list-str">'+str+'</div>');
+    },
+    render: function() {
+        var self = this;
+        
+        self.$list.find('.list-of-strings').html('');
+        var arr = self.model.get(self.options.fieldName);
+        for(var i in arr) {
+            var str = arr[i];
+            self.appendString(str);
+        }
+        
+        this.$el.append(self.$list);
+        this.setElement(this.$el);
+        return this;
+    },
+    val: function(v) {
+        if(v) {
+            
+        } else {
+            
+        }
+    },
+    validateVal: function() {
+        var self = this;
+        return self.model.get(self.options.fieldName);
     }
 });
 
