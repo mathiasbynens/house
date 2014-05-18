@@ -108,7 +108,7 @@
                     className: "form-control"
                 },
             }
-            self.formView = new window.pollsCollection.getFormView(formOpts);
+            self.formView = new window.pollsCollection.getNewFormView(formOpts);
             self.formView.on('saved', function(model){
                 self.trigger('saved', model);
             });
@@ -463,7 +463,7 @@
                 //     className: "form-control"
                 // },
             }
-            self.formView = new window.configsCollection.getFormView(formOpts);
+            self.formView = new window.configsCollection.getNewFormView(formOpts);
             self.formView.on('saved', function(model){
                 self.trigger('saved', model);
             });
@@ -573,7 +573,7 @@
                 //     className: "form-control"
                 // },
             }
-            self.formView = window.configsCollection.getFormView(formOpts);
+            self.formView = window.configsCollection.getNewFormView(formOpts);
             self.formView.on('saved', function(model){
                 self.trigger('saved', model);
             });
@@ -659,7 +659,7 @@
                     className: "form-control"
                 },
             }
-            self.formView = window.configsCollection.getFormView(formOpts);
+            self.formView = window.configsCollection.getNewFormView(formOpts);
             self.formView.on('saved', function(model){
                 self.trigger('saved', model);
             });
@@ -757,7 +757,7 @@
                     className: "form-control"
                 },
             }
-            self.formView = window.configsCollection.getFormView(formOpts);
+            self.formView = window.configsCollection.getNewFormView(formOpts);
             self.formView.on('saved', function(model){
                 self.trigger('saved', model);
             });
@@ -810,6 +810,41 @@
                 this.clientConfig = window.configsCollection.getNewModel({key: 'site', client: true});
             }
             
+            var clientFormOpts = {
+                collection: window.configsCollection,
+                model: this.clientConfig,
+                objectField: 'value',
+                submit: 'Save',
+                cancel: 'Cancel',
+                delete: false,
+                fields: {
+                    "api": {
+                        // validateType: 'doc',
+                        // autocomplete: "off",
+                        label: "API",
+                        // className: "form-control
+                        objectFields: {
+                            "secure_url": {
+                                validateType: 'string',
+                                autocomplete: "off",
+                                label: "Secure URL",
+                                className: "form-control"
+                            },
+                        }
+                    },
+                }
+            };
+            self.clientFormView = window.configsCollection.getNewFormView(clientFormOpts);
+            self.clientFormView.on('saved', function(model){
+                self.trigger('saved', model);
+            });
+            self.clientFormView.on('cancelled', function(model){
+                self.trigger('saved', model);
+            });
+            self.clientFormView.on('deleted', function(model){
+                self.trigger('saved', model);
+            });
+            
             var formOpts = {
                 collection: window.configsCollection,
                 model: this.serverConfig,
@@ -846,7 +881,7 @@
                 "owner": {
                     // validateType: 'doc',
                     // autocomplete: "off",
-                    label: "Owner",
+                    label: "Owner Contact",
                     // className: "form-control
                     objectFields: {
                         "name": {
@@ -881,7 +916,7 @@
                     }
                 },
             }
-            self.formView = window.configsCollection.getFormView(formOpts);
+            self.formView = window.configsCollection.getNewFormView(formOpts);
             self.formView.on('saved', function(model){
                 self.trigger('saved', model);
             });
@@ -891,11 +926,23 @@
             self.formView.on('deleted', function(model){
                 self.trigger('saved', model);
             });
+            
+            self.$navTabs = $('<ul class="nav nav-tabs">\
+    <li class="active"><a href="#'+self.cid+'-server" data-toggle="tab">Server</a></li>\
+    <li><a href="#'+self.cid+'-client" data-toggle="tab">Client</a></li>\
+</ul>');
+            self.$tabContent = $('<div class="tab-content">\
+    <div class="tab-pane active server" id="'+self.cid+'-server"></div>\
+    <div class="tab-pane client" id="'+self.cid+'-client"></div>\
+</div>');
         },
         render: function() {
             var self = this;
             
-            this.$el.append(self.formView.render().$el);
+            this.$el.append(self.$navTabs);
+            this.$el.append(self.$tabContent);
+            self.$tabContent.find('.server').append(self.formView.render().$el);
+            self.$tabContent.find('.client').append(self.clientFormView.render().$el);
             
             this.setElement(this.$el);
             return this;
