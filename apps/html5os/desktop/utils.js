@@ -298,6 +298,44 @@
     
     utils.initalizingTags = false;
     utils.initalizingCbs = [];
+    utils.initalizingUsers = false;
+    utils.initalizingUsersCbs = [];
+    utils.initUsers = function(waitForLoad, callback) {
+        if(typeof waitForLoad === 'function') {
+            callback = waitForLoad;
+            waitForLoad = false;
+        }
+        if(!callback) callback = function() {}
+        
+        if(!window.UsersBackbone || !window.usersCollection) {
+            if(utils.initalizingUsers) {
+                utils.initalizingUsersCbs.push(function(){
+                    //utils.initTags(waitForLoad, callback);
+                    callback();
+                });
+            } else {
+                utils.initalizingUsers = true;
+                require(['/users/backbone-users.js'], function(UsersBackbone){
+                    window.UsersBackbone = UsersBackbone;
+                    window.usersCollection = new UsersBackbone.Collection(); // collection
+                    utils.initalizingUsers = false;
+                    if(waitForLoad) {
+                        window.usersCollection.load(callback);
+                    } else {
+                        window.usersCollection.load();
+                        callback();
+                    }
+                    for(var c in utils.initalizingUsersCbs) {
+                        var cb = utils.initalizingUsersCbs[c];
+                        cb();
+                    }
+                    utils.initalizingUsersCbs = [];
+                });
+            }
+        } else {
+            callback();
+        }
+    }
     utils.initTags = function(waitForLoad, callback) {
         if(typeof waitForLoad === 'function') {
             callback = waitForLoad;

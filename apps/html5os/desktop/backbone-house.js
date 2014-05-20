@@ -240,10 +240,25 @@ Backbone.House.Model = Backbone.Model.extend({
             var attrFieldName = attr.substr(0, attri);
             var attrFieldSubName = attr.substr(attri+1);
             var attrObj = this.attributes[attrFieldName];
-            if(attrObj) {
-                return attrObj.hasOwnProperty(attrFieldSubName);
+            if(attrFieldSubName.indexOf('.') !== -1) {
+                var attrSubi = attrFieldSubName.indexOf('.');
+                var attrFieldSubSubName = attrFieldSubName.substr(attrSubi+1);
+                attrFieldSubName = attrFieldSubName.substr(0, attrSubi);
+                if(attrObj) {
+                    if(attrObj.hasOwnProperty(attrFieldSubName)) {
+                        return attrObj[attrFieldSubName].hasOwnProperty(attrFieldSubSubName);
+                    } else {
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
             } else {
-                return false;
+                if(attrObj) {
+                    return attrObj.hasOwnProperty(attrFieldSubName);
+                } else {
+                    return false;
+                }
             }
         } else {
             return Backbone.Model.prototype.has.call(this, attr);
@@ -255,14 +270,34 @@ Backbone.House.Model = Backbone.Model.extend({
             var attrFieldName = attr.substr(0, attri);
             var attrFieldSubName = attr.substr(attri+1);
             var attrObj = this.attributes[attrFieldName];
-            if(attrObj) {
-                if(attrObj[attrFieldSubName]) {
-                    return attrObj[attrFieldSubName];
+            
+            if(attrFieldSubName.indexOf('.') !== -1) {
+                var attrSubi = attrFieldSubName.indexOf('.');
+                var attrFieldSubSubName = attrFieldSubName.substr(attrSubi+1);
+                attrFieldSubName = attrFieldSubName.substr(0, attrSubi);
+                if(attrObj) {
+                    if(attrObj[attrFieldSubName]) {
+                        if(attrObj[attrFieldSubName][attrFieldSubSubName]) {
+                            return attrObj[attrFieldSubName][attrFieldSubSubName];
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        return null;
+                    }
                 } else {
                     return null;
                 }
             } else {
-                return null;
+                if(attrObj) {
+                    if(attrObj[attrFieldSubName]) {
+                        return attrObj[attrFieldSubName];
+                    } else {
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
             }
         } else {
             return Backbone.Model.prototype.get.call(this, attr);
@@ -288,8 +323,17 @@ Backbone.House.Model = Backbone.Model.extend({
                     if(!this.attributes.hasOwnProperty('attrFieldName')) {
                         this.attributes[attrFieldName] = {};
                     }
-                    this.attributes[attrFieldName][attrFieldSubName] = _.clone(this.attributes[f]);
-                    delete this.attributes[f];
+                    
+                    if(attrFieldSubName.indexOf('.') !== -1) {
+                        var attrSubi = attrFieldSubName.indexOf('.');
+                        var attrFieldSubSubName = attrFieldSubName.substr(attrSubi+1);
+                        attrFieldSubName = attrFieldSubName.substr(0, attrSubi);
+                        this.attributes[attrFieldName][attrFieldSubName][attrFieldSubSubName] = _.clone(this.attributes[f]);
+                        delete this.attributes[f];
+                    } else {
+                        this.attributes[attrFieldName][attrFieldSubName] = _.clone(this.attributes[f]);
+                        delete this.attributes[f];
+                    }
                 }
             }
         } else {
@@ -391,11 +435,10 @@ Backbone.House.Collection = Backbone.Collection.extend({
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                    // console.log(doc);
+                    console.log(doc);
                     if (_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;
-                        s
                     }
                     var model = self.get(doc.id);
                     if (!model) {
@@ -406,7 +449,13 @@ Backbone.House.Collection = Backbone.Collection.extend({
                         model.set(doc, {
                             silent: true
                         });
-                        model.renderViews();
+                        // model.renderViews();
+                        var changed = model.changedAttributes();
+                        for(var c in changed) {
+                            model.trigger('change:'+c);
+                        }
+                        model.trigger('change');
+                        model.changed = {}
                     }
                 }
                 if(!self.collectionName) {
@@ -462,7 +511,11 @@ Backbone.House.Collection = Backbone.Collection.extend({
             }
         });
     },
-    refreshCount: function(opts) {
+    refreshCount: function(opts, callback) {
+        if(typeof opts === 'function') {
+            callback = opts;
+            opts = {};
+        }
         if(!opts) {
             opts = {};
         }
@@ -470,6 +523,9 @@ Backbone.House.Collection = Backbone.Collection.extend({
         self.headCount(opts, function(count) {
             self.count = count;
             self.trigger('count', count);
+            if(callback) {
+                callback(count);
+            }
         });
     },
     sortField: 'at-',
@@ -958,6 +1014,99 @@ var ListTags = Backbone.View.extend({
                 return false;
             };
         } else {
+            return function() {
+                return true;
+            }
+        }
+    }
+});
+
+var ListUsers = Backbone.View.extend({
+    initialize: function(options) {
+        var self = this;
+        this.options = options;
+        self.fieldName = options.users.fieldName || 'user.id';
+        utils.initUsers(function(){
+            self.searchSelectView = new UsersBackbone.SearchSelectDropdown({});
+            self.searchSelectView.on('deselected', function() {
+                var deselectFilterObj = {};
+                if(self.options.list.filterView.selectedFilter) {
+                    deselectFilterObj.filter = self.options.list.filterView.selectedFilter;
+                    self.options.list.filter(function(model, filterId) {
+                        // console.log(filterId)
+                        if(self.options.list.filterView.getFilterFunc()(model, deselectFilterObj)) {
+                            return true;
+                        }
+                    }, deselectFilterObj, self.options.list.filterView.options.filters[deselectFilterObj.filter].load);
+                } else {
+                    self.options.list.filter(function(model, filterId) {
+                        return true;
+                    });
+                }
+            });
+            self.searchSelectView.on('selected', function(userId) {
+                // self.options.list.trigger('goToTagName', tag.get('name'));
+                self.filterBy(userId);
+            });
+            self.searchSelectView.on('deselected', function(userId) {
+                // self.options.list.trigger('goToTagName', tag.get('name'));
+                self.filterBy();
+            });
+            self.initialized = true;
+            self.trigger('initialized');
+        });
+    },
+    reset: function() {
+        this.searchSelectView.trigger('deselectAll', {silent: true});
+    },
+    filterBy: function(userId) {
+        var self = this;
+        var loadObj = {};
+        var filterFunc = function(m, v) {
+            if(self.getFilterFunc()(m,v)) {
+                if(self.options.list.filterView.getFilterFunc()(m,v)) {
+                    return true;
+                }
+            }
+        }
+        
+        var filterObj = {};
+        // filterObj[self.fieldName] = userId;
+        filterObj['user'] = userId;
+        if(self.options.list.filterView.selectedFilter) {
+            filterObj.filter = self.options.list.filterView.selectedFilter;
+            loadObj = self.options.list.filterView.options.filters[self.options.list.filterView.selectedFilter].load;
+        }
+        loadObj[self.fieldName] = userId;
+        self.options.list.filter(filterFunc, filterObj, loadObj);
+    },
+    render: function() {
+        var self = this;
+        this.setElement(this.$el);
+        if(!this.initialized) {
+            this.on('initialized', this.render);
+            return this;
+        }
+        this.$el.append(self.searchSelectView.render().$el);
+        return this;
+    },
+    events: {
+    },
+    getFilterFunc: function() {
+        var self = this;
+        if(self.searchSelectView && self.searchSelectView.selectedUser) {
+            return function(model, filterObj) {
+                // console.log(filterObj);
+                // var filterId = filterObj[self.fieldName];
+                var filterId = filterObj['user'];
+                var userId = model.get(self.fieldName);
+                // console.log(self.fieldName);
+                // console.log(filterId);
+                // console.log(userId);
+                return (filterId && userId && userId == filterId);
+            };
+        } else {
+            // console.log(self.searchSelectView)
             return function() {
                 return true;
             }
@@ -1558,6 +1707,7 @@ var ListView = Backbone.View.extend({
         this.$footer = $('<div class="houseCollectionFooter"></div>');
         this.$search = $('<span class="search"></span>');
         this.$tags = $('<span class="tags"></span>');
+        this.$users = $('<span class="users"></span>');
         this.$filter = $('<span class="filter"></span>');
         this.$sort = $('<span class="sort"></span>');
         this.$selection = $('<span class="selection"></span>');
@@ -1569,6 +1719,7 @@ var ListView = Backbone.View.extend({
         }
         this.$header.append(this.$search);
         this.$header.append(this.$tags);
+        this.$header.append(this.$users);
         this.$header.append(this.$filter);
         this.$header.append(this.$sort);
         this.$header.append(this.$layout);
@@ -1644,6 +1795,9 @@ var ListView = Backbone.View.extend({
         if(this.options.tags) {
             this.tagsView = new ListTags({el: this.$tags, list: this, tags: this.options.tags});
         }
+        if(this.options.users) {
+            this.usersView = new ListUsers({el: this.$users, list: this, users: this.options.users});
+        }
         if(this.options.filters) {
             this.filterView = new ListFilters({el: this.$filter, list: this, filters: this.options.filters});
         }
@@ -1716,6 +1870,9 @@ var ListView = Backbone.View.extend({
         if(this.tagsView && this.tagsView.tagSelectView && this.tagsView.tagSelectView.selectedTag) {
             loadObj[this.tagsView.fieldName] = this.tagsView.tagSelectView.selectedTag.get('name');
         }
+        if(this.usersView && this.usersView.searchSelectView && this.usersView.searchSelectView.selectedUser) {
+            loadObj[this.usersView.fieldName] = this.usersView.searchSelectView.selectedUser;
+        }
         if(this.searchView && this.searchView.selectedQuery) {
             loadObj[this.searchView.fieldName] = "/"+this.searchView.selectedQuery+"/i";
         }
@@ -1730,6 +1887,9 @@ var ListView = Backbone.View.extend({
         if(this.tagsView && this.tagsView.tagSelectView && this.tagsView.tagSelectView.selectedTag) {
             filterObj.tag = this.tagsView.tagSelectView.selectedTag.get('name');
         }
+        if(this.usersView && this.usersView.searchSelectView && this.usersView.searchSelectView.selectedUser) {
+            filterObj.user = this.usersView.searchSelectView.selectedUser;
+        }
         if(this.searchView && this.searchView.selectedQuery) {
             filterObj.search = this.searchView.selectedQuery;
         }
@@ -1740,8 +1900,10 @@ var ListView = Backbone.View.extend({
         return function(model, filterObj) {
             if(!this.filterView || this.filterView.getFilterFunc()(model, filterObj)) {
                 if(!this.tagsView || this.tagsView.getTagFilterFunc()(model, filterObj)) {
-                    if(!this.searchView || this.searchView.getSearchFilterFunc()(model, filterObj)) {
-                        return true;
+                    if(!this.usersView || this.usersView.getFilterFunc()(model, filterObj)) {
+                        if(!this.searchView || this.searchView.getSearchFilterFunc()(model, filterObj)) {
+                            return true;
+                        }
                     }
                 }
             }
@@ -1832,6 +1994,9 @@ var ListView = Backbone.View.extend({
         }
         if(this.tagsView) {
             this.tagsView.reset();
+        }
+        if(this.usersView) {
+            this.usersView.reset();
         }
         if(this.layoutView) {
             this.layoutView.reset();
@@ -2110,6 +2275,9 @@ var ListView = Backbone.View.extend({
         }
         if(this.tagsView) {
             this.tagsView.render();
+        }
+        if(this.usersView) {
+            this.usersView.render();
         }
         if(this.sortView) {
             this.sortView.render();

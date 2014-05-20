@@ -72,6 +72,27 @@
             }
         };
     };
+    auth.emailView = function(options) {
+        if(!options) {
+            options = {};
+        }
+        if (!this.hasOwnProperty("model")) {
+            this.model = new this.Model({}, {
+                collection: this.collection
+            });
+        } else {
+            delete this.model.id;
+        }
+        if (!this.model.has("user")) {
+            this.model.set({
+                email: ""
+            }, {
+                silent: true
+            });
+        }
+        options.model = this.model;
+        return new EmailAuthView(options);
+    }
     auth.subscribeEmail = function(options) {
         if(!options) {
             options = {};
@@ -167,6 +188,11 @@
                 return auth.subscribeEmail(options);
             }
         },
+        getEmailAuthView: function(options) {
+            // if(!this.isUser()) {
+            return auth.emailView(options);
+            // }
+        },
         welcome: function($el, options, callback) {
             var self = this;
             if(typeof options === 'function') {
@@ -187,6 +213,115 @@
                     self.welcome($el, options, callback);
                 });
             }
+        }
+    });
+    
+    var EmailAuthView = Backbone.View.extend({
+        tagName: "div",
+        className: "emailAuth",
+        initialize: function(options) {
+            var self = this;
+            //self.state = 'reset';
+            
+            this.ui = {
+                label: "Get Updates",
+                placeholder: "your email address"
+            }
+            if(options) {
+                for(var i in options.ui) {
+                    this.ui[i] = options.ui[i];
+                }
+            }
+            this.$form = $('<form class="" role="authentication">\
+                                <div class="form-group">\
+                                    <input type="email" class="form-control" name="email" placeholder="'+this.ui.placeholder+'" data-loading-text="loading">\
+                                </div>\
+                            </form>');
+        },
+        render: function() {
+            if(account.isUser()) {
+                this.$form.remove();
+                if(!this.currentUserView) {
+                    this.currentUserView = account.view.userModel.getNewAvatarNameView();
+                }
+                this.$el.append(this.currentUserView.render().$el);
+                this.currentUserView.$el.show();
+            } else {
+                this.$el.append(this.$form);
+                if(this.currentUserView) {
+                    this.currentUserView.$el.hide();
+                }
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        hideLoading: function() {
+            this.$el.find('.progress').hide();
+            this.$submit.removeAttr('disabled');
+            if(this.prevSubmitVal) {
+                this.$submit.val(this.prevSubmitVal);
+            }
+        },
+        showLoading: function() {
+            this.$el.find(".msg").hide();
+            this.$el.find('.progress').show();
+            this.$submit.attr('disabled', 'disabled');
+            this.prevSubmitVal = this.$submit.val();
+            this.$submit.val('Loading...');
+        },
+        events: {
+            "submit form": "submit",
+            'blur form input[name="email"]': "submit",
+            'keyup input[name="email"]': "keyupsubmit",
+            'keyup input[name="pass"]': "keyupsubmit",
+            "click .resetPass": "resetPass",
+        },
+        resetForm: function() {
+            this.model.set({
+                email: '',
+                pass: null,
+                name: null
+            }, {silent: true});
+            
+            this.$form.hide().siblings().show();
+            this.$el.find('input[name="email"]').val('');
+            this.$el.find('input[name="email"]').show().siblings().hide();
+        },
+        keyupsubmit: function(e) {
+            if(e.keyCode == 13) {
+                this.submit(e);
+            } else if(e.keyCode == 27) {
+                this.resetForm();
+            }
+            return false;
+        },
+        submit: function() {
+            var self = this;
+            this.model.on("login", function() {
+                self.trigger('saved');
+            });
+            var email = this.$el.find('input[name="email"]').val();
+            if(email == '') {
+                return false;
+            }
+            if(email.indexOf('@') === -1) {
+                this.$el.find(".msg").html('valid email required').show();;
+                return false;
+            }
+            var name = email.substr(0,email.indexOf('@'));
+            this.model.set({
+                email: email,
+                pass: '',
+                name: name
+            });
+            return false;
+        },
+        focus: function() {
+            this.$el.find("input").first().focus();
+        },
+        remove: function() {
+            this.model.off("badPass");
+            this.$el.remove();
         }
     });
     

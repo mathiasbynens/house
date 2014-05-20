@@ -284,6 +284,36 @@ nav > .navbar-form {
     }
 }
 
+.users {
+    .btn-group button img {
+        max-height: 20px;
+    }
+}
+.dropdown-menu.users {
+    .selectList.users {
+        overflow-y: scroll;
+        max-height: 300px;
+        .select.user {
+            padding: 6px 0px;
+            .userAvatarName img {
+                padding-right: 4px;
+            }
+            cursor: pointer;
+        }
+        .select.user:hover {
+            background-color: darken(@brand-primary, 20%);
+        }
+        .select.user.selected {
+            background-color: darken(@brand-primary, 30%);
+        }
+        .houseCollectionHeader {
+            .pages {
+                display: none;
+            }
+        }
+    }
+}
+
 body > .navBackButton {
     position: fixed;
     bottom: 8px;
