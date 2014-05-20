@@ -10,6 +10,31 @@
             } else {
                 this.orderItemSkuCollection = new OrderItemSkuCollection([], colOpts);
             }
+            this.on('change', function(){
+                self.renderViews();
+            });
+            
+            this.on('change:itemSkus', function(){
+                // this.orderItemSkuCollection.length
+                _.each(self.attributes.itemSkus, function(itemSku){
+                    var model = self.orderItemSkuCollection.get(itemSku.id);
+                    if (!model) {
+                        var model = self.orderItemSkuCollection.getNewModel(itemSku);
+                        self.orderItemSkuCollection.add(model);
+                    } else {
+                        // console.log('update model with doc')
+                        model.set(itemSku, {
+                            silent: true
+                        });
+                        var changed = model.changedAttributes();
+                        for(var c in changed) {
+                            model.trigger('change:'+c);
+                        }
+                        model.trigger('change');
+                        model.changed = {}
+                    }
+                });
+            });
             this.orderItemSkuCollection.on('add', function(){
                 // alert('added itemSku')
                 self.trigger('change');
@@ -19,7 +44,10 @@
             });
             this.addViewType(OrderMiniView, 'mini');
             this.addViewType(OrderView, 'order');
+            this.addViewType(OrderTableRowView, 'tableRow');
+            this.addViewType(OrderView, 'avatar');
             this.addViewType(BillView, 'bill');
+            this.addViewType(FullView, 'full');
             this.addViewType(PaymentMethodSelect, 'paymentMethodSelect');
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
@@ -28,6 +56,107 @@
         },
         getNewView: function(options) {
             return this.getNewOrderView();
+        },
+        getStatusStr: function() {
+            var statusCode = this.get('status');
+            if(statusCode === -1) {
+                return 'cancelled';
+            } else if(statusCode === 0) {
+                return 'pending';
+            } else if(statusCode === 10) {
+                return 'placed';
+            } else if(statusCode === 25) {
+                return 'declined';
+            } else if(statusCode === 30) {
+                return 'paid'; // aka processing
+            } else if(statusCode === 40) {
+                return 'refunded';
+            } else if(statusCode === 50) {
+                return 'processed';
+            } else if(statusCode === 100) {
+                return 'complete';
+            }
+        },
+        setUser: function(user, callback) {
+            if(!user && account.isUser()) {
+                user = {
+                    id: account.get('user'),
+                    name: account.get('name'),
+                }
+            }
+            this.set({user: user}, {silent: true});
+            var saveModel = this.save(null, {silent: false, wait: true});
+            if (saveModel) {
+                saveModel.done(function() {
+                    if(callback) {
+                        callback();
+                    }
+                });
+            } else {
+                if(callback) {
+                    callback();
+                }
+            }
+        },
+        saveStatus: function(statusCode, status, callback) {
+            console.log(arguments)
+            var setObj = status || {};
+            setObj.status = statusCode;
+            this.set(setObj, {silent: true});
+            var saveModel = this.save(null, {silent: false, wait: true});
+            if (saveModel) {
+                saveModel.done(function() {
+                    console.log('status saved')
+                    console.log(callback)
+                    if(callback) {
+                        callback();
+                    }
+                });
+            } else {
+                if(callback) {
+                    callback();
+                }
+            }
+        },
+        getGrandTotal: function() {
+            // TODO calc tax & ship and handling
+            var itemSubtotal = this.orderItemSkuCollection.getSubTotal();
+            return itemSubtotal;
+        },
+        getItem: function(itemId, callback) {
+            window.menuItemsCollection.getOrFetch(itemId, callback);
+        },
+        isMembership: function(callback) { // includes membership
+            var self = this;
+            var hasMembershipItemSku = false;
+            var itemIds = [];
+            
+            var procNextItem = function(completeCallback) {
+                var itemId = itemIds.pop();
+                self.getItem(itemId, function(itemModel){
+                    console.log(itemModel)
+                    if(itemModel) {
+                        if(itemModel.get('membership') && itemModel.get('membership').length > 0) {
+                            hasMembershipItemSku = true;
+                        }
+                    }
+                    if(itemIds.length > 0) {
+                        procNextItem(completeCallback);
+                    } else {
+                        if(completeCallback) {
+                            completeCallback();
+                        }
+                    }
+                });
+            }
+            this.orderItemSkuCollection.each(function(itemSkuModel){
+                // console.log(itemSkuModel)
+                itemIds.push(itemSkuModel.get('item.id'));
+            });
+            
+            procNextItem(function(){
+                callback(hasMembershipItemSku);
+            });
         }
     });
     var OrderItemSku = Backbone.House.Model.extend({
@@ -63,38 +192,10 @@
     var Collection = Backbone.House.Collection.extend({
         model: Model,
         collectionName: 'orders',
-        // collectionFriendlyName: 'groups',
         sortField: 'at-',
         pageSize: 0,
-        // filterPending: function(pendingExists) {
-        //     if (pendingExists) {
-        //         this.filter = {
-        //             status: pendingExists
-        //         };
-        //     } else {
-        //         this.filter = {
-        //             status: {
-        //                 $exists: false
-        //             }
-        //         };
-        //     }
-        // },
         getPendingListView: function() {
             if(!this.pendingListView) {
-                var filterFunc = function(model, filterObj) {
-                    var filterId = filterObj.filter;
-                    if(filterId === 'none') {
-                        return true;
-                    } else if(filterId === 'pending') {
-                        if(!model.has('status') || model.get('status') === 0) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        return true;
-                    }
-                }
                 this.pendingListView = this.getView({
                     selection: false, mason: false,
                     loadOnRenderPage: false,
@@ -103,9 +204,12 @@
                         'pending': {
                             txt: 'Pending',
                             glyphicon: 'unchecked',
-                            filter: filterFunc,
+                            filter: function(model, filterObj) {
+                                return ((!model.has('status') || model.get('status') === 0) && (account.get('user') == model.get('user.id') || account.id == model.get('session_id')));
+                            },
                             load: {
-                                "status": 0
+                                "status": 0,
+                                "user.id": account.get('user')
                             }
                         },
                     }
@@ -113,6 +217,109 @@
                 this.pendingListView.filterView.filterBy('pending');
             }
             return this.pendingListView;
+        },
+        getFullListView: function() {
+            if(!this.fullListView) {
+                this.fullListView = this.getView({
+                    selection: true,
+                    mason: false,
+                    layout: 'table',
+                    className: 'houseCollection table-responsive',
+                    // headerEl: $('#navbar-header-form'),
+                    // search: {
+                    //     'fieldName': 'filename'
+                    // },
+                    users: {
+                        'fieldName': 'user.id'
+                    },
+                    // loadOnRenderPage: false,
+                    // renderOnLoad: false,
+                    filters: {
+                        'cancelled': {
+                            txt: 'Cancelled',
+                            glyphicon: 'unchecked',
+                            filter: function(model, filterObj) {
+                                return model.get('status') === -1;
+                            },
+                            load: {
+                                "status": -1
+                            }
+                        },
+                        'pending': {
+                            txt: 'Pending',
+                            glyphicon: 'time',
+                            filter: function(model, filterObj) {
+                                return (!model.has('status') || model.get('status') === 0);
+                            },
+                            load: {
+                                "status": 0
+                            }
+                        },
+                        'placed': {
+                            txt: 'Placed',
+                            glyphicon: 'checked',
+                            filter: function(model, filterObj) {
+                                return model.get('status') === 10;
+                            },
+                            load: {
+                                "status": 10
+                            }
+                        },
+                        'declined': {
+                            txt: 'Declined',
+                            glyphicon: 'dollar',
+                            filter: function(model, filterObj) {
+                                return model.get('status') === 25;
+                            },
+                            load: {
+                                "status": 25
+                            }
+                        },
+                        'paid': { // aka processing
+                            txt: 'Paid',
+                            glyphicon: 'dollar',
+                            filter: function(model, filterObj) {
+                                return model.get('status') === 30;
+                            },
+                            load: {
+                                "status": 30
+                            }
+                        },
+                        'refunded': {
+                            txt: 'Refunded',
+                            glyphicon: 'unchecked',
+                            filter: function(model, filterObj) {
+                                return model.get('status') === 40;
+                            },
+                            load: {
+                                "status": 40
+                            }
+                        },
+                        'processed': {
+                            txt: 'Processed',
+                            glyphicon: 'unchecked',
+                            filter: function(model, filterObj) {
+                                return model.get('status') === 50;
+                            },
+                            load: {
+                                "status": 50
+                            }
+                        },
+                        'complete': {
+                            txt: 'Complete',
+                            glyphicon: 'unchecked',
+                            filter: function(model, filterObj) {
+                                return model.get('status') === 100;
+                            },
+                            load: {
+                                "status": 100
+                            }
+                        },
+                    }
+                });
+                // this.fullListView.filterView.filterBy('pending');
+            }
+            return this.fullListView;
         },
         makePendingOrder: function(callback) {
             this.saveNewModel({status: 0}, callback);
@@ -231,6 +438,15 @@
             });
             return total.toFixed(2);
         },
+        getQtyTotal: function() {
+            var total = 0;
+            this.each(function(model){
+                // total = total + model.get('sku.price');
+                var qty = model.get('qty') || 1;
+                total = total + qty;
+            });
+            return total;
+        }
     });
     var OrderList = Backbone.View.extend({
         tag: "span",
@@ -414,6 +630,191 @@
             this.$ul.append($el);
         },
     });
+    var OrderTableRowView = Backbone.View.extend({
+        tagName: "tr",
+        className: "order",
+        initialize: function() {
+            var self = this;
+            account.on("refreshUser", function(user) {
+                self.render();
+            });
+            // this.$td = $('<td class=""></td>');
+            this.$tdCustomer = $('<td class="customer"></td>');
+            this.$tdStatus = $('<td class="status"></td>');
+            this.$tdPayment = $('<td class="paymentMethod"></td>');
+            this.$tdTotalQty = $('<td class="totalQty" title="Quanitity"></td>'); // number of items
+            this.$tdTotalPrice = $('<td class="totalPrice"></td>');
+            this.$tdCta = $('<td class="cta"></td>');
+            this.$tdAt = $('<td class="at"></td>');
+            this.$tdActions = $('<td class="actions"></td>');
+            this.$customerName = $('<span class="customerName"></span>');
+            
+            var actionOptions = {
+                model: this.model, 
+                actionOptions: {
+                    // fav: {fieldName: 'fav'},
+                    // tags: {fieldName: 'tags'},
+                    detail: true,
+                    // share: false,
+                }
+            }
+            // if(this.model.get('metadata').src) {
+            //     var src = this.model.get('metadata').src;
+            //     var modelName = src.substr(0, src.length-1);
+            //     opts.actionOptions.more = {
+            //         "deleteSrc": {
+            //             title: "Delete "+modelName,
+            //             glyphicon: 'trash',
+            //             action: function(model) {
+            //                 if(confirm("Are you sure that you want to delete the source "+modelName+"?")) {
+            //                     console.log(typeof model.url);
+            //                     console.log(model.url);
+            //                     model.url = model.url() + '/src';
+            //                     // model.url = model.url+'/src';
+            //                     // return;
+            //                     model.destroy({success: function(model, response) {
+            //                       console.log('deleted src');
+            //                     }, 
+            //                     error: function(model, response) {
+            //                         console.log(arguments);
+            //                     },
+            //                     wait: true});
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+            this.actions = new utils.ModelActionsView(actionOptions);
+            this.actions.on('goToTagName', function(tagName){
+                app.collection.view.tagsView.tagSelectView.selectTagByName(tagName);
+            });
+            
+            this.model.bind("change", this.render, this);
+            this.model.bind("destroy", this.remove, this);
+        },
+        renderStatus: function() {
+            this.$tdStatus.html(this.model.getStatusStr());
+        },
+        renderTotals: function() {
+            var qtyTotal = this.model.orderItemSkuCollection.getQtyTotal();
+            if(qtyTotal) {
+                this.$tdTotalQty.html(qtyTotal);
+            }
+            var total = this.model.orderItemSkuCollection.getSubTotal();
+            if(total) {
+                this.$tdTotalPrice.html(total);
+            }
+        },
+        renderCustomer: function() {
+            var self = this;
+            if(!this.userAvatarView) {
+                if(!this.model.has('user')) {
+                    if(this.model.has('session_name')) {
+                        self.$tdCustomer.append(this.$customerName.html(this.model.get('session_name')));
+                    } else {
+                        self.$tdCustomer.append(this.$customerName.html('Guest'));
+                    }
+                } else {
+                    this.$customerName.remove();
+                    if(!self.userAvatarView) {
+                        this.model.getUser(function(userModel){
+                            if(!self.userAvatarView) {
+                                self.userAvatarView = userModel.getNewAvatarNameView();
+                            }
+                            self.renderCustomer();
+                        });
+                    }
+                }
+            } else {
+                self.$tdCustomer.append(self.userAvatarView.render().$el);
+            }
+        },
+        render: function() {
+            
+            this.renderCustomer();
+            this.renderStatus();
+            this.renderTotals();
+            if(this.model.has('at')) {
+                if(window.clock) {
+                    this.$tdAt.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
+                    this.$tdAt.html(clock.moment(this.model.get('at')).calendar());
+                }
+            }
+            
+            if(this.model.has('payment')) {
+                var payment = this.model.get('payment');
+                if(payment.cash) {
+                    this.$tdPayment.html('<span class="glyphicon glyphicon-usd"></span>');
+                } else if(payment.credit) {
+                    this.$tdPayment.html('<span class="glyphicon glyphicon-credit-card"></span>');
+                } else if(payment.points) {
+                    this.$tdPayment.html('Points');
+                } else if(payment.bitcoin) {
+                    this.$tdPayment.html('Bitcoin');
+                }
+            }
+            
+            this.$tdActions.append(this.actions.render().$el);
+            
+            this.$el.append(this.$tdCustomer);
+            this.$el.append(this.$tdStatus);
+            this.$el.append(this.$tdTotalQty);
+            this.$el.append(this.$tdPayment);
+            this.$el.append(this.$tdTotalPrice);
+            this.$el.append(this.$tdCta);
+            this.$el.append(this.$tdAt);
+            this.$el.append(this.$tdActions);
+            // var $e = $('<span class="orderView"></span>');
+            console.log(this.model);
+            // $e.append(this.model.orderItemSkuCollection.getView().render().$el);
+            // this.$el.html($e);
+            this.$el.attr("data-id", this.model.get("id"));
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            click: "clickSelect",
+            "click .remove": "removeit",
+            "touchstart input": "touchstartstopprop"
+        },
+        removeit: function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+        },
+        touchstartstopprop: function(e) {
+            e.stopPropagation();
+        },
+        select: function() {
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('selected', this);
+            }
+        },
+        deselect: function() {
+            this.$el.removeClass("selected");
+            this.$el.removeAttr('selected');
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('deselected', this);
+            }
+        },
+        clickSelect: function(e) {
+            var self = this;
+            var $et = $(e.target);
+            if($et.parents('.actions').length) {
+            } else {
+                if(this.$el.hasClass('selected')) {
+                    this.deselect();
+                } else {
+                    this.select();
+                }
+            }
+        },
+        remove: function() {
+            $(this.el).remove();
+        }
+    });
     var OrderView = Backbone.View.extend({
         tagName: "span",
         className: "order",
@@ -428,7 +829,7 @@
         },
         initialize: function() {
             var self = this;
-            menu.on("refreshUser", function(user) {
+            account.on("refreshUser", function(user) {
                 self.render();
             });
             this.model.bind("change", this.render, this);
@@ -465,9 +866,9 @@
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
             this.$title = $('<div class="title col-md-6"></div>');
-            this.$price = $('<div class="price col-md-2"><button class="btn btn-link disabled"><span class="currency">$</span> <span class="cost"></span></button></div>');
-            this.$qty = $('<div class="qty col-md-2"><button title="Click to edit quantity" class="btn btn-link"><span>x</span> <span class="quantitiy"></span></button></div>');
-            this.$actions = $('<div class="actions col-md-2"></div>');
+            this.$price = $('<div class="price col-md-2 col-xs-6"><button class="btn btn-link disabled"><span class="currency">$</span> <span class="cost"></span></button></div>');
+            this.$qty = $('<div class="qty col-md-2 col-xs-3"><button title="Click to edit quantity" class="btn btn-link"><span>x</span> <span class="quantitiy"></span></button></div>');
+            this.$actions = $('<div class="actions col-md-2 col-xs-3"></div>');
             this.$actions.append('<button class="remove btn btn-link"><span class="remove glyphicon glyphicon-trash"> </span></button>');
         },
         render: function() {
@@ -512,6 +913,7 @@
         editQty: function() {
             var self = this;
             var qty = prompt("Enter quantity amount ex. 1, 5, 10.", this.model.get('qty'));
+            qty = parseInt(qty, 10);
             if(qty === 0 || qty === '0') {
                 this.model.destroy();
             } else if(qty && qty !== this.model.get('qty')) {
@@ -620,7 +1022,7 @@
     
     var PaymentMethodSelect = Backbone.View.extend({
         tagName: "div",
-        className: "placeOrder",
+        className: "placeOrder row",
         initialize: function() {
             var self = this;
             account.on("refreshUser", function(user) {
@@ -629,16 +1031,16 @@
             this.defaultPaymentMethods = {
                 "cash": true,
                 "credit": true,
-                "points": true,
+                "points": false,
                 "bitcoin": false
             }
             this.paymentMethodsSupported = _.defaults(this.options.methods || {}, this.defaultPaymentMethods);
             
             if(this.paymentMethodsSupported.cash) {
-                this.$cash = $('<div class="payment-cash"><button class="btn btn-lg btn-success">Pay Cash</button></div>');
+                this.$cash = $('<div class="payment-cash col-xs-6"><button class="btn btn-lg btn-success btn-block">Pay Cash</button></div>');
             }
             if(this.paymentMethodsSupported.credit) {
-                this.$credit = $('<div class="payment-credit"><button class="btn btn-lg btn-success">Pay Credit</button></div>');
+                this.$credit = $('<div class="payment-credit col-xs-6"><button class="btn btn-lg btn-success btn-block">Pay Credit</button></div>');
             }
             if(this.paymentMethodsSupported.bitcoin) {
                 this.$bitcoin = $('<div class="payment-bitcoin"></div>');
@@ -646,6 +1048,26 @@
             if(this.paymentMethodsSupported.points) {
                 this.$points = $('<div class="payment-points"></div>');
             }
+        },
+        events: {
+            "click .payment-cash button": "clickCash",
+            "click .payment-credit button": "clickCredit",
+        },
+        clickCash: function() {
+            this.trigger('selected', 'cash');
+            return false;
+        },
+        clickCredit: function() {
+            this.trigger('selected', 'credit');
+            return false;
+        },
+        clickPoints: function() {
+            this.trigger('selected', 'points');
+            return false;
+        },
+        clickBitcoin: function() {
+            this.trigger('selected', 'bitcoin');
+            return false;
         },
         render: function() {
             if(this.$cash) {
@@ -665,6 +1087,212 @@
         }
     });
     
+    var FullView = Backbone.View.extend({
+        tagName: "div",
+        className: "order-detail",
+        initialize: function() {
+            var self = this;
+            account.on("refreshUser", function(user) {
+                self.render();
+            });
+            // this.model.bind('change', function(){
+            //     // 
+            // }, this);
+            this.model.bind('change', this.render, this);
+            // this.model.orderItemSkuCollection.bind('change', this.renderGoods, this);
+            // this.model.orderItemSkuCollection.bind('remove', this.renderGoods, this);
+            this.model.orderItemSkuCollection.bind("change", this.render, this);
+            this.paymentMethodSelect = this.model.getPaymentMethodSelectView();
+            this.paymentMethodSelect.on('selected', function(paymentMethodStr){
+                var paymentObj = {payment:{}
+                };
+                var noteStr = self.getNoteString();
+                if(noteStr && noteStr !== null) {
+                    paymentObj.note = noteStr;
+                }
+                if(paymentMethodStr === 'cash') {
+                    paymentObj.payment = {cash: true};
+                    self.model.saveStatus(10, paymentObj, function(){
+                        self.renderPaymentTab();
+                        self.tabToPayment();
+                    });
+                } else if(paymentMethodStr === 'credit') {
+                    paymentObj.payment = {credit: true};
+                    self.model.saveStatus(10, paymentObj, function(){
+                        self.renderPaymentTab();
+                        self.tabToPayment();
+                    });
+                } else if(paymentMethodStr === 'points') {
+                    paymentObj.payment = {points: true};
+                    self.model.saveStatus(10, paymentObj, function(){
+                        self.renderPaymentTab();
+                        self.tabToPayment();
+                    });
+                } else if(paymentMethodStr === 'bitcoin') {
+                    paymentObj.payment = {bitcoin: true};
+                    self.model.saveStatus(10, paymentObj, function(){
+                        self.renderPaymentTab();
+                        self.tabToPayment();
+                    });
+                }
+            });
+            
+            // self.emailAuthView = account.getEmailAuthView({className: 'emailAuth row'});
+            
+            this.$billOfGoods = $('<div class="bill-of-goods"></div>');
+            this.$noteTotalRow = $('<div class="noteTotalRow row"></div>');
+            this.$orderNoteTextarea = $('<div class="form-group col-xs-6"><textarea disabled="disabled" name="note" placeholder="Add a note" class="form-control"></textarea></div>')
+            this.$billTotal = $('<div class="bill-total col-xs-6">Total USD $ <strong class="grand-total-price"></strong></div>');
+            this.$paymentMethod = $('<div class="payment-methods"></div>');
+            
+            this.$paymentCash = $('<div class="paymentCash"><p>Please pay the cashier and your order will be approved.</p></div>');
+            this.$paymentCredit = $('<div class="paymentCredit"><h4>Credit Card</h4></div>');
+            this.$newCreditCard = $('<div class="newCredit"><h5>New Card</h5></div>');
+            this.$paymentApproved = $('<div class="paymentApproved"><h4>Thank you!</h4><p>Your order has been approved and is now being processed.</p></div>');
+            
+            this.$paymentMethods = $('<div class="paymentMethods"></div>');
+            
+            self.$navTabs = $('<ul class="nav nav-tabs">\
+    <li class="active"><a href="#'+self.cid+'-bill" data-toggle="tab">Cart</a></li>\
+    <li class="disabled"><a href="#'+self.cid+'-payment" data-toggle="tab">Payment</a></li>\
+    <li class="disabled"><a href="#'+self.cid+'-complete" data-toggle="tab">Complete</a></li>\
+</ul>');
+            self.$tabContent = $('<div class="tab-content">\
+    <div class="tab-pane active billTab" id="'+self.cid+'-bill"></div>\
+    <div class="tab-pane payment" id="'+self.cid+'-payment"></div>\
+    <div class="tab-pane complete" id="'+self.cid+'-complete"></div>\
+</div>');
+        },
+        getNoteString: function() {
+            return this.$orderNoteTextarea.find('textarea').val();
+        },
+        renderGoods: function() {
+            this.$billTotal.find('.grand-total-price').html(this.model.orderItemSkuCollection.getSubTotal());
+            this.$billOfGoods.append(this.model.orderItemSkuCollection.getFullView().render().$el);
+        },
+        renderPaymentTab: function() {
+            // this.$tabContent.find('.payment').append(this.emailAuthView.render().$el);
+            var self = this;
+            if(this.model.has("user")) {
+                this.model.getUser(function(userModel){
+                    console.log(userModel)
+                    if(!this.userAvatar) {
+                        this.userAvatar = userModel.getNewAvatarNameView();
+                    }
+                    self.$tabContent.find('.payment').prepend(this.userAvatar.render().$el);
+                });
+            }
+            
+            this.$tabContent.find('.payment').append(this.$paymentMethods);
+            if(this.model.get('status') >= 30) {
+                this.$tabContent.find('.payment').append(this.$paymentApproved);
+            } else {
+                if(this.model.has('payment.cash')) {
+                    
+                    if(app.canUserCashier()) {
+                        this.$paymentCash.html('<button class="tender btn btn-success">Tender $ <span class="cashDollars"></span></button>');
+                        this.$paymentCash.find('.cashDollars').html(this.model.getGrandTotal());
+                    }
+                    
+                    this.$paymentMethods.append(this.$paymentCash);
+                    this.$paymentCash.show().siblings().hide();
+                // } else if(this.model.has('payment.credit')) {
+                } else {
+                    this.$paymentMethods.append(this.$paymentCredit);
+                    this.$paymentCredit.show().siblings().hide();
+                }
+            }
+        },
+        render: function() {
+            // alert('render')
+            this.$el.append(this.$navTabs);
+            this.$el.append(this.$tabContent);
+            this.$tabContent.find('.billTab').append(this.$billOfGoods);
+            
+            if(this.model.has('note')) {
+                this.$orderNoteTextarea.find('textarea').val(this.model.get('note'));
+            }
+            this.$noteTotalRow.append(this.$orderNoteTextarea);
+            this.$noteTotalRow.append(this.$billTotal);
+            this.$tabContent.find('.billTab').append(this.$noteTotalRow);
+            this.$tabContent.find('.billTab').append(this.$paymentMethod);
+            
+            this.renderPaymentTab();
+            
+            this.renderGoods();
+            this.$paymentMethod.append(this.paymentMethodSelect.render().$el);
+            
+            this.goToTabFromStatus();
+            // console.log(this.options.order);
+            // $e.find(".items").append(this.model.orderItemSkuCollection.getFullView().render().$el);
+            // this.$el.html($e);
+            this.setElement(this.$el);
+            return this;
+        },
+        goToTabFromStatus: function() {
+            var self = this;
+            var statusCode = this.model.get('status');
+            if(this.$el.parent().length === 0) { // not on page yet
+                self.$tabContent.find('.active').removeClass('active');
+                if(statusCode >= 50) {
+                    self.$tabContent.find('.complete').addClass('active');
+                } else if(statusCode >= 10) {
+                    self.$tabContent.find('.payment').addClass('active');
+                } else {
+                    self.$tabContent.find('.billTab').addClass('active');
+                }
+            }
+            if(statusCode >= 50) {
+                this.tabToComplete();
+            } else if(statusCode >= 10) {
+                this.tabToPayment();
+            } else {
+                this.tabToBill();
+            }
+        },
+        tabToBill: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-bill"]');
+            $el.parent('li').removeClass('disabled');
+            $el.tab('show');
+        },
+        tabToPayment: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-payment"]');
+            $el.parent('li').removeClass('disabled');
+            $el.tab('show');
+        },
+        tabToComplete: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-complete"]');
+            $el.parent('li').removeClass('disabled');
+            $el.tab('show');
+        },
+        cashierPaid: function(amount) {
+            var self = this;
+            var saveObj = {paid: {}};
+            saveObj.paid = {cash: amount}; // gets cashier user object {name, id} on server
+            self.model.saveStatus(30, saveObj, function(){
+                self.renderPaymentTab();
+                self.tabToPayment();
+            });
+        },
+        events: {
+            "click button.cash": "order",
+            "click button.credit": "order",
+            "click button.tender": "tenderCashInFull",
+            "touchstart input": "touchstartstopprop"
+        },
+        tenderCashInFull: function() {
+            if(confirm('Confirm '+this.model.getGrandTotal()+' paid in full?')) {
+                this.cashierPaid(this.model.getGrandTotal());
+            }
+        },
+        touchstartstopprop: function(e) {
+            e.stopPropagation();
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+    
     var BillView = Backbone.View.extend({
         tagName: "div",
         className: "placeOrder",
@@ -678,28 +1306,192 @@
             // this.model.orderItemSkuCollection.bind('remove', this.renderGoods, this);
             this.model.orderItemSkuCollection.bind("change", this.render, this);
             this.paymentMethodSelect = this.model.getPaymentMethodSelectView();
+            this.paymentMethodSelect.on('selected', function(paymentMethodStr){
+                var paymentObj = {payment:{}
+                };
+                var noteStr = self.getNoteString();
+                if(noteStr && noteStr !== null) {
+                    paymentObj.note = noteStr;
+                }
+                if(paymentMethodStr === 'cash') {
+                    paymentObj.payment = {cash: true};
+                    self.model.saveStatus(10, paymentObj, function(){
+                        console.log('go to tab payment');
+                        // self.renderPaymentTab();
+                        self.tabToPayment();
+                    });
+                } else if(paymentMethodStr === 'credit') {
+                    paymentObj.payment = {credit: true};
+                    self.model.saveStatus(10, paymentObj, function(){
+                        self.renderPaymentTab();
+                        self.tabToPayment();
+                    });
+                } else if(paymentMethodStr === 'points') {
+                    paymentObj.payment = {points: true};
+                    self.model.saveStatus(10, paymentObj, function(){
+                        self.renderPaymentTab();
+                        self.tabToPayment();
+                    });
+                } else if(paymentMethodStr === 'bitcoin') {
+                    paymentObj.payment = {bitcoin: true};
+                    self.model.saveStatus(10, paymentObj, function(){
+                        self.renderPaymentTab();
+                        self.tabToPayment();
+                    });
+                }
+            });
+            
+            self.emailAuthView = account.getEmailAuthView({className: 'emailAuth row'});
+            self.emailAuthView.on('saved', function(){
+                self.model.setUser();
+            });
+            
             this.$billOfGoods = $('<div class="bill-of-goods"></div>');
-            this.$billTotal = $('<div class="bill-total">Total $ <span class="grand-total-price"></span></div>');
+            this.$noteTotalRow = $('<div class="noteTotalRow row"></div>');
+            this.$orderNoteTextarea = $('<div class="form-group col-xs-6"><textarea name="note" placeholder="Add a note" class="form-control"></textarea></div>')
+            this.$billTotal = $('<div class="bill-total col-xs-6">Total USD $ <strong class="grand-total-price"></strong></div>');
             this.$paymentMethod = $('<div class="payment-methods"></div>');
+            
+            this.$paymentCash = $('<div class="paymentCash"><p>Please pay the cashier and your order will be approved.</p></div>');
+            this.$paymentCredit = $('<div class="paymentCredit"><h4>Credit Card</h4></div>');
+            this.$paymentApproved = $('<div class="paymentApproved"><h4>Thank you!</h4><p>Your order has been received and is now being processed.</p></div>');
+            
+            this.$paymentMethods = $('<div class="paymentMethods"></div>');
+            this.$completeTab = $('<div class="completion"></div>');
+            
+            self.$navTabs = $('<ul class="nav nav-tabs">\
+    <li class="active"><a href="#'+self.cid+'-bill" data-toggle="tab">Cart</a></li>\
+    <li class="disabled"><a href="#'+self.cid+'-payment" data-toggle="tab">Pay</a></li>\
+    <li class="disabled"><a href="#'+self.cid+'-complete" data-toggle="tab">Complete</a></li>\
+</ul>');
+            self.$tabContent = $('<div class="tab-content">\
+    <div class="tab-pane active billTab" id="'+self.cid+'-bill"></div>\
+    <div class="tab-pane payment" id="'+self.cid+'-payment"></div>\
+    <div class="tab-pane complete" id="'+self.cid+'-complete"></div>\
+</div>');
+        },
+        setUser: function() {
+            
+        },
+        getNoteString: function() {
+            return this.$orderNoteTextarea.find('textarea').val();
         },
         renderGoods: function() {
             this.$billTotal.find('.grand-total-price').html(this.model.orderItemSkuCollection.getSubTotal());
             this.$billOfGoods.append(this.model.orderItemSkuCollection.getFullView().render().$el);
         },
+        renderPaymentTab: function() {
+            console.log('renderPaymentTab')
+            var self = this;
+            this.$tabContent.find('.payment').append(this.emailAuthView.render().$el);
+            this.$tabContent.find('.payment').append(this.$paymentMethods);
+            
+            this.$paymentMethods.show();
+            this.model.isMembership(function(isMembership){
+                if(isMembership) {
+                    if(!account.isUser()) {
+                        self.$paymentMethods.hide();
+                    }
+                }
+            });
+            
+            if(this.model.get('status') >= 20) {
+                var $el = this.$navTabs.find('a[href="#'+this.cid+'-payment"]');
+                $el.parent('li').removeClass('disabled');
+            }
+            
+            if(this.model.get('status') >= 30) {
+                this.$tabContent.find('.payment').append(this.$paymentApproved);
+            } else {
+                if(this.model.has('payment.cash')) {
+                    this.$paymentMethods.append(this.$paymentCash);
+                    this.$paymentCash.show().siblings().hide();
+                // } else if(this.model.has('payment.credit')) {
+                } else {
+                    this.$paymentMethods.append(this.$paymentCredit);
+                    this.$paymentCredit.show().siblings().hide();
+                }
+            }
+        },
+        renderCompleteTab: function() {
+            var self = this;
+            if(this.model.get('status') === 100) {
+                this.$completeTab.html('Your order is complete.'); // complete
+            } else if(this.model.get('status') === 50) { // processed
+                this.$completeTab.html('Your order has been processed.');
+            } else if(this.model.get('status') === 30) { // paid & processing
+                this.$completeTab.html('Your order has been paid and is being processed now.');
+            }
+            
+            if(this.model.get('status') >= 30) {
+                var $el = this.$navTabs.find('a[href="#'+this.cid+'-complete"]');
+                $el.parent('li').removeClass('disabled');
+            }
+            
+            this.$tabContent.find('.complete').append(this.$completeTab);
+        },
         render: function() {
             // alert('render')
-            this.$el.append(this.$billOfGoods);
-            this.$el.append(this.$billTotal);
-            this.$el.append(this.$paymentMethod);
+            this.$el.append(this.$navTabs);
+            this.$el.append(this.$tabContent);
+            this.$tabContent.find('.billTab').append(this.$billOfGoods);
+            
+            if(this.model.has('note')) {
+                this.$orderNoteTextarea.find('textarea').val(this.model.get('note'));
+            }
+            this.$noteTotalRow.append(this.$orderNoteTextarea);
+            this.$noteTotalRow.append(this.$billTotal);
+            this.$tabContent.find('.billTab').append(this.$noteTotalRow);
+            this.$tabContent.find('.billTab').append(this.$paymentMethod);
+            
+            this.renderPaymentTab();
+            this.renderCompleteTab();
             
             this.renderGoods();
             this.$paymentMethod.append(this.paymentMethodSelect.render().$el);
             
+            this.goToTabFromStatus();
             // console.log(this.options.order);
             // $e.find(".items").append(this.model.orderItemSkuCollection.getFullView().render().$el);
             // this.$el.html($e);
             this.setElement(this.$el);
             return this;
+        },
+        goToTabFromStatus: function() {
+            var self = this;
+            var statusCode = this.model.get('status');
+            if(this.$el.parent().length === 0) { // not on page yet
+                self.$tabContent.find('.active').removeClass('active');
+                if(statusCode >= 50) {
+                    self.$tabContent.find('.complete').addClass('active');
+                } else if(statusCode >= 10) {
+                    self.$tabContent.find('.payment').addClass('active');
+                } else {
+                    self.$tabContent.find('.billTab').addClass('active');
+                }
+            }
+            if(statusCode >= 50) {
+                this.tabToComplete();
+            } else if(statusCode >= 10) {
+                this.tabToPayment();
+            } else {
+                this.tabToBill();
+            }
+        },
+        tabToBill: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-bill"]');
+            $el.parent('li').removeClass('disabled');
+            $el.tab('show');
+        },
+        tabToPayment: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-payment"]');
+            $el.parent('li').removeClass('disabled');
+            $el.tab('show');
+        },
+        tabToComplete: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-complete"]');
+            $el.parent('li').removeClass('disabled');
+            $el.tab('show');
         },
         events: {
             "click button.cash": "order",
@@ -709,33 +1501,33 @@
         touchstartstopprop: function(e) {
             e.stopPropagation();
         },
-        order: function() {
-            var self = this;
-            if (!menu.user) {
-                menu.auth.getView().login(function() {
-                    console.log(menu.auth);
-                    menu.auth.getView().getUserModel(function(user) {
-                        console.log(user);
-                        menu.bindUser(user);
-                        self.order();
-                    });
-                });
-                return false;
-            }
-            this.options.order.set({
-                status: 10
-            }, {
-                silent: true
-            });
-            var saveModel = this.options.order.save(null, {silent: false, wait: true});
-            if (saveModel) {
-                saveModel.done(function() {
-                    alert("Thank you!  Your order has been placed.");
-                    app.router.navigate.navigate("patron/" + menu.auth.getView().userModel.get("name"), true);
-                });
-            }
-            return false;
-        },
+        // order: function() {
+        //     var self = this;
+        //     if (!menu.user) {
+        //         menu.auth.getView().login(function() {
+        //             console.log(menu.auth);
+        //             menu.auth.getView().getUserModel(function(user) {
+        //                 console.log(user);
+        //                 menu.bindUser(user);
+        //                 self.order();
+        //             });
+        //         });
+        //         return false;
+        //     }
+        //     this.options.order.set({
+        //         status: 10
+        //     }, {
+        //         silent: true
+        //     });
+        //     var saveModel = this.options.order.save(null, {silent: false, wait: true});
+        //     if (saveModel) {
+        //         saveModel.done(function() {
+        //             alert("Thank you!  Your order has been placed.");
+        //             app.router.navigate.navigate("patron/" + menu.auth.getView().userModel.get("name"), true);
+        //         });
+        //     }
+        //     return false;
+        // },
         remove: function() {
             this.$el.remove();
         }
@@ -746,6 +1538,7 @@
                 Collection: Collection,
                 Model: Model,
                 Bill: BillView,
+                Full: FullView,
             };
         });
     }
