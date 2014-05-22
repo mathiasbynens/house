@@ -435,7 +435,7 @@ Backbone.House.Collection = Backbone.Collection.extend({
                     socket.emit('join', self.collectionName);
                 });
                 var insertOrUpdateDoc = function(doc) {
-                    console.log(doc);
+                    // console.log(doc);
                     if (_.isArray(doc)) {
                         _.each(doc, insertOrUpdateDoc);
                         return;
