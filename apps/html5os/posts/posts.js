@@ -309,9 +309,8 @@
             }
             if(!doc) {
                 if(!self.newForm) {
-                    self.newForm = new window.PostsBackbone.Form({
-                        collection: window.postsCollection
-                    });
+                    var newPostModel = window.postsCollection.getNewModel();
+                    self.newForm = newPostModel.getFormView();
                     self.newForm.on("saved", function(doc) {
                         self.router.navigate(doc.getNavigatePath(), {
                             replace: true,
@@ -337,10 +336,7 @@
                 self.newForm.focus();
             } else {
                 if(!self.editForms.hasOwnProperty(doc.id)) {
-                    self.editForms[doc.id] = new window.PostsBackbone.Form({
-                        collection: window.postsCollection,
-                        model: doc
-                    });
+                    self.editForms[doc.id] = doc.getFormView();
                     if(doc.has('title')) {
                         self.router.setTitle(doc.get('title'));
                     }

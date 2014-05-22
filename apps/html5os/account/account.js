@@ -142,8 +142,8 @@
             }
         },
         url: function() {
-            if(window.config && window.config.authUrl) {
-                return window.config.authUrl;
+            if(window.config && window.config.site && window.config.site.api && window.config.site.api.secure_url) {
+                return window.config.site.api.secure_url + '/auth';
             } else {
                 return '/api/auth';
                 var hostPath = window.location.hostname;
@@ -432,8 +432,8 @@
     auth.Collection = Backbone.Collection.extend({
         model: auth.Model,
         url: function() {
-            if(window.config && window.config.authUrl) {
-                return window.config.authUrl;
+            if(window.config && window.config.site && window.config.site.api && window.config.site.api.secure_url) {
+                return window.config.site.api.secure_url + '/auth';
             } else {
                 return '/api/auth';
                 var hostPath = window.location.hostname;
@@ -883,7 +883,9 @@
                     lightbox.remove();
                 });
             });
-            e.preventDefault();
+            if(e) {
+                e.preventDefault();
+            }
         },
         login: function(e) {
             var self = this;
@@ -1467,13 +1469,14 @@
                     }
                 });
             }
-            var confPath = '/js/config.js';
+            var confPath = '/configs/config.js';
             require([confPath], function(config){
                 window.config = config;
                 loadUsers();
             }, function (err) {
                 window.config = {
-                    "authUrl": '/api/auth', //"https://"+window.location.hostname+"/api/auth"
+                    // "authUrl": '/api/auth', //"https://"+window.location.hostname+"/api/auth"
+                    "site":{"api":{"secure_url":'/api'}}
                 };
                 loadUsers();
             });

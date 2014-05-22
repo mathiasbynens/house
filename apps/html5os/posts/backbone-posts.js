@@ -8,6 +8,8 @@
             this.AvatarView = AvatarView;
             this.FullView = FullView;
             this.AView = AView;
+            // this.addViewType(FullView, 'full');
+            this.addViewType(FormView, 'form');
             options = options || {};
             options.ownerFieldName = 'owner';
             
@@ -20,6 +22,11 @@
                     }
                 }
             }
+            var self = this;
+            
+            this.on('change', function(){
+                self.renderViews();
+            });
             
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
@@ -676,12 +683,12 @@
             if(this.model.has('msg')) {
                 var $msg = $('<div class="msg col-md-8 col-md-offset-2"></div>');
                 var msgStr = this.model.get('msg');
-                var msgTxt = $('<span>'+br2nl(msgStr)+'</span>').text();
-                msgTxt = msgTxt.replace(/\n\n\s*\n/g, '\n\n'); // limit to two newlines
-                var msgStrTxt = nl2br(msgTxt);
+                // var msgTxt = $('<span>'+br2nl(msgStr)+'</span>').text();
+                // msgTxt = msgTxt.replace(/\n\n\s*\n/g, '\n\n'); // limit to two newlines
+                // var msgStrTxt = nl2br(msgTxt);
                 var trimLen = 555;
-                if(msgStrTxt.length > trimLen) {
-                    msgStr = msgStrTxt.substr(0, trimLen);
+                if(msgStr.length > trimLen) {
+                    msgStr = msgStr.substr(0, trimLen);
                     msgStr += '... <a href="#" class="readMore">Read more</a>'; // strip html
                 }
                 $msg.html(msgStr);
@@ -1107,7 +1114,9 @@
                     this.$msg.html(msgStr);
                 }
                 this.$el.append(this.$msg);
-                this.$msg.fitVids();
+                if(this.$msg.fitVids) {
+                    this.$msg.fitVids();
+                }
             }
             
             this.$el.append(this.$entryMeta);
@@ -1177,7 +1186,7 @@
     };
     window.br2nl = function(str) {
         return str.replace(/<br\s*\/?>/mg,"\n");
-    }
+    };
     
     var AvatarView = Backbone.View.extend({
         tagName: "span",
@@ -1975,11 +1984,26 @@
                 if(this.model.has('seq')) {
                     this.$inputSeq.val(this.model.get('seq'));
                 } else if(this.model.isNew()) {
-                    var ii = parseInt(this.model.collection.count) + 1;
-                    this.$inputSeq.val(ii);
+                    var ii = 1;
+                    if(this.model.collection && this.model.collection.count)  {
+                        ii = parseInt(this.model.collection.count) + 1;
+                        this.$inputSeq.val(ii);
+                    } else {
+                        this.model.collection.refreshCount(function(count){
+                            self.$inputSeq.val(count+1);
+                        });
+                    }
                 }
                 if(this.model.has('msg')) {
                     this.$inputMsg.val(this.model.get('msg'));
+                    
+                    if(self.editor) {
+                        self.editor.textarea.setValue(this.model.get('msg'));
+                        self.editor.setValue(this.model.get('msg'));
+                    }
+                    if(self.aceEditor) {
+                        self.aceEditor.setValue(this.model.get('msg'));
+                    }
                 }
                 if(this.model.has('slug')) {
                     this.$inputSlug.val(this.model.get('slug'));
@@ -2540,7 +2564,7 @@
             });
             if(saveModel) {
                 saveModel.done(function() {
-                    self.collection.add(self.model);
+                    self.model.collection.add(self.model);
                     self.markAsDirty(false);
                     if(dontTrigger !== true) {
                         self.trigger("saved", self.model);

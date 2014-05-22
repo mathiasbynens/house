@@ -22,6 +22,7 @@
                     'pages',
                     //'posts',
                     'polls',
+                    'rewards',
                     'todos',
                     'tags',
                     //'urls',

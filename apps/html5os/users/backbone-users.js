@@ -7,13 +7,16 @@
             this.RowView = RowView;
             this.AvatarView = AvatarView;
             this.FullView = FullView;
+            this.addViewType(AvatarNameView, 'avatarName');
+            this.addViewType(SelectView, 'select');
+            
             options = options || {};
             options.ownerFieldName = 'id';
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
         url: function() {
-            if(window.config && window.config.secureApiUrl) {
-                return window.config.secureApiUrl+'/users/'+this.id;
+            if(window.config && window.config.site && window.config.site.api && window.config.site.api.secure_url) {
+                return window.config.site.api.secure_url+'/users/'+this.id;
             } else if(window.config && window.config.usersUrl) {
                 return window.config.usersUrl+"/"+this.id;
             } else {
@@ -64,19 +67,19 @@
         // getAvatarView: function(options) {
         //     return this.getAvatar(options);
         // },
-        getNewAvatarNameView: function(options) {
-            if (!options) options = {};
-            options.model = this;
-            return new AvatarNameView(options)
-        },
-        getAvatarNameView: function(options) {
-            if (!options) options = {};
-            options.model = this;
-            if (!this.hasOwnProperty("avatarNameView")) {
-                this.avatarNameView = this.getNewAvatarNameView(options);
-            }
-            return this.avatarNameView;
-        },
+        // getNewAvatarNameView: function(options) {
+        //     if (!options) options = {};
+        //     options.model = this;
+        //     return new AvatarNameView(options)
+        // },
+        // getAvatarNameView: function(options) {
+        //     if (!options) options = {};
+        //     options.model = this;
+        //     if (!this.hasOwnProperty("avatarNameView")) {
+        //         this.avatarNameView = this.getNewAvatarNameView(options);
+        //     }
+        //     return this.avatarNameView;
+        // },
         getUserView: function(options) {
             return this.getFullView(options);
         },
@@ -114,8 +117,8 @@
         collectionName: 'users',
         //url: '/api/users',
         url: function() {
-            if(window.config && window.config.secureApiUrl) {
-                return window.config.secureApiUrl+'/users';
+            if(window.config && window.config.site && window.config.site.api && window.config.site.api.secure_url) {
+                return window.config.site.api.secure_url+'/users';
             } else if(window.config && window.config.usersUrl) {
                 return window.config.usersUrl;
             } else {
@@ -427,11 +430,15 @@
             this.$span = $('<span class="userAvatarName"><span class="name"></span></span>');
             this.$img = $('<img class="avatar" src="'+defaultImg+'">');
             // console.log(this.$img)
-            this.$span.append(this.$img);
+            if(options.avatarRight) {
+                this.$span.append(this.$img);
+            } else {
+                this.$span.prepend(this.$img);
+            }
         },
         render: function() {
             var self = this;
-            this.$el.html(this.$span);
+            this.$el.append(this.$span);
             this.$span.find('.name').html(this.model.get('name'));
             this.$img.attr('title', this.model.get('name'));
             if (this.model.has("avatar")) {
@@ -451,6 +458,70 @@
         },
         goToProfile: function() {
             this.trigger("goToProfile", this.model);
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+
+    var SelectView = Backbone.View.extend({
+        tagName: "div",
+        className: "select user",
+        initialize: function(options) {
+            var defaultImg = '';
+            if(options.defaultImg) {
+                defaultImg = options.defaultImg;
+            } else {
+                defaultImg = '/users/iosicon.png';
+            }
+            this.$span = $('<span class="userAvatarName"><span class="name"></span></span>');
+            this.$img = $('<img class="avatar" src="'+defaultImg+'">');
+            // console.log(this.$img)
+            this.$span.prepend(this.$img);
+        },
+        render: function() {
+            var self = this;
+            this.$el.append(this.$span);
+            this.$span.find('.name').html(this.model.get('name'));
+            this.$img.attr('title', this.model.get('name'));
+            if (this.model.has("avatar")) {
+                var src = this.model.get("avatar");
+                if (src.indexOf("http") === 0) {} else {
+                    src = "/api/files/" + encodeURIComponent(src);
+                }
+                if(this.$img.attr('src') !== src) {
+                    this.$img.attr('src', src);
+                }
+            }
+            this.setElement(this.$el);
+            return this;
+        },
+        select: function() {
+            this.$el.addClass("selected");
+            this.$el.attr("selected", true);
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('selected', this);
+            }
+        },
+        deselect: function() {
+            this.$el.removeClass("selected");
+            this.$el.removeAttr('selected');
+            if(this.options.hasOwnProperty('list')) {
+                this.options.list.trigger('deselected', this);
+            }
+        },
+        events: {
+            click: "clickSelect"
+        },
+        goToProfile: function() {
+            this.trigger("goToProfile", this.model);
+        },
+        clickSelect: function(e) {
+            if(this.$el.hasClass('selected')) {
+                this.deselect();
+            } else {
+                this.select();
+            }
         },
         remove: function() {
             this.$el.remove();
@@ -1675,8 +1746,183 @@
             this.$inputTitle.focus();
         },
         remove: function() {
-            $(this.el).remove();
+            this.$el.remove();
         }
+    });
+    
+    var SearchSelectDropdown = Backbone.View.extend({
+        tagName: 'div',
+        className: 'btn-group',
+        initialize: function() {
+            var self = this;
+            var dropdownMenuClassName = this.options.dropdownMenuClassName || 'users'; // pull-right
+            this.$btn = $('<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown"></button>');
+            this.$dropdownMenu = $('<ul class="dropdown-menu '+dropdownMenuClassName+'" role="menu"></ul>');
+            // this.$liNewTag = $('<li class="newTagForm"></li>');
+            this.$currentUserDiv = $('<li class="divider currentUser"></li>');
+            this.$selectList = $('<li class="selectList" title="Select a User"></li>');
+            // this.$tagNone = $('<li class="selectList" title="Select a Tag"></li>');
+            // this.$tagDeselect = $('<li class="selectList" title="Deselect Tag"></li>');
+            if(!window.usersCollection) {
+                window.usersCollection = new Collection();
+            }
+            this.fullList = window.usersCollection.getView({
+                layout: 'select',
+                el: this.$selectList,
+                selection: false, mason: false,
+                search: {
+                    fieldName: 'name'
+                }
+            }); // 
+            this.fullList.on('selected', function(view){
+                self.renderButtonAvatar(view.model);
+                self.selectedUser = view.model.id;
+                self.trigger('selected', view.model.id);
+            });
+            this.fullList.on('deselected', function(view){
+                delete self.selectedUser;
+                self.renderButtonAvatar();
+                self.trigger('deselected', view.model.id);
+            });
+            
+            this.on('deselectAll', function(options){
+                if(options.silent)
+                var silent = options.silent || false;
+                self.deselectTag(silent);
+            })
+            // console.log(this.model)
+        },
+        renderButtonAvatar: function(model) {
+            var self = this;
+            if(model) {
+                var avatarUrl = model.get('avatar');
+                if(avatarUrl.indexOf('://') === -1) {
+                    avatarUrl = '/api/files/'+model.get('avatar');
+                }
+                if(model.has('image.sizes')) {
+                    if(model.has('image.sizes.square')) {
+                        this.$btn.html('<img src="/api/files/'+model.get('image.sizes.square').filename+'" />');
+                    } else {
+                        this.$btn.html('<img src="'+avatarUrl+'" />');
+                    }
+                } else {
+                    this.$btn.html('<img src="'+avatarUrl+'" />');
+                }
+            } else {
+                this.$btn.html('<span class="glyphicon glyphicon-user"></span>  <span class="sr-only">Toggle Dropdown</span>');
+            }
+        },
+        render: function() {
+            var self = this;
+            // this.$el.find('ul.tags').html('');
+            
+            // bs btn steals my dropdown click
+            this.$el.on('shown.bs.dropdown', function(){
+                self.shownDropdown();
+            });
+            // this.$dropdownMenu.append(this.$liNewTag.html('<input name="tagName" placeholder="Enter a tag name" class="form-control" />'));
+            this.$dropdownMenu.append(this.$selectList);
+            // this.$dropdownMenu.append(this.$tagNone);
+            // this.$dropdownMenu.append(this.$tagDeselect);
+            
+            this.$el.append(this.$btn.html('<span class="glyphicon glyphicon-user"></span>  <span class="sr-only">Toggle Dropdown</span>'));
+            this.$el.append(this.$dropdownMenu);
+            this.setElement(this.$el);
+            return this;
+        },
+        renderTopUsers: function() {
+            var self = this;
+            // this.fullList.filter(function(){
+            //     return true;
+            // });
+            this.fullList.setElement(this.$selectList).render();
+            if(this.fullList.collection.length === 0) {
+                this.fullList.collection.load();
+            }
+            
+            // mark selected row
+            if(this.selectedUser) {
+                var $user = this.$el.find('.user[data-id="'+this.selectedUser+'"]');
+                if($user.length) {
+                    $user.addClass('selected').siblings().removeClass('selected');
+                }
+            } else {
+                this.$el.find('.user').removeClass('selected');
+            }
+            
+            return this;
+        },
+        events: {
+            "click input": "stopProp"
+            // "click .btn.dropdown-toggle": "clickBtnDropdown",
+            // "click .tagsOfSong.tagsList li.tag": "goToTag",
+            // "click .selectList .usersList li.user": "selectUser",
+            // "keyup input[name='tagName']": "debouncedKeyUp",
+            // "keydown input[name='tagName']": "debouncedKeyDown",
+            // "submit": "submitForm"
+        },
+        stopProp: function(e) {
+            return false;
+        },
+        // goToTag: function(e) {
+        //     var $t = $(e.currentTarget);
+        //     var tagName = $t.find('[data-name]').attr('data-name');
+        //     this.trigger('selectedTagName', tagName);
+        // },
+        // selectUser: function(e) {
+        //     var self = this;
+        //     var $t = $(e.currentTarget);
+        //     console.log($t)
+        //     console.log($t.attr('data-id'))
+        //     var user = this.fullList.collection.get($t.attr('data-id'));
+        //     console.log(user)
+        //     if(this.selectedUser) {
+        //         if(user == this.selectedUser) {
+        //             this.deselectTag();
+        //             return;
+        //         }
+        //     }
+        //     this.selectedUser = user;
+        //     if(user) {
+        //         this.trigger('selected', user);
+        //     }
+        //     e.stopPropagation();
+        //     e.preventDefault();
+        //     $(e.currentTarget).dropdown('toggle');
+        // },
+        selectByName: function(name) {
+            var self = this;
+            this.fullList.collection.getOrFetchName(name, function(model){
+                if(model) {
+                    if(self.selectedUser) {
+                        if(model.id == self.selectedUser) {
+                            self.deselectTag();
+                            return;
+                        }
+                    }
+                    self.selectedUser = model.id;
+                    self.trigger('selected', model.id);
+                }
+            });
+        },
+        deselectTag: function(silent) {
+            delete this.selectedTag;
+            this.$el.find('.user').removeClass('selected');
+            this.renderColors();
+            if(!silent) {
+                this.trigger('deselected');
+            }
+        },
+        shownDropdown: function() {
+            this.renderTopUsers();
+            // this.focus();
+        },
+        // clickBtnDropdown: function(e) {
+        //     this.renderTopTags();
+        //     $(e.currentTarget).dropdown('toggle');
+        //     e.stopPropagation();
+        //     e.preventDefault();
+        // },
     });
     
     if(define) {
@@ -1688,7 +1934,9 @@
                 Row: RowView,
                 Avatar: AvatarView,
                 Full: FullView,
-                Form: FormView
+                Form: FormView,
+                SelectView: SelectView,
+                SearchSelectDropdown: SearchSelectDropdown
             }
         });
     }

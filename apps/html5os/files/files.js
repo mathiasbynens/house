@@ -60,6 +60,9 @@
                                         'audio': {txt: 'Audio', glyphicon: 'music', filter: filterFunc, load: {contentType: new RegExp('audio')}},
                                         'video': {txt: 'Video', glyphicon: 'film', filter: filterFunc, load: {contentType: new RegExp('video')}},
                                     },
+                                    users: {
+                                        'fieldName': 'metadata.owner.id'
+                                    },
                                     tags: {
                                         'fieldName': 'metadata.tags'
                                     },

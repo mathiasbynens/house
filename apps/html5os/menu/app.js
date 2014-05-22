@@ -15,95 +15,103 @@
                             window.MenuItemReviews = MenuItemReviews;
                             require(['/orders/orders.js'], function(Orders) {
                                 window.Orders = Orders;
-                                window.ordersPendingCollection = new Orders.Collection();
-                                // window.ordersPendingCollection.filterPending();
-                                window.ordersPendingCollection.on('add', function(){
-                                    self.renderOrderPending();
-                                });
-                                window.ordersPendingCollection.on('remove', function(){
-                                    self.renderOrderPending();
-                                });
+                                window.ordersCollection = new Orders.Collection();
                                 
-                                self.ordersPendingList = window.ordersPendingCollection.getPendingListView();
+                                require(['/rewards/rewards.js'], function(Rewards) {
+                                    window.Rewards = Rewards;
+                                    window.rewardsCollection = new Rewards.Collection();
                                 
-                                window.menuGroupsCollection = new MenuGroups.Collection();
-                                window.menuGroupsCollection.on('editModel', function(menuGroup) {
-                                    self.nav.router.navigate('group/id/' + menuGroup.id + '/edit', {
-                                        trigger: true
+                                    // window.ordersCollection.filterPending();
+                                    window.ordersCollection.on('add', function(){
+                                        self.renderOrderPending();
                                     });
-                                });
-                                window.menuGroupsCollection.on('addGroupToModel', function(menuGroup) {
-                                    self.nav.router.navigate('group/id/' + menuGroup.id + '/addGroup', {
-                                        trigger: true
+                                    window.ordersCollection.on('remove', function(){
+                                        self.renderOrderPending();
                                     });
-                                });
-                                window.menuGroupsCollection.on('addItemToModel', function(menuGroup) {
-                                    self.nav.router.navigate('group/id/' + menuGroup.id + '/addItem', {
-                                        trigger: true
+                                    
+                                    self.ordersPendingList = window.ordersCollection.getPendingListView();
+                                    
+                                    window.menuGroupsCollection = new MenuGroups.Collection();
+                                    window.menuGroupsCollection.on('editModel', function(menuGroup) {
+                                        self.nav.router.navigate('group/id/' + menuGroup.id + '/edit', {
+                                            trigger: true
+                                        });
                                     });
-                                });
-        
-                                window.menuItemsCollection = new MenuItems.Collection();
-                                window.menuItemsCollection.on('editModel', function(model) {
-                                    self.nav.router.navigate('item/id/' + model.id + '/edit', {
-                                        trigger: true
+                                    window.menuGroupsCollection.on('addGroupToModel', function(menuGroup) {
+                                        self.nav.router.navigate('group/id/' + menuGroup.id + '/addGroup', {
+                                            trigger: true
+                                        });
                                     });
-                                });
-                                // self.menuGroupList = window.menuGroupsCollection.getView({
-                                //     // headerEl: this.$todoNav.find('.navbar-header-form'),
-                                //     layout: 'row',
-                                //     selection: false, mason: false,
-                                //     search: {
-                                //         'fieldName': 'name'
-                                //     },
-                                //     // filters: {
-                                //     //     'todo': {
-                                //     //         txt: 'Todos',
-                                //     //         glyphicon: 'unchecked',
-                                //     //         filter: filterFunc,
-                                //     //         load: {
-                                //     //             "done": 0
-                                //     //         }
-                                //     //     },
-                                //     //     'done': {
-                                //     //         txt: 'Done',
-                                //     //         glyphicon: 'check',
-                                //     //         filter: filterFunc,
-                                //     //         load: {
-                                //     //             "done": 1
-                                //     //         }
-                                //     //     },
-                                //     //     'none': {
-                                //     //         filter: filterFunc,
-                                //     //     }
-                                //     // },
-                                //     // tags: {
-                                //     //     'fieldName': 'tags'
-                                //     // },
-                                //     sorts: [{
-                                //         name: 'Created At',
-                                //         field: 'at',
-                                //         type: 'date',
-                                //         glyphicon: 'time',
-                                //     }, {
-                                //         name: 'Rank',
-                                //         field: 'rank',
-                                //         type: 'int',
-                                //         glyphicon: 'sort-by-order',
-                                //         default: -1
-                                //         // default: -1
-                                //     }],
-                                //     itemCollection: window.menuItemsCollection
-                                // });
-                                // self.menuItemList = window.menuItemsCollection.getView({
-                                //     menu: self
-                                // });
-                                // this.orderPending = new OrderPendingView;
-                                window.menuItemsCollection.load(null, function() {
-                                    window.menuGroupsCollection.load(null, function() {
-                                        window.ordersPendingCollection.load(null, function() {
-                                            self.initialized = true;
-                                            self.trigger('initialized', true);
+                                    window.menuGroupsCollection.on('addItemToModel', function(menuGroup) {
+                                        self.nav.router.navigate('group/id/' + menuGroup.id + '/addItem', {
+                                            trigger: true
+                                        });
+                                    });
+            
+                                    window.menuItemsCollection = new MenuItems.Collection();
+                                    window.menuItemsCollection.on('editModel', function(model) {
+                                        self.nav.router.navigate('item/id/' + model.id + '/edit', {
+                                            trigger: true
+                                        });
+                                    });
+                                    // self.menuGroupList = window.menuGroupsCollection.getView({
+                                    //     // headerEl: this.$todoNav.find('.navbar-header-form'),
+                                    //     layout: 'row',
+                                    //     selection: false, mason: false,
+                                    //     search: {
+                                    //         'fieldName': 'name'
+                                    //     },
+                                    //     // filters: {
+                                    //     //     'todo': {
+                                    //     //         txt: 'Todos',
+                                    //     //         glyphicon: 'unchecked',
+                                    //     //         filter: filterFunc,
+                                    //     //         load: {
+                                    //     //             "done": 0
+                                    //     //         }
+                                    //     //     },
+                                    //     //     'done': {
+                                    //     //         txt: 'Done',
+                                    //     //         glyphicon: 'check',
+                                    //     //         filter: filterFunc,
+                                    //     //         load: {
+                                    //     //             "done": 1
+                                    //     //         }
+                                    //     //     },
+                                    //     //     'none': {
+                                    //     //         filter: filterFunc,
+                                    //     //     }
+                                    //     // },
+                                    //     // tags: {
+                                    //     //     'fieldName': 'tags'
+                                    //     // },
+                                    //     sorts: [{
+                                    //         name: 'Created At',
+                                    //         field: 'at',
+                                    //         type: 'date',
+                                    //         glyphicon: 'time',
+                                    //     }, {
+                                    //         name: 'Rank',
+                                    //         field: 'rank',
+                                    //         type: 'int',
+                                    //         glyphicon: 'sort-by-order',
+                                    //         default: -1
+                                    //         // default: -1
+                                    //     }],
+                                    //     itemCollection: window.menuItemsCollection
+                                    // });
+                                    // self.menuItemList = window.menuItemsCollection.getView({
+                                    //     menu: self
+                                    // });
+                                    // this.orderPending = new OrderPendingView;
+                                    window.rewardsCollection.load(null, function(){
+                                        window.menuItemsCollection.load(null, function() {
+                                            window.menuGroupsCollection.load(null, function() {
+                                                window.ordersCollection.load(null, function() {
+                                                    self.initialized = true;
+                                                    self.trigger('initialized', true);
+                                                });
+                                            });
                                         });
                                     });
                                 });
@@ -129,23 +137,56 @@
             // if(!self.orderPending && self.ordersPendingList.collection.length > 0) {
             //     this.initOrderPendingView();
             // }
-            self.orderPending = self.ordersPendingList.collection.first();
-            if(self.orderPending.orderItemSkuCollection) {
-                self.orderPending.orderItemSkuCollection.on('add', function() {
-                    self.renderOrderPending();
-                });
-                self.orderPending.orderItemSkuCollection.on('remove', function() {
-                    self.renderOrderPending();
-                });
+            if(!self.orderPending) {
+                self.orderPending = _.first(self.ordersPendingList.getCollectionFiltered());
+                // self.orderPending = self.ordersPendingList.collection.first();
+                if(self.orderPending) {
+                    // console.log(self.orderPending.id)
+                    self.orderPending.on('change:status', function(model){
+                        // console.log(self.orderPending)
+                        // console.log(self.orderPending.id)
+                        // console.log(model)
+                        // console.log('status change of pending order '+model.get('status'))
+                        if(self.orderPending.get('status') > 20) {
+                            var orderId = self.orderPending.id;
+                            if(self.orderPendingMiniView) {
+                                self.orderPendingMiniView.remove();
+                                delete self.orderPendingMiniView;
+                                delete self.orderPending;
+                            }
+                            // console.log(window.ordersCollection)
+                            // console.log(window.ordersCollection.length)
+                            // window.ordersCollection.remove(orderId);
+                            // console.log(window.ordersCollection.length)
+                            // delete self.orderPending; // remove link, still exists?
+                            // self.renderOrderPending();
+                        }
+                    });
+                }
+                if(self.orderPending && self.orderPending.orderItemSkuCollection) {
+                    self.orderPending.orderItemSkuCollection.on('add', function() {
+                        self.renderOrderPending();
+                    });
+                    self.orderPending.orderItemSkuCollection.on('remove', function() {
+                        self.renderOrderPending();
+                    });
+                }
+            } else {
+                // console.log('already have orderPending')
+            }
+            console.log(self.orderPending)
+            if(self.orderPending && !self.orderPendingMiniView) {
+                self.orderPendingMiniView = self.orderPending.getMiniView();
             }
             if(self.orderPending) {
-                self.orderPendingMiniView = self.orderPending.getMiniView();
                 if(self.orderPending.orderItemSkuCollection && self.orderPending.orderItemSkuCollection.length > 0) {
                     self.$el.append(self.orderPendingMiniView.render().$el.show());
                 } else {
                     self.$el.append(self.orderPendingMiniView.render().$el.hide());
                 }
             } else {
+                // no pending orders
+                // console.log('no pending orders')
                 if(self.orderPendingMiniView) {
                     self.orderPendingMiniView.render().$el.hide();
                 }
@@ -186,11 +227,11 @@
                     trigger: true
                 });
             });
-            nav.col.add({
-                title: "Search",
-                navigate: "search",
-                glyphicon: 'search'
-            });
+            // nav.col.add({
+            //     title: "Search",
+            //     navigate: "search",
+            //     glyphicon: 'search'
+            // });
             // nav.col.add({title: "Groups", navigate: "groups"}); // , glyphicon: 'list'
             // nav.col.add({title: "Items", navigate: "items"});
             // nav.col.add({title: "New Item", navigate: "items/new", condition: 'isAdmin'});
@@ -248,6 +289,14 @@
             router.on('reset', function() {
                 // $('#header').removeAttr('class');
                 // self.$el.removeAttr('data-nav');
+                if(self.menuItemBox) {
+                    self.menuItemBox.off('removed');
+                    self.menuItemBox.hide();
+                }
+                if(self.orderBox) {
+                    self.orderBox.off('removed');
+                    self.orderBox.hide();
+                }
                 if(self.box) {
                     self.box.off('removed');
                     self.box.hide();
@@ -277,7 +326,7 @@
                 self.nav.selectByNavigate('groups');
                 router.trigger('loadingComplete');
             });
-
+            
             router.route("groups/new", "groupsNew", function() {
                 router.reset();
                 router.trigger('loadingProgress', 30);
@@ -319,7 +368,7 @@
                 self.nav.selectByNavigate('orders');
 
                 // window.menuItemsCollection.getOrFetch(id, function(doc) {
-                window.ordersPendingCollection.getOrFetch(id, function(doc) {
+                window.ordersCollection.getOrFetch(id, function(doc) {
                     if(doc) {
                         // self.renderMenuItem(doc);
                         self.box = utils.appendLightBox(doc.getBillView().render().$el, 'Place Order', false);

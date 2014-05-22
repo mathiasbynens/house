@@ -1319,7 +1319,12 @@
             }
         }
     });
-
+    window.nl2br = function(str) {
+        return (str + "").replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, "$1" + "<br />");
+    };
+    window.br2nl = function(str) {
+        return str.replace(/<br\s*\/?>/mg,"\n");
+    };
     var MenuItemView = Backbone.View.extend({
         tagName: "div",
         className: "menuItem fullView container",
@@ -1350,9 +1355,10 @@
             
             this.purchaseView = this.model.getPurchaseView();
             this.purchaseView.on('buySku', function(skuModel) {
-                window.ordersPendingCollection.addMenuItemSku(self.model, skuModel, function(orderItemSkuModel) {
+                window.ordersCollection.addMenuItemSku(self.model, skuModel, function(orderItemSkuModel) {
                     if(self.options.skipCart) {
-                        app.nav.router.navigate('order/'+orderItemSkuModel.collection.options.order.getNavigatePath('place'), {trigger: true});
+                        // app.nav.router.navigate('order/'+orderItemSkuModel.collection.options.order.getNavigatePath('place'), {trigger: true});
+                        account.view.nav.router.navigate('order/'+orderItemSkuModel.collection.options.order.getNavigatePath('place'), {trigger: true});
                     } else {
                         
                     }
@@ -1375,7 +1381,7 @@
             //     $e.append("<h2>" + this.model.get("title") + "</h2>");
             // }
             if(this.model.has("desc")) {
-                this.$desc.html(this.model.get("desc"));
+                this.$desc.html(window.nl2br(this.model.get("desc")));
             }
             // if (this.model.has("el")) {
             //     $e.append(this.model.get("el"));
@@ -1734,7 +1740,14 @@
                 cancel: 'Cancel',
                 delete: false
             };
+            
+            var rewardListSelectView = window.rewardsCollection.getNewSelectList({titleField: 'name'});
             formDonationOpts.fields = {
+                "reward": {
+                    label: "Grant Reward",
+                    fieldView: rewardListSelectView, //TodoListSelectListView,
+                    className: "form-control",
+                },
                 "donation": {
                     label: "Donation of any amount",
                     validateType: 'boolean',
@@ -1808,6 +1821,7 @@
         renderSkuForm: function() {
             var self = this;
             var skuModel = this.model.menuItemSkuCollection.getNewModel();
+            
             window.menuItemsCollection.getUniqueSkuId(function(skuId) {
                 skuModel.set('_id', skuId, {silent: true});
                 skuModel.set('rank', self.model.menuItemSkuCollection.length + 1, {silent: true});

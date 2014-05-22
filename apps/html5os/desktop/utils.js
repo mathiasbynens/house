@@ -300,6 +300,10 @@
     utils.initalizingCbs = [];
     utils.initalizingUsers = false;
     utils.initalizingUsersCbs = [];
+    utils.initalizingPosts = false;
+    utils.initalizingPostsCbs = [];
+    utils.initalizingMenu = false;
+    utils.initalizingMenuCbs = [];
     utils.initUsers = function(waitForLoad, callback) {
         if(typeof waitForLoad === 'function') {
             callback = waitForLoad;
@@ -366,6 +370,124 @@
                         cb();
                     }
                     utils.initalizingCbs = [];
+                });
+            }
+        } else {
+            callback();
+        }
+    }
+    utils.initMenu = function(waitForLoad, callback) {
+        if(typeof waitForLoad === 'function') {
+            callback = waitForLoad;
+            waitForLoad = false;
+        }
+        if(!callback) callback = function() {}
+        
+        if(!window.MenuItemsBackbone || !window.menuItemsCollection) {
+            if(utils.initalizingMenu) {
+                utils.initalizingMenuCbs.push(function(){
+                    //utils.initTags(waitForLoad, callback);
+                    callback();
+                });
+            } else {
+                utils.initalizingMenu = true;
+                
+                require(['/menu/menuItems.js'], function(MenuItems) {
+                    window.MenuItems = MenuItems;
+                    if(!window.menuItemsCollection) {
+                        window.menuItemsCollection = new MenuItems.Collection();
+                    }
+                    require(['/menu/menuGroups.js'], function(MenuGroups) {
+                        window.MenuGroups = MenuGroups;
+                        if(!window.menuGroupsCollection) {
+                            window.menuGroupsCollection = new MenuGroups.Collection();
+                        }
+                        require(['/menu/menuItemReviews.js'], function(MenuItemReviews) {
+                            window.MenuItemReviews = MenuItemReviews;
+                            if(!window.menuItemsCollection) {
+                                window.menuItemsCollection = new MenuItemReviews.Collection();
+                            }
+                            require(['/orders/orders.js'], function(Orders) {
+                                window.Orders = Orders;
+                                if(!window.ordersCollection) {
+                                    window.ordersCollection = new Orders.Collection();
+                                }
+                                require(['/rewards/rewards.js'], function(Rewards) {
+                                    window.Rewards = Rewards;
+                                    if(!window.rewardsCollection) {
+                                        window.rewardsCollection = new Rewards.Collection();
+                                    }
+                                    
+                                    utils.initalizingMenu = false;
+                                    for(var c in utils.initalizingMenuCbs) {
+                                        var cb = utils.initalizingMenuCbs[c];
+                                        cb();
+                                    }
+                                    utils.initalizingMenuCbs = [];
+                                    if(waitForLoad) {
+                                        window.rewardsCollection.load(null, function(){
+                                            window.menuItemsCollection.load(null, function() {
+                                                window.menuGroupsCollection.load(null, function() {
+                                                    window.ordersCollection.load(null, function() {
+                                                        if(callback) {
+                                                            callback();
+                                                        }
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    } else {
+                                        window.rewardsCollection.load(null, function(){
+                                            window.menuItemsCollection.load(null, function() {
+                                                window.menuGroupsCollection.load(null, function() {
+                                                    window.ordersCollection.load(null, function() {
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    }
+                                });
+                            });
+                        });
+                    });
+                });
+            }
+        } else {
+            callback();
+        }
+    }
+    utils.initPosts = function(waitForLoad, callback) {
+        if(typeof waitForLoad === 'function') {
+            callback = waitForLoad;
+            waitForLoad = false;
+        }
+        if(!callback) callback = function() {}
+        
+        if(!window.PostsBackbone || !window.postsCollection) {
+            if(utils.initalizingPosts) {
+                utils.initalizingPostsCbs.push(function(){
+                    //utils.initTags(waitForLoad, callback);
+                    callback();
+                });
+            } else {
+                utils.initalizingPosts = true;
+                require(['/posts/backbone-posts.js'], function(PostsBackbone){
+                    window.PostsBackbone = PostsBackbone;
+                    if(!window.postsCollection) {
+                        window.postsCollection = new PostsBackbone.Collection(); // collection
+                    }
+                    utils.initalizingPosts = false;
+                    if(waitForLoad) {
+                        window.postsCollection.load(callback);
+                    } else {
+                        window.postsCollection.load();
+                        callback();
+                    }
+                    for(var c in utils.initalizingPostsCbs) {
+                        var cb = utils.initalizingPostsCbs[c];
+                        cb();
+                    }
+                    utils.initalizingPostsCbs = [];
                 });
             }
         } else {

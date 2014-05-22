@@ -10,11 +10,11 @@
         "application/pdf": ""
     }
     
-    if(!window.filesize) {
-        require(['/files/filesize.min.js'], function(filesize){
-            window.filesize = filesize;
-        });
-    }
+    // if(!window.filesize) {
+    //     require(['/files/filesize.min.js'], function(filesize){
+    //         window.filesize = filesize;
+    //     });
+    // }
     
     var Model = Backbone.House.Model.extend({
         collectionName: "files",

@@ -26,7 +26,7 @@
                                                             accountProfile.setElement($('#siteMenu')).render();
                                                             account.getView().onNavInit(function(nav) {
                                                                 index.nav = nav;
-                                                                accountProfile.bindRouter(nav.router);
+                                                                
                                                                 nav.router.on('loading', function() {
                                                                     $('#loading .progress-bar').css('width', '1%');
                                                                     $('body').addClass('loading');
@@ -62,7 +62,7 @@
                                                                     window.app = new App();
                                                                     window.app.bindUser(accountProfile.loginStatus.getView().userModel);
                                                                     window.app.bindNav(nav);
-
+                                                                    accountProfile.bindRouter(nav.router);
                                                                     if(window.app.initialized) {
                                                                         index.onInit();
                                                                     } else {

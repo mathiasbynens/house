@@ -1131,7 +1131,7 @@ _html2canvas.Parse = function (images, options, cb) {
       for(var b in badClasses) {
           classes.splice(badClasses[b], 1);
       }
-      console.log(classes.length)
+    //   console.log(classes.length)
     }
 
     // Using the list of elements we know how pseudo el styles, create fake pseudo elements.

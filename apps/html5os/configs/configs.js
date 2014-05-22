@@ -538,6 +538,11 @@
             //     }
             // };
             formOpts.fields = {
+                "isLive": {
+                    validateType: 'boolean',
+                    label: "Live Mode",
+                    // className: "form-control"
+                },
                 "testSecretKey": {
                     validateType: 'string',
                     autocomplete: "off",

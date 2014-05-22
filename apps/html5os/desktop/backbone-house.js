@@ -710,7 +710,6 @@ Backbone.House.Collection = Backbone.Collection.extend({
         });
     },
     saveNewModel: function(doc, callback) {
-        console.log('1111111111');
         var self = this;
         if(!callback && typeof options == 'function') {
             callback = options;
@@ -2569,7 +2568,9 @@ var FormView = Backbone.View.extend({
             } else if(_.isObject(valClean) && !_.isEqual(valClean, this.model.get(objectFieldName))) {
                 setDoc[objectFieldName] = valClean;
             } else if(valClean !== this.model.get(objectFieldName)) {
-                setDoc[objectFieldName] = valClean;
+                if(valClean !== null || this.model.has(objectFieldName)) { // only set null (unset) if the field exists
+                    setDoc[objectFieldName] = valClean;
+                }
             }
         }
         if(_.size(setDoc) > 0) {
@@ -2999,7 +3000,6 @@ var SelectListView = Backbone.View.extend({
     validateVal: function() {
         var self = this;
         var doc_id = this.$el.val();
-        console.log(doc);
         var doc = this.collection.get(doc_id);
         var valObj = {
             id: doc_id

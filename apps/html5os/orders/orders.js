@@ -51,6 +51,30 @@
             this.addViewType(PaymentMethodSelect, 'paymentMethodSelect');
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
+        url: function() {
+            if(window.config && window.config.secureApiUrl) {
+                if(this.id) {
+                    return window.config.secureApiUrl+'/orders/'+this.id;
+                } else {
+                    return window.config.secureApiUrl+'/orders';
+                }
+            } else if(window.config && window.config.site && window.config.site && window.config.site.api && window.config.site.api.secure_url) {
+                if(this.id) {
+                    return window.config.site.api.secure_url+"/orders/"+this.id;
+                }
+                return window.config.site.api.secure_url+'/orders';
+            } else {
+                var hostPath = window.location.hostname;
+                if(window.location.port) {
+                    hostPath = hostPath + ':' + window.location.port;
+                }
+                if(this.id) {
+                    return "https://"+hostPath+"/api/orders/"+this.id;
+                } else {
+                    return "https://"+hostPath+"/api/orders";
+                }
+            }
+        },
         getView: function(options) {
             return this.getOrderView();
         },
@@ -218,6 +242,38 @@
             }
             return this.pendingListView;
         },
+        getCardList: function() {
+            if(!this.cardListView) {
+                this.cardListView = this.getView({
+                    selection: false,
+                    mason: false,
+                    // layout: 'table',
+                    className: 'houseCollection table-responsive',
+                    // headerEl: $('#navbar-header-form'),
+                    // search: {
+                    //     'fieldName': 'filename'
+                    // },
+                    // users: {
+                    //     'fieldName': 'user.id'
+                    // },
+                    filters: {
+                        'cards': {
+                            txt: 'Credit Cards',
+                            glyphicon: 'credit-card',
+                            filter: function(model, filterObj) {
+                                return model.get('customer.cards');
+                            },
+                            load: {
+                                "customer.cards": {$exists: true}
+                            },
+                            default: true
+                        },
+                    }
+                });
+                this.cardListView.filterView.filterBy('cards');
+            }
+            return this.cardListView;
+        },
         getFullListView: function() {
             if(!this.fullListView) {
                 this.fullListView = this.getView({
@@ -334,7 +390,9 @@
                 });
                 return;
             }
-            this.pendingOrder = this.first();
+            
+            var pendingOrders = window.ordersCollection.where({status: 0});
+            this.pendingOrder = _.first(pendingOrders);
             console.log(this.pendingOrder);
             // console.log(arguments);
             if (this.pendingOrder) {
@@ -346,6 +404,10 @@
             } else {
                 console.log("err");
                 // console.log(this.orderCollection);
+                this.makePendingOrder(function() {
+                    self.addMenuItemSku(menuItem, menuItemSku, callback);
+                });
+                return;
             }
         }
     });
@@ -649,6 +711,8 @@
             this.$tdActions = $('<td class="actions"></td>');
             this.$customerName = $('<span class="customerName"></span>');
             
+            this.ctaView = new CallToActionView({model: this.model});
+            
             var actionOptions = {
                 model: this.model, 
                 actionOptions: {
@@ -753,6 +817,8 @@
                     this.$tdPayment.html('Bitcoin');
                 }
             }
+            
+            this.$tdCta.append(this.ctaView.render().$el);
             
             this.$tdActions.append(this.actions.render().$el);
             
@@ -1020,6 +1086,65 @@
         }
     });
     
+    var CallToActionView = Backbone.View.extend({
+        tagName: "div",
+        className: "cta",
+        initialize: function() {
+            var self = this;
+            this.$ctaButton = $('<button class="btn btn-info"></button>');
+        },
+        render: function() {
+            this.$ctaButton.html('');
+            this.$ctaButton.attr('data-cta', '');
+            if(app.canUserCashier()) {
+                if(this.model.get('status') === 10) {
+                    if(this.model.has('payment.cash')) {
+                        this.$ctaButton.html('Tender');
+                        this.$ctaButton.attr('data-cta', 'tender');
+                        this.$ctaButton.show();
+                    }
+                } else if(this.model.get('status') === 30) { // paid
+                    this.$ctaButton.html('Process');
+                    this.$ctaButton.attr('data-cta', 'process');
+                    this.$ctaButton.show();
+                }
+                
+                this.$el.append(this.$ctaButton);
+            }
+            if(this.$ctaButton.html() === '') {
+                this.$ctaButton.hide();
+            }
+            
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            "click .btn": "clickBtn"
+        },
+        clickBtn: function() {
+            var self = this;
+            if(this.$ctaButton.attr('data-cta') === 'tender') {
+                if(confirm('Confirm '+this.model.getGrandTotal()+' paid in full?')) {
+                    var saveObj = {paid: {}};
+                    saveObj.paid = {cash: this.model.getGrandTotal()}; // gets cashier user object {name, id} on server
+                    self.model.saveStatus(30, saveObj, function(){
+                        // self.render();
+                    });
+                }
+            } else if(this.$ctaButton.attr('data-cta') === 'process') {
+                if(confirm('Confirm order processed?')) {
+                    var saveObj = {processed: true};
+                    self.model.saveStatus(50, saveObj, function(){
+                        // self.render();
+                    });
+                }
+            }
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+    
     var PaymentMethodSelect = Backbone.View.extend({
         tagName: "div",
         className: "placeOrder row",
@@ -1146,7 +1271,7 @@
             this.$paymentMethod = $('<div class="payment-methods"></div>');
             
             this.$paymentCash = $('<div class="paymentCash"><p>Please pay the cashier and your order will be approved.</p></div>');
-            this.$paymentCredit = $('<div class="paymentCredit"><h4>Credit Card</h4></div>');
+            this.$paymentCredit = $('<div class="paymentCredit"><h4>Credit Card</h4><span class="declined text-warning"></span></div>');
             this.$newCreditCard = $('<div class="newCredit"><h5>New Card</h5></div>');
             this.$paymentApproved = $('<div class="paymentApproved"><h4>Thank you!</h4><p>Your order has been approved and is now being processed.</p></div>');
             
@@ -1201,6 +1326,14 @@
                     this.$paymentMethods.append(this.$paymentCredit);
                     this.$paymentCredit.show().siblings().hide();
                 }
+                
+                if(this.model.get('status') === 25) {
+                    // declined
+                    if(this.model.has('declined')) {
+                        this.$paymentCredit.find('.declined').html(this.model.get('declined'));
+                    }
+                }
+                
             }
         },
         render: function() {
@@ -1353,7 +1486,16 @@
             this.$paymentMethod = $('<div class="payment-methods"></div>');
             
             this.$paymentCash = $('<div class="paymentCash"><p>Please pay the cashier and your order will be approved.</p></div>');
-            this.$paymentCredit = $('<div class="paymentCredit"><h4>Credit Card</h4></div>');
+            this.$paymentCredit = $('<div class="paymentCredit"><h4>Credit Card</h4><span class="declined text-danger"></span></div>');
+            //<h5>New Card</h5>
+            this.$pickCreditCard = $('<div class="pickCredit row">\
+</div>');            
+            this.$newCreditCard = $('<div class="newCredit row">\
+    <div class="form-group col-xs-12"><input class="form-control" autocomplete="false" type="text" name="number" placeholder="Card number" /></div>\
+    <div class="form-group col-xs-6"><input class="form-control" autocomplete="false" type="number" name="exp_month" placeholder="Exp. Month" min="1" max="12" /></div>\
+    <div class="form-group col-xs-6"><input class="form-control" autocomplete="false" type="number" name="exp_year" placeholder="Exp. Year" min="2014" max="3030" /></div>\
+    <div class="form-group col-xs-12"><button class="btn btn-block btn-success submit" data-loading-text="Loading...">Submit</button></div>\
+</div>');
             this.$paymentApproved = $('<div class="paymentApproved"><h4>Thank you!</h4><p>Your order has been received and is now being processed.</p></div>');
             
             this.$paymentMethods = $('<div class="paymentMethods"></div>');
@@ -1370,15 +1512,43 @@
     <div class="tab-pane complete" id="'+self.cid+'-complete"></div>\
 </div>');
         },
-        setUser: function() {
-            
-        },
         getNoteString: function() {
             return this.$orderNoteTextarea.find('textarea').val();
         },
         renderGoods: function() {
             this.$billTotal.find('.grand-total-price').html(this.model.orderItemSkuCollection.getSubTotal());
             this.$billOfGoods.append(this.model.orderItemSkuCollection.getFullView().render().$el);
+        },
+        renderPrevCards: function() {
+            var self = this;
+            window.cardOrdersCollection = new window.Orders.Collection();
+            var cardOrderList = window.cardOrdersCollection.getCardList();
+            console.log('cardOrders load')
+            cardOrderList.collection.load(null, function(){
+                self.$pickCreditCard.html('');
+                console.log('cardOrders loaded')
+                console.log(cardOrderList.collection)
+                if(cardOrderList.collection.length > 0) {
+                    self.$newCreditCard.hide();
+                    cardOrderList.collection.each(function(orderModel){
+                        if(orderModel.has('customer.cards.data')) {
+                            var cards = orderModel.get('customer.cards.data');
+                            for(var c in cards) {
+                                var card = cards[c];
+                                var $card = $('<div class="col-md-6 card"></div>');
+                                $card.attr('data-id', card.id);
+                                $card.attr('data-customer-id', orderModel.get('customer.id'));
+                                $card.append('<span class="info"><strong>'+card.type+'</strong> '+card.last4+' exp. '+card.exp_month+'/'+card.exp_year+'</span>');
+                                $card.append('<button class="btn btn-link use-card" data-loading-text="Using..">Use</button>');
+                                self.$pickCreditCard.append($card);
+                            }
+                        }
+                    });
+                    var $addCardBtn = $('<div class="form-group col-md-12"><button class="show-new-card-form btn btn-success btn-block">Add New Card</button></div>');
+                    self.$pickCreditCard.append($addCardBtn);
+                }
+            });
+            // this.$pickCreditCard.
         },
         renderPaymentTab: function() {
             console.log('renderPaymentTab')
@@ -1394,7 +1564,6 @@
                     }
                 }
             });
-            
             if(this.model.get('status') >= 20) {
                 var $el = this.$navTabs.find('a[href="#'+this.cid+'-payment"]');
                 $el.parent('li').removeClass('disabled');
@@ -1402,14 +1571,27 @@
             
             if(this.model.get('status') >= 30) {
                 this.$tabContent.find('.payment').append(this.$paymentApproved);
+                this.$paymentMethods.hide();
             } else {
                 if(this.model.has('payment.cash')) {
                     this.$paymentMethods.append(this.$paymentCash);
                     this.$paymentCash.show().siblings().hide();
                 // } else if(this.model.has('payment.credit')) {
                 } else {
+                    
+                    this.renderPrevCards();
+                    
+                    this.$paymentCredit.append(this.$pickCreditCard);
+                    this.$paymentCredit.append(this.$newCreditCard);
                     this.$paymentMethods.append(this.$paymentCredit);
                     this.$paymentCredit.show().siblings().hide();
+                }
+                
+                if(this.model.get('status') === 25) {
+                    // declined
+                    if(this.model.has('declined')) {
+                        this.$paymentCredit.find('.declined').html(this.model.get('declined'));
+                    }
                 }
             }
         },
@@ -1458,9 +1640,12 @@
             return this;
         },
         goToTabFromStatus: function() {
+            console.log('go to tab from status')
             var self = this;
             var statusCode = this.model.get('status');
+            console.log(statusCode)
             if(this.$el.parent().length === 0) { // not on page yet
+                console.log('not on page')
                 self.$tabContent.find('.active').removeClass('active');
                 if(statusCode >= 50) {
                     self.$tabContent.find('.complete').addClass('active');
@@ -1496,7 +1681,58 @@
         events: {
             "click button.cash": "order",
             "click button.credit": "order",
-            "touchstart input": "touchstartstopprop"
+            "touchstart input": "touchstartstopprop",
+            "click .submit": "submitNewCreditCard",
+            "click .show-new-card-form": "showNewCardForm",
+            "click .use-card": "useCard"
+        },
+        useCard: function(e) {
+            var self = this;
+            var $et = $(e.currentTarget);
+            var cardId = $et.parent('.card').attr('data-id');
+            var customerId = $et.parent('.card').attr('data-customer-id');
+            var paymentObj = {
+                payment: {}
+            }
+            paymentObj.payment.credit = {
+                card: cardId,
+                customer: customerId
+            }
+            // todo cvc
+            // address
+            $et.button('loading');
+            self.model.saveStatus(10, paymentObj, function(){
+                // console.log('set status with card payment details')
+                $et.button('reset');
+            });
+        },
+        showNewCardForm: function() {
+            this.$newCreditCard.show();
+            this.$newCreditCard.find('input[name="number"]').focus();
+        },
+        submitNewCreditCard: function() {
+            var self = this;
+            this.$newCreditCard.find('button').button('loading');
+            this.$paymentCredit.find('.declined').html('');
+            var ccn = this.$newCreditCard.find('input[name="number"]').val();
+            var exp_month = this.$newCreditCard.find('input[name="exp_month"]')[0].valueAsNumber;
+            var exp_year = this.$newCreditCard.find('input[name="exp_year"]')[0].valueAsNumber;
+            var paymentObj = {
+                payment: {}
+            }
+            paymentObj.payment.credit = {
+                number: ccn,
+                exp_month: exp_month,
+                exp_year: exp_year,
+            }
+            // todo cvc
+            // address
+            self.model.saveStatus(10, paymentObj, function(){
+                // console.log('set status with card payment details')
+                self.$newCreditCard.find('button').button('reset');
+            });
+            
+            return false;
         },
         touchstartstopprop: function(e) {
             e.stopPropagation();
