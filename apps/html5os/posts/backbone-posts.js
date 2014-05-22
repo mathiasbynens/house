@@ -7,8 +7,8 @@
             this.RowView = RowView;
             this.AvatarView = AvatarView;
             this.FullView = FullView;
-            this.AView = AView;
-            // this.addViewType(FullView, 'full');
+            // this.AView = AView;
+            this.addViewType(AView, 'a');
             this.addViewType(FormView, 'form');
             options = options || {};
             options.ownerFieldName = 'owner';

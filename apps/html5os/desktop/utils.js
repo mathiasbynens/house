@@ -461,6 +461,10 @@
             callback = waitForLoad;
             waitForLoad = false;
         }
+        var loadOptions = null;
+        if(typeof waitForLoad === 'object') {
+            loadOptions = waitForLoad;
+        }
         if(!callback) callback = function() {}
         
         if(!window.PostsBackbone || !window.postsCollection) {
@@ -478,9 +482,9 @@
                     }
                     utils.initalizingPosts = false;
                     if(waitForLoad) {
-                        window.postsCollection.load(callback);
+                        window.postsCollection.load(loadOptions, callback);
                     } else {
-                        window.postsCollection.load();
+                        window.postsCollection.load(loadOptions);
                         callback();
                     }
                     for(var c in utils.initalizingPostsCbs) {
