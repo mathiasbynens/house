@@ -11,7 +11,16 @@
             options = options || {};
             options.ownerFieldName = 'owner';
             
+            var qcolOpts = { poll: this };
+            attr.qs = attr.qs || [];
+            this.qsCollection = new QsCollection(attr.qs, qcolOpts);
+            
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
+        },
+        findQById: function(id, callback) {
+            if(callback) {
+                callback(this.qsCollection.get(id));
+            }
         },
         slugStr: function(str) {
             return str.replace(/[^a-zA-Z0-9\s]/g,"").toLowerCase().replace(/ /gi, '-');
@@ -41,6 +50,19 @@
         }
     });
     
+    var QModel = Backbone.House.Model.extend({
+        collectionName: "polls",
+        initialize: function(attr, options) {
+            this.addViewType(PollQsView, 'avatar');
+            // this.addViewType(QFormView, 'form');
+            options = options || {};
+            Backbone.House.Model.prototype.initialize.apply(this, arguments);
+        },
+        getNavigatePath: function() {
+            return 'id/'+this.options.poll.id+'/'+this.get('rank');
+        },
+    });
+    
     var Collection = Backbone.House.Collection.extend({
         model: Model,
         collectionName: 'polls',
@@ -61,6 +83,20 @@
             }
             return this.selectView;
         },
+    });
+    
+    var QsCollection = Backbone.House.Collection.extend({
+        model: QModel,
+        socket: false,
+        // collectionName: 'qs',
+        // url: '/api/polls',
+        sortField: 'rank',
+        url: function() {
+            return "/api/polls/" + this.options.poll.id + "/qs";
+        },
+        // comparator: function(a) {
+        //     return a.get("rank");
+        // }
     });
     
     var AView = Backbone.View.extend({
@@ -103,14 +139,110 @@
             if(options.list) {
                 this.list = options.list;
             }
+            var self = this;
+            var formOpts = {
+                collection: window.pollsCollection,
+                model: this.model,
+                submit: true,
+                cancel: true,
+                // delete: true
+            };
+            formOpts.fields = {
+                "title": {
+                    validateType: 'string',
+                    autocomplete: "off",
+                    placeholder: "poll title",
+                    className: "form-control"
+                },
+                "desc": {
+                    validateType: 'string',
+                    tagName: 'textarea',
+                    placeholder: "general details about the poll.",
+                    className: "form-control"
+                },
+            }
+            self.formView = window.pollsCollection.getNewFormView(formOpts);
+            self.formView.on('saved', function(model){
+                self.trigger('saved', model);
+            });
+            self.formView.on('cancelled', function(model){
+                self.trigger('saved', model);
+            });
+            self.formView.on('deleted', function(model){
+                self.trigger('saved', model);
+            });
+            
+            self.questionsView = self.model.qsCollection.getView({
+                // layout: 'row',
+                selection: false,
+                mason: false,
+                loadOnRenderPage: false,
+            });
+            
+            self.$navTabs = $('<ul class="nav nav-tabs">\
+    <li class="active"><a href="#' + self.cid + '-basic" data-toggle="tab">Basic Info</a></li>\
+    <li><a href="#' + self.cid + '-questions" data-toggle="tab">Questions</a></li>\
+    <li><a href="#' + self.cid + '-responses" data-toggle="tab"><span class="responseCount"></span> Responses</a></li>\
+</ul>');
+            self.$tabContent = $('<div class="tab-content">\
+    <div class="tab-pane active basic" id="' + self.cid + '-basic"></div>\
+    <div class="tab-pane questions row" id="' + self.cid + '-questions"><div class="questions-list col-md-12">\
+        <label>Questions</label><div class="questions-form-list"></div><div class="new-question-form"></div>\
+    </div></div>\
+    <div class="tab-pane responses row" id="' + self.cid + '-responses"></div>\
+</div>');
             
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
         },
-        render: function() {
-            this.$el.html('');
-            if(this.model.has('title')) {
-                this.$el.append('<a target="_blank" href="/polls/'+this.model.getNavigatePath()+'" class="title">'+this.model.get('title')+'</a>');
+        renderQuestionsTab: function() {
+            var self = this;
+            var qsModel = this.model.qsCollection.getNewModel();
+            qsModel.set('rank', self.model.qsCollection.length + 1, {silent: true});
+            
+            var newQuestionFormOpts = {
+                collection: self.model.qsCollection,
+                model: qsModel,
+                submit: 'Add Question',
+                cancel: false,
+                delete: false,
+                formClassName: 'form-inline'
+            };
+            newQuestionFormOpts.fields = {
+                "title": {
+                    validateType: 'string',
+                    autocomplete: "off",
+                    placeholder: "question title",
+                    className: "form-control"
+                },
+                "type": {
+                    validateType: 'string',
+                    placeholder: "type of poll.",
+                    className: "form-control"
+                },
+            }
+            
+            this.newQuestionView = window.pollsCollection.getNewFormView(newQuestionFormOpts);
+            self.formView.on('saved', function(model){
+                self.trigger('saved', model);
+            });
+            self.formView.on('cancelled', function(model){
+                self.trigger('saved', model);
+            });
+            
+            self.$tabContent.find('.questions-list').append(self.questionsView.render().$el);
+            self.$tabContent.find('.new-question-form').append(this.newQuestionView.render().$el);
+        },
+        render: function(tab) {
+            var self = this;
+            this.$el.append(self.$navTabs);
+            this.$el.append(self.$tabContent);
+            self.$tabContent.find('.basic').append(this.formView.render().$el);
+            this.renderQuestionsTab();
+            if(tab) {
+                if(tab === 'questions') {
+                    this.tabToQuestions();
+                }
             }
             this.$el.attr('data-id', this.model.id);
             //this.$el.append(this.actions.render().$el);
@@ -118,11 +250,33 @@
             return this;
         },
         events: {
-            "click a": "clickA"
         },
-        clickA: function(e) {
-            window.location = $(e.target).attr('href');
-            return false;
+        tabToBasic: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-basic"]');
+            $el.parent('li').removeClass('disabled');
+            if(this.$el.parent().length === 0) {
+                this.$tabContent.find('.active').removeClass('active');
+                this.$tabContent.find('.basic').addClass('active');
+            }
+            $el.tab('show');
+        },
+        tabToQuestions: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-questions"]');
+            $el.parent('li').removeClass('disabled');
+            if(this.$el.parent().length === 0) {
+                this.$tabContent.find('.active').removeClass('active');
+                this.$tabContent.find('.questions').addClass('active');
+            }
+            $el.tab('show');
+        },
+        tabToResponses: function() {
+            var $el = this.$navTabs.find('a[href="#'+this.cid+'-responses"]');
+            $el.parent('li').removeClass('disabled');
+            if(this.$el.parent().length === 0) {
+                this.$tabContent.find('.active').removeClass('active');
+                this.$tabContent.find('.responses').addClass('active');
+            }
+            $el.tab('show');
         },
         remove: function() {
             this.$el.remove();
@@ -209,10 +363,10 @@
             // this.$caption.append('<span class="contentLength">'+this.model.getLengthFormatted()+'</span>');
             // this.$panelFoot.append(this.$caption);
             
-            var $at = $('<a href="'+this.model.getNavigateUrl()+'" class="uploadDate">'+this.model.get('uploadDate')+'</a>');
+            var $at = $('<a href="'+this.model.getNavigateUrl()+'" class="createdAt">'+this.model.get('at')+'</a>');
             if(window.clock) {
-                $at.attr('title', clock.moment(this.model.get('uploadDate')).format('LLLL'));
-                $at.html(clock.moment(this.model.get('uploadDate')).calendar());
+                $at.attr('title', clock.moment(this.model.get('at')).format('LLLL'));
+                $at.html(clock.moment(this.model.get('at')).calendar());
             }
             this.$tdAt.html($at);
             if(this.model.has('metadata')) {
@@ -415,6 +569,420 @@
         }
     });
     
+    var PollQsView = Backbone.View.extend({
+        tagName: "div",
+        className: "menuItemSku",
+        initialize: function() {
+            var self = this;
+            account.on("refreshUser", function(user) {
+                self.render();
+            });
+            this.model.bind("change", this.render, this);
+            this.model.bind("destroy", this.remove, this);
+            this.$e = $('<div class="itemSku row">\
+    <div class="skuId col-md-2"></div>\
+    <div class="name col-xs-6"></div>\
+    <div class="price col-xs-2"><a href="#" title="Change Price"></a></div>\
+    <div class="actions col-xs-2"></div>\
+</div>');
+            
+            var opts = {
+                model: this.model, 
+                actionOptions: {
+                    collectionFriendlyName: 'question',
+                    fav: false,
+                    detail: false,
+                    // fav: {fieldName: 'fav'},
+                    // tags: {fieldName: 'tags'},
+                    // groups: {fieldName: 'groups'},
+                    // share: true,
+                }
+            }
+            opts.actionOptions.more = {
+                // "editName": {
+                //     title: "Edit Name",
+                //     glyphicon: 'pencil',
+                //     action: function(model) {
+                //         self.setName();
+                //         return false;
+                //     }
+                // },
+                // "moveUp": {
+                //     title: "Move Up",
+                //     glyphicon: 'arrow-up',
+                //     action: function(model) {
+                //         self.moveUp();
+                //         return false;
+                //     }
+                // },
+                // "setDuration": {
+                //     title: "Set Duration",
+                //     glyphicon: 'time',
+                //     action: function(model) {
+                //         self.setDuration();
+                //         return false;
+                //     }
+                // },
+                // "setRepeat": {
+                //     title: "Set Repeat",
+                //     glyphicon: 'repeat',
+                //     action: function(model) {
+                //         self.setRepeat();
+                //         return false;
+                //     }
+                // },
+                // "setDefault": {
+                //     title: "Set as Default",
+                //     glyphicon: 'certificate',
+                //     action: function(model) {
+                //         self.setAsDefault();
+                //         return false;
+                //     }
+                // },
+            }
+            this.actionsView = new utils.ModelActionsView(opts);
+        },
+        render: function() {
+            this.$el.append(this.$e);
+            if(this.model.get('default')) {
+                this.$e.find('.skuId').html('<b>'+this.model.id+'</b>');
+            } else {
+                this.$e.find('.skuId').html(this.model.id);
+            }
+            if(this.model.has("name")) {
+                this.$e.find('.name').html('<span class="text">'+this.model.get("name")+'</span><span class="moreInfo"><span class="duration"></span><span class="repeat"></span></span>');
+            }
+            if(this.model.has('duration')) {
+                this.$e.find('.duration').html('<button class="btn btn-link glyphicon glyphicon-time"></button>');
+                var duration = this.model.get('duration');
+                this.$e.find('.duration button').attr('title', this.getDurationStr());
+                // this.$e.find('.duration button').html(this.getDurationStr());
+            }
+            if(this.model.has('repeat')) {
+                this.$e.find('.repeat').html('<button class="btn btn-link glyphicon glyphicon-repeat"></button>');
+                var repeat = this.model.get('repeat');
+                this.$e.find('.repeat button').attr('title', this.getRepeatStr());
+                // this.$e.find('.duration button').html(this.getDurationStr());
+            }
+            if(this.model.has('repeat')) {
+                
+            }
+            if(this.model.has("price")) {
+                this.$e.find('.price a').html('$' + this.model.get("price"));
+            }
+            if(account.isAdmin()) {
+                // this.$actions = $('<ul class="actions"></ul>');
+                // this.$actions.append('<li><button class="setPrice">Set Price</button></li><li><button class="moveUp" title="rank ' + this.model.get("rank") + '">Move Up</button></li><li><button class="remove">Remove</button></li>');
+                // if(this.model.has("default")) {
+                //     this.$actions.append('<li><button class="removeDefault">Remove as Default</button></li>');
+                // } else {
+                //     this.$actions.append('<li><button class="setDefault">Set as Default</button></li>');
+                // }
+                this.$e.find('.actions').append(this.actionsView.render().$el);
+            }
+            this.$el.attr("data-id", this.model.id);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            // click: "select",
+            "click .moreInfo .duration": "removeDuration",
+            "click .moreInfo .repeat": "removeRepeat",
+            "click .price a": "setPrice",
+            "click .moveUp": "moveUp",
+            "click .remove": "removeit",
+            "touchstart input": "touchstartstopprop"
+        },
+        setName: function() {
+            var self = this;
+            var newName = prompt("Set SKU name", this.model.get("name"));
+            if(newName && newName !== this.model.get("name")) {
+                self.model.set({
+                    name: newName
+                }, {silent: true});
+                var saveModel = self.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                if(saveModel) {
+                    saveModel.done(function(s, typeStr, respStr) {
+                        self.render();
+                        // self.model.collection.sort({
+                        //     silent: true
+                        // });
+                        self.options.list.render();
+                    });
+                }
+            }
+            return false;
+        },
+        setPrice: function(e) {
+            var self = this;
+            var newPrice = prompt("Set SKU price", this.model.get("price"));
+            if(newPrice) {
+                self.model.set({
+                    price: parseFloat(newPrice)
+                }, {silent: true});
+                var saveModel = self.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                if(saveModel) {
+                    saveModel.done(function(s, typeStr, respStr) {
+                        self.render();
+                        self.model.collection.sort({
+                            silent: true
+                        });
+                        self.options.list.render();
+                    });
+                }
+                e.stopPropagation();
+                e.preventDefault();
+            }
+            return false;
+        },
+        getTimeLengthStrFromObj: function(obj) {
+            var str = '';
+            if(obj.days) {
+                if(obj.days === 1) {
+                    str = 'daily';
+                } else {
+                    str = obj.days+ ' days';
+                }
+            } else if(obj.weeks) {
+                if(obj.weeks === 1) {
+                    str = 'weekly';
+                } else {
+                    str = obj.weeks+ ' weeks';
+                }
+            } else if(obj.months) {
+                if(obj.months === 1) {
+                    str = 'monthly';
+                } else {
+                    str = obj.months+ ' months';
+                }
+            } else if(obj.years) {
+                if(obj.years === 1) {
+                    str = 'yearly';
+                } else {
+                    str = obj.years+ ' years';
+                }
+            }
+            return str;
+        },
+        getDurationStr: function() {
+            if(!this.model.get('duration')) {
+                return '';
+            }
+            var duration = this.model.get('duration');
+            return this.getTimeLengthStrFromObj(duration);
+        },
+        getRepeatStr: function() {
+            if(!this.model.get('repeat')) {
+                return '';
+            }
+            return this.getTimeLengthStrFromObj(this.model.get('repeat'));
+        },
+        setDuration: function() {
+            var self = this;
+            var userStr = prompt("ex. daily, monthly, 3 months", this.getDurationStr());
+            if(userStr && userStr !== this.getDurationStr()) {
+                userStr = userStr.trim();
+                var num = 1;
+                if(userStr === 'daily') {
+                    userStr = 'days';
+                } else if(userStr === 'weekly') {
+                    userStr = 'weeks';
+                } else if(userStr === 'monthly') {
+                    userStr = 'months';
+                } else if(userStr === 'yearly') {
+                    userStr = 'years';
+                } else {
+                    var splitUserStr = userStr.split(' ');
+                    if(splitUserStr.length > 1) {
+                        num = parseInt(splitUserStr[0], 10);
+                        userStr = splitUserStr[1];
+                    }
+                }
+                var durationObj = {};
+                durationObj[userStr] = num;
+                self.model.set({duration: durationObj}, {silent: true});
+                var saveModel = self.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function(s, typeStr, respStr) {
+                    self.render();
+                    self.options.list.render();
+                });
+            }
+        },
+        setRepeat: function() {
+            var self = this;
+            var userStr = prompt("ex. daily, monthly, 3 months", this.getRepeatStr());
+            if(userStr && userStr !== this.getRepeatStr()) {
+                userStr = userStr.trim();
+                var num = 1;
+                if(userStr === 'daily') {
+                    userStr = 'days';
+                } else if(userStr === 'weekly') {
+                    userStr = 'weeks';
+                } else if(userStr === 'monthly') {
+                    userStr = 'months';
+                } else if(userStr === 'yearly') {
+                    userStr = 'years';
+                } else {
+                    var splitUserStr = userStr.split(' ');
+                    if(splitUserStr.length > 1) {
+                        num = parseInt(splitUserStr[0], 10);
+                        userStr = splitUserStr[1];
+                    }
+                }
+                var durationObj = {};
+                durationObj[userStr] = num;
+                self.model.set({repeat: durationObj}, {silent: true});
+                var saveModel = self.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function(s, typeStr, respStr) {
+                    self.render();
+                    self.options.list.render();
+                });
+            }
+        },
+        removeDuration: function() {
+            var self = this;
+            if(confirm("Do you want to remove the duration?")) {
+                self.model.set({duration: null}, {silent: true});
+                var saveModel = self.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function(s, typeStr, respStr) {
+                    self.render();
+                    self.options.list.render();
+                });
+            }
+        },
+        removeRepeat: function() {
+            var self = this;
+            if(confirm("Do you want to remove the repeat?")) {
+                self.model.set({repeat: null}, {silent: true});
+                var saveModel = self.model.save(null, {
+                    silent: false,
+                    wait: true
+                });
+                saveModel.done(function(s, typeStr, respStr) {
+                    self.render();
+                    self.options.list.render();
+                });
+            }
+        },
+        moveUp: function() {
+            var self = this;
+            self.model.collection.sort({
+                silent: true
+            });
+            var r = self.model.get("rank");
+            var sibId = this.$el.prev().attr("data-id");
+            if(sibId) {
+                var swapModel = self.model.collection.get(sibId);
+                if(swapModel) {
+                    var higherRank = swapModel.get("rank");
+                    if(higherRank == r) {
+                        r++;
+                    }
+                    swapModel.set({
+                        rank: r
+                    }, {silent: true});
+                    var sm = swapModel.save(null, {
+                        silent: false,
+                        wait: true
+                    }).done(function(s, typeStr, respStr) {
+                        self.render();
+                        self.model.collection.sort({
+                            silent: true
+                        });
+                        self.options.list.render();
+                    });
+                    if(higherRank != self.model.get("rank")) {
+                        self.model.set({
+                            rank: higherRank
+                        }, {silent: true});
+                        var s = self.model.save(null, {
+                            silent: false,
+                            wait: true
+                        }).done(function(s, typeStr, respStr) {
+                            self.render();
+                            self.model.collection.sort({
+                                silent: true
+                            });
+                            self.options.list.render();
+                        });
+                    }
+                }
+            }
+            return false;
+        },
+        unsetDefaultForModel: function(model) {
+            var self = this;
+            model.set({default: null}, {silent: true});
+            model.save(null, {
+                silent: false,
+                wait: true
+            }).done(function(s, typeStr, respStr) {
+                self.render();
+                self.options.list.render();
+            });
+        },
+        setAsDefault: function() {
+            var self = this;
+            this.model.set({default: true}, {silent: true});
+            var s = self.model.save(null, {
+                silent: false,
+                wait: true
+            });
+            if(s) {
+                s.done(function(s, typeStr, respStr) {
+                    self.render();
+                    self.options.list.render();
+                    
+                    // unset the rest in the collection
+                    self.model.collection.each(function(model){
+                        if(model.id !== self.model.id) {
+                            self.unsetDefaultForModel(model);
+                        }
+                    });
+                });
+            } else {
+                self.model.collection.each(function(model){
+                    if(model.id !== self.model.id) {
+                        self.unsetDefaultForModel(model);
+                    }
+                });
+            }
+        },
+        removeit: function(e) {
+            this.model.destroy();
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+        },
+        touchstartstopprop: function(e) {
+            e.stopPropagation();
+        },
+        select: function() {
+            if(this.options.list) {
+                this.options.list.trigger("selected", this);
+            }
+            return false;
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+    
     var FormView = Backbone.View.extend({
         tagName: "div",
         className: "poll-form",
@@ -498,6 +1066,9 @@
         // },
         remove: function() {
             this.$el.remove();
+        },
+        focus: function() {
+            this.formView.focus('title');
         }
     });
    

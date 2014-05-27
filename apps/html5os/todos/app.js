@@ -111,7 +111,7 @@
                     className: "form-control"
                 },
             }
-            self.todosFormView = new window.todosCollection.getFormView(formOpts);
+            self.todosFormView = window.todosCollection.getFormView(formOpts);
             self.todosFormView.on('saved', function(todo){
                 console.log(todo)
                 self.todosFormView.render().$el.remove();
@@ -246,7 +246,7 @@
                     className: "form-control"
                 },
             }
-            self.formView = new window.todosCollection.getFormView(formOpts);
+            self.formView = window.todosCollection.getFormView(formOpts);
             self.formView.on('saved', function(todo){
                 // console.log(todo)
                 self.formView.render().$el.remove();
@@ -492,7 +492,7 @@
                         var formView = doc.getFormView();
                         formView.on('saved', function(){
                             box.remove();
-                            self.router.back();
+                            // self.router.back();
                         });
                         var box = utils.appendLightBox(formView.render().$el, false, false, {closeBtn: false, backdrop: 'static'});
                         formView.focus('name');

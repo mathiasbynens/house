@@ -204,10 +204,62 @@
                         // self.$app.addClass('blurred');
                         self.$el.addClass('appBlurred');
                         // self.collection.getView().$el.addClass('blurred');
-                        var mod = utils.getNewModalContent({title: doc.get('name'), body: doc.getFullView().render().$el, className: 'modal-content container'});
-                        self.$doc.html(mod.render().$el.show()).show();
+                        // var mod = utils.getNewModalContent({title: doc.get('name'), body: doc.getFullView().render().$el, className: 'modal-content container'});
+                        // self.$doc.html(mod.render().$el.show()).show();
+                        var fullView = doc.getFullView();
+                        fullView.on('saved', function() {
+                            box.remove();
+                        });
+                        var box = utils.appendLightBox(fullView.render().$el, doc.get('title'), false);
+                        box.on('removed', function(){
+                            self.router.back();
+                        });
                     } else {
-                        
+                        // 404
+                    }
+                });
+            });
+            router.route('id/:id', 'id', function(id){
+                router.reset();
+                self.collection.getOrFetch(id, function(doc){
+                    if(doc) {
+                        // self.$app.addClass('blurred');
+                        self.$el.addClass('appBlurred');
+                        // self.collection.getView().$el.addClass('blurred');
+                        // var mod = utils.getNewModalContent({title: doc.get('name'), body: doc.getFullView().render().$el, className: 'modal-content container'});
+                        // self.$doc.html(mod.render().$el.show()).show();
+                        var fullView = doc.getFullView();
+                        fullView.on('saved', function() {
+                            box.remove();
+                        });
+                        var box = utils.appendLightBox(fullView.render().$el, doc.get('title'), false);
+                        box.on('removed', function(){
+                            self.router.back();
+                        });
+                    } else {
+                        // 404
+                    }
+                });
+            });
+            router.route('id/:id/questions', 'idQuestionsTab', function(id){
+                router.reset();
+                self.collection.getOrFetch(id, function(doc){
+                    if(doc) {
+                        // self.$app.addClass('blurred');
+                        self.$el.addClass('appBlurred');
+                        // self.collection.getView().$el.addClass('blurred');
+                        // var mod = utils.getNewModalContent({title: doc.get('name'), body: doc.getFullView().render().$el, className: 'modal-content container'});
+                        // self.$doc.html(mod.render().$el.show()).show();
+                        var fullView = doc.getFullView();
+                        fullView.on('saved', function() {
+                            box.remove();
+                        });
+                        var box = utils.appendLightBox(fullView.render('questions').$el, doc.get('title'), false);
+                        box.on('removed', function(){
+                            self.router.back();
+                        });
+                    } else {
+                        // 404
                     }
                 });
             });
@@ -283,7 +335,7 @@
                         className: "form-control"
                     },
                 }
-                self.newPollForm = new window.pollsCollection.getFormView(formOpts);
+                self.newPollForm = window.pollsCollection.getFormView(formOpts);
                 self.newPollForm.on('saved', function(doc){
                     console.log(doc)
                     // self.formView.render().$el.remove();
@@ -300,7 +352,7 @@
                 box.on('removed', function(){
                     self.router.back();
                 });
-                
+                self.newPollForm.focus();
                 
                 router.trigger('loadingComplete');
             });

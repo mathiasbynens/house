@@ -1645,7 +1645,6 @@
             var statusCode = this.model.get('status');
             console.log(statusCode)
             if(this.$el.parent().length === 0) { // not on page yet
-                console.log('not on page')
                 self.$tabContent.find('.active').removeClass('active');
                 if(statusCode >= 50) {
                     self.$tabContent.find('.complete').addClass('active');

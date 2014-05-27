@@ -1227,13 +1227,13 @@
 
     var MenuItemPurchaseView = Backbone.View.extend({
         tagName: "div",
-        className: "purchaseItem",
+        className: "purchaseItem row",
         initialize: function() {
             var self = this;
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
-            this.$currency = $('<div class="currency col-md-1 col-xs-3 text-right"><button class="btn btn-lg btn-link disabled">$</button></div>');
-            this.$cost = $('<div class="cost col-md-2 col-xs-9"><button class="btn btn-lg btn-link disabled"></button></div>');
+            this.$currency = $('<div class="currency col-md-1 col-xs-5 text-right"><button class="btn btn-lg btn-link disabled">$</button></div>');
+            this.$cost = $('<div class="cost col-md-3 col-xs-9"><button class="btn btn-lg btn-link disabled"></button></div>');
             this.$priceInput = $('<input type="number" min="1" max="10000" step="1" name="price" class="form-control input-lg" value="1" />');
             // this.$priceCol = $('<div class="form-group"></div>');
             // this.$priceCol.append(this.$price);

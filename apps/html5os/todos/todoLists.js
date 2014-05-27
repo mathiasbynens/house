@@ -283,7 +283,7 @@
             if(options.list) {
                 this.list = options.list;
             }
-            console.log(this.list);
+            // console.log(this.list);
             this.model.bind('change', this.render, this);
             this.model.bind('destroy', this.remove, this);
             // this.actions = new ActionsView({model: this.model});
@@ -610,7 +610,7 @@
                 //     label: "Due Date"
                 // }
             }
-            self.todosFormView = new window.todosCollection.getFormView(formOpts);
+            self.todosFormView = window.todosCollection.getNewFormView(formOpts);
             self.todosFormView.on('saved', function(todo){
                 self.trigger('saved', todo);
             });

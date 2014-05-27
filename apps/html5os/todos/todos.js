@@ -61,7 +61,6 @@
         collectionName: 'todos',
         url: '/api/todos',
     });
-    
 
     var RowView = Backbone.View.extend({
         tagName: "a",
@@ -429,7 +428,7 @@
                     className: "form-control",
                 }
             }
-            self.todosFormView = new window.todosCollection.getFormView(formOpts);
+            self.todosFormView = window.todosCollection.getFormView(formOpts);
             self.todosFormView.on('saved', function(todo){
                 self.trigger('saved', todo);
             });
