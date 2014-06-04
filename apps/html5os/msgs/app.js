@@ -65,7 +65,7 @@
                         selection: {
                             actions: {
                                 "delete": {
-                                    title: "Delete File",
+                                    title: "Delete",
                                     glyphicon: 'trash',
                                     confirm: function() {
                                         return confirm("Are you sure that you want to delete the selected messages?");
@@ -108,12 +108,12 @@
                     }
                     if(window.account) {
                         window.account.on('loggedIn', function(loginView){
-                            loadCollections();
+                            // loadCollections();
                         });
                     }
                     self.initialized = true;
                     self.trigger('initialized');
-                    loadCollections();
+                    // loadCollections();
                 });
             });
             this.$app = $('<div class="app"></div>');

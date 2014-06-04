@@ -652,6 +652,16 @@ Backbone.House.Collection = Backbone.Collection.extend({
         if (doc) {
             callback(doc);
         } else {
+            if(!this.getOrFetchingIds) {
+                this.getOrFetchingIds = {};
+            }
+            if(this.getOrFetchingIds.hasOwnProperty(id)) {
+                this.once('getOrFetchingIdComplete-'+id, function() {
+                    self.getOrFetch(id, callback);
+                });
+                return;
+            }
+            this.getOrFetchingIds[id] = true;
             var options = {
                 "id": id
             };
@@ -666,9 +676,13 @@ Backbone.House.Collection = Backbone.Collection.extend({
                     } else {
                         callback(false);
                     }
+                    self.getOrFetchingIds[id] = false;
+                    self.trigger('getOrFetchingIdComplete-'+id, true);
                 },
                 error: function(collection, response) {
                     callback(false);
+                    self.getOrFetchingIds[id] = false;
+                    self.trigger('getOrFetchingIdComplete-'+id, true);
                 }
             });
         }
