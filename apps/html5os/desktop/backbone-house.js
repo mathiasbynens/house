@@ -701,6 +701,37 @@ Backbone.House.Collection = Backbone.Collection.extend({
             });
         }
     },
+    fetchWhere: function(whereDoc, callback) {
+        var self = this;
+        var doc;
+        var options = _.clone(whereDoc);
+        this.fetch({
+            data: options,
+            update: true,
+            remove: false,
+            success: function(collection, response) {
+                if (response) {
+                    callback(self.where(whereDoc));
+                } else {
+                    callback(false);
+                }
+            },
+            error: function(collection, response) {
+                callback(false);
+            }
+        });
+    },
+    findOrFetchWhere: function(whereDoc, callback) {
+        var self = this;
+        var docs = self.where(whereDoc);
+        if(docs.length > 0) {
+            if(callback) {
+                callback(docs);
+            }
+        } else {
+            this.fetchWhere(whereDoc, callback);
+        }
+    },
     getNewModel: function(doc) {
         if(!doc) {
             doc = {};
@@ -2289,7 +2320,7 @@ var ListView = Backbone.View.extend({
         }
         this.renderPagination();
         
-        if(this.options.headerEl) {
+        if(this.options.headerEl || this.options.headerEl === false) {
         } else {
             this.$el.prepend(this.$header);
         }
@@ -2416,7 +2447,7 @@ var FormView = Backbone.View.extend({
             this.beforeSubmitFunc = options.beforeSubmit;
         }
         
-        this.$form = $('<form></form>');
+        this.$form = $('<form role="form"></form>');
         
         if(options.formClassName) {
             this.$form.attr('class', options.formClassName);
@@ -2479,6 +2510,8 @@ var FormView = Backbone.View.extend({
                 field.fieldView = new StringListFieldView({model: this.model, fieldName: objectFieldName});
             } else if(field.hasOwnProperty('objectFields') && field.objectFields) {
                 field.fieldView = new ObjectFieldsetFieldView({model: this.model, fieldName: objectFieldName, fields: field.objectFields});
+            } else if(field.hasOwnProperty('choices') && field.choices) {
+                field.fieldView = new ChoiceFieldsetFieldView({model: this.model, fieldName: objectFieldName, choices: field.choices});
             }
         };
     },
@@ -2730,7 +2763,7 @@ var FormView = Backbone.View.extend({
                 }
             }
             if(this.$fieldLabels.hasOwnProperty(fieldName)) {
-                this.$fieldset.append(this.$fieldLabels[fieldName]);
+                this.$fieldsGroups[fieldName].append(this.$fieldLabels[fieldName]);
             }
             if(field.html) {
                 this.$fields[fieldName].html(field.html);
@@ -3044,6 +3077,56 @@ var SelectListView = Backbone.View.extend({
             } else {
                 return false;
             }
+        }
+    }
+});
+
+var ChoiceFieldsetFieldView = Backbone.View.extend({
+    tagName: "div",
+    className: "field-choice",
+    initialize: function(options) {
+        var self = this;
+        if(this.options.label) {
+            this.$label = $('<label></label>');
+            this.$label.html(this.options.label);
+        }
+        this.$select = $('<select name="'+this.options.fieldName+'" class="form-control"></select>');
+        // this.options.titleField = this.options.titleField || 'title';
+    },
+    events: {
+    },
+    render: function() {
+        var self = this;
+        
+        if(this.$label) {
+            this.$el.append(this.$label);
+        }
+        
+        this.$el.append(this.$select);
+        // this.$el.append('<option></option>');
+        //this.collection.sort({silent:true});
+        // this.collection.each(function(doc){
+            // self.$el.append('<option value="'+doc.id+'">'+doc.get(self.options.titleField)+'</option>');
+        // });
+        
+        for(var c in this.options.choices) {
+            var choice = this.options.choices[c];
+            this.$select.append('<option value="'+c+'">'+choice+'</option>');
+        }
+        
+        this.setElement(this.$el);
+        return this;
+    },
+    validateVal: function() {
+        var self = this;
+        console.log(this.$el.find('select').val());
+        return this.$el.find('select').val();
+    },
+    val: function(v) {
+        if(v) {
+            this.$el.find('select').val(v);
+        } else {
+            return this.$el.find('select').val();
         }
     }
 });

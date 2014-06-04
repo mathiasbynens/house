@@ -1,29 +1,33 @@
  {
-     _id: MongoObject(),
+     _id: new MongoObject(),
      at: new Date(),
      title: "Questions I have",
+     responseCount: 10,
      qs: [
          {
-            id: "q1",
+            id: new Date(),
             rank: 0,
             type: 'yes,no',
             title: 'are you human?',
-            desc: ''
+            desc: '',
+            responseCount: 10,
          },
          {
             id: "q1a",
             rank: 2,
-            type: 'text',
+            type: 'number',
             condition: {
                 'q1': true
             }
             title: 'What is 2+2 human?',
+            responseCount: 7,
          },
          {
             id: "q1b",
             rank: 2,
             type: 'text',
             title: 'What is 2^6 bot?',
+            responseCount: 6,
          },
          {
             id: "q2",
@@ -62,4 +66,42 @@
             title: 'What is your favorite color?',
          }
     ]
+ }
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ // pollRes
+ 
+ {
+     _id: new MongoObject(),
+     at: new Date(),
+     session_id: session.id,
+     user_id: user.id,
+     poll_id: poll.id,
+     qs: [
+         {
+             id: poll.qs[$].id
+             at: new Date(),
+             vote: true
+         },
+         {
+             id: poll.qs[$].id
+             at: new Date(),
+             vote: 4
+         },
+         {
+             id: poll.qs[$].id
+             at: new Date(),
+             vote: []
+         },
+     ]
  }

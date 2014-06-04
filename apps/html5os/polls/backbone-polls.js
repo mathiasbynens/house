@@ -8,6 +8,10 @@
             this.AvatarView = AView;
             this.FullView = FullView;
             this.AView = AView;
+            
+            this.addViewType(PollView, 'poll');
+            this.addViewType(ResultsView, 'results');
+            
             options = options || {};
             options.ownerFieldName = 'owner';
             
@@ -54,6 +58,7 @@
         collectionName: "polls",
         initialize: function(attr, options) {
             this.addViewType(PollQsView, 'avatar');
+            this.addViewType(PollQResultView, 'result');
             // this.addViewType(QFormView, 'form');
             options = options || {};
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
@@ -61,6 +66,38 @@
         getNavigatePath: function() {
             return 'id/'+this.options.poll.id+'/'+this.get('rank');
         },
+        getSessionResponse: function(callback) {
+            var self = this;
+            var whereObj = {'poll_id': this.options.poll.id};
+            if(account.isUser()) {
+                whereObj.user_id = account.get('user');
+            } else {
+                whereObj.session_id = account.id;
+            }
+            
+            window.pollResCollection.findOrFetchWhere(whereObj, function(models){
+                if(models && models.length > 0) {
+                    if(callback) {
+                        callback(_.first(models));
+                    }
+                } else {
+                    // make a new poll response for this user sesssion
+                    var newModel = window.pollResCollection.getNewModel({poll_id: self.options.poll.id});
+                    
+                    var saveModel = newModel.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    if(saveModel) {
+                        saveModel.done(function(s, typeStr, respStr) {
+                            if(callback) {
+                                callback(newModel);
+                            }
+                        });
+                    }
+                }
+            });
+        }
     });
     
     var Collection = Backbone.House.Collection.extend({
@@ -88,15 +125,14 @@
     var QsCollection = Backbone.House.Collection.extend({
         model: QModel,
         socket: false,
+        pageSize: 0,
         // collectionName: 'qs',
         // url: '/api/polls',
+        collectionName: 'qs',
         sortField: 'rank',
         url: function() {
             return "/api/polls/" + this.options.poll.id + "/qs";
         },
-        // comparator: function(a) {
-        //     return a.get("rank");
-        // }
     });
     
     var AView = Backbone.View.extend({
@@ -126,6 +162,220 @@
         clickA: function(e) {
             window.location = $(e.target).attr('href');
             return false;
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+    
+    var choicesObject = {
+        "text": "Text",
+        "number": "Number",
+        "textarea": "Textarea",
+        "booleanYesNo": "Yes No",
+        "booleanTrueFalse": "True False",
+        "choiceRadio": "Radio Select",
+        "choiceCheckboxes": "Checkboxes",
+        "singleSelect": "Single Select",
+        "multipleSelect": "Multiple Select",
+    }
+    
+    var ResultsView = Backbone.View.extend({
+        tagName: "div",
+        className: "poll-view",
+        initialize: function(options) {
+            var self = this;
+            self.questionsView = self.model.qsCollection.getView({
+                layout: 'result',
+                headerEl: false,
+                selection: false,
+                mason: false,
+                loadOnRenderPage: false,
+            });
+        },
+        events: {
+        },
+        render: function(tab) {
+            var self = this;
+            
+            this.$el.append(self.questionsView.render().$el);
+            
+            this.$el.attr('data-id', this.model.id);
+            this.setElement(this.$el);
+            return this;
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+    
+    var PollView = Backbone.View.extend({
+        tagName: "div",
+        className: "poll-view",
+        initialize: function(options) {
+            this.$paddles = $('<div class="prevNext"><div class="col-xs-4">\
+                                    <button class="btn btn-link btn-block prev">Prev</button>\
+                                </div>\
+                                <div class="col-xs-4 col-xs-offset-4">\
+                                    <button class="btn btn-primary btn-block next">Next</button>\
+                                </div></div>');
+            this.$question = $('<div class="current-question"></div>');
+            this.atIndex = 0;
+            this.$questionResponse = $('<div class="questionResponse col-md-6 col-md-offset-3"><div class="form-group"></div></div>');
+            this.$thankyou = $('<h1>Thank you!</h1>');
+        },
+        events: {
+            "click .next": "clickNext",
+            "click .prev": "clickPrev",
+            "click .yesNoToggle .off": "clickToggleOff",
+            "click .yesNoToggle .on": "clickToggleOn",
+        },
+        clickNext: function() {
+            var self = this;
+            this.saveCurrentQuestionResponse(function(){
+                if(self.model.qsCollection.length === self.atIndex + 1) {
+                    self.renderThankyou();
+                    self.trigger('complete');
+                } else {
+                    self.atIndex++;
+                    self.renderQuestion();
+                }
+            });
+        },
+        clickPrev: function() {
+            this.atIndex--;
+            this.renderQuestion();
+        },
+        clickToggleOff: function(e) {
+            var $et = $(e.currentTarget);
+            $et.parent('.yesNoToggle').addClass('left').removeClass('right');
+        },
+        clickToggleOn: function(e) {
+            var $et = $(e.currentTarget);
+            $et.parent('.yesNoToggle').addClass('right').removeClass('left');
+        },
+        saveCurrentQuestionResponse: function(callback) {
+            var self = this;
+            // this.currentQuestion
+            var val;
+            var type = this.currentQuestion.get('type');
+            if(type === 'text') {
+                val = this.$questionResponse.find('input').val();
+            } else if(type === 'textarea') {    
+                val = this.$questionResponse.find('textarea').val();
+            } else if(type === 'number') {
+                val = this.$questionResponse.find('input')[0].valueAsNumber; // .val()
+            } else if(type === 'booleanYesNo') {
+                var $toggle = this.$questionResponse.find('.yesNoToggle');
+                if($toggle.hasClass('left')) {
+                    val = false;
+                } else if($toggle.hasClass('right')) {
+                    val = true;
+                }
+            }
+            
+            if(self.currentQuestionResponse) {
+                self.currentQuestionResponse.qsCollection.getOrFetch(self.currentQuestion.id, function(model){
+                    if(!model) {
+                        model = self.currentQuestionResponse.qsCollection.getNewModel({_id: self.currentQuestion.id});
+                    }
+                    model.set('vote', val, {silent: true});
+                    var saveModel = model.save(null, {
+                        silent: false,
+                        wait: true
+                    });
+                    if(saveModel) {
+                        saveModel.done(function(s, typeStr, respStr) {
+                            if(callback) {
+                                callback();
+                            }
+                        });
+                    } else {
+                        if(callback) {
+                            callback();
+                        }
+                    }
+                });
+            } else {
+                if(callback) {
+                    callback();
+                }
+            }
+        },
+        renderQuestion: function() {
+            var self = this;
+            this.currentQuestion = this.model.qsCollection.at(this.atIndex);
+            if(this.currentQuestion) {
+                this.$question.html('');
+                this.$question.append('<h1 class="question-title text-center">'+this.currentQuestion.get('title')+'</h1>');
+                var type = this.currentQuestion.get('type');
+                if(type === 'text') {
+                    this.$questionResponse.find('.form-group').html('<input type="text" name="response-'+this.currentQuestion.id+'" class="form-control input-lg">');
+                } else if(type === 'textarea') {    
+                    this.$questionResponse.find('.form-group').html('<textarea type="text" name="response-'+this.currentQuestion.id+'" class="form-control input-lg"></textarea>');
+                } else if(type === 'number') {
+                    this.$questionResponse.find('.form-group').html('<input type="number" min=0 name="response-'+this.currentQuestion.id+'" class="form-control input-lg">');
+                } else if(type === 'booleanYesNo') {
+                    this.$questionResponse.find('.form-group').html('<div class="yesNoToggle"><span class="bulb"> </span> <span class="off">No</span> <span class="on">Yes</span></div>');
+                }
+                
+                this.$question.append(this.$questionResponse);
+                this.currentQuestion.getSessionResponse(function(pollRes){
+                    if(pollRes) {
+                        console.log(pollRes)
+                        self.currentQuestionResponse = pollRes;
+                        var pollResQs = self.currentQuestionResponse.qsCollection.get(self.currentQuestion.id);
+                        console.log(pollResQs)
+                        if(pollResQs && pollResQs.has('vote')) {
+                            console.log(voteVal)
+                            var voteVal = pollResQs.get('vote');
+                            
+                            if(type === 'text') {
+                                self.$questionResponse.find('input').val(voteVal);
+                            } else if(type === 'textarea') {    
+                                self.$questionResponse.find('textarea').val(voteVal);
+                            } else if(type === 'number') {
+                                self.$questionResponse.find('input').val(voteVal);
+                            } else if(type === 'booleanYesNo') {
+                                if(voteVal === true) {
+                                    self.$questionResponse.find('.yesNoToggle').addClass('right').removeClass('left');
+                                } else if(voteVal === false) {
+                                    self.$questionResponse.find('.yesNoToggle').addClass('left').removeClass('right');
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            if(this.atIndex === 0) {
+                this.$paddles.find('.prev').hide();
+            } else {
+                this.$paddles.find('.prev').show();
+            }
+            if(this.model.qsCollection.length === this.atIndex+1) {
+                this.$paddles.find('.next').html('Finish');//hide();
+            } else {
+                this.$paddles.find('.next').html('Next').show();
+            }
+        },
+        renderThankyou: function() {
+            this.$question.remove();
+            this.$paddles.remove();
+            this.$el.append(this.$thankyou.show());
+        },
+        render: function(tab) {
+            var self = this;
+            
+            this.$el.append(this.$question);
+            this.$el.append(this.$paddles);
+            this.$thankyou.hide();
+            
+            this.renderQuestion();
+            
+            this.$el.attr('data-id', this.model.id);
+            this.setElement(this.$el);
+            return this;
         },
         remove: function() {
             this.$el.remove();
@@ -187,9 +437,9 @@
             self.$tabContent = $('<div class="tab-content">\
     <div class="tab-pane active basic" id="' + self.cid + '-basic"></div>\
     <div class="tab-pane questions row" id="' + self.cid + '-questions"><div class="questions-list col-md-12">\
-        <label>Questions</label><div class="questions-form-list"></div><div class="new-question-form"></div>\
+        <div class="questions-form-list"></div><hr><div class="new-question-form"></div>\
     </div></div>\
-    <div class="tab-pane responses row" id="' + self.cid + '-responses"></div>\
+    <div class="tab-pane responses" id="' + self.cid + '-responses"></div>\
 </div>');
             
             this.model.bind('change', this.render, this);
@@ -197,41 +447,70 @@
         },
         renderQuestionsTab: function() {
             var self = this;
+            
+            this.resetNewQuestionFrom();
+            this.renderQuestionForm();
+            this.$tabContent.find('.questions-form-list').append(this.questionsView.render().$el);
+        },
+        renderQuestionForm: function() {
+            this.$tabContent.find('.new-question-form').html('').append(this.newQuestionView.render().$el);
+        },
+        resetNewQuestionFrom: function() {
+            var self = this;
             var qsModel = this.model.qsCollection.getNewModel();
             qsModel.set('rank', self.model.qsCollection.length + 1, {silent: true});
-            
             var newQuestionFormOpts = {
                 collection: self.model.qsCollection,
                 model: qsModel,
                 submit: 'Add Question',
                 cancel: false,
                 delete: false,
-                formClassName: 'form-inline'
+                formClassName: ''
             };
+            
             newQuestionFormOpts.fields = {
                 "title": {
+                    label: "Question",
                     validateType: 'string',
                     autocomplete: "off",
-                    placeholder: "question title",
+                    placeholder: "What's the answer to the question of life?",
                     className: "form-control"
                 },
                 "type": {
-                    validateType: 'string',
-                    placeholder: "type of poll.",
-                    className: "form-control"
+                    choices: choicesObject,
+                    label: "Poll Type",
+                    className: ""
                 },
+            }
+            if(this.newQuestionView) {
+                this.newQuestionView.remove();
             }
             
             this.newQuestionView = window.pollsCollection.getNewFormView(newQuestionFormOpts);
-            self.formView.on('saved', function(model){
-                self.trigger('saved', model);
+            self.newQuestionView.on('saved', function(model){
+                // self.trigger('saved', model);
+                self.resetNewQuestionFrom();
+                self.renderQuestionForm();
             });
-            self.formView.on('cancelled', function(model){
-                self.trigger('saved', model);
+            self.newQuestionView.on('cancelled', function(model){
+                self.resetNewQuestionFrom();
+                self.renderQuestionForm();
             });
-            
-            self.$tabContent.find('.questions-list').append(self.questionsView.render().$el);
-            self.$tabContent.find('.new-question-form').append(this.newQuestionView.render().$el);
+        },
+        renderResponsesTab: function() {
+            var self = this;
+            window.pollResCollection.fetchWhere({'poll_id': this.model.id}, function(models){
+                if(models) {
+                    console.log(models)
+                    var responseListView = window.pollResCollection.getView({
+                        layout: 'row',
+                        selection: false,
+                        mason: false,
+                        loadOnRenderPage: false,
+                    });
+                    self.$tabContent.find('.responses').append(responseListView.render().$el);
+                }
+            });
         },
         render: function(tab) {
             var self = this;
@@ -239,10 +518,13 @@
             this.$el.append(self.$tabContent);
             self.$tabContent.find('.basic').append(this.formView.render().$el);
             this.renderQuestionsTab();
+            this.renderResponsesTab();
             if(tab) {
                 if(tab === 'questions') {
                     this.tabToQuestions();
-                }
+                } else if(tab === 'responses') {
+                    this.tabToResponses();
+                } 
             }
             this.$el.attr('data-id', this.model.id);
             //this.$el.append(this.actions.render().$el);
@@ -304,7 +586,7 @@
                     title: "Take Poll",
                     glyphicon: 'play-circle',
                     action: function(model) {
-                        app.nav.router.navigate('poll/'+model.getNavigatePathVote(), {trigger: true});
+                        app.nav.router.navigate(model.getNavigatePathVote(), {trigger: true});
                     }
                 }
             }
@@ -316,6 +598,7 @@
             this.$tdIcon = $('<td class="icon"></td>');
             this.$tdTitle = $('<td class="title"></td>');
             this.$tdDesc = $('<td class="desc"></td>');
+            this.$tdResCount = $('<td class="resCount"></td>');
             this.$tdAt = $('<td class="at"></td>');
             this.$tdActions = $('<td class="actions"></td>');
             
@@ -333,7 +616,7 @@
             // this.$el.html('');
             this.$el.append(this.$tdIcon);
             this.$el.append(this.$tdTitle);
-            this.$el.append(this.$tdSize);
+            this.$el.append(this.$tdResCount);
             this.$el.append(this.$tdAt);
             this.$el.append(this.$tdActions);
             // this.$el.append(this.$checkbox);
@@ -369,44 +652,12 @@
                 $at.html(clock.moment(this.model.get('at')).calendar());
             }
             this.$tdAt.html($at);
-            if(this.model.has('metadata')) {
-                var meta = this.model.get('metadata');
-                var $ei = this.$el.find('.extraInfo').html('<h3>Metadata</h3>');
-                if(this.model.get('metadata').owner) {
-                    // $byline.append('<span class="owner"> by '+this.model.get('metadata').owner.name+'</span>');
-                }
-                if(meta.refs) {
-                    var refs = '';
-                    for(var r in meta.refs) {
-                        var ref = meta.refs[r];
-                        var refUrl = '/'+ref.col+'/id/'+ref.id;
-                        refs = refs + '<div class="ref"><a href="'+refUrl+'" target="_blank">'+ref.col+' '+ref.id+'</a></div>';
-                    }
-                    $ei.append('<div class="refs"><h4>Refs</h4>'+refs+'</div>');
-                }
-                if(meta.src) {
-                    $ei.append('<div class="src"><h4>Src</h4>'+meta.src+'</div>');
-                }
-                if(meta.srcUrl) {
-                    $ei.append('<div class="srcUrl"><h4>Src URL</h4>'+meta.srcUrl+'</div>');
-                }
-                if(meta.exif) {
-                    var resStr = '';
-                    for(var fieldName in meta.exif) {
-                        var v = meta.exif[fieldName];
-                        resStr = resStr + fieldName+': '+v+'\n';
-                    }
-                    $ei.append('<div class="exif"><h4>Exif</h4><pre>'+resStr+'</pre></div>');
-                }
-                if(meta.responseHeaders) {
-                    var resStr = '';
-                    for(var fieldName in meta.responseHeaders) {
-                        var v = meta.responseHeaders[fieldName];
-                        resStr = resStr + fieldName+': '+v+'\n';
-                    }
-                    $ei.append('<div class="responseHeaders"><h4>Response Headers</h4><pre>'+resStr+'</pre></div>');
-                }
+            
+            if(this.model.has('resCount')) {
+                var count = this.model.get('resCount');
+                this.$tdResCount.html(count);
             }
+            
             // this.$panelFoot.append(this.$byline);
             this.$tdActions.append(this.actions.render().$el);
             
@@ -569,9 +820,118 @@
         }
     });
     
+    var PollQResultView = Backbone.View.extend({
+        tagName: "div",
+        className: "pollQ-result col-md-4",
+        initialize: function() {
+            var self = this;
+            this.model.bind("change", this.render, this);
+            this.model.bind("destroy", this.remove, this);
+            this.$e = $('<div class="questionResult">\
+    <div class="title col-md-12 text-center"></div>\
+    <div class="resAverage col-xs-12 text-center"></div>\
+</div>');
+        },
+        render: function() {
+            this.$el.append(this.$e);
+            
+            if(this.model.has("title")) {
+                this.$e.find('.title').html(this.model.get("title"));
+            }
+            if(this.model.has("type")) {
+            }
+            if(this.model.has('resAverage')) {
+                var count = this.model.get('resAverage');
+                this.$e.find('.resAverage').html(count);
+            }
+            if(this.model.has('resPercent')) {
+                var count = this.model.get('resPercent');
+                // this.$e.find('.resAverage').html(count*100 + '%');
+                
+                var deg = 360 * count;
+                
+                this.$e.find('.resAverage').html('<style>\
+                .pieContainer {\
+                      height: 100px;\
+                 }\
+                 .pieBackground {\
+                      background-color: grey;\
+                      position: absolute;\
+                      width: 100px;\
+                      height: 100px;\
+                      -moz-border-radius: 50px;\
+                      -webkit-border-radius: 50px;\
+                      -o-border-radius: 50px;\
+                      border-radius: 50px;\
+                      -moz-box-shadow: -1px 1px 3px #000;\
+                      -webkit-box-shadow: -1px 1px 3px #000;\
+                      -o-box-shadow: -1px 1px 3px #000;\
+                      box-shadow: -1px 1px 3px #000;\
+                 }\
+                    .pie {\
+                          position: absolute;\
+                          width: 100px;\
+                          height: 100px;\
+                          -moz-border-radius: 50px;\
+                          -webkit-border-radius: 50px;\
+                          -o-border-radius: 50px;\
+                          border-radius: 50px;\
+                          clip: rect(0px, 50px, 100px, 0px);\
+                     }\
+                     .positiveSlice {\
+                          position: absolute;\
+                          width: 100px;\
+                          height: 100px;\
+                          -moz-border-radius: 50px;\
+                          -webkit-border-radius: 50px;\
+                          -o-border-radius: 50px;\
+                          border-radius: 50px;\
+                          clip: rect(0px, 100px, 100px, 50px);\
+                     }\
+                     .pie-'+this.cid+' .positiveSlice .pie {\
+                          background-color: #1b458b;\
+                          -webkit-transform:rotate('+deg+'deg);\
+                          -moz-transform:rotate('+deg+'deg);\
+                          -o-transform:rotate('+deg+'deg);\
+                          transform:rotate('+deg+'deg);\
+                     }\
+                    </style>\
+                    <div class="pieContainer pie-'+this.cid+'">\
+                         <div class="pieBackground"></div>\
+                         <div class="positiveSlice"><div class="pie"></div></div>\
+                    </div>');
+            }
+            if(this.model.has("resCount")) {
+                this.$e.find('.resCount').html(this.model.get("resCount"));
+            }
+            
+            
+            /// TODO GRAPH
+            
+            this.$el.attr("data-id", this.model.id);
+            this.setElement(this.$el);
+            return this;
+        },
+        events: {
+            // click: "select",
+        },
+        touchstartstopprop: function(e) {
+            e.stopPropagation();
+        },
+        select: function() {
+            if(this.options.list) {
+                this.options.list.trigger("selected", this);
+            }
+            return false;
+        },
+        remove: function() {
+            this.$el.remove();
+        }
+    });
+    
     var PollQsView = Backbone.View.extend({
         tagName: "div",
-        className: "menuItemSku",
+        className: "pollQView",
         initialize: function() {
             var self = this;
             account.on("refreshUser", function(user) {
@@ -579,10 +939,12 @@
             });
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
-            this.$e = $('<div class="itemSku row">\
-    <div class="skuId col-md-2"></div>\
-    <div class="name col-xs-6"></div>\
-    <div class="price col-xs-2"><a href="#" title="Change Price"></a></div>\
+            this.$e = $('<div class="question row">\
+    <div class="rank col-md-1"></div>\
+    <div class="title col-md-5"></div>\
+    <div class="type col-xs-2"></div>\
+    <div class="resAverage col-xs-1"></div>\
+    <div class="resCount col-xs-1"></div>\
     <div class="actions col-xs-2"></div>\
 </div>');
             
@@ -599,22 +961,22 @@
                 }
             }
             opts.actionOptions.more = {
-                // "editName": {
-                //     title: "Edit Name",
-                //     glyphicon: 'pencil',
-                //     action: function(model) {
-                //         self.setName();
-                //         return false;
-                //     }
-                // },
-                // "moveUp": {
-                //     title: "Move Up",
-                //     glyphicon: 'arrow-up',
-                //     action: function(model) {
-                //         self.moveUp();
-                //         return false;
-                //     }
-                // },
+                "editQuestion": {
+                    title: "Edit Question",
+                    glyphicon: 'pencil',
+                    action: function(model) {
+                        self.setTitle();
+                        return false;
+                    }
+                },
+                "moveUp": {
+                    title: "Move Up",
+                    glyphicon: 'arrow-up',
+                    action: function(model) {
+                        self.moveUp();
+                        return false;
+                    }
+                },
                 // "setDuration": {
                 //     title: "Set Duration",
                 //     glyphicon: 'time',
@@ -644,31 +1006,29 @@
         },
         render: function() {
             this.$el.append(this.$e);
-            if(this.model.get('default')) {
-                this.$e.find('.skuId').html('<b>'+this.model.id+'</b>');
-            } else {
-                this.$e.find('.skuId').html(this.model.id);
+            
+            var prev = this.model.prev();
+            var rank = this.model.get("rank");
+            
+            if(this.model.has("rank")) {
+                this.$e.find('.rank').html(rank+'.');
             }
-            if(this.model.has("name")) {
-                this.$e.find('.name').html('<span class="text">'+this.model.get("name")+'</span><span class="moreInfo"><span class="duration"></span><span class="repeat"></span></span>');
+            if(this.model.has("title")) {
+                this.$e.find('.title').html(this.model.get("title"));
             }
-            if(this.model.has('duration')) {
-                this.$e.find('.duration').html('<button class="btn btn-link glyphicon glyphicon-time"></button>');
-                var duration = this.model.get('duration');
-                this.$e.find('.duration button').attr('title', this.getDurationStr());
-                // this.$e.find('.duration button').html(this.getDurationStr());
+            if(this.model.has("type")) {
+                this.$e.find('.type').html(choicesObject[this.model.get("type")]);
             }
-            if(this.model.has('repeat')) {
-                this.$e.find('.repeat').html('<button class="btn btn-link glyphicon glyphicon-repeat"></button>');
-                var repeat = this.model.get('repeat');
-                this.$e.find('.repeat button').attr('title', this.getRepeatStr());
-                // this.$e.find('.duration button').html(this.getDurationStr());
+            if(this.model.has('resAverage')) {
+                var count = this.model.get('resAverage');
+                this.$e.find('.resAverage').html(count);
             }
-            if(this.model.has('repeat')) {
-                
+            if(this.model.has('resPercent')) {
+                var count = this.model.get('resPercent');
+                this.$e.find('.resAverage').html(count*100 + '%');
             }
-            if(this.model.has("price")) {
-                this.$e.find('.price a').html('$' + this.model.get("price"));
+            if(this.model.has("resCount")) {
+                this.$e.find('.resCount').html(this.model.get("resCount"));
             }
             if(account.isAdmin()) {
                 // this.$actions = $('<ul class="actions"></ul>');
@@ -693,12 +1053,12 @@
             "click .remove": "removeit",
             "touchstart input": "touchstartstopprop"
         },
-        setName: function() {
+        setTitle: function() {
             var self = this;
-            var newName = prompt("Set SKU name", this.model.get("name"));
-            if(newName && newName !== this.model.get("name")) {
+            var newVal = prompt("Set title", this.model.get("title"));
+            if(newVal && newVal !== this.model.get("title")) {
                 self.model.set({
-                    name: newName
+                    title: newVal
                 }, {silent: true});
                 var saveModel = self.model.save(null, {
                     silent: false,
@@ -741,144 +1101,6 @@
             }
             return false;
         },
-        getTimeLengthStrFromObj: function(obj) {
-            var str = '';
-            if(obj.days) {
-                if(obj.days === 1) {
-                    str = 'daily';
-                } else {
-                    str = obj.days+ ' days';
-                }
-            } else if(obj.weeks) {
-                if(obj.weeks === 1) {
-                    str = 'weekly';
-                } else {
-                    str = obj.weeks+ ' weeks';
-                }
-            } else if(obj.months) {
-                if(obj.months === 1) {
-                    str = 'monthly';
-                } else {
-                    str = obj.months+ ' months';
-                }
-            } else if(obj.years) {
-                if(obj.years === 1) {
-                    str = 'yearly';
-                } else {
-                    str = obj.years+ ' years';
-                }
-            }
-            return str;
-        },
-        getDurationStr: function() {
-            if(!this.model.get('duration')) {
-                return '';
-            }
-            var duration = this.model.get('duration');
-            return this.getTimeLengthStrFromObj(duration);
-        },
-        getRepeatStr: function() {
-            if(!this.model.get('repeat')) {
-                return '';
-            }
-            return this.getTimeLengthStrFromObj(this.model.get('repeat'));
-        },
-        setDuration: function() {
-            var self = this;
-            var userStr = prompt("ex. daily, monthly, 3 months", this.getDurationStr());
-            if(userStr && userStr !== this.getDurationStr()) {
-                userStr = userStr.trim();
-                var num = 1;
-                if(userStr === 'daily') {
-                    userStr = 'days';
-                } else if(userStr === 'weekly') {
-                    userStr = 'weeks';
-                } else if(userStr === 'monthly') {
-                    userStr = 'months';
-                } else if(userStr === 'yearly') {
-                    userStr = 'years';
-                } else {
-                    var splitUserStr = userStr.split(' ');
-                    if(splitUserStr.length > 1) {
-                        num = parseInt(splitUserStr[0], 10);
-                        userStr = splitUserStr[1];
-                    }
-                }
-                var durationObj = {};
-                durationObj[userStr] = num;
-                self.model.set({duration: durationObj}, {silent: true});
-                var saveModel = self.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function(s, typeStr, respStr) {
-                    self.render();
-                    self.options.list.render();
-                });
-            }
-        },
-        setRepeat: function() {
-            var self = this;
-            var userStr = prompt("ex. daily, monthly, 3 months", this.getRepeatStr());
-            if(userStr && userStr !== this.getRepeatStr()) {
-                userStr = userStr.trim();
-                var num = 1;
-                if(userStr === 'daily') {
-                    userStr = 'days';
-                } else if(userStr === 'weekly') {
-                    userStr = 'weeks';
-                } else if(userStr === 'monthly') {
-                    userStr = 'months';
-                } else if(userStr === 'yearly') {
-                    userStr = 'years';
-                } else {
-                    var splitUserStr = userStr.split(' ');
-                    if(splitUserStr.length > 1) {
-                        num = parseInt(splitUserStr[0], 10);
-                        userStr = splitUserStr[1];
-                    }
-                }
-                var durationObj = {};
-                durationObj[userStr] = num;
-                self.model.set({repeat: durationObj}, {silent: true});
-                var saveModel = self.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function(s, typeStr, respStr) {
-                    self.render();
-                    self.options.list.render();
-                });
-            }
-        },
-        removeDuration: function() {
-            var self = this;
-            if(confirm("Do you want to remove the duration?")) {
-                self.model.set({duration: null}, {silent: true});
-                var saveModel = self.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function(s, typeStr, respStr) {
-                    self.render();
-                    self.options.list.render();
-                });
-            }
-        },
-        removeRepeat: function() {
-            var self = this;
-            if(confirm("Do you want to remove the repeat?")) {
-                self.model.set({repeat: null}, {silent: true});
-                var saveModel = self.model.save(null, {
-                    silent: false,
-                    wait: true
-                });
-                saveModel.done(function(s, typeStr, respStr) {
-                    self.render();
-                    self.options.list.render();
-                });
-            }
-        },
         moveUp: function() {
             var self = this;
             self.model.collection.sort({
@@ -900,11 +1122,11 @@
                         silent: false,
                         wait: true
                     }).done(function(s, typeStr, respStr) {
-                        self.render();
-                        self.model.collection.sort({
-                            silent: true
-                        });
-                        self.options.list.render();
+                        // self.render();
+                        // self.model.collection.sort({
+                        //     silent: true
+                        // });
+                        // self.options.list.render();
                     });
                     if(higherRank != self.model.get("rank")) {
                         self.model.set({
@@ -924,44 +1146,6 @@
                 }
             }
             return false;
-        },
-        unsetDefaultForModel: function(model) {
-            var self = this;
-            model.set({default: null}, {silent: true});
-            model.save(null, {
-                silent: false,
-                wait: true
-            }).done(function(s, typeStr, respStr) {
-                self.render();
-                self.options.list.render();
-            });
-        },
-        setAsDefault: function() {
-            var self = this;
-            this.model.set({default: true}, {silent: true});
-            var s = self.model.save(null, {
-                silent: false,
-                wait: true
-            });
-            if(s) {
-                s.done(function(s, typeStr, respStr) {
-                    self.render();
-                    self.options.list.render();
-                    
-                    // unset the rest in the collection
-                    self.model.collection.each(function(model){
-                        if(model.id !== self.model.id) {
-                            self.unsetDefaultForModel(model);
-                        }
-                    });
-                });
-            } else {
-                self.model.collection.each(function(model){
-                    if(model.id !== self.model.id) {
-                        self.unsetDefaultForModel(model);
-                    }
-                });
-            }
         },
         removeit: function(e) {
             this.model.destroy();

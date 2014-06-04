@@ -745,6 +745,7 @@
                 var doMapView = false;
                 var doGalleryView = false;
                 var doPostsView = false;
+                var doPollsView = false;
                 var html = this.model.get('html');
                 if(this.$el.find('.sectionHtml').length == 0) {
                     this.$el.append('<div class="sectionHtml '+this.options.sectionClassName+'">'+this.model.get('html')+'</div>');
@@ -790,6 +791,25 @@
                     
                     this.$el.find('.sectionHtml').html(html);
                     doPostsView = true;
+                }
+                
+                var pollStrOpen = '[[polls';
+                var iofpoll = html.indexOf(pollStrOpen);
+                var iopollsend = html.indexOf(']]', iofpoll);
+                if(iofpoll !== -1) {
+                    //console.log('feedback form in section')
+                    var pollVars = {};
+                    var pollsOpts = html.substring(iofpoll+pollStrOpen.length+1, iopollsend);
+                    pollsOpts = pollsOpts.split('|');
+                    for(var i in pollsOpts){
+                        var option = pollsOpts[i].split('=');
+                        pollVars[option[0]] = option[1];
+                    }
+                    html = html.substr(0, iofpoll+pollStrOpen.length) + html.substr(iopollsend);
+                    html = html.replace('[[polls]]', '<span class="polls-widget container"></span>');
+                    
+                    this.$el.find('.sectionHtml').html(html);
+                    doPollsView = true;
                 }
                 
                 // GALLERY
@@ -985,6 +1005,26 @@
                         self.listView = postsCollection.getView(postOpts);
                         self.listView.initLayout('a');
                         self.$el.find('.sectionHtml .posts-widget').append(self.listView.render().$el);
+                    });
+                }
+                
+                if(doPollsView) {
+                    require(['/polls/backbone-polls.js'], function(PollsBackbone){
+                        window.PollsBackbone = PollsBackbone;
+                        if(!window.pollsCollection) {
+                            window.pollsCollection = new PollsBackbone.Collection(); // collection
+                        }
+                        
+                        console.log(pollVars)
+                        if(pollVars.results) {
+                            var poll_id = pollVars.results;
+                            window.pollsCollection.getOrFetch(poll_id, function(doc){
+                                if(doc) {
+                                    self.pollResultsView = doc.getResultsView();
+                                    self.$el.find('.sectionHtml .polls-widget').append(self.pollResultsView.render().$el);
+                                }
+                            });
+                        }
                     });
                 }
                 

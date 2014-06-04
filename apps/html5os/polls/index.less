@@ -8,3 +8,95 @@ body {
 body > .app {
     padding-top: 0px;
 }
+
+.houseCollection .houseCollectionHeader {
+    display: none;
+}
+
+.question {
+    .title, .type, .rank {
+        padding: 6px 0px;
+    }
+}
+
+.current-question {
+    .questionResponse {
+        padding-top: 50px;
+        padding-bottom: 50px;
+    }
+}
+
+@toggleDim: 44px;
+
+.yesNoToggle {
+  position: relative;
+  text-align: center;
+  cursor: pointer;
+    .off,
+    .on {
+      padding: 2px;
+      display: block;
+      width: 50%;
+      top: 0;
+      color: #505050;
+    }
+    .off {
+      left: 0;
+      position: absolute;
+    padding: 3px 22px;
+    font-size: 26px;
+    }
+    .on {
+      position: absolute;
+      right: 0;
+        padding: 4px 22px;
+        font-size: 26px;
+    }
+    .bulb {
+      background: #E1E1E1;
+      display: block;
+      height: @toggleDim;
+      border-radius: 25px;
+      margin: 0 auto;
+    }
+    .bulb:after {
+      border-radius: 50%;
+    //   border: 1px inset black;
+    //   background: rgba(235, 235, 235, 0.92);
+      display: block;
+      width: @toggleDim;
+      height: @toggleDim;
+      position: absolute;
+      content: " ";
+      border-radius: 0px;
+    }
+    &.right .bulb:after {
+      background: rgba(6, 99, 153, 0.62);
+        width: 50%;
+        right: 0;
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
+    }
+    &.right .bulb {
+    //   background: rgba(6, 99, 153, 0.62);
+    }
+    &.right .on {
+      color: #FFF;
+    }
+    &.right .off {
+      color: #CCC;
+    }
+    &.left .bulb:after {
+      background: rgba(6, 99, 153, 0.62);
+        width: 50%;
+        left: 0;
+        border-top-left-radius: 20px;
+        border-bottom-left-radius: 20px;
+    }
+    &.left .off {
+      color: #FFF;
+    }
+    &.left .on {
+      color: #CCC;
+    }
+}

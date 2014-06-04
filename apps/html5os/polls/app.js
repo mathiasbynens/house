@@ -16,105 +16,107 @@
                         window.UsersBackbone = UsersBackbone;
                         require(['/polls/backbone-polls.js'], function(PollsBackbone){
                             window.PollsBackbone = PollsBackbone;
-                            // self.$list = $('<div class="files-list asdasdsa houseCollection"></div>');
-                            // self.$viewer = $('<div class="file-viewer"></div>');
-                            console.log(PollsBackbone)
-                            self.collection = window.pollsCollection = new PollsBackbone.Collection(); // collection
-                            self.collection.pageSize = pageSize;
-                            // self.listView = new FilesBackbone.List({className: 'test', collection: self.collection}); //el: self.$list,
-                            var filterFunc = function(model, filterObj) {
-                                // console.log(model);
-                                var filterId = filterObj.filter;
-                                if(filterId === 'favs') {
-                                    return model.get('metadata').fav;
-                                }
-                                var m = model.get('contentType');
-                                return (m.indexOf(filterId) === 0);
-                            }
-                            var listOpts = {
-                                className: 'houseCollection polls table-responsive',
-                                headerEl: $('#navbar-header-form'),
-                                search: {
-                                    'fieldName': 'title'
-                                },
-                                // filters: {
-                                //     'favs': {txt: 'Favs', glyphicon: 'star', filter: filterFunc, load: {"metadata.fav": 1}},
-                                //     'text': {txt: 'Text', glyphicon: 'file', filter: filterFunc, load: {contentType: new RegExp('text')}},
-                                //     'image': {txt: 'Image', glyphicon: 'picture', filter: filterFunc, load: {contentType: new RegExp('image')}},
-                                //     'audio': {txt: 'Audio', glyphicon: 'music', filter: filterFunc, load: {contentType: new RegExp('audio')}},
-                                //     'video': {txt: 'Video', glyphicon: 'film', filter: filterFunc, load: {contentType: new RegExp('video')}},
-                                // },
-                                // tags: {
-                                //     'fieldName': 'metadata.tags'
-                                // },
-                                sorts: [
-                                    {name: 'Created At', field: 'at', type: 'date', glyphicon: 'time', default: -1},
-                                    {name: 'Title', field: 'title', glyphicon: 'sort-by-alphabet'},
-                                    // {name: 'File size', field: 'length', type: 'number', glyphicon: 'sort-by-order'}
-                                ],
-                                layouts: {
-                                    "table": {
-                                        title: 'Table',
-                                        glyphicon: 'th-list',
-                                        default: true
-                                    },
-                                    "avatar": {
-                                        title: 'Avatar',
-                                        glyphicon: 'th-large'
+                            require(['/polls/backbone-pollRes.js'], function(PollResBackbone){
+                                window.PollResBackbone = PollResBackbone;
+                                window.pollResCollection = new PollResBackbone.Collection();
+                                
+                                self.collection = window.pollsCollection = new PollsBackbone.Collection(); // collection
+                                self.collection.pageSize = pageSize;
+                                
+                                var filterFunc = function(model, filterObj) {
+                                    // console.log(model);
+                                    var filterId = filterObj.filter;
+                                    if(filterId === 'favs') {
+                                        return model.get('metadata').fav;
                                     }
-                                },
-                                selection: {
-                                    actions: {
-                                        "delete": {
-                                            title: "Delete Poll",
-                                            glyphicon: 'trash',
-                                            confirm: function() {
-                                                return confirm("Are you sure that you want to delete the selected polls?");
-                                            },
-                                            action: function(model, callback) {
-                                                // model.url = model.url+'/src';
-                                                // return;
-                                                model.destroy({success: function(model, response) {
-                                                    callback();
-                                                }, 
-                                                error: function(model, response) {
-                                                    console.log(arguments);
+                                    var m = model.get('contentType');
+                                    return (m.indexOf(filterId) === 0);
+                                }
+                                var listOpts = {
+                                    className: 'houseCollection polls table-responsive',
+                                    headerEl: $('#navbar-header-form'),
+                                    search: {
+                                        'fieldName': 'title'
+                                    },
+                                    // filters: {
+                                    //     'favs': {txt: 'Favs', glyphicon: 'star', filter: filterFunc, load: {"metadata.fav": 1}},
+                                    //     'text': {txt: 'Text', glyphicon: 'file', filter: filterFunc, load: {contentType: new RegExp('text')}},
+                                    //     'image': {txt: 'Image', glyphicon: 'picture', filter: filterFunc, load: {contentType: new RegExp('image')}},
+                                    //     'audio': {txt: 'Audio', glyphicon: 'music', filter: filterFunc, load: {contentType: new RegExp('audio')}},
+                                    //     'video': {txt: 'Video', glyphicon: 'film', filter: filterFunc, load: {contentType: new RegExp('video')}},
+                                    // },
+                                    // tags: {
+                                    //     'fieldName': 'metadata.tags'
+                                    // },
+                                    sorts: [
+                                        {name: 'Created At', field: 'at', type: 'date', glyphicon: 'time', default: -1},
+                                        {name: 'Title', field: 'title', glyphicon: 'sort-by-alphabet'},
+                                        // {name: 'File size', field: 'length', type: 'number', glyphicon: 'sort-by-order'}
+                                    ],
+                                    layouts: {
+                                        "table": {
+                                            title: 'Table',
+                                            glyphicon: 'th-list',
+                                            default: true
+                                        },
+                                        "avatar": {
+                                            title: 'Avatar',
+                                            glyphicon: 'th-large'
+                                        }
+                                    },
+                                    selection: {
+                                        actions: {
+                                            "delete": {
+                                                title: "Delete Poll",
+                                                glyphicon: 'trash',
+                                                confirm: function() {
+                                                    return confirm("Are you sure that you want to delete the selected polls?");
                                                 },
-                                                wait: true});
-                                            },
-                                            complete: function() {
-                                                // alert('Files removed.');
-                                                self.listView.renderPage(1);
+                                                action: function(model, callback) {
+                                                    // model.url = model.url+'/src';
+                                                    // return;
+                                                    model.destroy({success: function(model, response) {
+                                                        callback();
+                                                    }, 
+                                                    error: function(model, response) {
+                                                        console.log(arguments);
+                                                    },
+                                                    wait: true});
+                                                },
+                                                complete: function() {
+                                                    // alert('Files removed.');
+                                                    self.listView.renderPage(1);
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            self.listView = self.collection.getView(listOpts);
-                            
-                            self.collection.on('goToNavigatePath', function(model) {
-                                self.router.navigate(model.getNavigatePath(), {trigger: true});
+                                self.listView = self.collection.getView(listOpts);
+                                
+                                self.collection.on('goToNavigatePath', function(model) {
+                                    self.router.navigate(model.getNavigatePath(), {trigger: true});
+                                });
+                                // self.listView.on('goToProfile', function(user){
+                                //     self.router.navigate('by/'+user.get('name'), true);
+                                // });
+                                
+                                // self.collection.on('editModel', function(model) {
+                                //     self.router.navigate(model.getNavigatePath()+'/edit', true);
+                                // });
+                                
+                                var loadCollections = function() {
+                                    self.collection.load(null, function(){
+                                        self.initialized = true;
+                                        self.trigger('initialized');
+                                    });
+                                }
+                                if(window.account) {
+                                    window.account.on('loggedIn', function(loginView){
+                                        loadCollections();
+                                    });
+                                }
+                                loadCollections();
                             });
-                            // self.listView.on('goToProfile', function(user){
-                            //     self.router.navigate('by/'+user.get('name'), true);
-                            // });
-                            
-                            // self.collection.on('editModel', function(model) {
-                            //     self.router.navigate(model.getNavigatePath()+'/edit', true);
-                            // });
-                            
-                            var loadCollections = function() {
-                                self.collection.load(null, function(){
-                                    self.initialized = true;
-                                    self.trigger('initialized');
-                                });
-                            }
-                            if(window.account) {
-                                window.account.on('loggedIn', function(loginView){
-                                    loadCollections();
-                                });
-                            }
-                            loadCollections();
                         });
                     });
                 });
@@ -241,6 +243,17 @@
                     }
                 });
             });
+            router.route('id/:id/vote', 'takePoll', function(id){
+                router.reset();
+                self.collection.getOrFetch(id, function(doc){
+                    if(doc) {
+                        router.setTitle(doc.get('title'));
+                        
+                        var pollView = doc.getPollView();
+                        self.$el.append(pollView.render().$el);
+                    }
+                });
+            });
             router.route('id/:id/questions', 'idQuestionsTab', function(id){
                 router.reset();
                 self.collection.getOrFetch(id, function(doc){
@@ -255,6 +268,28 @@
                             box.remove();
                         });
                         var box = utils.appendLightBox(fullView.render('questions').$el, doc.get('title'), false);
+                        box.on('removed', function(){
+                            self.router.back();
+                        });
+                    } else {
+                        // 404
+                    }
+                });
+            });
+            router.route('id/:id/responses', 'idResponsesTab', function(id){
+                router.reset();
+                self.collection.getOrFetch(id, function(doc){
+                    if(doc) {
+                        // self.$app.addClass('blurred');
+                        self.$el.addClass('appBlurred');
+                        // self.collection.getView().$el.addClass('blurred');
+                        // var mod = utils.getNewModalContent({title: doc.get('name'), body: doc.getFullView().render().$el, className: 'modal-content container'});
+                        // self.$doc.html(mod.render().$el.show()).show();
+                        var fullView = doc.getFullView();
+                        fullView.on('saved', function() {
+                            box.remove();
+                        });
+                        var box = utils.appendLightBox(fullView.render('responses').$el, doc.get('title'), false);
                         box.on('removed', function(){
                             self.router.back();
                         });
