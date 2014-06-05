@@ -765,3 +765,169 @@ a[title]:hover:after {
         display: none;
     }
 }
+
+@toggleDim: 44px;
+
+.yesNoToggle {
+  position: relative;
+  text-align: center;
+  cursor: pointer;
+    .off,
+    .on {
+      padding: 2px;
+      display: block;
+      width: 50%;
+      top: 0;
+      color: #505050;
+    }
+    .off {
+      left: 0;
+      position: absolute;
+    padding: 3px 22px;
+    font-size: 26px;
+    }
+    .on {
+      position: absolute;
+      right: 0;
+        padding: 4px 22px;
+        font-size: 26px;
+    }
+    .bulb {
+      background: #E1E1E1;
+      display: block;
+      height: @toggleDim;
+      border-radius: 25px;
+      margin: 0 auto;
+    }
+    .bulb:after {
+      border-radius: 50%;
+    //   border: 1px inset black;
+    //   background: rgba(235, 235, 235, 0.92);
+      display: block;
+      width: @toggleDim;
+      height: @toggleDim;
+      position: absolute;
+      content: " ";
+      border-radius: 0px;
+    }
+    &.right .bulb:after {
+      background: rgba(6, 99, 153, 0.62);
+        width: 50%;
+        right: 0;
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
+    }
+    &.right .bulb {
+    //   background: rgba(6, 99, 153, 0.62);
+    }
+    &.right .on {
+      color: #FFF;
+    }
+    &.right .off {
+      color: #CCC;
+    }
+    &.left .bulb:after {
+      background: rgba(6, 99, 153, 0.62);
+        width: 50%;
+        left: 0;
+        border-top-left-radius: 20px;
+        border-bottom-left-radius: 20px;
+    }
+    &.left .off {
+      color: #FFF;
+    }
+    &.left .on {
+      color: #CCC;
+    }
+}
+
+.polls-widget {
+    .pollQ-result {
+        background: @gray-darker;
+    }
+    .pollQ-result:nth-child(even) {
+        background: rgb(214, 214, 214);
+    }
+    .questionResult:hover {
+         .pieBackground, .positiveSlice {
+            .scale(1.1, 1.1);
+         }
+         .averageNum {
+             .scale(1.2, 1.2);
+         }
+     }
+    .questionResult {
+        .resAverage {
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .resChart {
+            font-size: 14px;
+            margin-bottom: 45px;
+        }
+        .title {
+            min-height: 90px;
+            padding: 15px;
+        }
+        .averageNum {
+            .transition(0.5s ease-in);
+             font-size: 36px;
+             padding: 35px 0px;
+             font-weight: bold;
+            font-style: italic;
+             color: @brand-primary;
+         }
+         
+        .pieContainer {
+            
+            height: 100px;
+            margin: 0 auto;
+            width: 100px;
+             .pieTxt {
+                z-index:100;
+                position: absolute;
+                top: 100%;
+                width: 100px;
+             }
+             .pieBackground {
+                 .transition(0.5s ease-in);
+                background-color: @brand-primary;
+                position: absolute;
+                width: 100px;
+                height: 100px;
+                -moz-border-radius: 50px;
+                -webkit-border-radius: 50px;
+                -o-border-radius: 50px;
+                border-radius: 50px;
+                -moz-box-shadow: -1px 1px 3px #000;
+                -webkit-box-shadow: -1px 1px 3px #000;
+                -o-box-shadow: -1px 1px 3px #000;
+                box-shadow: -1px 1px 3px #000;
+             }
+            .pie {
+                position: absolute;
+                width: 100px;
+                height: 100px;
+                -moz-border-radius: 50px;
+                -webkit-border-radius: 50px;
+                -o-border-radius: 50px;
+                border-radius: 50px;
+                clip: rect(0px, 50px, 100px, 0px);
+             }
+             .positiveSlice {
+                 .transition(0.5s ease-in);
+                position: absolute;
+                width: 100px;
+                height: 100px;
+                -moz-border-radius: 50px;
+                -webkit-border-radius: 50px;
+                -o-border-radius: 50px;
+                border-radius: 50px;
+                clip: rect(0px, 100px, 100px, 50px);
+             }
+             .positiveSlice .pie {
+                background-color: @gray;
+             }
+         }
+    }
+}

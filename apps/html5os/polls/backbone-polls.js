@@ -3,6 +3,7 @@
     var Model = Backbone.House.Model.extend({
         collectionName: "polls",
         initialize: function(attr, options) {
+            var self = this;
             this.TableRowView = TableRowView;
             this.RowView = RowView;
             this.AvatarView = AView;
@@ -18,6 +19,31 @@
             var qcolOpts = { poll: this };
             attr.qs = attr.qs || [];
             this.qsCollection = new QsCollection(attr.qs, qcolOpts);
+            this.on('change:qs', function(){
+                var qs = self.attributes.qs || [];
+                console.log(qs)
+                _.each(qs, function(doc){
+                    var model = self.qsCollection.get(doc.id);
+                    console.log(model);
+                    if (!model) {
+                        var model = new self.qsCollection.model(doc);
+                        self.qsCollection.add(model);
+                    } else {
+                        // console.log('update model with doc')
+                        model.set(doc, {
+                            silent: true
+                        });
+                        // model.renderViews();
+                        var changed = model.changedAttributes();
+                        for(var c in changed) {
+                            model.trigger('change:'+c);
+                        }
+                        model.trigger('change');
+                        model.changed = {}
+                    }
+                });
+                // self.qsCollection = new QsCollection(qs, qcolOpts);
+            });
             
             Backbone.House.Model.prototype.initialize.apply(this, arguments);
         },
@@ -32,11 +58,19 @@
         setSlug: function(slug) {
             this.set('slug', this.slugStr(slug));
         },
-        getNavigatePath: function() {
-            if(this.has('slug')) {
-                return this.get('slug');
+        getNavigatePath: function(subPath) {
+            if(subPath) {
+                if(this.has('slug')) {
+                    return this.get('slug')+'/'+subPath;
+                } else {
+                    return 'id/'+this.id+'/'+subPath;
+                }
             } else {
-                return 'id/'+this.id;
+                if(this.has('slug')) {
+                    return this.get('slug');
+                } else {
+                    return 'id/'+this.id;
+                }
             }
         },
         getNavigatePathVote: function() {
@@ -75,28 +109,36 @@
                 whereObj.session_id = account.id;
             }
             
-            window.pollResCollection.findOrFetchWhere(whereObj, function(models){
-                if(models && models.length > 0) {
-                    if(callback) {
-                        callback(_.first(models));
-                    }
-                } else {
-                    // make a new poll response for this user sesssion
-                    var newModel = window.pollResCollection.getNewModel({poll_id: self.options.poll.id});
-                    
-                    var saveModel = newModel.save(null, {
-                        silent: false,
-                        wait: true
-                    });
-                    if(saveModel) {
-                        saveModel.done(function(s, typeStr, respStr) {
-                            if(callback) {
-                                callback(newModel);
-                            }
+            if(!window.pollResCollection) {
+                require(['/polls/backbone-pollRes.js'], function(PollResBackbone){
+                    window.PollResBackbone = PollResBackbone;
+                    window.pollResCollection = new PollResBackbone.Collection();
+                    self.getSessionResponse(callback);
+                });
+            } else {
+                window.pollResCollection.findOrFetchWhere(whereObj, function(models){
+                    if(models && models.length > 0) {
+                        if(callback) {
+                            callback(_.first(models));
+                        }
+                    } else {
+                        // make a new poll response for this user sesssion
+                        var newModel = window.pollResCollection.getNewModel({poll_id: self.options.poll.id});
+                        
+                        var saveModel = newModel.save(null, {
+                            silent: false,
+                            wait: true
                         });
+                        if(saveModel) {
+                            saveModel.done(function(s, typeStr, respStr) {
+                                if(callback) {
+                                    callback(newModel);
+                                }
+                            });
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     });
     
@@ -182,23 +224,46 @@
     
     var ResultsView = Backbone.View.extend({
         tagName: "div",
-        className: "poll-view",
+        className: "poll-view row",
         initialize: function(options) {
             var self = this;
-            self.questionsView = self.model.qsCollection.getView({
+            self.questionsView = self.model.qsCollection.getNewListView({
                 layout: 'result',
                 headerEl: false,
                 selection: false,
                 mason: false,
                 loadOnRenderPage: false,
             });
+            if(options.vote) {
+                self.$takePollBtn = $('<button class="take-poll btn btn-default btn-block">Take the Poll</button>');
+            }
         },
         events: {
+            "click .take-poll": "takePoll"
         },
-        render: function(tab) {
+        takePoll: function() {
+            var self = this;
+            var pollView = this.model.getPollView();
+            var box = utils.appendLightBox(pollView.render().$el, this.model.get('title'), false);
+            box.on('removed', function(){
+            });
+            pollView.once('complete', function(){
+            });
+            pollView.once('cta', function(){
+                self.model.collection.fetch({
+                    data: {id: self.model.id},
+                update: true});
+                // self.render();
+                box.remove();
+            });
+        },
+        render: function() {
             var self = this;
             
             this.$el.append(self.questionsView.render().$el);
+            if(self.$takePollBtn) {
+                this.$el.append(self.$takePollBtn);
+            }
             
             this.$el.attr('data-id', this.model.id);
             this.setElement(this.$el);
@@ -213,22 +278,27 @@
         tagName: "div",
         className: "poll-view",
         initialize: function(options) {
-            this.$paddles = $('<div class="prevNext"><div class="col-xs-4">\
+            this.$paddles = $('<div class="prevNext row"><div class="col-xs-4">\
                                     <button class="btn btn-link btn-block prev">Prev</button>\
                                 </div>\
                                 <div class="col-xs-4 col-xs-offset-4">\
                                     <button class="btn btn-primary btn-block next">Next</button>\
                                 </div></div>');
-            this.$question = $('<div class="current-question"></div>');
+            this.$question = $('<div class="current-question row"></div>');
             this.atIndex = 0;
             this.$questionResponse = $('<div class="questionResponse col-md-6 col-md-offset-3"><div class="form-group"></div></div>');
-            this.$thankyou = $('<h1>Thank you!</h1>');
+            this.$thankyou = $('<div class="pollComplete"><h1 class="text-center">Thank you!</h1><button class="call-to-action btn-link btn-block">See results</button></div>');
         },
         events: {
             "click .next": "clickNext",
             "click .prev": "clickPrev",
             "click .yesNoToggle .off": "clickToggleOff",
             "click .yesNoToggle .on": "clickToggleOn",
+            "click .call-to-action": "clickCTA"
+        },
+        clickCTA: function() {
+            var self = this;
+            this.trigger('cta', true);
         },
         clickNext: function() {
             var self = this;
@@ -322,12 +392,9 @@
                 this.$question.append(this.$questionResponse);
                 this.currentQuestion.getSessionResponse(function(pollRes){
                     if(pollRes) {
-                        console.log(pollRes)
                         self.currentQuestionResponse = pollRes;
                         var pollResQs = self.currentQuestionResponse.qsCollection.get(self.currentQuestion.id);
-                        console.log(pollResQs)
                         if(pollResQs && pollResQs.has('vote')) {
-                            console.log(voteVal)
                             var voteVal = pollResQs.get('vote');
                             
                             if(type === 'text') {
@@ -588,6 +655,13 @@
                     action: function(model) {
                         app.nav.router.navigate(model.getNavigatePathVote(), {trigger: true});
                     }
+                },
+                "pollResults": {
+                    title: "Poll Results",
+                    glyphicon: 'stats',
+                    action: function(model) {
+                        app.nav.router.navigate(model.getNavigatePath('results'), {trigger: true});
+                    }
                 }
             }
             this.actions = new utils.ModelActionsView(opts);
@@ -827,7 +901,7 @@
             var self = this;
             this.model.bind("change", this.render, this);
             this.model.bind("destroy", this.remove, this);
-            this.$e = $('<div class="questionResult">\
+            this.$e = $('<div class="questionResult row">\
     <div class="title col-md-12 text-center"></div>\
     <div class="resAverage col-xs-12 text-center"></div>\
 </div>');
@@ -841,8 +915,11 @@
             if(this.model.has("type")) {
             }
             if(this.model.has('resAverage')) {
-                var count = this.model.get('resAverage');
-                this.$e.find('.resAverage').html(count);
+                var count = this.model.get('resAverage'); 
+                this.$e.find('.resAverage').html('<div class="averageNum">'+count.toFixed(1)+'</div>');
+                if(this.model.has("resCount")) {
+                    this.$e.find('.resAverage').append('average from '+this.model.get("resCount")+' votes');
+                }
             }
             if(this.model.has('resPercent')) {
                 var count = this.model.get('resPercent');
@@ -851,45 +928,7 @@
                 var deg = 360 * count;
                 
                 this.$e.find('.resAverage').html('<style>\
-                .pieContainer {\
-                      height: 100px;\
-                 }\
-                 .pieBackground {\
-                      background-color: grey;\
-                      position: absolute;\
-                      width: 100px;\
-                      height: 100px;\
-                      -moz-border-radius: 50px;\
-                      -webkit-border-radius: 50px;\
-                      -o-border-radius: 50px;\
-                      border-radius: 50px;\
-                      -moz-box-shadow: -1px 1px 3px #000;\
-                      -webkit-box-shadow: -1px 1px 3px #000;\
-                      -o-box-shadow: -1px 1px 3px #000;\
-                      box-shadow: -1px 1px 3px #000;\
-                 }\
-                    .pie {\
-                          position: absolute;\
-                          width: 100px;\
-                          height: 100px;\
-                          -moz-border-radius: 50px;\
-                          -webkit-border-radius: 50px;\
-                          -o-border-radius: 50px;\
-                          border-radius: 50px;\
-                          clip: rect(0px, 50px, 100px, 0px);\
-                     }\
-                     .positiveSlice {\
-                          position: absolute;\
-                          width: 100px;\
-                          height: 100px;\
-                          -moz-border-radius: 50px;\
-                          -webkit-border-radius: 50px;\
-                          -o-border-radius: 50px;\
-                          border-radius: 50px;\
-                          clip: rect(0px, 100px, 100px, 50px);\
-                     }\
                      .pie-'+this.cid+' .positiveSlice .pie {\
-                          background-color: #1b458b;\
                           -webkit-transform:rotate('+deg+'deg);\
                           -moz-transform:rotate('+deg+'deg);\
                           -o-transform:rotate('+deg+'deg);\
@@ -899,14 +938,10 @@
                     <div class="pieContainer pie-'+this.cid+'">\
                          <div class="pieBackground"></div>\
                          <div class="positiveSlice"><div class="pie"></div></div>\
+                         <div class="pieTxt">'+(count*100).toFixed(0)+' % YES</div>\
                     </div>');
+                this.$e.find('.resAverage').addClass('resChart');
             }
-            if(this.model.has("resCount")) {
-                this.$e.find('.resCount').html(this.model.get("resCount"));
-            }
-            
-            
-            /// TODO GRAPH
             
             this.$el.attr("data-id", this.model.id);
             this.setElement(this.$el);
@@ -1021,11 +1056,11 @@
             }
             if(this.model.has('resAverage')) {
                 var count = this.model.get('resAverage');
-                this.$e.find('.resAverage').html(count);
+                this.$e.find('.resAverage').html(count.toFixed(1));
             }
             if(this.model.has('resPercent')) {
                 var count = this.model.get('resPercent');
-                this.$e.find('.resAverage').html(count*100 + '%');
+                this.$e.find('.resAverage').html((count*100).toFixed(0) + '%');
             }
             if(this.model.has("resCount")) {
                 this.$e.find('.resCount').html(this.model.get("resCount"));

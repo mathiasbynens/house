@@ -806,7 +806,7 @@
                         pollVars[option[0]] = option[1];
                     }
                     html = html.substr(0, iofpoll+pollStrOpen.length) + html.substr(iopollsend);
-                    html = html.replace('[[polls]]', '<span class="polls-widget container"></span>');
+                    html = html.replace('[[polls]]', '<div class="polls-widget"></div>');
                     
                     this.$el.find('.sectionHtml').html(html);
                     doPollsView = true;
@@ -1020,7 +1020,11 @@
                             var poll_id = pollVars.results;
                             window.pollsCollection.getOrFetch(poll_id, function(doc){
                                 if(doc) {
-                                    self.pollResultsView = doc.getResultsView();
+                                    var resultsViewOpts = {};
+                                    if(pollVars.vote) {
+                                        resultsViewOpts.vote = true;
+                                    }
+                                    self.pollResultsView = doc.getResultsView(resultsViewOpts);
                                     self.$el.find('.sectionHtml .polls-widget').append(self.pollResultsView.render().$el);
                                 }
                             });

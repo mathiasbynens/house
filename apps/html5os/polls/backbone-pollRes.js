@@ -68,10 +68,8 @@
             var self = this;
             this.$el.html('');
             
-            console.log(this.model.attributes)
             if(this.model.has('user_id')) {
                 window.usersCollection.getOrFetch(this.model.get('user_id'), function(user){
-                    console.log(user)
                     self.$user.html(user.getNewAvatarNameView().render().$el);
                 });
             } else if(this.model.has('session_id')) {
@@ -139,7 +137,6 @@
                 // console.log(pollModel)
                 if(pollModel) {
                     var qs = pollModel.qsCollection.get(self.model.id);
-                    console.log(qs)
                     self.$q.html(qs.get('title'));
                 }
             });

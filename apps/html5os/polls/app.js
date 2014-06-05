@@ -250,7 +250,32 @@
                         router.setTitle(doc.get('title'));
                         
                         var pollView = doc.getPollView();
-                        self.$el.append(pollView.render().$el);
+                        pollView.on('cta', function(){
+                            doc.collection.fetch({
+                                data: {id: doc.id},
+                            update: true});
+                            self.router.navigate(doc.getNavigatePath('results'), {trigger: true});
+                        });
+                        // self.$el.append(pollView.render().$el);
+                        var box = utils.appendLightBox(pollView.render().$el, doc.get('title'), false);
+                        box.on('removed', function(){
+                            self.router.back();
+                        });
+                    }
+                });
+            });
+            router.route('id/:id/results', 'pollResults', function(id){
+                router.reset();
+                self.collection.getOrFetch(id, function(doc){
+                    if(doc) {
+                        router.setTitle(doc.get('title'));
+                        
+                        var pollView = doc.getResultsView();
+                        // self.$el.append(pollView.render().$el);
+                        var box = utils.appendLightBox(pollView.render().$el, doc.get('title'), false);
+                        box.on('removed', function(){
+                            self.router.back();
+                        });
                     }
                 });
             });
